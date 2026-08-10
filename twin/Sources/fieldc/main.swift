@@ -1,0 +1,386 @@
+import FieldCore
+import FieldGPU
+import FieldUI
+import SwiftUI
+import Foundation
+import ImageIO
+import UniformTypeIdentifiers
+import CoreGraphics
+
+// fieldc — the CLI half of the "one core, two front-ends" law (§20 L2).
+// Everything the UI can do is reachable here, through the same FieldCore calls.
+
+func gitSHA() -> String {
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+    p.arguments = ["rev-parse", "--short", "HEAD"]
+    let pipe = Pipe(); p.standardOutput = pipe; p.standardError = Pipe()
+    do { try p.run(); p.waitUntilExit() } catch { return "unknown" }
+    let d = pipe.fileHandleForReading.readDataToEndOfFile()
+    return String(data: d, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        ?? "unknown"
+}
+
+func deviceName() -> String {
+    var size = 0
+    sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+    guard size > 0 else { return "unknown" }
+    var buf = [CChar](repeating: 0, count: size)
+    sysctlbyname("machdep.cpu.brand_string", &buf, &size, nil, 0)
+    return String(cString: buf)
+}
+
+func writeReceipt(_ r: Receipt) {
+    let dir = URL(fileURLWithPath: "Receipts")
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    let stamp = r.date.replacingOccurrences(of: ":", with: "-")
+    let url = dir.appendingPathComponent("\(r.name)_\(stamp).json")
+    if let data = try? r.json() {
+        try? data.write(to: url)
+        print("receipt written: \(url.path)")
+    }
+}
+
+let args = Array(CommandLine.arguments.dropFirst())
+let cmd = args.first ?? "help"
+
+switch cmd {
+
+case "g5":
+    // Diagnostic sweep: if the residual falls ~1/cpw^2 the error is FDTD grid
+    // dispersion (a known property of the Yee scheme), not a propagator fault.
+    print("  cells/lambda   residual")
+    for cpw in [6, 8, 10, 12] {
+        let g = G5.run(cellsPerWavelength: cpw)
+        print(String(format: "  %10d   %8.4f%@", cpw, g.measured,
+                     (g.passed ? "  <- PASSES" : "") as NSString))
+    }
+
+case "gate", "gates":
+    let t0 = Date()
+    let gates = PhysicsGates.runAll()
+    let r = Receipt(name: "gates", gates: gates,
+                    durationSeconds: Date().timeIntervalSince(t0),
+                    device: deviceName(), gitSHA: gitSHA())
+    print(r.summary)
+    if args.contains("--receipt") { writeReceipt(r) }
+    exit(r.allPassed ? 0 : 1)
+
+case "test":
+    let t0 = Date()
+    let h = CoreTests.runAll()
+    print(h.summary)
+    print(String(format: "(%.2fs)", Date().timeIntervalSince(t0)))
+    exit(h.allPassed ? 0 : 1)
+
+case "machine":
+    let preset = RH1.preset(includeEMCaps: args.contains("--em"))
+    print("preset      : \(preset.displayName) [\(preset.id)]")
+    print("gates       : \(preset.gateCount)")
+    print("elements    : \(preset.elements.count)")
+    print("build volume: r = \(preset.buildVolume.radius * 1000) mm, "
+        + "h = \(preset.buildVolume.height * 1000) mm")
+    print("medium      : rho = \(preset.medium.density), c = \(preset.medium.soundSpeed)")
+    let l = preset.medium.wavelength(at: 40_000)
+    print("lambda@40kHz: \(String(format: "%.3f", l * 1000)) mm  "
+        + "(node spacing \(String(format: "%.3f", l / 2 * 1000)) mm)")
+    var bySurface: [SurfaceID: Int] = [:]
+    for e in preset.elements { bySurface[e.surface, default: 0] += 1 }
+    for (k, v) in bySurface.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
+        print("  \(k.rawValue): \(v) elements")
+    }
+
+case "focus":
+    // Compile a single trap and report what the field actually does.
+    let f = 40_000.0
+    let preset = RH1.preset(frequency: f)
+    let lambda = preset.medium.wavelength(at: f)
+    let inset = 2 * lambda, sp = lambda / 2
+    let R = preset.buildVolume.radius
+    let lat = FieldLattice(origin: Vec3(-R, -R, inset), spacing: sp,
+                           nx: Int((2 * R / sp).rounded(.down)) + 1,
+                           ny: Int((2 * R / sp).rounded(.down)) + 1,
+                           nz: Int(((preset.buildVolume.height - 2 * inset) / sp).rounded(.down)) + 1)
+    print("building operator: \(lat.count) points x \(preset.gateCount) gates ...")
+    let t0 = Date()
+    let prop = Propagator(elements: preset.elements, lattice: lat,
+                          frequency: f, medium: preset.medium,
+                          gateCount: preset.gateCount)
+    print(String(format: "  built in %.2fs", Date().timeIntervalSince(t0)))
+    let target = Vec3(0, 0, preset.buildVolume.height / 2)
+    let g = Gorkov(medium: preset.medium, particle: .pla())
+    print("  contrast Phi = \(String(format: "%.3f", g.contrast)) "
+        + "(>0 => traps at pressure nodes)")
+    for method in InverseSolver.Method.allCases {
+        let u = InverseSolver.solve(propagator: prop,
+                                    points: [.init(position: target, targetAmplitude: 1)],
+                                    method: method, iterations: 80)
+        let field = prop.forward(u)
+        let at = prop.pressure(at: target, drive: u).magnitude
+        let mean = field.reduce(0.0) { $0 + $1.magnitude } / Double(field.count)
+        let force = g.force(at: target, propagator: prop, drive: u)
+        let name = method.rawValue.padding(toLength: 8, withPad: " ", startingAt: 0)
+        print("  \(name) gain \(String(format: "%6.2f", at / max(mean, 1e-30)))x   "
+            + "|F| = \(String(format: "%.3e", force.length)) N   "
+            + "holds 200um PLA: \(g.canLevitate(force: force) ? "yes" : "no")")
+    }
+
+case "gpu":
+    // G-GPU: the Metal propagator must match the CPU reference. A GPU kernel
+    // with no reference to be tested against is a kernel nobody can trust.
+    do {
+        let ctx = try MetalContext()
+        print("device: \(ctx.deviceDescription)")
+        let preset = TestPresets.singlePlate(n: 8)
+        let lat = FieldLattice(origin: Vec3(-0.02, -0.02, 0.03), spacing: 0.004,
+                               nx: 8, ny: 8, nz: 8)
+        let cpu = Propagator(elements: preset.elements, lattice: lat,
+                             frequency: 40_000, medium: preset.medium,
+                             gateCount: preset.gateCount)
+        let gpu = try PropagatorGPU(ctx: ctx, elements: preset.elements, lattice: lat,
+                                    frequency: 40_000, medium: preset.medium,
+                                    gateCount: preset.gateCount)
+        var drive = [Complex](repeating: .zero, count: preset.gateCount)
+        for i in drive.indices { drive[i] = Complex.expi(Double(i) * 0.37) }
+        let a = cpu.forward(drive)
+        let b = try gpu.forwardToHost(drive)
+        let rel = b.relativeL2(to: a)
+        let g = GateResult(id: "G-GPU", name: "Metal propagator vs CPU reference",
+                           measured: rel, threshold: 1e-5,
+                           detail: "\(lat.count) points x \(preset.gateCount) gates; "
+                                 + "float32 GPU vs float64 CPU; "
+                                 + String(format: "build %.3fs", gpu.buildSeconds))
+        print(g.line)
+        exit(g.passed ? 0 : 1)
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
+case "render":
+    // Offscreen render of the RH-1 machine — the viewport half of the
+    // screenshot harness, with no window server involved.
+    do {
+        let ctx = try MetalContext()
+        let r = try Renderer(ctx: ctx)
+        let light = args.contains("--light")
+        let pal = light ? SceneBuilder.Palette.light : SceneBuilder.Palette()
+        var obj: SceneGeometry? = nil
+        if !args.contains("--empty") {
+            let placed = STL.sampleCup().placed(in: RH1.preset().buildVolume)
+            obj = SceneBuilder.object(placed.mesh, palette: pal, fits: placed.fits)
+            print("  object: \(placed.mesh.triangles.count) triangles, fits \(placed.fits)")
+        }
+        // --overlays: compile a field and render it with traps, so the overlay
+        // path is verifiable outside the window.
+        if args.contains("--overlays") {
+            let preset = RH1.preset()
+            let f = 40_000.0
+            let lam = preset.medium.wavelength(at: f)
+            let inset = 2 * lam, sp = lam / 2, R = preset.buildVolume.radius
+            let lat = FieldLattice(
+                origin: Vec3(-R, -R, inset), spacing: sp,
+                nx: Int((2 * R / sp).rounded(.down)) + 1,
+                ny: Int((2 * R / sp).rounded(.down)) + 1,
+                nz: Int(((preset.buildVolume.height - 2 * inset) / sp).rounded(.down)) + 1)
+            let prop = Propagator(elements: preset.elements, lattice: lat,
+                                  frequency: f, medium: preset.medium,
+                                  gateCount: preset.gateCount)
+            let target = Vec3(0, 0, preset.buildVolume.height / 2)
+            let drive = InverseSolver.solve(
+                propagator: prop, points: [.init(position: target, targetAmplitude: 1)],
+                method: .gspat, iterations: 80)
+            let mag = prop.forward(drive).map(\.magnitude)
+            let g = Gorkov(medium: preset.medium, particle: .pla())
+            let U = g.potentialField(propagator: prop, drive: drive)
+            let traps = Gorkov.findTraps(U: U, lattice: lat, limit: 250)
+            print("  field: \(mag.count) pts, peak \(String(format: "%.3g", mag.max() ?? 0))")
+            print("  traps: \(traps.count) minima")
+            var extra = SceneBuilder.fieldSlice(magnitude: mag, lattice: lat)
+            // matter: run the particle sim forward so transport is visible
+            var sim = ParticleSim(potential: U, lattice: lat, medium: preset.medium)
+            sim.seedDelivered(count: 900)
+            let gain = sim.levitationGain(ratio: 3)
+            for _ in 0..<1200 { sim.step(dt: 2e-4, forceGain: gain) }
+            let c = sim.counts
+            print("  matter: \(c.feedstock) feedstock, \(c.inTransit) transit, \(c.trapped) trapped")
+            let pg = SceneBuilder.particles(sim)
+            extra.linePositions += pg.linePositions
+            extra.lineColors += pg.lineColors
+            // boundary: per-element drive on the surfaces
+            let bg = SceneBuilder.boundary(elements: preset.elements, drive: drive,
+                                           palette: pal)
+            print("  boundary: \(preset.elements.count) elements painted")
+            extra.trianglePositions += bg.trianglePositions
+            extra.triangleColors += bg.triangleColors
+            let tg = SceneBuilder.traps(traps, palette: pal)
+            extra.linePositions += tg.linePositions
+            extra.lineColors += tg.lineColors
+            extra.trianglePositions += tg.trianglePositions
+            extra.triangleColors += tg.triangleColors
+            if let o = obj {
+                extra.linePositions += o.linePositions
+                extra.lineColors += o.lineColors
+                extra.trianglePositions += o.trianglePositions
+                extra.triangleColors += o.triangleColors
+            }
+            obj = extra
+        }
+        r.load(SceneBuilder.rh1(palette: pal), object: obj)
+        if light { r.background = SIMD4<Double>(0.97, 0.965, 0.95, 1) }
+        switch args.first(where: { ["front","top","iso","home"].contains($0) }) {
+        case "front": r.camera = .front
+        case "top":   r.camera = .top
+        default:      r.camera = .home
+        }
+        let w = 1280, h = 800
+        guard let img = try r.renderOffscreen(width: w, height: h) else {
+            print("render failed"); exit(1)
+        }
+        let out = args.first(where: { $0.hasSuffix(".png") }) ?? "machine.png"
+        let url = URL(fileURLWithPath: out)
+        guard let dest = CGImageDestinationCreateWithURL(
+                url as CFURL, "public.png" as CFString, 1, nil) else {
+            print("could not create \(out)"); exit(1)
+        }
+        CGImageDestinationAddImage(dest, img, nil)
+        CGImageDestinationFinalize(dest)
+        print("wrote \(url.path)  (\(w)x\(h))")
+    } catch { print("render unavailable: \(error)"); exit(2) }
+
+case "scan":
+    // End-to-end: FDTD pulse-echo -> S(f) -> matrix pencil -> chords ->
+    // .pattern -> Machine View reconstruction -> gates.
+    do {
+        let n = 44, dx = 0.004
+        let sphere = Mesh.sphere(radius: 0.022, subdivisions: 3)
+        print("scanning a 44 mm sphere in a \(n)^3 chamber (dx = 4 mm) ...")
+        let t0 = Date()
+        let result = Scan.run(nx: n, ny: n, nz: n, dx: dx, object: sphere,
+                              gateCount: 12, steps: 700, code: .welchCostas)
+        print(String(format: "  %d gates, %d samples, dt = %.3g s   (%.1fs)",
+                     result.gates.count, result.portRecords[0].count,
+                     result.dt, Date().timeIntervalSince(t0)))
+        print("  reciprocity  \(String(format: "%.4f", result.reciprocity))")
+        print("  chords extracted: \(result.chords.count)")
+        for (i, c) in result.chords.prefix(5).enumerated() {
+            print(String(format: "    [%d] f = %8.1f Hz   Q = %7.1f   weight %.4g",
+                         i, c.frequencyHz, c.qFactor, c.weight))
+        }
+
+        // Model-order sweep. The FDTD is the expensive part (~18s); extraction
+        // is cheap, so one scan is re-extracted at several orders rather than
+        // re-running the chamber per order.
+        if args.contains("--sweep") {
+            print("\n  order   win  chords   in-fit   held-out   ratio")
+            for (order, win) in [(32, 64), (48, 96), (64, 128), (96, 180),
+                                 (128, 220)] {
+                let ch = MatrixPencil.extract(records: result.portRecords,
+                                              dt: result.dt, maxChords: order,
+                                              pencilWindow: win)
+                var probe = result
+                probe.chords = ch
+                let g = MachineView.heldOutPrediction(probe, holdOut: 3,
+                                                      maxChords: order,
+                                                      pencilWindow: win)
+                // pull the two numbers out of the detail string
+                let re = MatrixPencil.synthesize(chords: ch,
+                                                 gates: result.portRecords.count,
+                                                 samples: result.portRecords[0].count,
+                                                 dt: result.dt)
+                var inFit = 0.0
+                for i in result.portRecords.indices {
+                    inFit += re[i].relativeL2(to: result.portRecords[i])
+                }
+                inFit /= Double(result.portRecords.count)
+                let ratio = inFit > 0 ? g.measured / inFit : Double.nan
+                print(String(format: "  %5d  %4d  %6d  %7.4f   %8.4f  %6.2fx%@",
+                             order, win, ch.count, inFit, g.measured, ratio,
+                             (g.measured < 0.15 ? "  <- PASSES" : "") as NSString))
+            }
+            print("")
+        }
+
+        // .pattern round trip, with provenance enforced.
+        let pat = PatternFile(name: "sphere-22mm", machine: "emulated-chamber",
+                              calibrationRef: result.calibrationRef,
+                              material: .init(name: "PLA", density: 1240, soundSpeed: 2220),
+                              band: [20000, 80000], chords: result.chords,
+                              rung: "L0", greensFunctionMeasured: false)
+        let data = try pat.encoded()
+        let back = try PatternFile.decode(data)
+        let roundTrip = try back.encoded() == data
+        print("  .pattern: \(data.count) bytes, round trip \(roundTrip ? "bit-exact" : "DIFFERS")")
+        print("  provenance: \(pat.meta.counts.measured) measured / "
+            + "\(pat.meta.counts.inferred) inferred; buildable \(pat.buildableChords.count)")
+        try data.write(to: URL(fileURLWithPath: "scan.pattern"))
+
+        // Machine View.
+        let lat = FieldLattice(origin: Vec3(0, 0, 0), spacing: dx * 2,
+                               nx: n / 2, ny: n / 2, nz: n / 2)
+        let recon = MachineView.backProject(result, lattice: lat)
+        let cov = recon.coverage.sorted()
+        func pct(_ q: Double) -> Double { cov[min(cov.count - 1, Int(q * Double(cov.count)))] }
+        print(String(format: "  Machine View L0: %.1f%% NEVER OBSERVED   "
+                   + "coverage p10 %.2f  p50 %.2f  p90 %.2f",
+                     recon.unobservedFraction * 100, pct(0.10), pct(0.50), pct(0.90)))
+        let centred = sphere.translated(by: Vec3(Double(n-1)*dx/2, Double(n-1)*dx/2,
+                                                 Double(n-1)*dx/2) - sphere.centroid)
+        var gates = MachineView.compareToTruth(recon, truth: centred)
+        gates.append(contentsOf: MachineView.chordTruncation(result))
+        gates.append(MachineView.heldOutPrediction(result))
+        gates.append(GateResult(id: "G11", name: ".pattern round trip bit-exact",
+                                measured: roundTrip ? 0 : 1, threshold: 0.5))
+        gates.append(GateResult(id: "G15", name: "reciprocity ||K-K^T||/||K||",
+                                measured: result.reciprocity, threshold: 0.1,
+                                detail: "free QC on every scan"))
+        // L1 DORT must REFUSE without a measured Green's function.
+        let refused = MachineView.dort(result, lattice: lat,
+                                       greensFunctionMeasured: false) == nil
+        gates.append(GateResult(id: "G-DORT-gate",
+                                name: "L1 refuses without a measured Green's function",
+                                measured: refused ? 0 : 1, threshold: 0.5,
+                                detail: refused ? "refused, as required"
+                                                : "DID NOT REFUSE — would emit a "
+                                                + "confident meaningless image"))
+        for g in gates { print("  " + g.line) }
+        let rec = Receipt(name: "scan", gates: gates,
+                          durationSeconds: Date().timeIntervalSince(t0),
+                          device: deviceName(), gitSHA: gitSHA())
+        if args.contains("--receipt") { writeReceipt(rec) }
+    } catch { print("scan failed: \(error)"); exit(1) }
+
+case "broadband":
+    // The corrected channel-count study (§ BroadbandGate). Runs the free-field
+    // monochromatic condition and the cavity+chord condition side by side so the
+    // difference between them is visible rather than asserted.
+    print("condition                          RH-1 par/main   dense par/main   RH-1 rel")
+    for (tones, walls, rainbow, label) in [
+        (1, false, false, "1 tone, free field  (old model)"),
+        (1, true,  false, "1 tone, walls"),
+        (5, true,  false, "5 tones, walls"),
+        (5, true,  true,  "5 tones, walls + rainbow"),
+    ] {
+        let g = BroadbandGate.channelCountStudy(tones: tones, withWalls: walls,
+                                                withRainbow: rainbow)
+        let rh1 = g[0].measured, rel = g[1].measured
+        let dense = rel > 0 ? rh1 / rel : Double.nan
+        print(String(format: "%-34@ %13.4f %16.4f %10.2fx",
+                     label as NSString, rh1, dense, rel))
+    }
+    print("\nlower parasitic/main is better; RH-1 rel > 1 means RH-1 is worse than 512-ch")
+
+case "shot":
+    exit(await MainActor.run { ShotCommand.run(args: args) })
+
+default:
+    print("""
+    fieldc — Field Compiler CLI
+
+      fieldc gate [--receipt]   run the physics acceptance gates (§22)
+      fieldc test               run the unit suite
+      fieldc machine [--em]     describe the RH-1 preset
+      fieldc focus              compile a centre trap, compare solver methods
+      fieldc gpu                validate the Metal propagator against the CPU
+      fieldc render [iso|front|top] [--light] [out.png]\n      fieldc scan [--receipt]   end-to-end scan -> chords -> .pattern -> Machine View\n      fieldc broadband          channel-count study: free field vs cavity + chord\n      fieldc shot [scene] [--all] [--light] [--contact-sheet] [--out DIR]
+
+    Built for CommandLineTools only — no Xcode, no external dependencies.
+    """)
+}

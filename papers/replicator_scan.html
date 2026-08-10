@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scan — how the machine sees</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-derived{color:#fff;background:var(--amber);border-color:var(--amber)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px; font-size:.85em; padding:.05em .3em}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">Read first: <a href="replicator_principles.html">Principles</a> ·
+sibling modes: <a href="replicator_assemble.html">Assemble</a> /
+<a href="replicator_dissolve.html">Dissolve</a> ·
+carriers: <a href="the_two_carriers.html">The Two Carriers</a> /
+<a href="replicator_phonons.html">The Phonons</a> /
+<a href="replicator_photons.html">The Photons</a> ·
+topology: <a href="replicator_architecture.html">Architecture</a> ·
+software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
+instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a></div>
+
+<h1>Scan — how the machine sees</h1>
+<p class="sub">The scan-mode narrative: what happens, step by step, when
+the machine looks at an object — first in plain words, then in the terms
+the engineering uses. Size-free — the physics privileges ratios, not
+dimensions.</p>
+<p class="meta">draft v1.0 · 2026-08-01 · mode paper — owns the scan-mode
+narrative; element detail lives in the carrier papers, solver detail in the
+Field Compiler. Sibling mode papers:
+<a href="replicator_assemble.html">Assemble</a> and
+<a href="replicator_dissolve.html">Dissolve</a>. <b>Single-home rule</b>:
+this paper narrates; every fact it uses is owned elsewhere and linked —
+the scan pipeline by
+<a href="replicator_field_compiler.html">Field Compiler §15</a>, the
+reconstruction discipline by Field Compiler §16.3, the probe elements by
+<a href="replicator_photons.html">The Photons</a> and
+<a href="replicator_phonons.html">The Phonons</a>, the honesty ladder by
+ruling R12.</p>
+
+<h2 id="s0">0 · The picture</h2>
+<p>The machine has no camera — no lens anywhere, nothing inside the chamber
+looks at anything. Instead, the walls sing to the object and listen to how
+it sings back.</p>
+<p>You already know the trick. Tap a wine glass and the note tells you about
+the glass — shape, thickness, whether it is cracked. A doctor's ultrasound
+does it deliberately: send sound in, listen to the echoes, draw the baby. A
+CT scanner does it with rays from many angles, folding all the views into
+one solid picture. A hologram does it with light: record how waves bounced
+off a thing, and you can replay the recording to get the image back.</p>
+<p>This machine is all three of those at once, turned inside out. Instead of
+a scanner that moves around a patient, the object sits still inside a
+closed room whose <em>entire wall surface</em> is the scanner — small
+speakers, microphones, and antennas everywhere. To scan, the walls take
+turns asking questions: a brief, quiet chirp of sound containing many
+pitches at once; a pulse of radio-band light. The waves wash over the
+object — some pass through, some bounce, some land exactly on a note the
+object likes to ring at, the wine-glass effect at many pitches
+simultaneously — and everything that comes back is recorded at every wall
+and folded into a picture of what must be sitting in the middle.</p>
+<p>The operator's one-sentence framing is correct as stated: <b>a scan is
+ultrasonic and electromagnetic holographic tomography</b> —
+"tomography" meaning the CT-style many-angles-folded-into-a-volume part,
+"holographic" meaning the recordings keep the waves' timing, not just their
+loudness, so they can be replayed. And yes — among the electromagnetic
+probes are <b>"flying doughnuts"</b>: doughnut-shaped pulses of light —
+real, laboratory-made, published measured physics, not a metaphor — which
+cross the chamber keeping their shape, report their own position as they
+fly, and come back carrying an unusually rich imprint of what they passed
+— though this machine using them as a routine scanning tool is still ours
+to demonstrate. The rest of this paper walks down from this picture into
+the machinery, one notch more technical per section.</p>
+<blockquote>One phrase from the sensing rulings carries through the whole
+paper: <b>the machine sees matter in the terms by which it holds it.</b>
+The same contrast that makes a grain visible is the contrast the built
+field grips it by — the scan is not an accessory bolted onto the builder,
+but the same machine listening instead of pushing.</blockquote>
+
+<h2 id="s1">1 · Tomography, literally</h2>
+<p>None of the imaging physics here is exotic. <b>Ultrasound computed
+tomography</b> (USCT) — a ring or bowl of transducers surrounding tissue,
+transmission and reflection recorded on all sides, sound-speed and
+attenuation maps reconstructed — is
+<span class="chip c-measured">MEASURED</span> medical art, in clinical use
+for breast imaging; <b>microwave tomography</b> — the same geometry with
+EM antennas, reconstructing dielectric contrast — is likewise published,
+working art. Scan mode is these two instruments merged into one chamber
+and pointed at objects instead of patients.</p>
+<p>Three structural — not clever — advantages make the chamber a
+<em>better</em> platform than a medical scanner:</p>
+<ul>
+<li><b>Full-surround aperture.</b> A medical scanner sees from a ring, an
+arc, or a handheld probe; every view it lacks is information it never
+gets. Here the boundary is closed — every wave scattering off the
+workpiece crosses the walls on its way out and can be recorded
+(<a href="replicator_principles.html">Principles §2</a>) — and the known
+walls' reflections act as extra <em>virtual</em> viewpoints, so the
+effective aperture exceeds the transducer count
+(<a href="replicator_field_compiler.html">Field Compiler §18</a>).</li>
+<li><b>The machine measures its own cavity.</b> A hospital scanner must
+assume its acoustics; this machine calibrates them: the empty-chamber
+reference run (one per configuration, cached), the TX→RX identity measured
+at assembly and at every power-up, and continuous milliwatt listening —
+exactly the measurements that make the hardest part of reconstruction (§4)
+honest rather than assumed.</li>
+<li><b>The empty-chamber reference.</b> Every scan is a
+<em>difference</em> measurement — object-in-chamber against the same
+chamber empty — so everything the chamber itself does to the waves (wall
+echoes, resonances, transducer quirks) divides out, leaving the object's
+contribution.</li>
+</ul>
+<p>Register: the tomography itself is
+<span class="chip c-measured">MEASURED</span> art; the chamber's
+structural advantages <span class="chip c-derived">DERIVED</span> from
+its geometry; the composed instrument — this chamber performing USCT-class
+imaging on arbitrary objects — design until the bench signs it
+(<a href="replicator_principles.html">Principles §8b</a>).</p>
+
+<h2 id="s2">2 · The probes — what is actually sent in</h2>
+
+<h3>2a · The acoustic call</h3>
+<p>The sound side asks in <b>coded chirps</b> — brief multi-frequency
+bursts at milliwatt level, low enough that nothing in the volume moves.
+One gate speaks, all ports listen; then the next gate, or a coded
+combination. The v1 schedule is one-gate-at-a-time; from milestone M5, a
+<b>Welch–Costas schedule</b> — because 13 is prime with primitive root 2,
+a perfect ambiguity-free hopping schedule exists for exactly 12 gates
+(<code>slot k → gate 2ᵏ mod 13</code>) — lets all gates interrogate
+simultaneously without colliding. Owner:
+<a href="replicator_field_compiler.html">Field Compiler §15</a>; the
+acoustic elements (horns, meshes, drive laws) are
+<a href="replicator_phonons.html">The Phonons</a>.</p>
+
+<h3>2b · The EM call — the flying doughnuts</h3>
+<p>The electromagnetic side speaks the machine's toroidal-pulse alphabet
+(ruling R2-b: the bore optical channel and the microwave face are one
+full TX/RX holographic alphabet — six decades of frequency, both
+directions). The "flying doughnut" is a single-cycle,
+space-time-nonseparable toroidal EM pulse — a laboratory object, not a
+design sketch:</p>
+<ul>
+<li><b>They exist and can be launched.</b>
+<span class="chip c-measured">MEASURED</span>: optical toroidal pulses by
+metasurface converter (Zdagkas et al., <i>Nat. Photonics</i> 16:512,
+2022), and by pulse shaper × segmented waveplate with no metasurface
+needed (Vignjevic et al., arXiv:2509.10924); microwave toroidal and
+toroidal-helical pulses from launcher structures of the machine's own
+family (Wang et al., <i>Commun. Phys.</i> 7:356, 2024; Shi et al.,
+<i>Commun. Phys.</i>, 2026). In-machine they launch two ways: the
+<b>optical stem</b> at the bore (pulse shaper × wavefront/polarization
+converter, both commodity parts) and the caps'
+<b>equiangular-spiral slot gratings</b> at microwave
+(<a href="replicator_photons.html">The Photons §2–§3</a>).</li>
+<li><b>Their structure survives the trip.</b>
+<span class="chip c-measured">MEASURED</span>: the pulses are self-healing
+— imperfect launches correct on propagation, a synthesis tolerance
+budget — and isodiffracting: each frequency keeps its own radius, so the
+frequency→radius map travels with the pulse. (Honesty note, inherited
+from <a href="replicator_principles.html">Principles §8b</a>: the
+measured robustness is the pulses' <em>space-time nonseparability</em>;
+their skyrmion-texture label is a descriptor of the polarization map, not
+an indestructibility claim.)</li>
+<li><b>They report their own position.</b>
+<span class="chip c-measured">MEASURED</span> at microwave (Wang et al.
+2024): single-aperture 3D positioning from the pulse's internal
+space-time structure — the pulse is its own self-referencing ruler,
+exactly what a probe wants.</li>
+<li><b>What comes back is read as a hologram, and then some.</b> The stem
+reads returns by state tomography — reconstructing the pulse's full
+density matrix across space, polarization, and spectrum
+(<span class="chip c-measured">MEASURED</span> as published art) — richer
+than a classical hologram: even the <em>loss of purity</em> in the return
+measures the object's roughness and depolarization. Decoherence as
+data.</li>
+<li><b>Register.</b> Every item above is measured published physics. The
+<em>in-machine tomographic use</em> — flying doughnuts as a routine probe
+of arbitrary objects in this chamber, folded into the reconstruction of
+§4 — is design, <span class="chip c-open">OPEN</span> until demonstrated.
+So are the two stem items already flagged in
+<a href="replicator_photons.html">The Photons §3</a>: anapole
+spectroscopy, and tomography at control-loop rate rather than
+calibration rate.</li>
+</ul>
+<p>The EM sweep also carries what sound cannot ask: dielectric response
+for material class, and optical spectroscopy down the bore for composition
+(<a href="replicator_principles.html">Principles §5, Scan step 6</a>). And
+the cross-carrier verbs add free viewpoints: light <em>writes</em> sound —
+a laser pulse absorbed on any visible surface, including the workpiece,
+launches ultrasound from that spot with nothing moving — and
+<em>reads</em> sound (schlieren/vibrometry). Owners:
+<a href="the_two_carriers.html">The Two Carriers §6b</a>,
+<a href="replicator_field_compiler.html">Field Compiler §17.6</a>.</p>
+
+<h2 id="s3">3 · Call-and-response — the formal object a scan builds</h2>
+<p>Formally, a scan measures the object's <b>scattering matrix S(f)</b>:
+for every frequency in the band, how a call from each gate maps to the
+response at every port. The pipeline, in summary (owner, with the full
+recipe: <a href="replicator_field_compiler.html">Field Compiler
+§15</a>):</p>
+<ol>
+<li><b>Reference.</b> The cached empty-chamber run; everything downstream
+normalizes against it.</li>
+<li><b>Coded runs.</b> The chirp schedule of §2a, one gate or
+Welch–Costas-coded combinations.</li>
+<li><b>S(f) assembly.</b> Fourier-transform every port record; each
+column of S(f) is one gate's normalized response spectrum.</li>
+<li><b>Chord extraction.</b> A matrix-pencil solve over all gates'
+records jointly — one object, one set of resonances — yields the object's
+poles (resonant frequencies and ring-down rates) and, per pole, the port
+pattern that excites it. Each (pole, port-vector) pair is one
+<b>chord</b>.</li>
+<li><b>Emit</b> <code>.pattern</code> — the chord list, ordered by
+signature contribution, calibration reference in the metadata.</li>
+</ol>
+<p>The chord list is the machine's native compression — an object stored
+by the resonances it rings at and the drive that addresses each one,
+sharpening progressively as chords arrive (the JPEG analogy is
+<a href="replicator_principles.html">Principles §0–§1</a>'s). What makes
+this more than a file format is
+<a href="replicator_principles.html">Principles §6</a>: scan and build are
+one operation run in opposite directions — the same chord list is at once
+the scan's output, the builder's drive recipe, and the build's acceptance
+criterion, met when the workpiece rings true. Milliwatt listening is
+always on, so every instant of fabrication is also a scan; and the EM
+octaves ring up ~10⁴× faster than the acoustic chords they check, so
+verification is effectively continuous: <b>acoustic builds, EM
+verifies</b>.</p>
+
+<h2 id="s4">4 · Reconstruction — from echoes to a volume, honestly</h2>
+<p>Turning port records into a picture of the interior is the hard half of
+scan mode, with the sharpest failure modes. The full treatment is
+software-owned (<a href="replicator_field_compiler.html">Field Compiler
+§16.3</a>); this is the narrative and the discipline.</p>
+<p>The <b>reconstruction ladder</b> runs four rungs, cheapest first —
+separately selectable operators over the same records, so outputs can be
+compared: <b>L0</b> delay-and-sum backprojection (milliseconds; a
+reflectivity image — a 3D B-scan, <em>not</em> a geometry, and the UI must
+say so); <b>L1</b> DORT — the SVD of S(f) taken directly, each significant
+singular vector one scatterer, with a free reciprocity check that flags
+calibration faults; <b>L2</b> regularized linear inversion against the
+fast forward model; <b>L3</b> full-waveform inversion — honest about the
+fact that recovering an <em>object</em>, rather than a field, from
+boundary data is nonlinear inverse scattering.</p>
+<div class="warn"><b>The Green's-function trap — the single biggest
+technical risk in the program.</b> Every imaging rung above L1's bare SVD
+needs to know how waves propagate from each interior point to the walls —
+the cavity's Green's function. Inside a closed high-Q cavity that function
+is chaotically sensitive to geometry and not computable from CAD; run
+textbook imaging with the free-space version and you get a confident,
+sharp, <b>meaningless</b> image — far worse than none.
+The machine's answer is structural, not algorithmic: it <em>measures</em>
+its own cavity (§1) and gates the imaging rungs behind a measured — never
+modelled — cavity response
+(<a href="replicator_field_compiler.html">Field Compiler §18</a>).</div>
+<p><b>The diversity budget.</b> No amount of field control computes its
+way out of a measurement gap. Transmit-pattern cleverness — beamforming,
+coded excitation, holographic drive — adds <em>no</em> independent
+information: every pattern is a linear combination of the element
+responses, buying signal-to-noise and conditioning, never new k-space;
+adaptive "smart scanning" allocates the budget, never enlarges it. Only
+two axes add genuinely new information: <b>frequency</b> (each frequency
+probes new k-space, and the printed holograms steer by frequency, so
+every tone is a different illumination geometry from a static aperture)
+and <b>position</b>, real or virtual — wall-mirror virtual sources, the
+instance's rotating door, and §2b's photoacoustic sources, an acoustic
+source anywhere light can see with nothing moving.</p>
+<p><b>Coverage — rendering what the machine does not know.</b> Some facets
+are unmeasurable from the aperture as posed (the specular gap): that is a
+null-space of the measurement, not an algorithm failure, and no
+regularizer recovers it. So every voxel of a reconstruction carries a
+tri-state that is never collapsed and never interpolated:
+<b>OBSERVED-OCCUPIED</b>, <b>OBSERVED-EMPTY</b>, <b>NEVER-OBSERVED</b> —
+and confirmed-empty and never-observed must never blur into one another,
+because a filter that averages them manufactures a plausible surface out
+of pure ignorance.</p>
+<p><b>Validation without ground truth.</b> With no turntable (the design
+aims at zero moving parts), correctness is checked by <b>held-out
+prediction</b> — reconstruct from a subset of gates or frequencies, then
+predict the withheld measurements; a wrong cavity model cannot predict
+data it was never fitted to — plus reciprocity, inter-rung agreement, and,
+for absolute accuracy, a machined reference phantom of known geometry
+(<a href="replicator_field_compiler.html">Field Compiler §18</a>).</p>
+
+<h2 id="s5">5 · How sharp can it see</h2>
+<p>Ruling R12 fixes what the machine may honestly claim, rung by rung —
+quoted from the photon paper with its register tags intact:</p>
+<div class="overflow"><table>
+<tr><th>rung</th><th>claim</th><th>register</th></tr>
+<tr><td>compound broadband full-waveform tomography, in-air</td>
+<td>surface features at <b>λ_min/2</b> of the working band — the impedance
+cliff makes solids-in-air opaque, so this is scattering tomography of
+surfaces: silhouettes, shadows, multi-bounce, fully invertible
+<em>(instance: ≈0.85 mm at the plan-A air band — hardware spec)</em>.
+Interior κ/ρ/α phase maps require the fluid-coupled roadmap rung</td>
+<td><span class="chip c-derived">DERIVED</span> on
+<span class="chip c-measured">MEASURED</span> art (USCT)</td></tr>
+<tr><td>band extrapolation</td><td>~2× more, log-SNR-bounded</td>
+<td><span class="chip c-derived">DERIVED</span></td></tr>
+<tr><td>harmonic imaging</td><td>a few × more</td>
+<td><span class="chip c-measured">MEASURED</span> art</td></tr>
+<tr><td>resonant near-field structure + broadband decoding</td>
+<td><b>λ/25–λ/30 class</b></td>
+<td><span class="chip c-measured">MEASURED</span> elsewhere (Lerosey &amp;
+Fink, <i>Science</i> 2007); in-chamber
+<span class="chip c-open">OPEN</span></td></tr>
+<tr><td>discrete-scatterer localization + photoacoustic beacons</td>
+<td><b>λ/100-class positions</b> — the payload is discrete and carries its
+own beacons, so localization, not classical resolution, is the machine's
+working question</td>
+<td><span class="chip c-measured">MEASURED</span> art (ULM: Errico et al.,
+<i>Nature</i> 2015)</td></tr>
+</table></div>
+<p>The last row is the one that matters for building: localizing known
+discrete scatterers is far easier than classical imaging, with measured
+art (ultrasound localization microscopy) two orders below the
+wavelength.</p>
+<blockquote><b>TX/RX conjugacy — the identity that closes the loop.</b> A
+phase-kept scan <em>is</em> hologram acquisition; the same recording,
+replayed conjugate, is a trap around the thing imaged (time reversal). And
+the same Δκ/Δρ contrast vector appears in Born scattering (what the
+machine <em>senses</em>) and in the Gor'kov force (what it
+<em>grips</em>). <b>The machine sees matter in the terms by which it holds
+it</b> — §0's slogan, now as an identity.</blockquote>
+
+<h2 id="s6">6 · What a scan produces</h2>
+<p>The product of a scan is a <code>.pattern</code> file: the chord list
+of §3, ordered by contribution, streamed progressively, calibration
+reference in the metadata
+(<a href="holographic_memory_and_compute_plan.html">Memory &amp;
+Compute</a> owns the format; Field Compiler §19 the encoding). Because the
+scan output is also the build acceptance criterion, the file carries an
+honesty obligation no ordinary scanner file has:</p>
+<div class="box"><b>Provenance — the model may propose, only the aperture
+asserts.</b> Every chord carries a
+<code>provenance: measured | inferred</code> tag, and so does every
+reconstruction derived from it. Inferred content — anything a prior or
+regularizer filled in — is rendered visually distinct, never merely
+footnoted, and is <b>excluded by default</b> from the build acceptance
+criterion: you may look at it, you may not fabricate to it, and promoting
+an inferred chord to load-bearing is an explicit, logged user action.
+Otherwise an inferred interior becomes a fabricated-from-a-guess interior,
+laundered through a fabrication step that looks like verification.
+(Owner: <a href="replicator_field_compiler.html">Field
+Compiler §16.3</a>.)</div>
+<p>Alongside the chords, the coverage tri-state of §4 ships with every
+reconstruction — export, receipts, and gate reports all carry the
+measured/inferred split and coverage statistics. Detail-adaptive chord
+budgeting is first-class: spend chords where the object rings complex,
+stop early where it is homogeneous — resolution in this format
+<em>is</em> chord count.</p>
+<p><b>Scanner-first — the staging note.</b> The
+<a href="desktop_replicator_hardware_spec.html">hardware spec</a> stages
+the product so that the first build, powered below the assemble/dissolve
+thresholds, ships as a complete desktop 3D scanner at milliwatt class —
+no passive camera; appearance is computed from composition. First staging
+rung: acoustic (exterior geometry plus eigenmode fingerprint) plus active
+optical; second: the EM materials suite (dielectric spectroscopy,
+eddy-current σ/µ, Raman/hyperspectral). Scan mode is the first product
+the architecture ships; the copy loop (scan → pattern → viewport → build,
+when powered) runs end-to-end from day one (hardware spec,
+product-staging row).</p>
+
+<h2 id="s7">7 · Register</h2>
+<p>Claims are tagged <span class="chip c-measured">MEASURED</span>
+(published or bench-verified art),
+<span class="chip c-derived">DERIVED</span> (arithmetic on measured
+quantities), or <span class="chip c-open">OPEN</span> (registered bet with
+named falsification). This paper narrates; it introduces no new results
+and upgrades nothing it quotes.</p>
+<ul>
+<li><span class="chip c-measured">MEASURED</span>: USCT and microwave
+tomography as medical/NDT art; toroidal EM pulses — existence, launch,
+self-healing, isodiffraction, position self-encoding, state-tomography
+readout (Zdagkas 2022; Wang 2024; Shi 2026; Vignjevic); time-reversal /
+DORT and multi-bounce NDT practice; harmonic imaging; λ/25-class
+near-field decoding (elsewhere); ULM λ/100-class localization;
+structured-light photoacoustics.</li>
+<li><span class="chip c-derived">DERIVED</span>: the chamber's structural
+advantages over a medical scanner (§1); the λ_min/2 and band-extrapolation
+rungs of the R12 ladder; the diversity-budget argument; the
+acoustic-builds-EM-verifies rate split.</li>
+<li><span class="chip c-open">OPEN</span>, by name: in-machine flying-
+doughnut tomography as a routine probe; anapole spectroscopy;
+control-loop-rate tomography; in-chamber λ/25 near-field resolution; and
+the mode's headline composition — <b>scanning an arbitrary object into a
+faithful <code>.pattern</code> is the machine's claim, not yet
+demonstrated</b>.</li>
+<li>Standing honesty notes inherited, not restated: the skyrmion-texture
+descriptor caveat (<a href="replicator_principles.html">Principles
+§8b</a>) and the reflectivity-is-not-geometry, never-interpolate-coverage,
+and Green's-function disciplines
+(<a href="replicator_field_compiler.html">Field Compiler §16.3</a>).</li>
+</ul>
+<p>Where everything lives: probe elements —
+<a href="replicator_photons.html">The Photons</a> /
+<a href="replicator_phonons.html">The Phonons</a>; pipeline and
+reconstruction — <a href="replicator_field_compiler.html">Field Compiler
+§15–§18</a>; the mode's place among the three —
+<a href="replicator_principles.html">Principles §5–§6</a>; what the
+first scanner ships as —
+<a href="desktop_replicator_hardware_spec.html">Hardware Spec</a>. The
+sibling narratives are <a href="replicator_assemble.html">Assemble</a>
+and <a href="replicator_dissolve.html">Dissolve</a>.</p>
+
+</body>
+</html>

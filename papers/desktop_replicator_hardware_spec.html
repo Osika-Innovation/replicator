@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Replicator — Hardware Specification RH-1 (free-standing)</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font:.85em "JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    padding:.05em .3em; border-radius:2px}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+  .figure{margin:1.8rem 0; text-align:center}
+  .figure svg{max-width:100%; height:auto; background:#fdfcf8;
+    border:1px solid var(--rule); border-radius:3px}
+  .caption{font-size:.85rem; color:var(--soft); font-style:italic;
+    margin-top:.5rem; text-align:left}
+  .caption b{font-style:normal; font-family:"Helvetica Neue",Helvetica,sans-serif; color:#555}
+</style>
+</head>
+<body>
+
+<div class="banner">
+Read first → <a href="replicator_principles.html">Replicator Principles</a> ·
+architecture → <a href="replicator_architecture.html">Architecture</a> ·
+carriers → <a href="replicator_phonons.html">Phonons</a> +
+<a href="replicator_photons.html">Photons</a> · build &amp; wiring →
+<a href="replicator_mechanical_construction.html">Mechanical Construction</a> ·
+science → <a href="transmutation.html">Transmutation</a> ·
+testbed BOM: <code>lpoh/docs/REPLICATOR_12CH…SOURCING</code> · KOSMOS series
+</div>
+
+<h1>The Replicator — RH-1</h1>
+<p class="sub">Hardware specification — industrial design and Phase-1
+build envelope for the free-standing three-plate machine: two mirrored
+chambers in one anodized column</p>
+<p class="meta">draft v0.4 · 2026-07-30 · <b>supersedes</b> the desktop
+v0.3 envelope (rulings R9–R11: the presented and reference form is
+free-standing; the desktop remains a valid smaller instantiation of the
+same ratios, kept as a variant note in §3). <b>Role in the pair</b>: this
+is the <em>settled-specs and optimum-engineering</em> document — committed
+numbers and frozen rulings only. The science, evidence tiers, and open
+bets live in <a href="transmutation.html">Transmutation as Consensus
+Repair</a>; session
+rulings R1–R13 in <code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>
+are folded into the body below. Dimensions are canonical for renders
+(source model: <code>lpoh/cad/rh1_freestanding_rev2.blend</code>) and for
+the first chassis build.</p>
+
+<h2>1 · What this machine is, honestly</h2>
+<p>RH-1 is a free-standing anodized column, Ø460 × 1650&nbsp;mm, built
+around <b>three plate assemblies and two mirrored chambers</b>: an open
+glass <b>build chamber</b> in the upper third, an <b>active storage
+chamber</b> hidden in the body below it, and between and around them the
+Phase-1 instrument — Ø410 perforated radiating plates, contrawound
+toroidal windings, ring-horn acoustic front ends with gyroid volumes,
+full metrology, and the multi-octave drive stack. Phase-1 capability
+<span class="chip c-measured">MEASURED</span> art: multi-octave acoustic
+holography, field-molded particle placement, levitation matched to
+material class (induction / electrostatic / acoustic — §6.0),
+toroidal-pulse positioning, per-layer spectroscopic metrology,
+chemistry-grade assembly experiments. Operating medium, by operator
+ruling (R11): <b>normal atmosphere</b> — the 40–300&nbsp;kHz window a
+460&nbsp;mm chamber supports at single-digit dB per pass; medium
+conditioning is a roadmap lever, not a precondition. What it does
+<em>not</em> do: transmutation <span class="chip c-open">OPEN</span> —
+the collar program of the main paper — makes no appearance in this unit
+and no claim on this spec. The honest tagline: <em>a boundary-control
+instrument standing on the floor, whose upgrade path is the main paper's
+ladder — one chamber holds the object, one holds the matter it will
+become; between them, one plate.</em></p>
+<div class="box"><b>This column is an instance, not the architecture.</b>
+Every number in this document is one instantiation of a scale-free idea: a
+commanded boundary around a volume. The architecture fixes <em>ratios</em> —
+aperture to volume, element pitch to design wavelength, bore to aperture —
+and a phased boundary is a tiling, so adding area and channels grows the
+volume with it. Nothing in the physics privileges these millimetres; the
+free-standing size houses the storage twin and the services below the work,
+at the height a person works at. The desktop variant (Ø360 × 560, single
+chamber) remains a valid smaller instantiation; the workshop cell and the
+factory array are larger ones — same field compiler, same file format, same
+verbs. Read the
+dimensions below as <em>this</em> machine, and the ratios as <em>the</em>
+machine. <em>(2026-08-01, family restructure: this demotion is now
+structural — the family's subject is the principles / architecture /
+carrier papers (<a href="replicator_principles.html">Principles</a>,
+<a href="replicator_architecture.html">Architecture</a>,
+<a href="replicator_phonons.html">Phonons</a>,
+<a href="replicator_photons.html">Photons</a>); this spec is the RH-1
+instance record.)</em></div>
+
+<h2>2 · Configuration — one column, two chambers, three plates</h2>
+<p>The machine is a cylinder because its work happens between circular
+boundary plates — plates facing each other <em>is</em> the transporter
+configuration, and the column is the smallest polite body around a stack
+of them. The free-standing form follows from the stack (rulings
+R8–R10): the <b>build chamber</b> is the only open, visible volume; the
+<b>storage chamber</b> is its hidden mirror twin below, served by the same
+plate hardware; the <b>middle plate is double-faced</b> — two cap stacks
+back to back, radiating up into the build and down into storage; and
+feedstock rides the co-axial bores as a field (R10 — detail in §4). Each
+plate hologram carries a focusing term, so each facing
+pair forms a stable open resonator for the beamable bands; the walls are
+demoted from boundary to instrument — EMC closure, muscle band, high-angle
+sensing, safety.</p>
+
+<div class="figure">
+<svg viewBox="0 0 740 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RH-1 free-standing side elevation with dimensions">
+  <defs>
+    <marker id="d1" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8a8676"/></marker>
+    <marker id="d2" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6 Z" fill="#8a8676"/></marker>
+  </defs>
+  <text x="24" y="26" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">RH-1 side elevation (section) — free-standing, canonical</text>
+  <!-- floor -->
+  <line x1="120" y1="530" x2="640" y2="530" stroke="#1c1c1c" stroke-width="2"/>
+
+  <!-- crown + top band (hollow shells) -->
+  <rect x="250" y="46" width="260" height="18" rx="4" fill="#e7e1d2" stroke="#1c1c1c" stroke-width="1.3"/>
+  <rect x="250" y="64" width="260" height="22" rx="3" fill="#efe9da" stroke="#1c1c1c" stroke-width="1.1"/>
+  <text x="522" y="60" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">crown + band — 4 mm shells, hollow</text>
+  <!-- top plate assembly + torus pair -->
+  <rect x="262" y="86" width="236" height="8" rx="2" fill="#5a5a5c" stroke="#1c1c1c" stroke-width="1"/>
+  <circle cx="320" cy="78" r="6" fill="none" stroke="#b06f2a" stroke-width="2.2"/>
+  <circle cx="440" cy="78" r="6" fill="none" stroke="#b06f2a" stroke-width="2.2"/>
+  <text x="522" y="93" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">top plate Ø410 — faces down; contrawound torus Ø290 + gyroid horn above</text>
+
+  <!-- build chamber glass -->
+  <line x1="256" y1="94" x2="256" y2="240" stroke="#9fb9c9" stroke-width="4" opacity=".8"/>
+  <line x1="504" y1="94" x2="504" y2="240" stroke="#9fb9c9" stroke-width="4" opacity=".8"/>
+  <text x="380" y="120" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#3a5a7d">build chamber — Ø444 glass, 4 mm</text>
+  <g fill="#2f6d5e" opacity=".8">
+    <circle cx="360" cy="170" r="3.2"/><circle cx="382" cy="170" r="3.2"/><circle cx="404" cy="170" r="3.2"/>
+    <circle cx="371" cy="150" r="2.2" opacity=".6"/><circle cx="393" cy="150" r="2.2" opacity=".6"/>
+    <circle cx="371" cy="190" r="2.2" opacity=".6"/><circle cx="393" cy="190" r="2.2" opacity=".6"/>
+  </g>
+  <line x1="380" y1="94" x2="380" y2="512" stroke="#5a6470" stroke-width=".8" stroke-dasharray="4 4"/>
+  <text x="380" y="234" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#5a6470">Ø12 co-axial bores — feed + optical stem (resized 2026-08-03)</text>
+
+  <!-- mid plate assembly + torus pair -->
+  <rect x="262" y="240" width="236" height="8" rx="2" fill="#5a5a5c" stroke="#1c1c1c" stroke-width="1"/>
+  <circle cx="320" cy="258" r="6" fill="none" stroke="#b06f2a" stroke-width="2.2"/>
+  <circle cx="440" cy="258" r="6" fill="none" stroke="#b06f2a" stroke-width="2.2"/>
+  <text x="522" y="247" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">middle plate — double-faced; contrawound torus + gyroid horn below</text>
+
+  <!-- lower body (one extrusion) -->
+  <rect x="248" y="248" width="264" height="282" rx="8" fill="#efe9da" stroke="#1c1c1c" stroke-width="1.4"/>
+  <!-- storage cavity -->
+  <rect x="266" y="268" width="228" height="112" rx="4" fill="#faf7ef" stroke="#8a8676" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="380" y="300" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#5a6470">storage chamber — hidden, Ø400 × 385</text>
+  <text x="380" y="316" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#5a6470">acoustophoretic sort · incoming QC · staging</text>
+  <!-- storage contents: sorted feedstock rows + transport arrows -->
+  <g fill="#5a6470" opacity=".75">
+    <circle cx="320" cy="352" r="2.6"/><circle cx="338" cy="352" r="2.6"/><circle cx="356" cy="352" r="2.6"/>
+    <circle cx="410" cy="352" r="2.2"/><circle cx="425" cy="352" r="2.2"/><circle cx="440" cy="352" r="2.2"/>
+  </g>
+  <text x="380" y="342" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#8a8676">feedstock held in sorted acoustic rows</text>
+  <path d="M 380 470 L 380 402 M 375 410 L 380 400 L 385 410" fill="none" stroke="#7a1f1f" stroke-width="1.6"/>
+  <path d="M 380 226 L 380 176 M 375 184 L 380 174 L 385 184" fill="none" stroke="#7a1f1f" stroke-width="1.6"/>
+  <text x="394" y="466" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#7a1f1f">bore lift — traveling-wave field</text>
+  <!-- storage deck + torus pair -->
+  <rect x="266" y="380" width="228" height="6" rx="2" fill="#cfc7b2" stroke="#1c1c1c" stroke-width="1"/>
+  <circle cx="320" cy="396" r="6" fill="none" stroke="#b06f2a" stroke-width="2.2"/>
+  <circle cx="440" cy="396" r="6" fill="none" stroke="#b06f2a" stroke-width="2.2"/>
+  <text x="522" y="387" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">storage deck — third radiating plate; contrawound torus below</text>
+  <!-- base -->
+  <text x="380" y="440" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#5a6470">base — feedstock reserve · power · compute</text>
+  <text x="380" y="456" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#5a6470">(plan A: normal atmosphere — no gas plant)</text>
+
+  <!-- dimensions -->
+  <line x1="212" y1="46" x2="212" y2="530" stroke="#8a8676" stroke-width="1" marker-start="url(#d2)" marker-end="url(#d1)"/>
+  <text x="204" y="290" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#8a8676">1650</text>
+  <line x1="232" y1="94" x2="232" y2="240" stroke="#8a8676" stroke-width="1" marker-start="url(#d2)" marker-end="url(#d1)"/>
+  <text x="226" y="170" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#8a8676">460</text>
+  <line x1="250" y1="546" x2="510" y2="546" stroke="#8a8676" stroke-width="1" marker-start="url(#d2)" marker-end="url(#d1)"/>
+  <text x="380" y="559" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#8a8676">Ø 460 body — 4 mm anodized extrusion shells</text>
+</svg>
+<div class="caption"><b>Fig. 1 — Side elevation (rev. 2026-07-30).</b>
+One anodized column: base (feedstock/power/compute) and hidden storage
+chamber in the lower body, the open Ø444 glass build chamber above, hollow
+4&nbsp;mm shells at band and crown. Three plate assemblies — storage deck,
+double-faced middle plate, top plate — each carrying its contrawound torus,
+ring-horn gyroid volume, and perforated Ø410 radiating face. Co-axial
+Ø12 bores form the feed and optical axis (resized 2026-08-03 from Ø130 —
+ingot-scale induction melting dropped as a baseline capability; see
+<a href="replicator_mechanical_construction.html">Mechanical
+Construction</a> §3c). All numbers in mm;
+canonical source: <code>lpoh/cad/rh1_freestanding_rev2.blend</code>.</div>
+</div>
+
+<h2>3 · Dimensional envelope</h2>
+<div class="overflow"><table>
+<tr><th>item</th><th>value</th><th>note</th></tr>
+<tr><td>overall</td><td>Ø 460 × 1650 mm</td><td>free-standing; footprint fits a 500 mm square; work height = chamber floor at ~1060</td></tr>
+<tr><td>shells</td><td>4 mm anodized aluminium extrusions</td><td>lower body tube (one piece, 0–1060) + bottom closure + internal storage deck; top band + crown as capped tubes; all walls uniform 4 mm (ruling: extrusion construction, no castings)</td></tr>
+<tr><td>build chamber</td><td>Ø 444 glass × 460 mm</td><td>low-iron, 4 mm wall; the only open, visible volume; aperture between plate faces Ø 410</td></tr>
+<tr><td>storage chamber</td><td>Ø 400 × 385 mm cavity</td><td>hidden inside the lower body; mirror twin of the build chamber, served by the deck and middle plates</td></tr>
+<tr><td>plates</td><td>3 × Ø 410, 12 mm thick, Ø 12 bores</td><td>storage deck (up), middle (double-faced), top (down); each: 12 equiangular through-slots + ~380-hole Vogel field + bore collar; carrier rings Ø 409→452 mount them into the shell; bore resized 2026-08-03 (was Ø 130 — see Mechanical Construction §3c)</td></tr>
+<tr><td>tori</td><td>3 × Ø 290 major, Ø 60 tube</td><td>contrawound pairs, two feeds each (R5); hidden under/above their plates; also the ring-horn flare (R3)</td></tr>
+<tr><td>base section</td><td>~650 mm</td><td>feedstock reserve, power, compute — no gas plant (plan A = air, R11)</td></tr>
+<tr><td>mass</td><td>≈ 50 kg class</td><td>shells ~20 kg, plates+carriers ~15 kg, glass ~6.5 kg, tori/windings/electronics balance; floor-standing, no anchoring</td></tr>
+<tr><td>power</td><td>single internal DC drive rail; harvest returns into it</td><td><b>scales with the build, not fixed by it</b> — draw follows aperture area × channel count × duty. RH-1 sits in the few-hundred-watt class on a commodity supply</td></tr>
+<tr><td><em>desktop variant</em></td><td><em>Ø 360 × 560, single chamber</em></td><td><em>the v0.3 envelope, demoted to bench instantiation; same ratios, no storage twin</em></td></tr>
+</table></div>
+
+<h2>4 · The base and the storage chamber</h2>
+<ul>
+<li><b>Touch UI</b>: 7″ capacitive panel set into the front face at
+standing eye height; settle-cycle state echoed by the chamber LED ring
+(ambient status without a screen glance).</li>
+<li><b>Storage chamber — an instrument, not a bin</b> (R9): the hidden
+twin is field-addressed by the deck and middle plates: <b>acoustophoretic
+sorting</b> of feedstock by the same Δκ/Δρ contrast the machine grips
+(<span class="chip c-measured">MEASURED</span> art), <b>incoming QC</b> by
+the identical tomography stack that scans the build volume, and
+<b>staging/pre-heat</b> via the deck winding. Every gram is scanned and
+sorted before it is ever lifted.</li>
+<li><b>Feedstock reserve</b> (§6.8): sealed water reservoir, graphite
+block bay, filtered air intake, and the <b>cartridge circle</b> — the
+polar trace-element magazine (ring = period, angle = group, keyed slots),
+loaded through the base door.</li>
+<li><b>Transport</b> (R10): feedstock rides the co-axial Ø 130 bores —
+three contrawound pairs stacked on one axis = six independent circuits =
+traveling-wave induction elevator for conductive feed, acoustic tube
+conveying for the rest. No belts, no augers; the lift is a field.</li>
+<li><b>Electronics</b>: each plate assembly's rim annulus carries its own
+drive; the base adds the supply, the router (per-assembly I/Q bus), the
+metrology computer, and the pumps for the feed lines.</li>
+<li><b>Reclaim (roadmap)</b>: the §6.8 disassembly loop docks naturally as
+the storage chamber's reverse mode — same hardware, second increment.</li>
+</ul>
+
+<h2>5 · The build-chamber enclosure — two half-cylinders on a roller track</h2>
+<p>The build chamber (the storage chamber is sealed inside the body and
+has no door) closes with <b>two nested half-cylinders of low-iron
+glass</b>. The <b>rear half</b> (Ø 444 mm, fixed) closes the back. The
+<b>front half</b> (Ø 464 mm — deliberately larger) nests <em>outside</em>
+the rear half and rides in <b>circular roller tracks</b>: a V-groove ring
+in the middle-plate carrier and a matching ring under the top band.
+Rotate the front half 180° and it nests fully behind the rear half — the
+chamber stands open across its entire front; rotate it back and the
+volume is sealed. No hinges, no swing radius, one motion.</p>
+
+<div class="figure">
+<svg viewBox="0 0 740 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Enclosure mechanism plan view, closed and open">
+  <text x="24" y="28" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">Enclosure mechanism — plan view at deck level</text>
+
+  <!-- CLOSED -->
+  <g transform="translate(185,185)">
+    <circle r="118" fill="#faf7ef" stroke="#d2cdbf" stroke-width="1"/>
+    <path d="M -104,0 A 104,104 0 0 1 104,0" fill="none" stroke="#7fa3ba" stroke-width="7" opacity=".9"/>
+    <path d="M -96,0 A 96,96 0 0 0 96,0" fill="none" stroke="#9fb9c9" stroke-width="6" opacity=".7"/>
+    <rect x="-20" y="88" width="40" height="22" rx="4" fill="#cfc7b2" stroke="#1c1c1c" stroke-width="1"/>
+    <circle r="118" fill="none" stroke="#b88a2a" stroke-width="2" stroke-dasharray="3 5"/>
+    <text y="-132" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11.5" font-weight="700" fill="#444">CLOSED</text>
+    <text y="4" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">build volume</text>
+    <text y="104" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#5a6470">spine</text>
+  </g>
+  <text x="185" y="322" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#5a6470">front (dark) seals against rear (light) · amber dashes = roller track ring</text>
+
+  <!-- OPEN -->
+  <g transform="translate(545,185)">
+    <circle r="118" fill="#faf7ef" stroke="#d2cdbf" stroke-width="1"/>
+    <path d="M -96,0 A 96,96 0 0 0 96,0" fill="none" stroke="#9fb9c9" stroke-width="6" opacity=".7"/>
+    <path d="M -104,0 A 104,104 0 0 0 104,0" fill="none" stroke="#7fa3ba" stroke-width="7" opacity=".9"/>
+    <rect x="-20" y="88" width="40" height="22" rx="4" fill="#cfc7b2" stroke="#1c1c1c" stroke-width="1"/>
+    <circle r="118" fill="none" stroke="#b88a2a" stroke-width="2" stroke-dasharray="3 5"/>
+    <path d="M -60,-125 A 138,138 0 0 1 60,-125" fill="none" stroke="#8a8676" stroke-width="1.4" marker-end="url(#rot)"/>
+    <defs><marker id="rot" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#8a8676"/></marker></defs>
+    <text y="-132" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11.5" font-weight="700" fill="#444">OPEN — front rotated 180°</text>
+    <text y="4" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">full front access</text>
+  </g>
+  <text x="545" y="322" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#5a6470">front half nests OUTSIDE and BEHIND the rear half — no hinge, no swing radius</text>
+</svg>
+<div class="caption"><b>Fig. 2 — The rotating enclosure.</b> The front
+half-cylinder's larger diameter (464 vs 444 mm) lets it pass outside the
+fixed rear half; six polymer V-rollers (three per track ring) carry it with
+detents at fully-open and sealed. Closing engages a conductive gasket and
+the interlock. Tracks ride the middle-plate carrier ring and the top-band
+underside.</div>
+</div>
+
+<h3>5.05 The rear arcade — high-angle RX and services
+(revised 2026-07-30: walls demoted to instrument, R8)</h3>
+<p>The rear arc of the build chamber carries an <b>arcade of seven slim
+vertical columns</b> behind the fixed rear glass (30° spacing across the
+rear 180°, aligned with plate sector boundaries). Their role under the
+walls-demoted ruling: <b>high-angle sensing rows and services only</b> —
+the primary aperture is the plate pair. Each column carries a dense
+vertical RX strip; with the plate elements transmitting they form a MIMO
+virtual array — the high-angle coverage the specular-gap audit requires,
+door in any position. Three of the seven carry the services (feed riser,
+power, data). Sparse-array honesty: 30° spacing ≫ λ/2, so raw beams have
+grating lobes — mitigated the standard MIMO way (dense within-column
+sampling, wideband FMCW, compressed sensing); the rotating front glass
+adds an aperture-diversity sweep. <b>Plan-B upgrade path</b>: populating
+the inter-column bays with phononic panels adds auxiliary muscle band and
+side-boundary drive where an application needs it — built out in
+<a href="replicator_mechanical_construction.html">Mechanical Construction</a>
+§4; the free-standing baseline ships without them.</p>
+
+<h3>5.1 Track and interlock details</h3>
+<div class="overflow"><table>
+<tr><th>item</th><th>spec</th></tr>
+<tr><td>track</td><td>V-groove rings in the middle-plate carrier and the top-band underside; 6 polymer V-rollers (3+3) on the front glass's bonded end-bands; detents at 0° (sealed) and 180° (open)</td></tr>
+<tr><td>glass</td><td>low-iron laminated glass, 4 mm, half-cylinders; polycarbonate variant for the cost-reduced build</td></tr>
+<tr><td>seal</td><td>conductive fabric-over-foam gasket on both vertical meeting edges + track lips, engaged only at the 0° detent</td></tr>
+<tr><td>interlock</td><td>Hall sensor at the 0° detent gates all drive power above metrology level — high-SPL acoustic (full band) and EM drive are physically impossible with the enclosure open (inherits the lane's acoustic-power safety doctrine)</td></tr>
+<tr><td>shield / upgrade path</td><td>the glass carries a transparent conductive (ITO-class) coating: sealed, the enclosure is a Faraday side-boundary — EMC containment now, and a latent upgrade rung: segmenting that coating into addressable electrodes turns the passive side wall into partial side-boundary drive, the ladder step between two plates and the shell (<a href="replicator_architecture.html#s1-2">Architecture §1.2</a>)</td></tr>
+</table></div>
+
+<blockquote>The enclosure is not packaging. Sealed, it completes the
+controlled boundary (passive today, addressable later); its interlock is
+the safety case; and its one-motion opening is the entire user ritual:
+turn the glass, place the cartridge, turn it back, touch <em>begin</em>.</blockquote>
+
+<h2>6 · Plates, build volume, services</h2>
+
+<h3>6.0 Channels at engineering optimum <em>(rev 2026-07-30: the plates
+carry both carriers)</em></h3>
+<p>The machine has four physical handles on the build volume; the design
+never asks one channel to do another's job. <em>Sound is the muscle,
+microwave is the ears and the axial drive, light is the fingertip and the
+eyes, the windings are the strong field and the experiment.</em>
+<b>Doctrine (operator, 2026-07-30): the three circular plate assemblies
+are the primary aperture for phonons <u>and</u> photons.</b> Each assembly
+is a dual-carrier coaxial horn — three PZT elements at a common throat,
+the contrawound torus as ring-radial flare and strong-field source, a
+graded ceramic gyroid as acoustic library and EM dielectric, one
+perforated plate as the shared radiating face.</p>
+<div class="overflow"><table>
+<tr><th>channel</th><th>carries</th><th>resolution / precision</th><th>speed</th></tr>
+<tr><td><b>acoustic</b> — the three plate assemblies (throat → torus
+ring-horn → gyroid → perforated face), broadband; side panels plan B</td>
+<td>force and momentum: holds, moves, sculpts matter (the only channel
+with real force-per-watt); facing plate pairs form a stable open
+resonator (focusing term, R8)</td>
+<td>independent features ~λ/2 far-field: 0.6–0.9 mm at the air band's
+attenuation ceiling (~200–300 kHz), ~0.1 mm in liquid/melt; trap
+<em>placement</em> is phase/SNR-limited (~µm); sub-λ near the hologram
+plates</td><td>ms (speed of sound)</td></tr>
+<tr><td><b>EM microwave</b> — the same plates' spiral-slot grating (coax
+horn: copper inner cone → gyroid dielectric → 12 slots)</td>
+<td>bulk energy by <b>spectral addressing</b> (frequency is the address,
+chemistry is the mask), helicity, and sensing; topological registers
+(skyrmion numbers, R13) on the drive states</td>
+<td>focusing stays diffraction-limited (cm); <em>positioning</em> ~0.5λ
+single-aperture via toroidal-pulse signatures (SNR-limited, not
+λ-limited)</td><td>ns</td></tr>
+<tr><td><b>optical stem</b> — bore sightline, <b>bidirectional TX/RX
+port</b> (R2-b)</td>
+<td>out: flying-doughnut chords (self-healing, isodiffracting) +
+photoacoustic writing + energy delivery; back: density-matrix state
+tomography (purity = roughness data) + composition (OCT / Raman / LIBS)</td>
+<td>µm</td><td>fast</td></tr>
+<tr><td><b>windings</b> — three contrawound torus pairs, two feeds each
+(R5)</td>
+<td>sum mode = strong confined flux: induction levitation/heating and the
+potential-port experiment <span class="chip c-open">OPEN</span>;
+difference mode = fast ring dipole: toroidal-pulse exciter and the
+six-circuit traveling-wave bore lift (R10)</td>
+<td>n/a</td><td>sum: slow/strong · difference: fast/weak</td></tr>
+</table></div>
+<p>Two honesty notes that govern everything below. <b>Precision ≠
+resolution</b>: feature <em>spacing</em> is wavelength-limited; feature
+<em>placement</em> is not. And below the capillary length, surface tension
+finishes what the field molds — the field is the mold-maker, not the
+polisher.</p>
+<p><b>Levitation is matched to material class</b>, not owned by one
+channel:</p>
+<div class="overflow"><table>
+<tr><th>material</th><th>mode</th><th>status</th></tr>
+<tr><td>conductive metal (small droplets/melt only)</td><td><b>induction</b> —
+in-plate bore winding levitates and heats small conductive droplets in
+one coil; bulk ingot-scale melting <b>dropped</b> from this shared coil
+2026-08-03 (bore resized to Ø12 — see §6.0 and Mechanical Construction
+§3c; an ingot-scale melt stage would need its own independently-sized
+coil, not specified here)</td>
+<td>induction levitation (industrial, small-scale)</td></tr>
+<tr><td>charged droplet (any material)</td><td><b>electrostatic (ESL)</b> —
+the plate pair is the electrode geometry; kV bias + active servo
+(Earnshaw: feedback is mandatory — supplied by the position-servo ruling
+in §6.1)</td><td>lab standard (containerless processing)</td></tr>
+<tr><td>dielectric / neutral / fine placement</td><td><b>acoustic</b> —
+traps and near-field holograms</td><td>measured (acoustic tweezers)</td></tr>
+</table></div>
+
+<ul>
+<li><b>Plate assemblies ×3 — dual-carrier coaxial horns</b> (rulings
+R3–R5, bore/throat resized 2026-08-03 — see Mechanical Construction §3c):
+each is, face to back: <b>perforated plate</b> Ø410 (12
+single-handed equiangular through-slots — the toroidal-pulse launcher,
+slots are voids — plus the ~380-hole golden-angle Vogel field = the
+acoustic micro-horn mesh; Ø12 bore with collar) ← <b>graded ceramic
+gyroid horn</b> (throat Ø36 flaring to Ø404; acoustic library +
+effective-medium EM dielectric; production cells 2–5 mm per the
+viscothermal floor) ← <b>copper inner cone</b> (coax-horn center
+conductor, throat → bore-rim ring feed) ← <b>contrawound torus</b>
+Ø290 (ring-radial flare; two independent feed circuits) ← <b>3 PZT
+elements</b> at 120° on the throat (drive-phasing gives acoustic OAM
+m = ±1). Top and middle-down faces are mirror-imaged to the middle-up and
+deck faces — opposite intrinsic handedness; counter-drive covers twist,
+cancellation, and the CPA verb. Ø12 bores co-axial through all three:
+feed transport axis (R10, fine powder/droplets only — bulk ingot-scale
+induction dropped) + optical stem (R2-b).</li>
+<li><b>Side paneling — plan B</b> (§5.05): phononic wall panels are the
+auxiliary rung for added muscle band and high-angle coverage; the
+free-standing baseline ships without them — the walls' standing duties
+(EMC closure, safety, high-angle RX) live in the glass coating and the
+arcade strips.</li>
+<li><b>Thermal</b>: base intake filter → plate-backing conduction paths →
+band exhaust; plate backings ≤ 60 °C at full drive.</li>
+</ul>
+
+<h3>6.1 Drive and transduction — settled rulings (2026-07-19)</h3>
+<div class="overflow"><table>
+<tr><th>ruling</th><th>spec</th><th>basis</th></tr>
+<tr><td>channel architecture <em>(rev. 2026-07-22 "carriers separated by
+surface" → <b>superseded rev 2026-07-30, operator</b>)</em></td><td><b>the
+three circular plate assemblies carry both carriers</b> — dual-carrier
+coaxial horns (§6.0 bullets), scale separation as the diplexer: the
+sub-λ Vogel mesh reads as solid conductor at GHz while transmitting
+sound; PZT transduction is dead at GHz while the slots don't radiate at
+MHz. No per-site diplexer part — <em>the physics is the diplexer</em>.
+<b>Side paneling = plan B</b> (auxiliary muscle/coverage). The 07-22
+rationale (no diplexer hardware, optimal geometry per carrier) survives
+intact; its letter (carriers on different surfaces) does not</td><td>one
+geometry, bands separated by mechanism; the carriers overlap where it
+matters — in the build volume, on the workpiece — <em>and now on the
+plate</em>. Detail: <a href="replicator_mechanical_construction.html">Mechanical
+Construction</a> §3–§3b</td></tr>
+<tr><td>element specialization</td><td>per assembly: 3 PZT throat elements
+(acoustic, OAM by phasing) + contrawound winding pair (strong field +
+pulse exciter) + printed slot grating (EM launch) — each element still
+rides one band on one line; the <em>assembly</em> is dual-carrier, the
+<em>elements</em> are not</td><td>keeps every element at its physics
+optimum while sharing one aperture</td></tr>
+<tr><td>conical inductors</td><td>still used as broadband chokes / matching in the drivers (no longer a per-site diplexer role — carriers are surface-separated)</td><td>standard broadband part</td></tr>
+<tr><td>radiator geometry</td><td>self-similar (angle-defined) throughout: printed spirals (EM), tapered/graded structures (acoustic); no single-resonance radiators in the signal path</td><td>Bode–Fano/Chu budget — bandwidth from geometry, not resonance (science: Replicator §6.3.3)</td></tr>
+<tr><td>toroidal-pulse launch</td><td>the plate's EM face is an <b>equiangular-spiral slot grating</b> (r(φ)=r₀e<sup>cot α·φ</sup>) with a radial ring feed at the bore rim — a flattened coaxial horn. It launches single-cycle, space-time-nonseparable <b>toroidal and toroidal-helical pulses</b>; the TE/TM mix α, relative phase β, and handedness are <em>runtime drive parameters</em> (the chord alphabet gains a helicity axis). Mirror-imaged plates give opposite intrinsic handedness; counter-drive covers twist, cancellation, and the two-plate CPA verb</td><td><span class="chip c-measured">MEASURED</span> art: Wang et al., <i>Commun. Phys.</i> 7:356 (2024); Shi et al., <i>Commun. Phys.</i> (2026, in press)</td></tr>
+<tr><td>position servo</td><td><b>toroidal-pulse signature positioning</b>: space-time nonseparability gives every chamber point a unique frequency–polarization chord; matched against a pre-computed dictionary (the <code>.pattern</code> chord machinery) one aperture tracks position to ~0.5λ, SNR-limited — the ns-class feedback signal that stabilizes ESL, acoustic traps, and melt shaping</td><td><span class="chip c-measured">MEASURED</span>: 97% of cases &lt;0.5λ, single antenna (Wang et al. 2024)</td></tr>
+<tr><td>levitation by material class</td><td>per the §6.0 table: small conductive droplets → in-plate induction winding (bulk ingot-scale melting dropped 2026-08-03 — own coil, not this shared one); charged droplet (any) → plate-pair ESL, kV bias + position-servo feedback; dielectric/neutral/fine → acoustic traps + near-field holograms. No channel is asked to levitate outside its class</td><td>induction levitation (industrial, small-scale), ESL (lab standard), acoustic tweezers (measured)</td></tr>
+<tr><td>matching</td><td>graded sub-wavelength impedance ramps at every carrier boundary; active (non-Foster) matching permitted where the power electronics allows</td><td>coherent energy must never thermalize uninstructed</td></tr>
+<tr><td>assembly mechanism</td><td>acoustic parameters (frequency, pressure amplitude, cavitation regime) are treated as <b>chemical process knobs</b> in the build volume</td><td>sonochemistry — established measured field</td></tr>
+<tr><td>mold options</td><td>three grades: passive printed acoustic hologram plate (object-specific, cheapest — a legitimate product increment) → phased plate (RH-1 baseline) → full metamaterial surface (the KOSMOS optimum)</td><td>Melde et al. 2016; kosmos.html §4</td></tr>
+<tr><td>in-volume metrology</td><td>sonoluminescence monitoring: bubble-collapse light localizes acoustic field concentration in the build fluid — a free optical reporter, imaged through the axial sightline</td><td>measured phenomenon; zero added hardware beyond the crown camera</td></tr>
+<tr><td>transport phases</td><td><b>lowest-rung rule</b>: powder or melt/droplets for bulk, droplets fed up the Ø12 bore (~100 µm voxels ⇒ ~10⁸ placements per 0.25 kg object); vapor/ion reserved for the atomic <b>finishing pass</b> (surface ≈ 10¹⁸ atoms) and m/q sorting — never for bulk. <b>Revised 2026-08-03</b>: bulk ingot-to-droplet induction melting via a shared "ingot bay beneath the deck" is dropped as a baseline claim (it does not survive against the Ø12 bore — see Mechanical Construction §3c); where pre-melted droplet/powder feedstock comes from is now <span class="chip c-open">OPEN</span> — a dedicated, independently-sized melting stage is a roadmap item, not specified here</td><td>liquid-metal jetting, EBPVD — industrial art; energy ladder ≈ 0 / 1 / 8 / 22 MJ/kg (Fe)</td></tr>
+<tr><td>melt sculpting mode</td><td>continuous field-shaped melt (holographic electromagnetic casting): native at ≥100 µm features (capillary limit: mm ≈ 0.1 T, 100 µm ≈ 0.3 T local modulation); requires active Rayleigh–Plateau stabilization via the listen-loop; finer detail deferred to solidified-state ion finishing</td><td>EM casting + cold-crucible shaping = industrial; jet stabilization = published art</td></tr>
+<tr><td>cooling harvest</td><td><b>TPV ring</b> in the harvest layer: melt-temperature glow (~0.6 MW/m²) converted at ~40% — recovers ≈⅓ of melt energy per object; field-directed solidification programs microstructure (columnar / single-crystal / quench-amorphous)</td><td>thermophotovoltaics ~40% (MIT 2022); directional solidification = turbine-blade art</td></tr>
+<tr><td>transducer roadmap</td><td>Phase-1: surface-separated single-crystal drivers (above) → integrated <b>polaritonic element</b>: piezo/multiferroic cavity where one drive addresses the photon-ish or phonon-ish branch of a hybrid dispersion (the mixing angle does the carrier split in one material, re-uniting the carriers at a site where wanted); chiral branch-selection by drive handedness remains hypothesis — the chiral <em>launch</em> side is now measured (toroidal-pulse row)</td><td>phonon-polaritons + GHz piezo filters = commodity physics; BiFeO₃-class multiferroics; science: Replicator §6.3.3</td></tr>
+<tr><td>feed transport</td><td>ionized feed electrostatically accelerated (~keV class): base-store → build-point transit ≈ 5 µs — perceptually instantaneous; neutral mesoscale feed by acoustic tractor paths; all transport through the bore and guided channels (no through-wall claims)</td><td>electrostatic acceleration + acoustic tractor beams = measured art; science §6.8 "matter stream"</td></tr>
+<tr><td>software</td><td><b>the Field Compiler (RSW-1)</b>: slicer whose output is boundary field states (<code>.fcode</code> frames: per-channel per-band complex drive + verb + schedule + RX gates); emulator API = hardware API (backend swap); WebGPU/WGSL from scratch, MLX validation twin</td><td>architecture: <a href="replicator_field_compiler.html">replicator_field_compiler.html</a>; roadmap v0–v4 therein</td></tr>
+<tr><td>product staging</td><td><b>scanner-first</b>: the first RH-1 build (power below ADD/REMOVE thresholds) ships as a complete desktop 3D scanner, mW-class. Primary aperture = the arcade MIMO array (§5.05, door in any position) + toroidal-pulse positioning; the front glass adds aperture diversity. <b>No passive camera — appearance is computed from composition</b>: v0.5a = acoustic (exterior + eigenmode fingerprint) + active optical (laser/OCT to 1–10 µm); v0.5b = + EM suite (cavity-perturbation ε, dielectric spectroscopy, eddy σ/µ) + Raman/hyperspectral (gated LIBS optional). Copy loop = scan → pattern → viewport → (build, when powered); details compiler §8.1b</td><td>kosmos.html scan mode (MIMO FMCW + SAR); compiler §8; zero added hardware</td></tr>
+</table></div>
+
+<h3>6.2 Rulings provenance</h3>
+<p>This revision folds session rulings <b>R1–R13</b> (full text, register
+tags, and derivations in <code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>)
+into the body above: R3–R5 in the §6.0 assembly bullets, R8 in §2 and
+§5.05, R9–R10 in §2 and §4, R11 in §1 and §3, R2-b and R13 in the §6.0
+channel table. The plate-face detail (Fibonacci 21×34 crossed-spiral
+micro-horn mesh, chirality doctrine) and the horn/gyroid build recipe live
+in <a href="replicator_mechanical_construction.html">Mechanical
+Construction</a> §3–§3b; the optical stem's full specification lives in
+the <a href="replicator_field_compiler.html">field compiler</a> §17.7.</p>
+
+<h2>7 · Major assemblies and tiers</h2>
+<div class="overflow"><table>
+<tr><th>assembly</th><th>content</th><th>tier</th></tr>
+<tr><td>plate assembly ×3</td><td>perforated Ø410 plate (12 slots + Vogel mesh + collar) · ceramic gyroid horn · copper inner cone · contrawound torus Ø290 (2 feeds) · 3 PZT throat elements · carrier ring</td><td>commodity + published art; ceramic print + CNC</td></tr>
+<tr><td>shells</td><td>4 mm anodized extrusions: lower body tube + bottom closure + storage deck, top band, crown cap</td><td>ordinary fabrication</td></tr>
+<tr><td>enclosure</td><td>2 glass half-cylinders (Ø444 fixed / Ø464 rotating), track rings, rollers, gasket, interlock</td><td>ordinary mechanism engineering</td></tr>
+<tr><td>arcade</td><td>7 RX/service columns behind the rear glass (plan-B panel bays empty in baseline)</td><td>commodity</td></tr>
+<tr><td>base</td><td>UI, supply, router, pumps, feedstock reserve, cartridge circle</td><td>commodity</td></tr>
+<tr><td>metrology</td><td>optical stem (bidirectional port §6.0) + plate TX→RX self-calibration + storage-chamber QC</td><td>commodity</td></tr>
+<tr><td>reclaim mode</td><td>storage chamber reversed (§4)</td><td>second increment</td></tr>
+<tr><td>transmuter stage</td><td>—</td><td><span class="chip c-open">OPEN</span> — not in this product; see main paper §5–§8</td></tr>
+</table></div>
+
+<h2>8 · For renderers (Blender / pitch deck)</h2>
+<p>Canonical source model: <code>lpoh/cad/rh1_freestanding_rev2.blend</code>
+(the old desktop model is archived inside it as <code>RH1_v1_OLD</code>).
+Canonical numbers: Ø460×1650 body; build chamber glass Ø444×460 at
+1060–1520; plates Ø410×12 with Ø12 bores (resized 2026-08-03, was Ø130 —
+see Mechanical Construction §3c) at 655 (deck), 1048–1060
+(middle), 1520–1532 (top); tori Ø290 major / Ø60 tube at 600, 998, 1575;
+gyroid horn cones throat Ø36 → Ø404 (model cells enlarged ~10× for
+legibility; production cells 2–5 mm); 4 mm walls everywhere. Finishes:
+shells in champagne <b>anodized aluminium</b> (satin, faint brushed
+grain); plate faces dark machined metal (let the slots and hole-field
+show — they are the product's face); ceramic gyroid warm bone; contrawound
+windings two-tone copper/bronze (the signature detail — show them in any
+cutaway); low-iron glass with a just-visible tint; LED ring warm white.
+The hero shots are (a) the closed column — one luminous chamber in a
+quiet monolith — and (b) the quarter section cut (live boolean in the
+model, <code>R2_SectionCutter</code>): shells 4 mm thin, storage rows,
+three tori, gyroid horns. The machine should read as an instrument, not
+an appliance: the closest kin are a watchmaker's bell jar, a telescope
+pier, and a transporter pad — in that order of restraint.</p>
+
+<div class="warn"><b>Register note for the deck.</b> Renders may show the
+machine assembling an object from the mold field — that is Phase-1
+capability class <span class="chip c-measured">MEASURED</span> at
+mesoscale. Do not depict on-device transmutation or claim it in copy; that
+program is <span class="chip c-open">OPEN</span> and lives in the main
+paper's pre-registered ladder. The pitch is strong precisely because its
+body is buildable art and its ceiling is honest.</div>
+
+</body>
+</html>

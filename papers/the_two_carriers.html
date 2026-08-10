@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Two Carriers — a complete degrees-of-freedom inventory</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-used{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-partial{color:#fff;background:var(--amber);border-color:var(--amber)}
+  .chip.c-unused{color:#fff;background:var(--blood);border-color:var(--blood)}
+  .chip.c-meas{color:#fff;background:var(--green);border-color:var(--green)}
+  .chip.c-der{color:#fff;background:var(--steel);border-color:var(--steel)}
+  .chip.c-open{color:#fff;background:var(--violet);border-color:var(--violet)}
+  pre{font:.8rem/1.5 "JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    padding:.6rem .8rem; border-radius:2px; overflow-x:auto}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.86rem}
+  th,td{border:1px solid var(--rule); padding:.4rem .55rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.8rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--slate); background:#f1f0ea;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.92rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font:.85em "JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    padding:.05em .3em; border-radius:2px}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">
+Foundation document · read first →
+<a href="replicator_principles.html">Principles</a> · carriers →
+<a href="replicator_phonons.html">The Phonons</a> ·
+<a href="replicator_photons.html">The Photons</a> · machine →
+<a href="replicator_architecture.html">Architecture</a> ·
+<a href="replicator_mechanical_construction.html">Mechanical Construction</a> ·
+<a href="desktop_replicator_hardware_spec.html">Hardware Spec</a> · matter →
+<a href="transmutation.html">Transmutation</a> · memory/compute →
+<a href="holographic_memory_and_compute_plan.html">Holographic Plan</a> ·
+bounds → <a href="replicator_at_the_limit.html">At the Limit</a>
+</div>
+
+<h1>The Two Carriers</h1>
+<p class="sub">A complete degrees-of-freedom inventory for photons and phonons
+— what each one can carry, what only one of them can carry, how they couple,
+and which of it we are currently leaving on the table.</p>
+<p class="meta">draft v0.2 · 2026-08-01 (v0.1 2026-07-22) ·
+<b>Changelog v0.2</b>: cross-carrier crossings consolidated here as §6b (now
+the canonical home); §7 audit refreshed against rulings R1–R14
+(<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>) ·
+<b>Role</b>: the simplification
+layer. Everything the machine can do is some use of the degrees of freedom
+the two carriers offer, so this document lists them <em>exhaustively</em>
+rather than selectively. The audit at the end is the point: a DOF we have
+not named is a DOF we cannot deliberately spend.</p>
+
+<h2>1 · The machine, reduced</h2>
+<div class="overflow"><table>
+<tr><th>part</th><th>what it is</th><th>what it holds or does</th></tr>
+<tr><td><b>Store</b></td><td>phase-change holographic medium</td><td>pattern files — chords, transforms, the library. Non-volatile, rewritable, associative</td></tr>
+<tr><td><b>Compute core</b></td><td>optical cavity (EML toroid) + written transforms</td><td>the live holographic state; the bridge in both directions between chamber and store</td></tr>
+<tr><td><b>Chamber</b></td><td>a boundary-controlled volume</td><td>where photonic and phononic fields are <em>created, controlled and measured</em>, and where they act on matter</td></tr>
+</table></div>
+<p>That is the whole machine; everything else in the paper set is detail of
+how one of the three is built. Since the chamber's entire job is field
+control, the machine's capability ceiling is set by <b>how many independent
+handles the two carriers offer, and how many we actually use</b>.</p>
+
+<h2>2 · The complete list — photons</h2>
+<p>Grouped by kind, not by convenience. Every entry is an independently
+addressable property of a light field.</p>
+<div class="overflow"><table>
+<tr><th>#</th><th>degree of freedom</th><th>what it is</th><th>range / quantum</th></tr>
+<tr><td colspan="4"><b>Scalar, per mode</b></td></tr>
+<tr><td>1</td><td><b>Amplitude</b></td><td>field magnitude |E|; intensity ∝ |E|²</td><td>continuous</td></tr>
+<tr><td>2</td><td><b>Phase</b></td><td>arg(E) — absolute and, more usefully, relative between ports</td><td>continuous, mod 2π</td></tr>
+<tr><td>3</td><td><b>Frequency</b></td><td>ω; and its time-derivative, <em>chirp</em></td><td>continuous</td></tr>
+<tr><td colspan="4"><b>Internal (vector) — the "spin" family</b></td></tr>
+<tr><td>4</td><td><b>Polarisation = spin angular momentum (SAM)</b></td><td>the E-vector's orientation/handedness. This <em>is</em> photon spin</td><td><b>exactly 2 states</b>, ±ħ per photon</td></tr>
+<tr><td>5</td><td><b>Longitudinal field component</b></td><td>absent in a free plane wave; present in tightly-focused, evanescent and structured fields — including our toroidal pulses</td><td>continuous</td></tr>
+<tr><td colspan="4"><b>External (spatial)</b></td></tr>
+<tr><td>6</td><td><b>Wavevector direction k</b></td><td>propagation direction; in a cavity, the mode index</td><td>discrete in a cavity</td></tr>
+<tr><td>7</td><td><b>Orbital angular momentum (OAM)</b></td><td>azimuthal phase winding e<sup>ilφ</sup> — a vortex</td><td><b>unbounded integer l</b>, lħ per photon</td></tr>
+<tr><td>8</td><td><b>Transverse spatial mode</b></td><td>the full field profile — Hermite–Gauss, Laguerre–Gauss, Bessel</td><td>a complete basis</td></tr>
+<tr><td colspan="4"><b>Temporal, and mixed</b></td></tr>
+<tr><td>9</td><td><b>Temporal envelope / pulse shape</b></td><td>the mode in time, dual to the spectrum</td><td>continuous</td></tr>
+<tr><td>10</td><td><b>Space–time nonseparability</b></td><td>fields that cannot be written as (space)×(time) — toroidal and toroidal-helical pulses live here</td><td>a structural property, not a number</td></tr>
+<tr><td>11</td><td><b>Space–polarisation nonseparability</b></td><td>vector beams: polarisation varies across the beam. Poincaré beams, optical skyrmions</td><td>a structural property</td></tr>
+<tr><td colspan="4"><b>Statistical and quantum</b></td></tr>
+<tr><td>12</td><td><b>Coherence</b></td><td>temporal (linewidth) and spatial (mutual coherence) — how well phases hold across time and aperture</td><td>continuous</td></tr>
+<tr><td>13</td><td><b>Photon number / quantum state</b></td><td>Fock, coherent, thermal; <b>squeezing</b>; entanglement</td><td>quantum</td></tr>
+</table></div>
+
+<h2>3 · The complete list — phonons</h2>
+<p>The same grouping, and one enormous difference at entry 4 that governs
+much of the machine's design.</p>
+<div class="overflow"><table>
+<tr><th>#</th><th>degree of freedom</th><th>what it is</th><th>range / note</th></tr>
+<tr><td colspan="4"><b>Scalar, per mode</b></td></tr>
+<tr><td>1</td><td><b>Amplitude</b></td><td>pressure, or particle displacement / velocity</td><td>continuous</td></tr>
+<tr><td>2</td><td><b>Phase</b></td><td>as for light — the holographic handle</td><td>continuous</td></tr>
+<tr><td>3</td><td><b>Frequency</b></td><td>Ω; strongly <em>dispersive</em> in structured media, unlike light in free space</td><td>continuous, band-limited</td></tr>
+<tr><td colspan="4"><b>Internal (vector) — where phonons differ radically</b></td></tr>
+<tr><td>4</td><td><b>Polarisation</b></td><td><b>In a fluid</b> (air, melt): <em>longitudinal only</em> — fluids carry no shear. <b>In a solid</b>: <em>three</em> branches — 1 longitudinal + 2 transverse (shear)</td><td><b>1 in fluid, 3 in solid</b></td></tr>
+<tr><td>5</td><td><b>Surface / guided modes</b></td><td>Rayleigh (elliptical, retrograde), Lamb (plate: symmetric + antisymmetric), Love (shear-horizontal), Stoneley (interface)</td><td>a family with no optical analogue this rich</td></tr>
+<tr><td>6</td><td><b>Acoustic spin</b></td><td>local elliptical trajectory of the velocity field. Long thought impossible for longitudinal waves; established for <em>structured</em> sound (evanescent, interfering) since ~2019</td><td>real, and easy to overlook</td></tr>
+<tr><td colspan="4"><b>External (spatial)</b></td></tr>
+<tr><td>7</td><td><b>Wavevector direction q</b></td><td>direction; cavity mode index</td><td>discrete in a cavity</td></tr>
+<tr><td>8</td><td><b>Acoustic OAM</b></td><td>acoustic vortex beams, e<sup>ilφ</sup> — carries torque, spins trapped particles</td><td><b>unbounded integer l</b></td></tr>
+<tr><td>9</td><td><b>Transverse mode structure</b></td><td>full pressure-field profile; the holographic handle for shaping</td><td>a complete basis</td></tr>
+<tr><td colspan="4"><b>Temporal, nonlinear, and material</b></td></tr>
+<tr><td>10</td><td><b>Temporal envelope</b></td><td>pulse shape; time-of-flight is the ranging observable</td><td>continuous</td></tr>
+<tr><td>11</td><td><b>Nonlinear products</b></td><td>harmonics, and <b>difference-frequency</b> — the parametric array: two ultrasonic beams generate a low-frequency beam along their overlap</td><td>strong; sound is far more nonlinear than light</td></tr>
+<tr><td>12</td><td><b>Mode conversion</b></td><td>L↔T at interfaces and boundaries — no optical equivalent</td><td>a boundary phenomenon</td></tr>
+<tr><td>13</td><td><b>Dispersion engineering</b></td><td>phononic-crystal band structure, band gaps, slow sound, negative index</td><td>the metamaterial handle</td></tr>
+</table></div>
+
+<h2>4 · The asymmetries — what only one carrier has</h2>
+<div class="overflow"><table>
+<tr><th>property</th><th>photon</th><th>phonon</th><th>consequence for the machine</th></tr>
+<tr><td>polarisation states</td><td><b>2</b> (transverse only, free space)</td><td><b>1</b> in fluid, <b>3</b> in solid</td><td>the solid plates have a shear channel the air volume simply does not; mode conversion at the plate face is a real, usable handle</td></tr>
+<tr><td>speed</td><td>3 × 10⁸ m/s</td><td>~343 (air) to ~5000 m/s (solid)</td><td>see §5 — this is the single most important number in the architecture</td></tr>
+<tr><td>momentum per unit energy</td><td>tiny (E/c)</td><td><b>~10⁵–10⁶ × larger</b> (E/v)</td><td>sound moves matter; light does not — per watt. At µm-and-below payloads light's direct gradient traps become the precision channel (R1-b, 2026-08-01: sound is the hands, light is the fingertips — <a href="replicator_photons.html">The Photons §3b</a>)</td></tr>
+<tr><td>nonlinearity</td><td>weak in ordinary media</td><td><b>strong</b> — harmonics and parametric mixing are easy</td><td>acoustic difference-frequency generation is available almost for free</td></tr>
+<tr><td>dispersion</td><td>weak in free space</td><td><b>strong</b>, engineerable via structure</td><td>rainbow trapping, band gaps, slow sound — the passive multiplexing of the panels</td></tr>
+<tr><td>medium required</td><td>none</td><td><b>yes</b> — no sound in vacuum</td><td>the chamber must contain a medium; the compute cavity need not</td></tr>
+<tr><td>surface-wave family</td><td>plasmons, limited</td><td>Rayleigh, Lamb, Love, Stoneley</td><td>the plates and panels are wave-guiding structures, not just radiators</td></tr>
+</table></div>
+
+<h2>5 · The number that justifies having both</h2>
+<p>At the <em>same frequency</em>, sound's wavelength is about five orders of
+magnitude shorter than light's, because the speeds differ by that much:</p>
+<div class="overflow"><table>
+<tr><th>frequency</th><th>light</th><th>sound in air</th><th>sound in solid</th></tr>
+<tr><td>1 kHz</td><td>300 km</td><td>343 mm</td><td>5 m</td></tr>
+<tr><td>1 MHz</td><td>300 m</td><td>343 µm</td><td>5 mm</td></tr>
+<tr><td>1 GHz</td><td>300 mm</td><td>343 nm</td><td>5 µm</td></tr>
+</table></div>
+<blockquote><b>Sound buys fine spatial structure at low frequency; light buys
+speed and bandwidth at coarse structure.</b> A GHz sound wave in a solid has
+a 5 µm wavelength — comparable to visible light — which is exactly why an
+acoustic wave can act as a diffraction grating that light can see. Having
+both carriers is not redundancy. It is the only way to get fine structure and
+high bandwidth in the same instrument.</blockquote>
+
+<h2>6 · How they couple — the complete mechanism list</h2>
+<div class="overflow"><table>
+<tr><th>mechanism</th><th>direction</th><th>what happens</th></tr>
+<tr><td><b>Photoelastic / acousto-optic</b></td><td>phonon → photon</td><td>strain changes refractive index; sound becomes a moving grating that diffracts light. The workhorse</td></tr>
+<tr><td><b>Electrostriction</b></td><td>photon → phonon</td><td>the optical field creates strain — the inverse of the above</td></tr>
+<tr><td><b>Brillouin scattering</b></td><td>both, resonantly</td><td>light scatters off an acoustic wave and shifts by exactly the acoustic frequency. Stimulated Brillouin is the strong version: light <em>generates</em> the sound that scatters it</td></tr>
+<tr><td><b>Radiation pressure / optomechanics</b></td><td>photon → phonon</td><td>light pushes a boundary; the boundary's motion phase-modulates the light. Weak per watt, but the basis of cavity optomechanics — and of the dynamical Casimir effect at the extreme</td></tr>
+<tr><td><b>Thermoelastic (photoacoustic)</b></td><td>photon → phonon</td><td>absorbed light heats, thermal expansion launches sound. Inefficient, deposits heat, but works in any absorbing target</td></tr>
+<tr><td><b>Piezoelectricity</b></td><td>EM field ↔ phonon</td><td>not photon-to-phonon directly, but the machine's actual transducer: field ↔ strain at near-unity coupling in single-crystal relaxors</td></tr>
+<tr><td><b>Raman scattering</b></td><td>photon ↔ optical phonon</td><td>couples to molecular vibration rather than bulk sound — the machine's composition sensor</td></tr>
+<tr><td><b>Phonon-polariton</b></td><td>hybrid</td><td>in polar dielectrics, an optical phonon and a photon mix into one quasiparticle. The "mixing angle" element of the transducer roadmap</td></tr>
+</table></div>
+<div class="box"><b>The conservation laws are the design rules.</b> Any
+photon–phonon interaction satisfies all three simultaneously, and each is a
+constraint you can <em>use</em> rather than merely obey:
+<ul>
+<li><b>Energy:</b> ω<sub>out</sub> = ω<sub>in</sub> ± Ω. The scattered light
+is shifted by exactly the acoustic frequency — so a light measurement
+<em>reads out</em> the sound.</li>
+<li><b>Momentum:</b> k<sub>out</sub> = k<sub>in</sub> ± q. The Bragg /
+phase-matching condition — what makes the interaction <em>directional</em>
+and therefore addressable.</li>
+<li><b>Angular momentum:</b> l<sub>out</sub> = l<sub>in</sub> ± l<sub>ac</sub>,
+and likewise for spin. <b>Acoustic OAM can be transferred to optical OAM.</b>
+The least-exploited of the three and the most interesting: a sound field can
+write a topological property into a light field.</li>
+</ul>
+At 1550 nm in a solid, the naturally phase-matched acoustic frequency is
+around 10 GHz — a useful anchor for where the two carriers meet.</div>
+
+<h2 id="s6b">6b · The crossings in the volume — the cross-carrier verbs</h2>
+
+<div class="box"><b>Canonical home.</b> This section consolidates the
+in-flight cross-carrier verbs previously carried at
+<code>the_replicator.html</code> §6.10 and
+<code>replicator_field_compiler.html</code> §17.6, and is now the canonical
+home for the crossings; the compiler paper keeps its software-facing §17.6
+copy until its next revision, then links here.</div>
+
+<p>Section 6 lists the coupling <em>mechanisms</em> — the element-level
+physics (piezo, PMUT, the polaritonic roadmap row). What that leaves
+unexploited is the crossing <b>in the build volume itself</b>: the two
+carriers interacting in flight, in air and in melt, because sound is a
+density wave and density sets the refractive index. The currency of these
+crossings is not power — photon momentum per watt is ~10⁶× below phonon
+momentum, the same arithmetic that rejects radiation pressure as a drive
+(the parametric bound, below). It is <b>addressing, verification, and
+measurement diversity</b> — exactly the quantities the compiler's scan
+program identifies as binding.</p>
+
+<div class="overflow"><table>
+<tr><th>crossing</th><th>mechanism</th><th>machine verb</th><th>register</th></tr>
+<tr><td><b>sound steers light</b></td><td>photoelastic Δn: the acoustic
+hologram is a volumetric, reprogrammable GRIN optic, refreshed at
+microsecond rate</td><td>in air, deflection stays ~10⁻⁴ rad — a
+<b>fine-trim and modulation</b> channel on the axial sightline, not
+steering; genuine beam shaping belongs to the melt or coupling fluid
+(correction below), where the acoustic field focuses the optical channel
+onto the workpiece</td><td>commodity acousto-optic
+modulator art <span class="chip c-meas">MEASURED</span></td></tr>
+<tr><td><b>light reads sound</b></td><td>the same Δn, run as metrology:
+schlieren / refracto-vibrometry through the volume</td><td>full-field
+optical tomography of the drive field, a calibration path physically
+independent of the RX microphone chain. <b>Attacks the Green's-function
+trust problem head on</b>: the drive field stops being inferred and becomes
+photographed — a second witness</td><td>schlieren imaging of ultrasound; laser refracto-vibrometry
+<span class="chip c-meas">MEASURED</span></td></tr>
+<tr><td><b>light writes sound</b></td><td>photoacoustic launch: a
+modulated/pulsed beam absorbed at a surface radiates ultrasound from that
+spot</td><td><b>a programmable acoustic source aperture on any optically
+visible surface, including the workpiece</b> — position diversity for the
+scan (new rows in the measurement operator, nothing moving, no added
+transducers), and an optically-placed tap for call-and-response: tap with
+light, listen with the whole screen. Per ruling R2, spot-scanning is merely
+this operator's delta basis and the worst one — patterned (Hadamard-class)
+bases carry the multiplex SNR advantage</td><td>laser-ultrasonics, NDT art; structured-illumination
+photoacoustics <span class="chip c-meas">MEASURED</span></td></tr>
+<tr><td><b>sound bridges µW↔optical</b></td><td>piezo-optomechanical
+transduction: a phonon mode coherently coupled to both bands</td><td>the
+polaritonic element's end state; carrier hand-off inside one
+device</td><td>quantum-transduction literature
+<span class="chip c-meas">MEASURED</span>; in-machine use
+<span class="chip c-open">OPEN</span></td></tr>
+</table></div>
+
+<div class="box">
+<b>Arithmetic verified independently, 2026-07-27</b>
+<span class="chip c-der">DERIVED</span>, because the whole section rests on
+one number. Air, Gladstone–Dale n−1 = 2.9×10⁻⁴, δρ/ρ = p/ρc²:
+<pre>155 dB → p = 1,125 Pa   Δn = 2.3e-6    1.38 optical waves over 300 mm   θ 1.6e-4 rad
+165 dB → p = 3,557 Pa   Δn = 7.3e-6    4.37 optical waves over 300 mm   θ 5.1e-4 rad
+175 dB → p = 11,247 Pa  Δn = 2.3e-5   13.8  optical waves over 300 mm   θ 1.6e-3 rad</pre>
+So Δn ~ 10⁻⁵ and "several optical wavelengths of accumulated phase" are both
+correct at the kPa class the muscle channel reaches.
+</div>
+
+<div class="warn">
+<b>The parametric bound, and one correction.</b>
+<em>(i)</em> All of these crossings are <b>parametric</b> couplings — one
+field modulates the medium the other propagates through. Energy exchange
+between carriers is negligible outside engineered cavities. The unlock is
+<b>information and addressing — never power or force</b>. This bound is
+what ruling R1 (the control/muscle principle: light addresses, measures,
+calibrates; sound and induction exert force and heat) was derived from —
+see <code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>, R1. Coherent
+phonon↔photon <em>amplification</em> (Brillouin gain in the melt) is real
+physics but belongs on the roadmap shelf beside the polaritonic element,
+not in the baseline <span class="chip c-open">OPEN</span>.
+<em>(ii)</em> <b>Corrected 2026-07-27</b>: the claim that photoelastic
+coupling makes sound-steers-light "orders stronger" in the melt needs care —
+<b>at equal pressure a liquid is worse</b>, not better: water gives
+Δn ~ 5×10⁻⁷ against air's 7×10⁻⁶ at the same 3.5 kPa, because ρc² is
+~10³× larger, so the same pressure buys far less density change. The real
+advantage in melt or coupling fluid is that it admits <em>far higher drive
+pressures</em> and a different acousto-optic figure of merit
+(M₂ = n⁶p²/ρv³, where the lower sound speed helps), not a larger response
+per pascal. State it that way or the number will propagate wrong.
+</div>
+
+<p><b>Why this is the same doctrine, not a new one</b>: each crossing is
+holographic synthesis extended from the boundary into the volume — one
+carrier plays the reference wave, and the other carrier's modulation of the
+medium <em>is</em> the recording. The boundary surfaces are computed
+holograms in a fixed medium; the volume crossings are <b>computed holograms
+in each other's medium</b>.</p>
+
+<h2>7 · The audit — what we use, and what we are leaving on the table</h2>
+<p>The point of the inventory. <span class="chip c-used">USED</span> is in
+the design today; <span class="chip c-partial">PARTIAL</span> is named but
+not exploited; <span class="chip c-unused">UNUSED</span> is a handle we have
+not spent at all.</p>
+<div class="overflow"><table>
+<tr><th>degree of freedom</th><th>status</th><th>where it is, or what it would buy</th></tr>
+<tr><td>amplitude, phase, frequency (both carriers)</td><td><span class="chip c-used">USED</span></td><td>the chord alphabet is exactly these three</td></tr>
+<tr><td>optical polarisation / SAM</td><td><span class="chip c-used">USED</span></td><td>handedness of the toroidal-helical launch; anisotropic holography makes it an aperture property. <em>(rev 2026-08-01, per R4: chirality is now doctrine, not incident — driven structures are chiral and separately addressable, passive structures achiral and neutral; handedness is a drive-side knob on both carriers)</em></td></tr>
+<tr><td>space–time nonseparability</td><td><span class="chip c-used">USED</span></td><td>the toroidal pulses; the super-resolution positioning signature depends on it</td></tr>
+<tr><td>transverse mode structure (both)</td><td><span class="chip c-used">USED</span></td><td>holographic shaping is mode-basis synthesis</td></tr>
+<tr><td>acoustic dispersion engineering</td><td><span class="chip c-used">USED</span></td><td>the graded hex screen; rainbow trapping</td></tr>
+<tr><td><b>optical OAM</b></td><td><span class="chip c-partial">PARTIAL</span></td><td>implicit in the helical pulses, never used as an independent addressing channel — an unbounded integer index we currently spend as a single bit of handedness. <em>(rev 2026-08-01, per R2-b/R13: the bore optical stem is now a full TX/RX holographic port — toroidal-pulse chords out, density-matrix tomography back — and skyrmion-class topological structure is a named register; the unbounded integer <b>l</b> as a per-channel address is still unspent)</em></td></tr>
+<tr><td><b>acoustic OAM</b></td><td><span class="chip c-used">USED</span> <em>(was PARTIAL)</em></td><td>discussed as vortex trapping; not in the chord format. It carries <em>torque</em> — the natural way to rotate a workpiece without touching it. <em>(rev 2026-08-01, per R3/R4: the cap front end's 3-PZT throat ring synthesizes acoustic OAM m = ±1 by phasing alone — drive-side chirality, no geometric doubling — so acoustic OAM is now in the drive architecture, not merely discussed)</em></td></tr>
+<tr><td><b>shear / transverse phonons in the plates</b></td><td><span class="chip c-partial">PARTIAL</span></td><td>the solid has 3 polarisations and we drive essentially one. Mode conversion at the face is free and unexploited</td></tr>
+<tr><td><b>surface-wave family (Rayleigh/Lamb)</b></td><td><span class="chip c-partial">PARTIAL</span></td><td>the panels are plates — Lamb modes exist whether or not we design for them. Designing for them turns the panel into a waveguide, not just a radiator</td></tr>
+<tr><td><b>acoustic nonlinearity / parametric array</b></td><td><span class="chip c-unused">UNUSED</span></td><td>two ultrasonic beams generate a difference-frequency beam <em>along their overlap only</em> — a way to place low-frequency energy at a point without a low-frequency aperture. Directly attacks the long-wavelength addressing problem</td></tr>
+<tr><td><b>acoustic spin</b></td><td><span class="chip c-unused">UNUSED</span></td><td>a local, independently-addressable vector property of structured sound fields</td></tr>
+<tr><td><b>angular-momentum transfer sound → light</b> (and topology as a register)</td><td><span class="chip c-partial">PARTIAL</span> <em>(was UNUSED)</em></td><td>the conservation law says it is available; it would let the acoustic field write topology into the optical readout. <em>(rev 2026-08-01, per R13: topology is now a deliberate register on <b>both</b> carriers — the topological alphabet adopts a measured skyrmion-number extraction toolkit explicitly applicable to acoustic and elastic waves, plus programmable topological TX; the specific sound→light transfer verb itself remains undemonstrated in-machine)</em></td></tr>
+<tr><td><b>optical squeezing / quantum state</b></td><td><span class="chip c-unused">UNUSED</span></td><td>sub-shot-noise sensing. Relevant only once the readout is shot-noise-limited — not yet, and worth knowing why not</td></tr>
+<tr><td>longitudinal optical field component</td><td><span class="chip c-partial">PARTIAL</span></td><td>present in the toroidal pulses by construction, never treated as a separate handle</td></tr>
+</table></div>
+<blockquote>The audit's finding: <b>the machine currently spends
+amplitude, phase and frequency well, spatial structure adequately, and
+angular momentum hardly at all.</b> The largest untouched handles are
+acoustic OAM (torque without contact), the parametric array (low-frequency
+placement without a low-frequency aperture), and the shear channel in the
+solid plates. None of these require new physics — they require putting a
+column in the chord format.
+<br><br><em>Amendment 2026-08-01 (per R1–R14,
+<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>): the angular-momentum
+verdict has partly aged, exactly as this audit predicted it would. Acoustic
+OAM is now spent (R3/R4 drive-side phasing), chirality is doctrine (R4), and
+topology is a named register on both carriers (R13). Still on the table:
+optical OAM as a per-channel integer address, the parametric array, acoustic
+spin, and the shear channel in the plates.</em></blockquote>
+
+<div class="warn"><b>Register.</b> Sections 2–6 are textbook physics and
+should be checked as such; nothing there is a claim of ours. Section 6b
+carries its own per-claim register chips (MEASURED / DERIVED / OPEN) and
+consolidates previously-published content without upgrading any register.
+Section 7 is an assessment of our own design and the part most likely to
+age — a DOF marked UNUSED may be unused for a good reason not recorded
+here; the right response is to write the reason down, not to quietly start
+using it. The 2026-08-01 amendments are that aging happening in public:
+verdicts amended with dated notes, never silently rewritten. The
+acoustic-spin entry is the newest physics in the document (structured-field
+acoustic spin is a ~2019 result, not long-settled) and deserves
+correspondingly more care.</div>
+
+</body>
+</html>

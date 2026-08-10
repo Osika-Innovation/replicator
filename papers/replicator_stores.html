@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Stores — what the machine keeps, and in what form</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-derived{color:#fff;background:var(--amber);border-color:var(--amber)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px; font-size:.85em; padding:.05em .3em}
+  pre{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:3px; font-size:.8em; padding:.7em .9em; overflow-x:auto}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">Read first: <a href="replicator_principles.html">Principles</a> ·
+machine: <a href="replicator_architecture.html">Architecture</a> ·
+modes: <a href="replicator_scan.html">Scan</a> /
+<a href="replicator_assemble.html">Assemble</a> /
+<a href="replicator_dissolve.html">Dissolve</a> ·
+patterns: <a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a> ·
+instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a></div>
+
+<h1>The Stores — what the machine keeps, and in what form</h1>
+<p class="sub">The machine's pantry: which matter it holds on the shelf,
+why the shelf is small, why everything on it is deliberately boring, and
+why the shelf itself is an instrument rather than a bin. Size-free — the
+logic privileges chemistry and ratios, not litres.</p>
+<p class="meta">draft v1.0 · 2026-08-01 · machine member — owns
+matter-store detail; loop topology stays with
+<a href="replicator_architecture.html">Architecture §5</a>; pattern storage
+stays with <a href="holographic_memory_and_compute_plan.html">Memory &amp;
+Compute</a>. <b>Single-home rule</b>: this paper is now the canonical home
+for store-level detail — the store taxonomy, the chemistry rationale, the
+QC/sorting instrumentation of the storage chamber, and the inventory
+bookkeeping. Register chips
+(<span class="chip c-measured">MEASURED</span> /
+<span class="chip c-derived">DERIVED</span> /
+<span class="chip c-open">OPEN</span>) travel with each claim exactly as
+tagged at the source; no claim's register was upgraded in the move.
+Millimetre and litre numbers appear only as clearly-marked instance
+pointers at the <a href="desktop_replicator_hardware_spec.html">Hardware
+Spec</a>.</p>
+
+<h2 id="s0">0 · The picture</h2>
+<p>To make almost anything, what do you keep on the shelf?</p>
+<p>The intuition most people bring to a universal fabricator is a warehouse:
+one jar per thing you might build — a bin of cup-stuff, a bin of
+plate-stuff, a bin of spoon-stuff. That intuition is wrong, and it is wrong
+in the same way a kitchen proves it wrong. A good kitchen does not keep one
+cupboard per dish. It keeps flour, water, oil, salt, and a spice rack — a
+small set of dense, stable, boring staples — and the <em>recipes</em> live
+somewhere else, on paper. Any dish on demand, from a pantry you can walk
+past without noticing.</p>
+<p>The Replicator's pantry is smaller than a kitchen's, because it works
+below recipes, at the level of atoms — and at that level the world is
+shockingly repetitive. A cup, a steak, a circuit board, and the shelf they
+sit on are overwhelmingly built from the same short list of elements:
+carbon, hydrogen, oxygen, nitrogen, silicon, a little iron and friends.
+Objects differ in <em>arrangement</em>, not ingredients. The machine
+assembles from the atoms' own chemistry, not from finished parts — so what
+it must keep is elements in bulk, not objects in miniature. Four boring
+staples cover most of the periodic demand: <b>water</b> (hydrogen and
+oxygen), <b>charcoal</b> (carbon), <b>air</b> (nitrogen, oxygen — and
+argon, free of charge), and <b>rock</b> (silicon, iron, aluminium, calcium
+and the rest of the crust's greatest hits). Add a spice rack of trace
+elements for the recipes that need a pinch of something rare, and the
+pantry is complete.</p>
+<p>Two more things make this pantry unlike a warehouse. First, everything
+on the shelf is kept in its most <em>boring</em> chemical form — oxidized,
+dissolved, inert — because boring is what stable, safe, and dense look like
+in chemistry. The exciting forms (pure reactive metal, loose atoms) are
+made fresh at build time, the way a kitchen grinds coffee just before
+brewing. Second, the shelf is not passive. The storage chamber is a working
+instrument — a mirrored twin of the build chamber that sorts incoming
+matter, checks it, weighs it, and stages it for the next build, all while
+the chamber above is busy presenting the object. The pantry has hands.</p>
+<p>That is the picture. The rest of this paper is the machinery under it:
+what exactly sits on the shelf and why chemistry forces those choices (§2),
+the spice rack (§3), the storage chamber as instrument (§4), how matter
+gets in and out and how the books are kept (§5), and how big the shelf must
+be — which turns out to be a question about what you build, not about the
+machine (§6).</p>
+
+<h2 id="s1">1 · Two storages, one machine</h2>
+<p>The word "storage" names two entirely different things in this machine,
+and confusing them is the first error this paper exists to prevent:</p>
+<div class="overflow"><table>
+<tr><th>store</th><th>holds</th><th>substrate</th><th>owner paper</th></tr>
+<tr><td><b>the pattern library</b></td><td>what objects <em>are</em> —
+blueprints, scans, drive chords, the machine's learned weights</td>
+<td>digital / holographic — information</td>
+<td><a href="holographic_memory_and_compute_plan.html">Memory &amp;
+Compute</a></td></tr>
+<tr><td><b>the matter stores</b></td><td>what objects are <em>made of</em>
+— elements in bulk, in storable chemical form</td>
+<td>tanks, blocks, hoppers, bottles — atoms</td>
+<td>this paper</td></tr>
+</table></div>
+<p>The split is exact and load-bearing. A pattern weighs nothing and can be
+copied; matter weighs exactly what it weighs and can only be moved —
+baryon conservation makes the machine a rearranger, never a creator
+(<a href="replicator_principles.html">Principles</a>). Everything about
+how patterns are held — why they are chords rather than bits, why the
+weights are the medium rather than a file — lives in
+<a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a>
+and is not restated here. This paper is about the atoms' side of the house:
+the shelf, its chemistry, and its instrument.</p>
+
+<h2 id="s2">2 · What to keep — the store taxonomy</h2>
+<p>The taxonomy below is the canonical store inventory (moved here from
+<a href="replicator_architecture.html">Architecture §5</a>, which keeps the
+loop topology around it). The governing rule is stated first because every
+row obeys it:</p>
+<div class="box"><b>The salt/ash rule: store oxidized, never atomized.</b>
+The reduced, atomized form of an element — pure metal powder, free atoms —
+is an <em>energy investment</em>, not a shelf state. You pay that
+investment at build time, exactly when the atoms are needed loose, and not
+a moment earlier. Three reasons, and each alone would suffice:
+<ul>
+<li><b>Energy</b> — the oxidized compound is the thermodynamic ground
+floor; nothing further can go wrong with it. Reduction energy paid at
+resupply is energy stored as fire hazard on the shelf.</li>
+<li><b>Stability</b> — oxides, chlorides, and carbonates have indefinite
+shelf life; fine metal powder oxidizes, cakes, and degrades on its own
+schedule.</li>
+<li><b>Safety</b> — a fine reactive-metal powder is maximized surface area
+on precisely the reaction you least want (see the hydrogen-per-kilogram
+arithmetic in the salt/ash row below). A brine cannot burn.</li>
+</ul>
+Boring = safe = dense = pattern-free — the stored form carries no
+information and no surprises; all the interesting structure is added by the
+build.</div>
+
+<div class="overflow"><table>
+<tr><th>subsystem</th><th>design</th><th>tier</th></tr>
+<tr><td>bulk stores</td><td>water tank (H,O); solid graphite block (C —
+feedstock and screen chemistry are the same element,
+<a href="replicator_architecture.html">Architecture §2.4</a>); air intake
+(N,O — never store what the atmosphere holds). <b>Argon joins the air
+intake</b>, not the cartridge: at 0.93% by volume it is the third most
+abundant atmospheric component, so the same rule covers it, and ordinary
+cryogenic air separation already yields it as a standard
+product</td><td>trivial</td></tr>
+<tr><td>trace cartridge</td><td>~20-element mineral pack (Si, Ca, Fe, Na,
+K, P, S…) — the recipe tail. <b>Collapses to one "rock" bulk</b>:
+silicate/regolith already carries Si, O, Al, Ca, Fe, Na, K, Mg in one
+stable solid, so a single mineral hopper replaces the slotted pack; the
+machine sorts specific metals out on demand (the EM m/q stage —
+<a href="replicator_architecture.html">Architecture §5</a>). But that
+hopper is <em>itself</em> two stores — see the salt/ash split immediately
+below</td><td>trivial</td></tr>
+<tr><td>mineral bulk — <b>the salt/ash split</b></td><td>The mineral store
+divides in two, and the dividing property is <em>solubility</em>.
+<b>Salt</b> = the soluble fraction (alkali and alkaline-earth chlorides and
+carbonates), held as <b>brine</b>, riding the fluid loop — pumped,
+dissolved, addressable. <b>Ash</b> = the insoluble refractory residue
+(SiO₂, Al₂O₃, Fe₂O₃, CaO), riding the solids loop — augered, fluidized,
+sintered. The split is forced by chemistry, not chosen for tidiness:
+<b>atomized metal cannot be stored in water.</b> Per kg of metal in water,
+Li yields 1,762 L H₂, Al 1,359, Mg 1,006, Fe 657, Ca 610, Na 532 (Na and K
+ignite it) — and fine powder maximizes exactly the surface area that
+drives the reaction, so a metal-powder slurry stores hydroxide and rust,
+not metal. The resolution is that the metals reacting most violently with
+water are precisely those whose <em>salts</em> are most soluble
+(LiCl ≈ 830 g/L, CaCl₂ ≈ 745, MgCl₂ ≈ 540, NaCl ≈ 360), so the reactive
+tail stores <b>pre-oxidized and dissolved</b> — stable, pumpable, and
+already past the sort. Rule: <b>store oxidized, never atomized.</b> The
+former single "rock" hopper is the ash store; the brine is
+new</td><td>design rule</td></tr>
+<tr><td>noble-gas cartridge</td><td>He, Ne, Kr, Xe only — a small pressure
+bottle, and <b>the one place in the loop where a bottle beats
+everything.</b> Dissolution in water is dead: at 1 atm and 25 °C water
+holds He 1.5 mg/L, Ne 9.1, Ar 56, Kr 210, Xe 578 — even xenon, the most
+soluble, is 0.06% by mass, and a plain 200-bar bottle beats water by
+~3,900× (Xe, real-gas) to 21,000× (He). <b>Use real-gas densities, not
+ideal-gas:</b> at 200 bar and 20 °C, Peng–Robinson gives He 31 g/L, Ne 154,
+Ar 355, Kr 978, Xe <b>2,281</b> — the ideal-gas law understates xenon by
+2.1× and krypton by 1.4×, because both are near enough to their critical
+points to be liquid-like under pressure. Atmospheric extraction is dead for
+these four too: 1 g needs 67 m³ of air (Ne), 256 (Kr), 1,166 (He), or
+2,140 (Xe ≈ 714 kWh of air liquefaction per gram). But they are the
+<em>ideal</em> cartridge item — chemically inert, zero degradation,
+indefinite shelf life — and demand is narrow (sealed lamps, insulated
+glazing, some electronics), so a small bottle is proportionate. Clathrate
+hydrate is a near-miss worth recording rather than building: Xe hydrate is
+56% xenon by mass and forms at only ~0.15 MPa at 273 K, but it needs
+refrigeration, does not beat pressurised storage, and fails where help is
+wanted, since Ar needs ~100 MPa and He and Ne will not form cages at
+accessible pressure at all. <b>Condensed phases are real but not wanted at
+cartridge scale.</b> All five liquefy and solidify (Xe: BP 165 K, MP 161 K,
+liquid 2,942 kg/m³, solid 3,540; Ar: BP 87 K, liquid 1,396; He is the
+exception — <em>it does not solidify at 1 atm at any temperature</em>,
+needing ~25 atm to freeze, because zero-point energy exceeds its van der
+Waals binding). Cryogenic liquid is how these ship in <em>bulk</em> — the
+density gain over a bottle is 7.8× (Ne), 4.0× (He), 3.9× (Ar), 2.5× (Kr) —
+but only 1.3× for xenon, and every one of them buys that gain with a
+cryoplant and continuous boil-off. At the gram-to-kilogram quantities this
+cartridge holds, ambient-temperature pressure storage wins on total system
+mass and has indefinite shelf life. Note also that xenon's critical
+temperature is 16.58 °C, <em>below</em> room temperature: at 20 °C it
+cannot be liquefied at any pressure and is stored as a dense supercritical
+fluid — which is exactly how xenon is held for ion
+thrusters</td><td><span class="chip c-measured">MEASURED</span>
+components</td></tr>
+<tr><td>container architecture</td><td><b>store count is a
+sorting-efficiency dial, not an element count.</b> A container is a
+decision to pre-pay the element sort at resupply rather than on-demand at
+build. Because the stored form is stable oxidized compounds, a single mixed
+bulk of <em>rock + graphite + ice</em> is chemically stable cold — so the
+"one mass bulk" limit is blocked only by on-demand sorting <em>energy</em>,
+not by chemistry or safety. Ladder: slotted cartridge → <b>brine + ash +
+water + carbon + free air, plus the noble-gas bottle (~4 stores and one
+cartridge — the instance floor, RH-1: <a
+href="desktop_replicator_hardware_spec.html">Hardware Spec §4</a>)</b> →
+single oxidized bulk as in-field sorting efficiency climbs. Note that the
+salt/ash split is the one merge the ladder does <em>not</em> get to make
+for free: brine and ash can share a vessel cold, but re-separating them
+costs an evaporation, so they stay split until in-field sorting is cheap
+enough to pay it. The single bulk is the efficiency-limit endpoint
+(feedstock's "one performance, one block"), pulled closer by the recycle
+loop — repetitive make/unmake makes the bulk's element ratios track
+demand, shrinking the sort</td><td>design rule</td></tr>
+<tr><td>stored form vs transport form</td><td>ionized/molten streams via
+CNT-membrane channels
+(<a href="replicator_architecture.html">Architecture §2.4</a>) are
+<em>transport</em> phases; the <em>stored</em> form = densest
+chemically-boring stable phases (boring = safe = dense = pattern-free).
+<b>Exotic dense-matter states are firewalled out of storage</b>: Rydberg
+matter is <em>low</em>-density (wrong direction), and ultradense hydrogen
+H(0) is contested and, if real, a near-nuclear energy density — the
+opposite of "boring/safe." H(0)/RM belong (if anywhere) to the OPEN energy
+lane, never the feedstock bin. Ordinary condensed matter is dense
+enough</td><td><span class="chip c-measured">MEASURED</span>
+components</td></tr>
+</table></div>
+
+<p><b>Provenance of the salt/ash split, stated in derivation order</b>
+(2026-07-30). The partition above was reached from reactivity and
+solubility arithmetic — the H₂-per-kg and g/L figures in the row itself —
+and only afterwards noticed to reproduce the water / salt / ash triad of
+classical alchemy, which specifies exactly these three vessels and draws
+the same distinction we need: <em>"pure ash has not emerged from a
+coagulation or deposition process, but from the (opposite) fire process"</em>
+(Steiner, GA343, 1921) — i.e. precipitate and calcine are different routes
+to a solid mineral and therefore differ in solubility. That is a real
+distinction, correctly drawn, and the convergence is unsurprising once
+stated: both schemes classify matter by <em>how it separates</em>, and the
+separation verbs are few. It is recorded here as a <b>taxonomy match, not
+a source</b> — nothing in the row depends on it, and the ordering matters:
+the arithmetic came first and would stand alone.</p>
+
+<h2 id="s3">3 · The trace rack</h2>
+<p>Most of the periodic table is not pullable from the four bulk staples,
+and most of it is never needed — but the tail of real recipes (dopants,
+catalysts, phosphors, the odd gram of something exotic) is exactly what
+separates "makes most things" from "makes almost anything." The trace rack
+holds that tail: small sealed cartridges of elements that neither the air,
+the water, the carbon block, nor the rock hopper can supply, each stored —
+same rule as everywhere — in its most boring stable compound form. The
+noble-gas bottle of §2 is honorary rack membership: cartridge-scale,
+indefinite shelf life, narrow demand.</p>
+<p><b>Cartridge geometry — the chart as parts organizer.</b> The trace
+cartridge takes polar form: a circular magazine in which ring radius =
+period (octave) and angular position = group (tone) — the periodic chart
+in polar coordinates as a physical parts layout, with mechanically keyed
+slots (an element cartridge cannot seat at the wrong address). The
+instance realization — the cartridge circle loaded through the base door —
+is the <a href="desktop_replicator_hardware_spec.html">Hardware Spec
+§4</a>'s to dimension.</p>
+<div class="warn"><b>The polar layout is organizational, not functional —
+measured, and kept dead.</b> Whether chart-position carries any physical
+signal was left to a pre-registered test (Test 0), <b>which has since run
+and returned a clean negative</b>: tone-position carries no signal beyond
+ordinary group membership. Verdict adopted: the layout is
+<em>organizational</em> — registration, inventory-at-a-glance, and
+instrument furniture. The machine still wears the chart it was designed
+from; the chart just doesn't drive it. Do not resurrect chart-addressing
+claims on the strength of the geometry.</div>
+
+<h2 id="s4">4 · The storage chamber as instrument</h2>
+<p>The shelf has hands. Ruling R9
+(<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>; stack topology
+owned by <a href="replicator_architecture.html">Architecture §3.2</a>)
+places the stores' working volume directly under the build volume: top,
+middle, and bottom plate assemblies; <b>build chamber above, storage
+chamber below; the middle plate is double-faced</b> — two cap stacks back
+to back, the mirrored-pair logic promoted to an interior bulkhead,
+radiating up into the build volume and down into storage.</p>
+<p>The consequence this paper owns: <b>the storage chamber is an active
+instrument, not a bin.</b> Three standing duties:</p>
+<ul>
+<li><b>Acoustophoretic sorting.</b> The same Δκ/Δρ acoustic contrast the
+machine senses and grips is also a <em>separation</em> handle: particles of
+different compressibility and density migrate to different equilibrium
+positions in a standing field — <span class="chip c-measured">MEASURED</span>
+art (acoustofluidic sorting). The chamber that will later hold matter is
+the same physics that sorts it first.</li>
+<li><b>Incoming QC.</b> The storage chamber runs the identical tomography
+stack that scans the build volume
+(<a href="replicator_scan.html">Scan</a>) — every gram is scanned,
+characterized, and inventoried before it is ever lifted. Resupply is not
+trusted; it is measured.</li>
+<li><b>Staging and pre-heat.</b> The next build's feedstock is sorted,
+portioned, and brought to temperature <em>below</em> while the build
+chamber is busy <em>above</em> — the storage chamber is the machine's prep
+counter.</li>
+</ul>
+<p>Why a second chamber at all, rather than a hopper and a pump: the twin
+is the <em>same plates</em>. A same-size mirrored chamber means one bill of
+materials, one drive stack, one calibration — and a hidden volume where
+field-work can proceed while the build chamber presents the object. The
+machine is never idle; it is always either performing or preparing. Later
+options on the same logic: a calibration chamber, a dedicated
+disassembly/reclaim chamber. Deck line, quoted from the stack ruling:
+<em>two chambers — one holds the object, one holds the matter it will
+become; between them, one plate.</em></p>
+
+<h2 id="s5">5 · In and out — transport, staging, reclaim, and the
+ledger</h2>
+<p>Four interfaces connect the shelf to the rest of the machine.</p>
+<h3>5.1 The lift is a field (R10)</h3>
+<p>Feedstock moves between chambers <b>through the co-axial bores</b> —
+ruling R10, owned in full by
+<a href="replicator_architecture.html">Architecture §3.3</a>. Summary:
+three contrawound winding pairs stacked on one axis give six independent
+circuits, which is traveling-wave synthesis — a linear-induction elevator
+for conductive feedstock plus acoustic tube conveying for the rest. No
+belts, no augers, no moving parts: <em>the lift is a field, not a
+mechanism.</em> The bore shares duty with the optical sightline by aperture
+partition or time-multiplex.</p>
+<h3>5.2 Staging for assemble</h3>
+<p>The build mode's feed stage
+(<a href="replicator_assemble.html">Assemble §4</a>) takes its input from
+here: feedstock leaves the storage chamber already sorted, characterized,
+and pre-heated (§4), rides the bore, and enters the build volume in
+whichever transport phase the build calls for — powder, droplet, vapor
+(the transport-phase ladder is
+<a href="replicator_architecture.html">Architecture §5</a>'s). The stores'
+contract with assemble is simple: nothing arrives unmeasured, and the
+reduction from stored (oxidized) form to build (reduced) form is paid
+en route, at build time — §2's rule read in the forward direction.</p>
+<h3>5.3 Reclaim from dissolve</h3>
+<p>Dissolve's output comes back the same way
+(<a href="replicator_dissolve.html">Dissolve §5</a>): freed grains ride the
+trap pockets back, deeper unbind rungs ride the bore and the fluid loop as
+droplets or vapor — and everything re-enters storage <em>in storable
+form</em>, obeying the same salt/ash rule as resupply. Reclaimed mineral
+matter divides by solubility into brine and ash; reactive metals return
+pre-oxidized. Reclaimed stock passes the same incoming QC as bought stock —
+the storage chamber does not distinguish where atoms came from, only what
+they are.</p>
+<h3>5.4 Mass bookkeeping — the conservation ledger</h3>
+<p>Baryon conservation makes the inventory arithmetic exact: <b>every gram
+in the object came from a store, and every gram returns to one.</b> Stores
+grow by exactly one object-mass per derez. Cyclic element imbalances
+(replicate steak, derez plates → carbon surplus, iron deficit) are buffered
+by the trace rack and balanced by resupply — or, if ever demonstrated, by
+the <a href="transmutation.html">transmutation sector</a> as balancer of
+last resort (<span class="chip c-open">OPEN</span> there, not here; that
+link is this paper's only one — feedstock chemistry is ordinary chemistry).
+Energy rides the same ledger in miniature: recombination energy released on
+re-forming simple stored molecules is captured by the harvest layer
+(<a href="replicator_architecture.html">Architecture §2.4</a>), so derez is
+modest-net-cost, not free — tier: arithmetic and
+<span class="chip c-measured">MEASURED</span> components, as tagged at the
+source rows in §2.</p>
+
+<h2 id="s6">6 · How big must the shelf be</h2>
+<p>Size-free, because the answer genuinely does not depend on the machine.
+The store volume is set by two distributions the machine does not choose:</p>
+<ul>
+<li><b>the object-mass distribution of what you build</b> — how much stuff,
+per week, actually gets made and unmade; and</li>
+<li><b>the element frequency of those objects</b> — which is heavily
+concentrated: food, ceramics, glass, and most plastics are roughly ten
+cheap elements, all of them in the four bulk staples. The demand curve for
+elements is steeper than any power law the trace rack needs to worry
+about.</li>
+</ul>
+<p>Three consequences:</p>
+<ol>
+<li><b>The pantry is small compared to the build volume.</b> The stored
+forms of §2 are dense condensed phases — water, graphite, rock, brine are
+all within a factor of a few of the density of the objects they become,
+and an object is mostly <em>empty arrangement</em> (a cup is a thin shell
+of its bounding box). A store that holds several builds' worth of mass
+occupies a modest fraction of one build volume.</li>
+<li><b>The recycle loop shrinks the shelf further.</b> A household that
+derezzes what it replicates approaches closed-loop: the stores then need to
+buffer only the <em>net</em> flux (objects kept, mass eaten) plus the
+cyclic imbalances of §5.4 — not gross production. The single-bulk endpoint
+of §2's container ladder is this logic taken to its limit.</li>
+<li><b>The floor is set by sorting, not by chemistry.</b> How many separate
+vessels the shelf needs is §2's container ladder — a sorting-efficiency
+dial. The "~4 stores and one cartridge" floor, and every litre attached to
+it, is an <em>instance</em> figure: see
+<a href="desktop_replicator_hardware_spec.html">Hardware Spec §4</a> for
+RH-1's tanks, bays, and the cartridge circle. This paper deliberately
+contains no litres.</li>
+</ol>
+
+<h2 id="s7">7 · Register, and the single-home note</h2>
+<p>Register discipline: claims are tagged
+<span class="chip c-measured">MEASURED</span> (published or bench-verified
+art), <span class="chip c-derived">DERIVED</span> (arithmetic on measured
+quantities), or <span class="chip c-open">OPEN</span> (registered bet with
+named falsification); taxonomy rows additionally carry their source tiers
+(trivial / design rule / arithmetic) verbatim. Nothing was upgraded in the
+move to this paper; where the source document carried a chip or tier, it is
+carried here unchanged.</p>
+<ul>
+<li>The solubility, gas-density, and reactivity figures of §2 are
+arithmetic on textbook quantities — the noble-gas and stored-form rows are
+<span class="chip c-measured">MEASURED</span> components composed by design
+rules; the salt/ash split and container ladder are design rules forced by
+that arithmetic.</li>
+<li>The Test-0 negative of §3 is a pre-registered measured result and is
+kept as a standing prohibition: polar cartridge geometry is organizational
+only.</li>
+<li>§4's sorting and QC rest on
+<span class="chip c-measured">MEASURED</span> art (acoustophoretic
+separation; the tomography stack per
+<a href="replicator_scan.html">Scan</a>); their <em>composition</em> as a
+storage instrument at machine scale is design until a bench signs it.</li>
+<li>§5.4's ledger is arithmetic; the transmutation balancer is
+<span class="chip c-open">OPEN</span> in its own paper and appears here as
+a link only.</li>
+<li>§6 is sizing logic, not a claim — its numbers live in the instance
+paper.</li>
+</ul>
+<p><b>Single-home note.</b> This paper owns store-level detail: the
+taxonomy of §2, its chemistry rationale, the trace rack, the storage
+chamber's instrument duties, and the inventory bookkeeping. What it does
+not own: the matter-loop <em>topology</em> — the sorting energy ladder,
+the transport-phase ladder, disassembly and energy recovery — which stays
+with <a href="replicator_architecture.html">Architecture §5</a>; the stack
+and bore rulings R9–R10
+(<a href="replicator_architecture.html">Architecture §3.2–3.3</a>); the
+reclaim narrative (<a href="replicator_dissolve.html">Dissolve §5</a>);
+pattern storage
+(<a href="holographic_memory_and_compute_plan.html">Memory &amp;
+Compute</a>); and any specific build's dimensions
+(<a href="desktop_replicator_hardware_spec.html">Hardware Spec §4</a>). A
+change to what the machine keeps, or in what form, lands here first; the
+other papers then point at it.</p>
+
+</body>
+</html>

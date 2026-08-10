@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory and Compute in the Holographic Machine — a conceptual plan</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  .chip.c-bound{color:#fff;background:var(--blood);border-color:var(--blood)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--slate); background:#f1f0ea;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.92rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font:.85em "JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    padding:.05em .3em; border-radius:2px}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+  .figure{margin:1.8rem 0; text-align:center}
+  .figure svg{max-width:100%; height:auto; background:#fdfcf8;
+    border:1px solid var(--rule); border-radius:3px}
+  .caption{font-size:.85rem; color:var(--soft); font-style:italic;
+    margin-top:.5rem; text-align:left}
+  .caption b{font-style:normal; font-family:"Helvetica Neue",Helvetica,sans-serif; color:#555}
+</style>
+</head>
+<body>
+
+<div class="banner">
+Read first → <a href="replicator_principles.html">Replicator Principles</a> ·
+Bridge document · compute lane →
+<a href="../../papers/desktop_optical_supercomputer.html">Desktop Optical Supercomputer</a> ·
+<a href="../../papers/optimizing_compute.html">Optimizing Compute</a> · replicator lane →
+<a href="replicator_architecture.html">Architecture</a> ·
+<a href="replicator_at_the_limit.html">The Replicator at the Limit</a> ·
+<a href="replicator_mechanical_construction.html">Mechanical Construction</a>
+</div>
+
+<h1>Memory and Compute in the Holographic Machine</h1>
+<p class="sub">A conceptual plan — where the bits live, where the arithmetic
+happens, and why those are not the same cavity.</p>
+<p class="meta">draft v0.1 · 2026-07-22 · <b>Role</b>: this document connects
+two lanes that were built separately. The compute lane has a prototype (a
+twelve-port EML toroid, $10 BOM) and a measurement framework (the Osika and
+its four axes). The replicator lane has a boundary-controlled chamber and a
+field compiler. Both are holographic in the same technical sense. This plan
+says what happens when they are treated as one system — and it opens by
+answering the question that decides the architecture, which turns out to
+have a clean numerical answer rather than a matter of taste.</p>
+<p class="meta"><em>Note 2026-08-01: this plan predates the 07-30 cap+stack
+rulings — its 18.5&nbsp;L two-cap-era chamber figures are instance-era
+numbers; nothing here is materially contradicted; to be refreshed at the
+next revision.</em></p>
+
+<h2>1 · The question that decides everything</h2>
+<p>The tempting idea is that the replicator's build volume, being a
+programmable holographic cavity already, should double as the machine's
+computer. It should not, and the reason is a mode count.</p>
+<p>A cavity's information capacity scales as its volume divided by the cube
+of the wavelength it operates at — <code>N ≈ 8πV/3λ³</code>. The build
+volume is 18.5 L. Run that number for each carrier the machine actually
+uses:</p>
+<div class="overflow"><table>
+<tr><th>carrier in the build volume</th><th>λ</th><th>independent modes</th></tr>
+<tr><td>acoustic, 100 kHz in air</td><td>3.4 mm</td><td><b>3.8 × 10⁶</b></td></tr>
+<tr><td>acoustic, ~1 MHz in melt</td><td>~5 mm</td><td>1.2 × 10⁶</td></tr>
+<tr><td>microwave, 10 GHz</td><td>30 mm</td><td><b>5.7 × 10³</b></td></tr>
+<tr><td>optical, 500 nm</td><td>0.0005 mm</td><td><b>1.2 × 10¹⁸</b></td></tr>
+</table></div>
+<blockquote><b>Twelve orders of magnitude.</b> The same 18.5 litres holds a
+million-ish addressable modes for sound and a quintillion for light. The
+build chamber is a poor computer <em>because it is a good replicator</em>:
+moving matter needs long wavelengths and real forces, and long wavelengths
+are exactly what makes a cavity information-poor.</blockquote>
+<p>Note the ordering trap in that table: microwave has <em>fewer</em> modes
+than acoustic in the same box — 10 GHz is a longer wavelength than 100 kHz
+sound. The EM channel earns its place by speed, bandwidth and sensing
+precision, not capacity.</p>
+<p>So the ruling is: <b>do not merge the cavities.</b> Build one architecture
+instantiated at three wavelengths, each sized for what it is good at, and let
+them share the mathematics and the compiler rather than the volume.</p>
+
+<h2>2 · One mathematics, three cavities</h2>
+<p>What justifies calling this one system is that the same operation runs in
+all three: interfere a <em>reference</em> wave with an <em>object</em> wave,
+store the interference, then re-illuminate to reconstruct. Memory, actuator
+and processor are that one operation wearing three hats.</p>
+<div class="overflow"><table>
+<tr><th>cavity</th><th>λ / medium</th><th>role</th><th>status</th></tr>
+<tr><td><b>Build chamber</b></td><td>acoustic + µwave, 18.5 L</td><td>the actuator: shape matter, scan objects. ~10⁶ modes is plenty for shaping and far too few for arithmetic</td><td>specified — <a href="replicator_mechanical_construction.html">construction paper</a></td></tr>
+<tr><td><b>Compute cavity</b></td><td>optical, toroid, cm-scale</td><td>the processor: recurrent EML graph, settles to a fixed point in ns; depth set by Q</td><td><span class="chip c-measured">PROTOTYPED</span> — <a href="../../papers/desktop_optical_supercomputer.html">$10 toroid</a></td></tr>
+<tr><td><b>Store</b></td><td>optical, phase-change medium</td><td>the memory: non-volatile, rewritable, associative; ceiling (V/λ³)×bits-per-mode ≈ 10¹–10² TB/cm³, real limit set by M# (§3.1)</td><td>plan — this document</td></tr>
+</table></div>
+<p>The compiler is what makes them one machine. The
+<a href="replicator_field_compiler.html">field compiler</a> already emits
+boundary field states for the build chamber; the same synthesis step — record
+reference against object, modulate the surface — is what programs a
+holographic aperture, and what writes a page into the memory volume. One
+toolchain, three back-ends.</p>
+
+<h2>3 · Two layers, not four</h2>
+<p>An earlier draft of this plan proposed a four-level hierarchy with an
+SLM/LCD fast boundary and a write-once photopolymer archive on the ends.
+Both ends collapse, and the architecture is better for it:</p>
+<ul>
+<li><b>The SLM was a slower version of something the cavity already does.</b>
+The compute cavity's own <em>field state</em> is reconfigured at the drive
+rate — picoseconds to nanoseconds — while an SLM runs at 10²–10⁴ Hz: a
+kilohertz device in the path of a gigahertz cavity is a bottleneck called a
+layer.</li>
+<li><b>The archive collapses into the store.</b> PCM is already
+non-volatile with year-scale retention; a separate write-once medium buys
+permanence we already have, at the cost of a second write chain and a second
+material.</li>
+</ul>
+<p>What remains is two layers and a bridge:</p>
+<div class="overflow"><table>
+<tr><th>layer</th><th>medium</th><th>timescale</th><th>persistence</th><th>holds</th></tr>
+<tr><td><b>Live state</b></td><td>the optical compute core — the field standing in the cavity</td><td>ps–ns, reconfigured at the drive rate</td><td>one coherence time</td><td>the working set: whatever is being computed, scanned or reconstructed <em>right now</em></td></tr>
+<tr><td><b>Store</b></td><td><b>phase-change material</b> (GST, Sb₂S₃)</td><td>ns switching, finite endurance</td><td><b>non-volatile</b>, no power</td><td>everything persistent: patterns, transforms, weights</td></tr>
+</table></div>
+<p><b>The core is the bridge, and it runs in both directions.</b> Every path
+in the machine passes through the live state: chamber → core (scan data in),
+core → PCM (consolidate), PCM → core (recall), core → chamber (drive out).
+Reading and writing are the same optical operation run with the reference
+and object waves exchanged, which is why one element can serve both.</p>
+<div class="box"><b>Why PCM, and why the earlier deferral was still right.</b>
+The photonic lane once considered PCM films as "frozen weights" and correctly
+set them aside: that architecture wanted <em>every pixel reconfigured every
+frame</em>, the one job a non-volatile medium is wrong for. That judgement
+was right — but it evaluated PCM for the <em>fast</em> job. Here the fast job
+belongs to the field itself, and PCM takes the one it was always suited to:
+the non-volatile, rewritable, high-index-contrast <em>store</em> — large
+amorphous↔crystalline index change, holds with no power, rewrites in place.
+Not a reversal of the old call — a different slot.</div>
+<h3>3.1 · Counting the store correctly</h3>
+<p>An earlier version of this section quoted ~200 MB/cm² per layer, derived
+from "one bit per (λ/2)² spot." <b>That figure was wrong, and wrong in an
+instructive way</b>: it is a <em>binary optical disc</em> model — one bit per
+resolvable spot on a surface — applied to a medium that does not work that
+way. A hologram does not put a bit in a place; it writes a distributed
+interference pattern across a volume, and many such patterns coexist there,
+separated by Bragg selectivity in angle, wavelength, shift or phase code.
+Capacity scales with <em>thickness</em>, and the correct accounting is mode
+counting, not spot counting.</p>
+<div class="overflow"><table>
+<tr><th>accounting</th><th>modes or bits per cm³</th><th>note</th></tr>
+<tr><td>one mode per λ³</td><td>8 × 10¹² modes → <b>1 TB/cm³</b> at 1 bit/mode</td><td>the conventional statement of the bound</td></tr>
+<tr><td>one mode per (λ/2)³ (Nyquist cell)</td><td>6.4 × 10¹³ modes → <b>8 TB/cm³</b></td><td>the aggressive but defensible cell size</td></tr>
+<tr><td>× 4 bits/mode (amplitude × phase × polarisation)</td><td><b>32 TB/cm³</b></td><td>the multidimensional-encoding direction (<i>Optica</i> 13, 591, 2026)</td></tr>
+<tr><td>× 8 bits/mode</td><td><b>64 TB/cm³</b></td><td>optimistic on SNR</td></tr>
+</table></div>
+<p>So the sugar-lump claim comes back, and larger than before: at 4 bits per
+mode, <b>1 cm³ holds ~32 TB ≈ 320 000 objects</b>. Storage is emphatically
+not the constraint.</p>
+<div class="box"><b>One precision that matters, so we do not overclaim in the
+other direction.</b> V/λ³ is <em>not</em> the imaging diffraction limit, and
+holography does not evade it — holography is precisely the technique that
+<em>reaches</em> it, where bit-per-pixel storage wastes it. It is a mode
+count, the same count as §1's cavity modes, and linear optics cannot exceed
+it. What legitimately exceeds <em>one bit per mode</em> is a larger alphabet
+per mode: amplitude, phase and polarisation give several bits where intensity
+alone gives one. So the honest form is <b>capacity ≈ (V/λ³) × bits-per-mode</b>
+— insane in absolute terms, and still bounded.</div>
+<div class="warn"><b>The wall you actually hit is dynamic range, not λ³.</b>
+When M holograms share a volume, the available index modulation divides among
+them, and diffraction efficiency per page goes as
+<code>η = (M#/M)²</code> — the medium's M-number over the page count,
+squared. With a good M# of 20: 100 pages gives η ≈ 4 × 10⁻²; 1 000 pages
+gives 4 × 10⁻⁴; 10 000 pages gives 4 × 10⁻⁶. Recall signal collapses
+quadratically in the very quantity we are trying to maximise. <b>The λ³
+ceiling is never what stops a real system — the detector noise floor is.</b>
+Any capacity number in this plan is therefore a ceiling awaiting an M#
+measurement, and step 2 of §7 exists to get one.</div>
+<div class="box"><b>Why PCM is a good holographic medium — a reversal of my
+earlier pessimism.</b> Phase-change materials have <em>enormous</em>
+refractive-index contrast between amorphous and crystalline states —
+Δn of order 1, against ~0.03 for photopolymer. Since M# scales with available
+index modulation, that huge Δn buys <b>multiplexing depth</b>: more pages
+before η collapses — the opposite of a drawback, and a partial answer to the
+thickness problem, since a thin high-Δn medium can hold what a thick low-Δn
+one does. Two engineering conditions: use the <b>low-loss</b> compositions
+developed for photonics — Sb₂S₃ and Sb₂Se₃ — rather than GST, which is
+strongly absorbing when crystalline and gives amplitude modulation where you
+want phase; and genuine <em>volumetric</em> (thick or many-layer) PCM remains
+<span class="chip c-open">OPEN</span> — deposited films are tens of
+nanometres.</div>
+
+<h3>3.2 · Chords, not bits — the figure of merit changes</h3>
+<p>Counting modes rather than spots changes not just the arithmetic but the
+unit. <b>The medium's natural quantum is not a bit. It is a stored
+interference pattern — which is to say, a chord.</b></p>
+<p>That matters because a hologram is natively <em>associative</em>:
+illuminate it with a probe and every stored page responds at once, each with
+its own correlation, in the time light takes to cross the volume — a bank of
+matched filters all firing in parallel. "What is at address <i>n</i>" and
+"what do you have that looks like <i>this</i>" are different questions, and
+the second is the one this machine actually asks.</p>
+<blockquote>Storing chords rather than bits deletes a whole layer. The
+<code>.pattern</code> format is already complex poles and port-vectors; the
+medium already stores complex interference patterns. Serialising chords into
+bits, writing bits into a medium that wanted patterns, then reconstructing
+chords on readout is a round trip through a representation neither end
+needed. <b>Write the chords.</b></blockquote>
+<p>So the honest figure of merit for this store is not bytes but
+<b>distinguishable, retrievable patterns per volume</b> — limited by the same
+M# budget, because what degrades with load is precisely the ability to tell
+stored patterns apart. Capacity in bits is a sanity check on the object
+library; capacity in chords is what the architecture actually spends.</p>
+<p>It also settles §5's second return. "Which stored chord does this echo
+match?" is not a search over a database — it is <em>one illumination</em>,
+answered by every page simultaneously. That is why a holographic correlator
+belongs in the Tbit/s scan loop and a lookup table does not.</p>
+<div class="warn"><b>Two honest limits on associative recall.</b> First, it
+returns a <em>ranked correlation</em>, not an exact match — several pages
+answer, and the answer is "these, in this order, with these strengths." That
+is a proposal, which is exactly why the provenance rule of §6 binds it.
+Second, discrimination degrades with load on the same
+<code>(M#/M)²</code> curve: the more chords stored, the more alike the
+weak ones look. Associative capacity and recall fidelity are the same
+budget spent twice, and no encoding scheme escapes that.</div>
+
+<h2>4 · Weights are not a file — they are the medium</h2>
+<p>In this architecture, "a model need not be a large weight file" is
+literally true rather than a manner of speaking — worth stating precisely,
+because it is easy to overclaim.</p>
+<p>A hologram performs a <b>linear transform</b> on whatever illuminates it:
+that is what a diffractive element <em>is</em>. A neural network layer is a
+matrix–vector product followed by a nonlinearity. So a weight matrix written
+as an interference pattern is not data that gets loaded into a processor —
+the light passing through it <em>is</em> the multiply, executed at the speed
+of propagation, with no memory bus in the path. This is established art:
+diffractive optical networks and programmable nanophotonic meshes both work
+this way.</p>
+<p>The scale is the surprising part. At the 1 bit/λ³ density, a
+<b>1024 × 1024 weight matrix occupies a cube about 51 µm on a side</b> — a
+speck at the edge of visibility. The "weight file" does not shrink; it stops
+being a file.</p>
+<p>And plasticity follows from the medium rather than from a training loop:
+because PCM is rewritable in place, <em>learning is re-exposure</em>. A
+weight update is a local optical or electrical pulse that nudges the
+crystalline fraction of one site. That is the honest technical content of
+"neuroplasticity" here — not a metaphor, but also not free.</p>
+<h3>4.1 · The nonlinearity objection does not apply to this machine</h3>
+<p>An earlier draft of this plan asserted that "there is no good optical
+transistor; cascading layers without electronic regeneration remains the
+central unsolved problem of optical computing." <b>That is a correct general
+statement about optical computing and the wrong statement about this
+architecture</b> — it imports the machine-learning stack (linear layer, then
+an activation function bolted on) onto a machine that does not use it.</p>
+<p>Two things make it not apply:</p>
+<ul>
+<li><b>The primitive is already nonlinear.</b> The compute cavity does not
+compose matrix multiplications; it composes
+<code>eml(x, y) = exp(x) − ln(y)</code>, which is a nonlinear function of
+both arguments and is <em>universal</em> for the entire elementary-function
+family in the way NAND is universal for Boolean logic. There is no activation
+to add afterwards, because there is no linear layer to activate.</li>
+<li><b>The device supplies it physically, and it is the same device that does
+the I/O.</b> Per the <a href="../../papers/desktop_optical_supercomputer.html">supercomputer
+paper</a> §5.1: the exponential branch is the gain-vs-carrier response of the
+laser cavity, the logarithmic branch is the carrier-vs-photon response of the
+same junction, and the subtraction is what the two coupled state variables do
+at threshold. <em>The diode at threshold is, materially, a physical eml
+gate.</em> So the architecture never needed an optical transistor; it needed
+a device whose native physics is the primitive, and a laser diode at
+threshold is one.</li>
+</ul>
+<blockquote>The correction changes what to worry about. <b>The ceiling on
+this machine is not "can it be nonlinear" — it is "how deep a composition
+can it sustain."</b></blockquote>
+<div class="warn"><b>So here are the limits that are actually binding.</b>
+<ul>
+<li><b>Depth is Q-limited, and Q is currently small.</b> Composition depth is
+how many EML applications complete before the field drops below the readout
+floor. The honest figures from the compute lane: optical ringdown Q ≈ 10–100
+on the resin chamber, and <b>effective compute-depth Q closer to 10</b>. Ten
+EML gates deep is a real computer and a shallow one. This — not
+nonlinearity — is the frontier, and it is a materials frontier: CVD diamond
+supports ringdown Q &gt; 10⁹.</li>
+<li><b>Breadth and depth are different numbers; do not let one cover for the
+other.</b> The <em>operator space</em> is astronomical — of order 6 × 10⁵⁷
+distinguishable encodings select which EML tree the substrate evaluates. The
+<em>composition depth</em> is ~10. Both are true. Quoting the first while the
+second is the binding constraint would be the easiest available
+self-deception in this whole document.</li>
+<li><b>Analog cascades accumulate noise — and the architecture's answer is
+settling, not regeneration.</b> Digital restores signal levels at every gate,
+analog does not, so error compounds with depth. But a chamber that
+<em>settles to a fixed point</em> is running a contractive map, and
+contraction suppresses perturbations — signal restoration achieved
+dynamically rather than by a transistor. The tension to watch: the HAPTIC
+contract deliberately operates at the <em>edge of lasing</em>, the most
+sensitive available point, and sensitivity and contraction pull in opposite
+directions. Whether the loop sits contractive enough to restore while
+sensitive enough to read is an empirical question about the operating
+point.</li>
+<li><b>Precision is finite.</b> Analog optical/PCM compute delivers of order
+4–8 effective bits per site, not fp32 — workable for inference and awkward
+for training.</li>
+<li><b>PCM endurance is finite</b> (order 10⁶–10⁹ cycles): fine for a store
+that updates rarely, disqualifying at activation rates. Precisely why it is
+the store and not the working layer.</li>
+<li><b>In-situ training remains unsolved.</b> Inference through a written
+transform is straightforward; computing gradients inside the medium is not.
+Assume transforms are fitted elsewhere and written here until shown
+otherwise.</li>
+</ul></div>
+<div class="box"><b>And the two compute modes cover each other.</b> This plan
+contains <em>both</em> stories: a <b>passive holographic transform</b> (§4 —
+genuinely linear, needing an activation from somewhere), and the <b>EML
+cavity</b> (§2 — nonlinear by construction). The generic objection applies to
+the first and not the second, and the machine has both — the diode stage is
+available as the nonlinearity for a holographic matmul that lacks one. The
+honest architecture is not "optics plus an unsolved problem." It is <b>a
+linear transform in the medium and a nonlinear primitive at the device — the
+standard division of labour, just physical.</b></div>
+
+<h2>5 · What this gives the replicator</h2>
+<p>Three concrete returns, in increasing order of how much they matter:</p>
+<ol>
+<li><b>A store for the pattern library.</b> From the
+<a href="replicator_at_the_limit.html">limit paper</a>, an object costs
+~100 MB; per §3.1, <b>1 cm³ holds ~32 TB ≈ 320 000 objects</b>, rewritable
+in place. The number that will actually bind is not capacity but M#.</li>
+<li><b>A solution to the Tbit/s problem.</b> The machine's binding
+constraint is not building but <em>listening</em>: ~1 Tbit/s of sensor
+stream, with corrections due inside one wave period. A holographic
+correlator answers "which stored chord does this echo match?" in the time
+light crosses it — which is the shape of the scan problem, not a coincidence.</li>
+<li><b>A brain the machine can build.</b> Per the limit paper's §4.2:
+transistor logic is chemistry, optical computing is geometry, and geometry is
+what a replicator makes. The compute cavity and the memory volume are both
+shaped media — waveguides, index contrast, exposed volumes. They are the
+parts of a computer that a matter compiler can plausibly close on.</li>
+</ol>
+
+<h2>6 · The provenance rule binds this lane too</h2>
+<p>This plan inherits the scan lane's discipline: <b>every chord, and every
+reconstruction it feeds, carries <code>measured | inferred</code> provenance,
+and the viewer renders the difference.</b> The reason is specific to this
+machine: the scan output
+is also the build acceptance criterion, so an inferred interior becomes a
+<em>fabricated-from-a-guess</em> interior. Both a wrong Green's function and
+a confident prior produce sharp, convincing, meaningless images.</p>
+<p>That rule bites here because the returns in §5 are inference. A
+holographic correlator that answers "which stored chord does this echo
+match?" is proposing a match — it is not measuring one. So:</p>
+<blockquote><b>The model may propose; only the aperture asserts.</b> Anything
+the compute core recalls, completes, denoises or pattern-matches is tagged
+<code>inferred</code> and stays tagged through every downstream use. The
+optical core is allowed to be fast and clever; it is not allowed to launder a
+guess into a measurement by being either.</blockquote>
+<p>Two corollaries worth writing down now, before there is code to argue
+with:</p>
+<ul>
+<li><b>Adaptive selection allocates; it does not synthesize.</b> Spending more
+chords where an object rings complex is a policy over a finite measurement
+budget — genuinely valuable, and the reason resolution should be spatially
+non-uniform, but no independent information. A learned scan policy chooses
+<em>among</em> available measurements; it cannot create one.</li>
+<li><b>Weights are inferred by construction.</b> A transform written into PCM
+is a prior. When the core applies it, the output inherits
+<code>inferred</code> — which means the "weights are the medium" claim of §4
+buys speed, not epistemic standing.</li>
+</ul>
+<div class="box"><b>The one thing that makes multi-bounce reconstruction
+legitimate is also what makes this lane legitimate: the machine measures its
+own cavity.</b> The empty-chamber reference run, the per-plate TX→RX identity
+matrix and the double-precision twin gates are not housekeeping — they are
+what turns wall multipath from a liability into aperture, because the forward
+model is <em>measured</em> rather than assumed. The same standard applies to
+any hologram this plan writes: a stored transform is trustworthy only to the
+extent the medium's response was characterised, not asserted.</div>
+
+<h2>7 · The plan, in order</h2>
+<div class="overflow"><table>
+<tr><th>#</th><th>step</th><th>why it is first</th><th>gate</th></tr>
+<tr><td>1</td><td><b>Write and read one hologram</b> in a phase-change film with the existing 450 nm optics; recover a known bit pattern</td><td>establishes the write/read chain before any capacity claim</td><td>bit-error rate on a known page</td></tr>
+<tr><td>2</td><td><b>Measure the medium's M#</b> — multiplex N pages, plot η vs N, fit <code>(M#/M)²</code></td><td>this, not λ³, is what limits a real store; every capacity claim in §3.1 is a ceiling awaiting this number</td><td>M# with its η-vs-N curve; capacity restated as a fraction of the mode ceiling</td></tr>
+<tr><td>3</td><td><b>One matrix–vector product</b> through a written hologram; compare against the digital reference</td><td>this is the whole "weights are the medium" claim, reduced to one falsifiable step</td><td>relative error vs digital <code>Wx</code></td></tr>
+<tr><td>4</td><td><b>PCM rewrite cycle</b>: write a transform, run it, rewrite it, run again</td><td>separates "non-volatile store" from "reprogrammable transform" — the plasticity claim lives here</td><td>contrast retained over N cycles</td></tr>
+<tr><td>5</td><td><b>Correlator against the chord dictionary</b> — feed a scan echo, get a match</td><td>the first step where compute serves the replicator rather than standing alone</td><td>match rate vs the software matcher</td></tr>
+<tr><td>6</td><td><b>Score on the four axes</b> (<a href="../../papers/optimizing_compute.html">Osika</a>), reporting all three energy denominators</td><td>keeps this lane commensurable with the toroid and with digital baselines</td><td>a filled axis table with named verification type</td></tr>
+</table></div>
+<p>Steps 1–3 are a bench sequence, not a program. Nothing after step 3
+should be argued for until step 3 produces a number.</p>
+
+<h2>8 · Open questions worth naming</h2>
+<ul>
+<li><b>Does the build chamber compute at all?</b> ~10⁶ acoustic modes is a
+poor processor but not zero. The chamber's modes are spent on
+<em>shaping</em>; asking them to also compute is asking one resource to do
+two jobs. Whether any useful computation rides free on the shaping is
+<span class="chip c-open">OPEN</span> and would be a genuine finding — but it
+is not a plan, and it must not be assumed in the budget.</li>
+<li><b>Multiplex depth in practice.</b> The λ³ bound counts sites; realized
+holographic systems lose an order or more to multiplexing crosstalk and
+dynamic range. The recent multidimensional-encoding work (amplitude × phase
+× polarisation, <i>Optica</i> 13, 591, 2026) is the right direction — more
+degrees of freedom per site — but is research-stage.</li>
+<li><b>Where the nonlinearity comes from.</b> Unresolved here and everywhere.
+Candidates worth tracking: saturable absorption, the diode-bridge trick the
+toroid already exploits (the laser diode <em>is</em> the nonlinearity in that
+architecture), and simply accepting an electronic activation between optical
+layers.</li>
+<li><b>Self-fabrication of the media.</b> Photopolymer and doped glass are
+bulk phases and plausibly in-machine; PCM films with controlled stoichiometry
+are less obviously so. This sets where the von Neumann sea-of-parts line
+actually falls for the memory layer.</li>
+</ul>
+
+<div class="warn"><b>Register.</b> This is a plan, not a result. The toroid
+prototype and its bench measurement are
+<span class="chip c-measured">MEASURED</span> and belong to the
+<a href="../../papers/desktop_optical_supercomputer.html">supercomputer paper</a> with its
+own caveats (optical-ringdown Q ≈ 10–100, effective compute-depth Q closer to
+10). Everything in §3–§6 here is design intent with numbered gates; nothing
+in it has been built. The density figures are bounds and arithmetic, and the
+arithmetic is checkable in a minute. Where this plan touches AI claims it
+claims two separable things — a linear transform held in the medium, and a
+nonlinear primitive supplied physically by the diode (§4.1) — and explicitly
+disclaims in-situ training, fp32-class precision, and any composition depth
+beyond what measured Q supports.</div>
+
+</body>
+</html>

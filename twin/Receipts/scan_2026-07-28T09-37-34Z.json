@@ -1,0 +1,64 @@
+{
+  "configHash" : "",
+  "date" : "2026-07-28T09:37:34Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 50.03277289867401,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "no bar by design — a bar here would reward hallucinating into unobserved space",
+      "id" : "G14a",
+      "measured" : 0,
+      "name" : "Machine vs God view, raw IoU",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "0.0% of the volume was never observed; the gap 0.000 is the specular-gap cost",
+      "id" : "G14b",
+      "measured" : 0,
+      "name" : "coverage-weighted IoU (observed only)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "<",
+      "detail" : "in-fit 0.1251, held-out 0.1219, ratio 0.97x (bar: also <= 1.5x); 3 gates held out",
+      "id" : "G18",
+      "measured" : 0.12187433707320601,
+      "name" : "held-out gate prediction error",
+      "passed" : true,
+      "threshold" : 0.15
+    },
+    {
+      "comparison" : "<",
+      "detail" : "",
+      "id" : "G11",
+      "measured" : 0,
+      "name" : ".pattern round trip bit-exact",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "free QC on every scan",
+      "id" : "G15",
+      "measured" : 0.000958822751478412,
+      "name" : "reciprocity ||K-K^T||\/||K||",
+      "passed" : true,
+      "threshold" : 0.1
+    },
+    {
+      "comparison" : "<",
+      "detail" : "refused, as required",
+      "id" : "G-DORT-gate",
+      "measured" : 0,
+      "name" : "L1 refuses without a measured Green's function",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "1f1cf0c",
+  "name" : "scan"
+}

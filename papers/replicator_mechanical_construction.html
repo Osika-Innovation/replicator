@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RH-1 — Mechanical Construction &amp; Wiring (instance)</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  .chip.c-demo{color:#fff;background:var(--soft);border-color:var(--soft)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--slate); background:#f1f0ea;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.92rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font:.85em "JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    padding:.05em .3em; border-radius:2px}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+  .figure{margin:1.8rem 0; text-align:center}
+  .figure svg{max-width:100%; height:auto; background:#fdfcf8;
+    border:1px solid var(--rule); border-radius:3px}
+  .caption{font-size:.85rem; color:var(--soft); font-style:italic;
+    margin-top:.5rem; text-align:left}
+  .caption b{font-style:normal; font-family:"Helvetica Neue",Helvetica,sans-serif; color:#555}
+</style>
+</head>
+<body>
+
+<div class="banner">
+Read first → <a href="replicator_principles.html">Replicator Principles</a> ·
+architecture → <a href="replicator_architecture.html">Architecture</a> ·
+carriers → <a href="replicator_phonons.html">Phonons</a> +
+<a href="replicator_photons.html">Photons</a> ·
+spec → <a href="desktop_replicator_hardware_spec.html">Hardware Specification</a> ·
+science → <a href="transmutation.html">Transmutation</a> · KOSMOS series
+</div>
+
+<h1>RH-1 — Mechanical Construction &amp; Wiring</h1>
+<p class="sub">One realized instance, at the engineering
+optimum — two plate types, the active back-wall, the energy loop, and the
+power-up sequence. Written to build from, and to model from.</p>
+<p class="meta">draft v0.3 · 2026-07-22 · <b>Role in the set</b>: the companions
+answer <em>why</em> (physics) and <em>what's decided</em> (frozen rulings).
+This one answers <em>what atoms go where</em> at the limit of physics. Written
+to the <b>optimum</b>: the best arrangement of established physics, not the
+cheapest demo. First-light COTS shortcuts are marked
+<span class="chip c-demo">FIRST-LIGHT</span> and kept subordinate. Everything
+here is measured or published art; the optimum is an <em>arrangement</em>, and
+claims no new physics. This revision (v0.3) separates the two carriers onto
+two plate types and adds the harvest loop and the initialization sequence.</p>
+
+<div class="box"><b>Instance note (2026-08-01, family restructure).</b> This
+file is the build recipe for <em>one realized instance</em> — RH-1. The
+machine topology it instantiates lives canonically in
+<a href="replicator_architecture.html">The Replicator — Architecture</a>, and
+element-level physics now has canonical homes in
+<a href="replicator_phonons.html">The Phonons</a> and
+<a href="replicator_photons.html">The Photons</a>; this file keeps the
+instance recipes — what atoms go where in RH-1. <b>Known internal
+inconsistency:</b> §9–§10 still carry desktop-era two-cap geometry that
+conflicts with the free-standing v0.4 spec; to be fixed when this instance
+doc is next revised.</div>
+
+<h2>1 · The machine is an eight-face boundary</h2>
+<p>One principle sets the build. Kirchhoff–Helmholtz: the field inside a
+volume is fixed by the field on its enclosing surface — so command as much of
+that surface as possible. <em>(Rev 2026-07-30, operator: the two-kinds-of-plate
+split below is superseded — the circular plate assemblies are now
+<b>dual-carrier</b> and primary for phonons AND photons; the phononic panels
+are <b>plan B</b>, an auxiliary extension. §2 and §4 are retained as the
+plan-B build recipe; §3b gives the current primary assembly.)</em></p>
+<div class="overflow"><table>
+<tr><th>surface</th><th>type</th><th>carrier</th><th>what it does</th></tr>
+<tr><td><b>3 circular plate assemblies</b> (top · double-faced middle ·
+storage deck)</td><td>dual-carrier coaxial horn (§3b)</td><td>acoustic
+<b>and</b> microwave</td><td><b>the primary aperture, both carriers</b>:
+3-PZT throat + contrawound torus + gyroid horn + perforated face —
+toroidal-pulse launch, acoustic holography, super-resolution sensing; each
+holds the Ø12 bore and the optical stem (resized 2026-08-03, §3c —
+ingot-scale induction dropped) — <em>the axis</em></td></tr>
+<tr><td><b>phononic wall panels</b> (rear bays)</td><td>plan B —
+auxiliary</td><td>acoustic</td><td>added muscle band and side-boundary
+drive where an application needs them; <b>not in the free-standing
+baseline</b> — the arcade columns carry RX strips and services regardless
+— <em>the equator</em></td></tr>
+<tr><td><b>front glass</b> (rotating door)</td><td>passive (ITO-coated)</td><td>—</td><td>EMC closure + safety; the one uncommanded face; opens the chamber (spec §5)</td></tr>
+<tr><td><b>base bay</b></td><td>electronics</td><td>—</td><td>generation only: controller, drivers, PSU, feedstock, UI — no field elements</td></tr>
+</table></div>
+<p>So the mental model is no longer a drum but a <b>press</b>: facing
+circular plates command the axis as a stable open resonator (the focusing
+term, R8), the walls watch and close EMC, and the plan-B staves can join
+the equator when fitted. The free-standing machine stacks two such
+chambers — build above, storage below — sharing the double-faced middle
+plate (spec §2).</p>
+
+<div class="figure">
+<svg viewBox="0 0 740 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Boundary layout: two caps, six back panels, front door">
+  <text x="24" y="26" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">The eight-face boundary — section (left) &amp; plan (right)</text>
+  <!-- SECTION -->
+  <g>
+    <rect x="70" y="70" width="200" height="16" rx="3" fill="#eaf0f5" stroke="#3a5a7d" stroke-width="1.3"/>
+    <text x="170" y="63" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#3a5a7d">EM cap (top)</text>
+    <rect x="70" y="224" width="200" height="16" rx="3" fill="#eaf0f5" stroke="#3a5a7d" stroke-width="1.3"/>
+    <text x="170" y="256" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#3a5a7d">EM cap (bottom)</text>
+    <!-- side panels -->
+    <rect x="70" y="90" width="14" height="130" fill="#eef3e8" stroke="#5a7d3a" stroke-width="1.2"/>
+    <rect x="256" y="90" width="14" height="130" fill="#eef3e8" stroke="#5a7d3a" stroke-width="1.2"/>
+    <text x="60" y="160" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#3f5a28" transform="rotate(-90 60 160)">phononic panel</text>
+    <!-- bore -->
+    <line x1="170" y1="86" x2="170" y2="224" stroke="#7a1f1f" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <ellipse cx="170" cy="86" rx="20" ry="4" fill="none" stroke="#7a1f1f" stroke-width="1.4"/>
+    <text x="196" y="150" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">bore + winding</text>
+    <!-- workpiece -->
+    <circle cx="170" cy="155" r="12" fill="#e8bd4a" opacity=".7"/>
+    <text x="170" y="290" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#5a6470">caps drive the axis · panels converge on the center</text>
+  </g>
+  <!-- PLAN -->
+  <g transform="translate(520,155)">
+    <circle r="105" fill="#faf7ef" stroke="#d2cdbf" stroke-width="1"/>
+    <!-- 6 back panels across ~240deg -->
+    <g stroke="#5a7d3a" stroke-width="7" fill="none" opacity=".9">
+      <path d="M -91,52 A 105,105 0 0 1 -105,0"/>
+      <path d="M -105,-4 A 105,105 0 0 1 -74,-74"/>
+      <path d="M -70,-78 A 105,105 0 0 1 -4,-105"/>
+      <path d="M 4,-105 A 105,105 0 0 1 70,-78"/>
+      <path d="M 74,-74 A 105,105 0 0 1 105,-4"/>
+      <path d="M 105,0 A 105,105 0 0 1 91,52"/>
+    </g>
+    <!-- front door arc -->
+    <path d="M -88,57 A 105,105 0 0 0 88,57" fill="none" stroke="#7fa3ba" stroke-width="7" opacity=".8"/>
+    <circle r="26" fill="none" stroke="#7a1f1f" stroke-width="1.4" stroke-dasharray="3 3"/>
+    <text y="-118" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#3f5a28">6 phononic panels (back)</text>
+    <text y="85" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#3a5a7d">glass door (front)</text>
+    <text y="3" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#7a1f1f">bore</text>
+  </g>
+</svg>
+<div class="caption"><b>Fig. 1 — The boundary.</b> Two EM caps on the axis,
+six phononic panels wrapping the back, the glass door across the front. The
+plan (right) looks down: panels command ~240°, the door the front ~120°.</div>
+</div>
+
+<h2>2 · The phononic panel — plan B <em>(rev 2026-07-30: auxiliary, not
+baseline)</em></h2>
+<p><em>Status note: the primary acoustic aperture is now the plate assembly
+(§3b); this section is retained as the build recipe for the plan-B wall
+panels — the layer stack below (relaxor driver, graded taper, hex rainbow
+screen) is unchanged engineering and correct wherever a panel is
+fitted.</em></p>
+<p>The panels are the muscle, so they carry the hard question: <em>max
+acoustic power and max datarate into the volume</em>. Datarate is Shannon,
+<code>C = BW·log₂(1+SNR)</code> — bandwidth <em>and</em> power — against three
+physical walls:</p>
+<ul>
+<li><b>Gain–bandwidth (Bode–Fano).</b> A resonance trades coupling depth for
+bandwidth against a fixed budget. Escape = high <code>f₀</code>.</li>
+<li><b>Air attenuation ∝ f².</b> Through-air over 300 mm caps near a few
+hundred kHz; the MHz regime lives only in a coupling medium or the melt (see
+box).</li>
+<li><b>The impedance cliff — dominant.</b> <code>Z_air ≈ 415</code> vs
+<code>Z_piezo ≈ 30 MRayl</code>: a bare piezo face radiates ≈ −42 dB (0.005%)
+into air. The power problem is the handoff, not the crystal.</li>
+</ul>
+<p>So the panel is not a part but a stack that beats all three with material
+and geometry:</p>
+<div class="overflow"><table>
+<tr><th>layer / role</th><th>optimum</th><th>the wall it beats</th></tr>
+<tr><td><b>driver</b></td><td><b>single-crystal relaxor</b> (PMN-PT / PIN-PMN-PT), k² ≈ 0.9</td><td>near-unity electrical→coherent-phonon; past ceramic PZT (k²≈0.5) and the voice coil</td></tr>
+<tr><td><b>front-end</b></td><td><b>graded phononic-crystal impedance taper</b>, crystal→air</td><td>broadband acoustic anti-reflection — defeats the −42 dB cliff without a narrowband λ/4 layer</td></tr>
+<tr><td><b>multiplexer + face</b></td><td><b>hex phononic screen</b> — graded cells that <b>rainbow-trap</b> (each frequency stalls at a different spot)</td><td>spatial frequency demux with zero electronics; geometry carries the multiplexing</td></tr>
+<tr><td><b>display</b></td><td>the cells themselves are emissive — a lit cell means its band is driven, so the panel reads as a <b>banded barcode up the rainbow axis</b></td><td>the dispersion map made visible: height already <em>is</em> frequency, so lighting cells by band turns the screen into a live spectrum of its own drive (§4)</td></tr>
+</table></div>
+
+<div class="figure" id="fig-panel">
+<svg viewBox="0 0 740 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Phononic panel construction: thickness section and face">
+  <defs>
+    <marker id="pa" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5a6470"/></marker>
+    <linearGradient id="taper" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#cfd8c4"/><stop offset="1" stop-color="#8fa77c"/>
+    </linearGradient>
+  </defs>
+  <text x="24" y="26" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">The phononic panel — through-thickness section (left) &amp; face (right)</text>
+
+  <!-- ================= SECTION ================= -->
+  <text x="40" y="58" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">SECTION — thickness exaggerated ×6</text>
+  <text x="40" y="80" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#3f5a28">← build volume (air)</text>
+  <line x1="40" y1="88" x2="96" y2="88" stroke="#5a7d3a" stroke-width="1.2" marker-end="url(#pa)"/>
+
+  <!-- layer bands: chamber side on the LEFT -->
+  <!-- 1 hex screen -->
+  <rect x="100" y="100" width="46" height="230" fill="#e7efe0" stroke="#5a7d3a" stroke-width="1.3"/>
+  <g fill="none" stroke="#5a7d3a" stroke-width=".85" opacity=".75">
+    <polygon points="112,116 122,116 127,124 122,132 112,132 107,124"/>
+    <polygon points="130,116 140,116 145,124 140,132 130,132 125,124"/>
+    <polygon points="112,140 122,140 127,148 122,156 112,156 107,148"/>
+    <polygon points="130,140 140,140 145,148 140,156 130,156 125,148"/>
+    <polygon points="111,166 123,166 129,176 123,186 111,186 105,176"/>
+    <polygon points="130,166 142,166 148,176 142,186 130,186 124,176"/>
+    <polygon points="110,196 124,196 131,208 124,220 110,220 103,208"/>
+    <polygon points="129,196 143,196 150,208 143,220 129,220 122,208"/>
+    <polygon points="109,232 125,232 133,246 125,260 109,260 101,246"/>
+    <polygon points="128,232 144,232 152,246 144,260 128,260 120,246"/>
+    <polygon points="108,272 126,272 135,288 126,304 108,304 99,288"/>
+    <polygon points="127,272 145,272 154,288 145,304 127,304 118,288"/>
+  </g>
+  <!-- 2 graded taper -->
+  <rect x="146" y="100" width="74" height="230" fill="url(#taper)" stroke="#5a7d3a" stroke-width="1.3"/>
+  <g stroke="#3f5a28" stroke-width=".7" opacity=".5">
+    <line x1="156" y1="100" x2="156" y2="330"/><line x1="170" y1="100" x2="170" y2="330"/>
+    <line x1="186" y1="100" x2="186" y2="330"/><line x1="204" y1="100" x2="204" y2="330"/>
+  </g>
+  <!-- 3 single-crystal driver -->
+  <rect x="220" y="100" width="52" height="230" fill="#efece2" stroke="#5a6470" stroke-width="1.3"/>
+  <g fill="#b9b3a2" stroke="#5a6470" stroke-width=".9">
+    <rect x="228" y="118" width="36" height="42" rx="2"/>
+    <rect x="228" y="172" width="36" height="42" rx="2"/>
+    <rect x="228" y="226" width="36" height="42" rx="2"/>
+    <rect x="228" y="280" width="36" height="42" rx="2"/>
+  </g>
+  <!-- 4 backing / mount -->
+  <rect x="272" y="100" width="30" height="230" fill="#d7d2c4" stroke="#5a6470" stroke-width="1.3"/>
+  <g stroke="#5a6470" stroke-width=".8" opacity=".55">
+    <line x1="280" y1="106" x2="280" y2="324"/><line x1="290" y1="106" x2="290" y2="324"/>
+  </g>
+
+  <!-- labels -->
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5">
+    <line x1="123" y1="96" x2="123" y2="80" stroke="#5a6470" stroke-width=".8"/>
+    <text x="123" y="74" text-anchor="middle" fill="#3f5a28" font-weight="700">1 hex screen</text>
+    <text x="123" y="63" text-anchor="middle" fill="#5a6470">0.9 mm proud</text>
+    <line x1="183" y1="336" x2="183" y2="352" stroke="#5a6470" stroke-width=".8"/>
+    <text x="183" y="365" text-anchor="middle" fill="#3f5a28" font-weight="700">2 graded phononic taper</text>
+    <text x="183" y="377" text-anchor="middle" fill="#5a6470">Z ramps crystal → air (broadband AR)</text>
+    <line x1="246" y1="96" x2="246" y2="80" stroke="#5a6470" stroke-width=".8"/>
+    <text x="246" y="74" text-anchor="middle" fill="#5a6470" font-weight="700">3 PMN-PT ×4</text>
+    <text x="246" y="63" text-anchor="middle" fill="#5a6470">k² ≈ 0.9</text>
+    <line x1="287" y1="336" x2="287" y2="352" stroke="#5a6470" stroke-width=".8"/>
+    <text x="292" y="365" text-anchor="middle" fill="#5a6470" font-weight="700">4 backing</text>
+    <text x="299" y="377" text-anchor="middle" fill="#5a6470">mounts to columns</text>
+  </g>
+  <text x="312" y="216" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">outward →</text>
+
+  <!-- ================= FACE ================= -->
+  <text x="440" y="58" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">FACE — 42.5 × 300 mm</text>
+  <rect x="470" y="70" width="86" height="300" fill="#f2f5ee" stroke="#5a7d3a" stroke-width="1.4"/>
+  <!-- graded hex cells: small at top (high f) -> large at bottom (low f) = rainbow trapping -->
+  <g fill="none" stroke="#5a7d3a" stroke-width=".8" opacity=".8">
+    <g>
+      <polygon points="484,80 492,80 496,86 492,92 484,92 480,86"/><polygon points="500,80 508,80 512,86 508,92 500,92 496,86"/><polygon points="516,80 524,80 528,86 524,92 516,92 512,86"/><polygon points="532,80 540,80 544,86 540,92 532,92 528,86"/>
+      <polygon points="484,96 492,96 496,102 492,108 484,108 480,102"/><polygon points="500,96 508,96 512,102 508,108 500,108 496,102"/><polygon points="516,96 524,96 528,102 524,108 516,108 512,102"/><polygon points="532,96 540,96 544,102 540,108 532,108 528,102"/>
+    </g>
+    <g>
+      <polygon points="486,118 496,118 501,126 496,134 486,134 481,126"/><polygon points="505,118 515,118 520,126 515,134 505,134 500,126"/><polygon points="524,118 534,118 539,126 534,134 524,134 519,126"/>
+      <polygon points="486,140 496,140 501,148 496,156 486,156 481,148"/><polygon points="505,140 515,140 520,148 515,156 505,156 500,148"/><polygon points="524,140 534,140 539,148 534,156 524,156 519,148"/>
+    </g>
+    <g>
+      <polygon points="487,170 500,170 507,181 500,192 487,192 480,181"/><polygon points="509,170 522,170 529,181 522,192 509,192 502,181"/>
+      <polygon points="487,198 500,198 507,209 500,220 487,220 480,209"/><polygon points="509,198 522,198 529,209 522,220 509,220 502,209"/>
+    </g>
+    <g>
+      <polygon points="488,236 504,236 512,250 504,264 488,264 480,250"/><polygon points="510,236 526,236 534,250 526,264 510,264 502,250"/>
+      <polygon points="488,272 504,272 512,286 504,300 488,300 480,286"/><polygon points="510,272 526,272 534,286 526,300 510,300 502,286"/>
+    </g>
+    <g>
+      <polygon points="489,314 508,314 517,331 508,348 489,348 480,331"/><polygon points="512,314 531,314 540,331 531,348 512,348 503,331"/>
+    </g>
+  </g>
+  <!-- rainbow-trap annotation -->
+  <line x1="566" y1="86" x2="566" y2="340" stroke="#b88a2a" stroke-width="1.2" marker-end="url(#pa)"/>
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5">
+    <text x="576" y="90" fill="#7a5d12" font-weight="700">cell size grades ↓</text>
+    <text x="576" y="104" fill="#5a6470">small cells — high f stalls here</text>
+    <text x="576" y="216" fill="#7a5d12" font-weight="700">rainbow trapping</text>
+    <text x="576" y="230" fill="#5a6470">each frequency halts at its own</text>
+    <text x="576" y="242" fill="#5a6470">position (v_group → 0): spatial</text>
+    <text x="576" y="254" fill="#5a6470">frequency demux, zero electronics</text>
+    <text x="576" y="344" fill="#5a6470">large cells — low f stalls here</text>
+  </g>
+  <text x="513" y="386" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">6 panels · r = 155 mm · 42.5 mm chord of the 15.7° clear gap</text>
+  <text x="24" y="412" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#5a6470">Four wired drivers per panel; the screen expands them into hundreds of spatially-addressable field DOF — geometry carries the multiplexing.</text>
+</svg>
+<div class="caption"><b>Fig. 2 — Phononic panel construction.</b> The driver
+supplies power (k² ≈ 0.9), the graded taper gets it into air across the
+−42 dB impedance cliff without a narrowband λ/4 layer, and the graded hex
+screen does the multiplexing passively. Emissive cells over the screen make
+the drive state visible — the lit "sheet" of §4.</div>
+</div>
+
+<p><b>Levitation geometry.</b> Six panels converging on the center is a
+<em>better</em> trap than two opposed caps: opposed caps give a 1-D axial
+standing wave, six panels give full 3-D trap control and multiple
+simultaneous traps (holographic acoustic tweezers). Moving the muscle to the
+sides buys degrees of freedom, it does not cost them.</p>
+<div class="box"><b>The medium split.</b> The through-air scan / levitation
+band is attenuation-capped at a few hundred kHz — lower datarate, universal
+reach. The <em>work</em> band operates in the melt or a coupling medium, where
+the MHz regime and its datarate return. The panel's screen is tuned across
+both. This is why "max datarate" has two answers.</div>
+<div class="box"><span class="chip c-demo">FIRST-LIGHT</span> Dayton
+<b>DAEX25 voice-coil exciter</b> for the piezo driver (broadband, glue-on,
+free B₀; but low power density and a ~20 kHz ceiling); plain <b>FR4</b> for
+the screen. Its one real advantage — the magnet's free B₀ — is recovered at
+the optimum by a thin permanent-magnet bias layer, or taken from the bore
+winding.</div>
+
+<div class="box"><b>Should the panels be wired at all?</b> A tempting
+simplification is to delete the six drive runs and let the caps' EM field
+excite the panels directly. Three ways that could work, ranked honestly:
+<ul>
+<li><b>Direct EM→acoustic (EMAT).</b> A coil plus a static B field drives
+eddy currents in a conductive face; the Lorentz force launches sound with no
+contact. Established NDT art <span class="chip c-measured">MEASURED</span>,
+and we already have the static field. <b>But it is typically tens of dB less
+efficient than piezo</b> — and this is the <em>muscle</em> channel, the one
+place we specifically bought k² ≈ 0.9. It puts the highest-power channel
+behind the lossiest coupling, dumps the loss as heat inside a sealed chamber,
+and makes acoustic phase a <em>derived</em> quantity of the EM field rather
+than something commanded — losing the control authority holographic
+sculpting depends on. <b>Rejected as the primary path.</b></li>
+<li><b>Radiation pressure.</b> Force ≈ P/c, so a watt of EM pushes ~10⁶×
+weaker than a watt of sound. Not a drive mechanism.</li>
+<li><b>Wireless power, local drive — the option worth keeping.</b> Do not
+convert EM to phonons in the field; convert it to <em>electricity</em> at the
+panel. The panel carries a rectenna (already in the architecture, §6) and a
+local single-crystal driver does the acoustic work at full k². The EM carries
+power <em>and</em> the phase reference; the panel phase-locks to it — which
+is exactly the coupling-lock of §7, promoted from an initialization step to
+a load-bearing one. Keeps: no cable runs, sealed panels with no electrical
+penetrations, one distribution carrier. Costs: each panel needs local
+rectification, phase-lock and amplification — so the panel is
+<em>cordless</em>, not passive.</li>
+</ul>
+Baseline for RH-1 stays <b>wired</b>: it is simpler, it is the efficient
+path, and it keeps amplitude and phase directly commanded. The cordless panel
+is the credible second increment, and the honest reason to want it is
+sealing and assembly, not performance.</div>
+
+<h2>3 · The EM face of the circular plate <em>(now ×3 assemblies,
+dual-carrier — see §3b; this section is the EM-launch build recipe,
+unchanged)</em></h2>
+<p>The caps are flat discs — the right shape for the one thing acoustic can't
+do: launch a structured EM pulse along the axis. Their build is the
+published toroidal-pulse launcher, not a doublet:</p>
+<div class="overflow"><table>
+<tr><th>layer / role</th><th>optimum</th><th>basis</th></tr>
+<tr><td><b>launcher face</b></td><td><b>equiangular-spiral slot grating</b> with a radial ring feed at the bore rim — a flattened coaxial horn</td><td>launches toroidal &amp; toroidal-helical pulses; α, β, handedness are runtime knobs (Wang <i>Commun. Phys.</i> 7:356 2024; Shi 2026)</td></tr>
+<tr><td><b>reflector</b></td><td>EBG (high-impedance surface) behind the spiral</td><td>3.4-octave forward radiation off a thin one-sided disc (Luadang 2025)</td></tr>
+<tr><td><b>sensing</b></td><td>the same aperture reads back for super-resolution positioning</td><td>one aperture → ~0.5λ position, SNR-limited (Wang 2024); the servo signal for every levitation mode</td></tr>
+<tr><td><b>harvest</b></td><td>rectenna patches on the rim ring</td><td>microwave harvest → the drive rail (§6)</td></tr>
+<tr><td><b>axis services</b></td><td>the bore (Ø12 free-standing, resized
+2026-08-03 — §3c; desktop variant's proportional number not yet
+rederived): field-driven feed transport (fine powder/droplets — bulk
+ingot-scale induction dropped), the bidirectional optical stem, and the
+contrawound winding pair (§5)</td><td>the "13th" port; the axial waveguide between facing plates</td></tr>
+<tr><td><b>upgrade path</b></td><td><b>q-BIC leaky-wave metasurface</b>: replace the plain grating with a surface whose <em>local symmetry-breaking</em> is patterned across the aperture. A perfectly symmetric cell supports a bound state in the continuum — trapped, non-radiating, infinite Q; breaking the symmetry by a controlled amount makes it leak at a chosen rate</td><td>the leakage rate becomes a <em>geometric</em> variable, so the Bode–Fano budget is spent <b>spatially</b> rather than globally: aperture taper, sidelobe control, and customized radiation from a flat printed surface, with no per-element electronics. <span class="chip c-measured">MEASURED</span> at micro/mm-wave: Xu, Overvig, Kasahara, Martini, Maci &amp; Alù, <i>Nat. Commun.</i> 14 (2023)</td></tr>
+</table></div>
+<div class="box"><b>Holographic synthesis — the method that generates all of the
+above.</b> The spiral grating, the graded phononic screen and the q-BIC
+leakage map are not three unrelated tricks; they are three outputs of one
+design procedure. Record the interference of the <em>reference</em> wave the
+feed actually launches across the surface, Ψ<sub>ref</sub>, against the
+<em>object</em> wave you want in the build volume, Ψ<sub>obj</sub>, and
+modulate the surface impedance by it:
+<code>Z(r) = X₀ + M·Re{Ψ*<sub>ref</sub>·Ψ<sub>obj</sub>}</code>. That is the
+optical holography recording equation written onto an aperture instead of an
+emulsion; running the reference wave across the modulated surface
+reconstructs the object wave. The consequence for this build:
+<b>the plate pattern stops being a shape we choose and becomes a
+pattern we compute</b> — the same status the drive already has in the Field
+Compiler, now extended to the passive half of the boundary. Modulation depth
+<code>M</code> is the leakage rate, i.e. the q-BIC symmetry-breaking knob
+above; a frequency-dependent reconstruction is rainbow trapping. Both
+carriers use it: EM caps after the holographic leaky-wave art (Azad et al.,
+<i>Sci. Rep.</i> 15, 2025 — omnidirectional conical beam with elevation
+scan, the right primitive for addressing a ring at a chosen height in a
+cylindrical volume), and the acoustic panels after the printed acoustic
+hologram already carried in the spec (Melde et al. 2016).
+<span class="chip c-measured">MEASURED</span> on both sides.
+<b>Two refinements the art already supplies.</b> (i) Make the surface
+impedance a <b>tensor</b> rather than a scalar — an <em>anisotropic</em>
+hologram — and circular polarisation falls out of the pattern itself, with no
+parasitic elements. That is the cleanest source of the handedness knob this
+architecture wants: chirality by <em>impedance</em>, not only by mirroring
+geometry. (ii) The method assumes a clean reference wave, which makes the
+launcher a first-class part, not the "radial ring feed" hand-wave in the
+table above. A <b>spoof surface-plasmon-polariton (SSPP)</b> feed gives a
+slow, tightly-bound surface wave whose wavenumber is set by corrugation
+depth — shorter reference wavelength means finer fringes, i.e. more
+independent holographic pixels on a Ø300 cap — and the accompanying
+waveguide-stripline launcher is measured at 142% impedance bandwidth
+(8–20 GHz) while explicitly <em>not</em> corrupting the radiation pattern,
+which is what a multi-octave, angle-defined aperture needs from its feed
+(<i>Sci. Rep.</i> 15, 1149, 2025). <span class="chip c-measured">MEASURED</span>
+<b>The time axis (added 2026-07-22).</b> Everything above is
+<em>space-only</em> holography: a static <code>Z(r)</code>, one reference
+tone, amplitude and phase. Letting the surface modulate in time as well —
+<code>Z(r, t)</code> — has now been demonstrated as a <b>space-time
+holographic metasurface antenna</b> — spatiotemporal, heterodyne,
+multifrequency — with frequency conversion and holographic beamforming in
+the far field and
+multifrequency 2D/3D holographic imaging in the near field
+(<i>Sci. Adv.</i>, 2026, adx7090) <span class="chip c-measured">MEASURED</span>.
+Three consequences land directly on this build. (i) <b>It encodes the chord
+alphabet natively.</b> Space-only holography holds amplitude and phase but is
+single-tone; a space-time hologram carries the <em>frequency content too</em>
+— what the <code>.pattern</code> format has been asking an aperture to
+store all along. (ii) <b>Frequency conversion happens at the
+aperture</b>, so one surface can accept one carrier and emit another —
+relevant to a machine whose whole difficulty is that its carriers live in
+different bands. (iii) <b>Time modulation breaks reciprocity</b>, which
+makes the ADD and REMOVE paths genuinely separable rather than two uses of
+one symmetric channel. Their near-field 3D imaging demonstration is, in form,
+the scan mode of this machine.
+<b>Bounds, so this is not oversold:</b> the space-time result is EM-only —
+frequency conversion <em>within</em> a band, not the acoustic↔EM
+transduction of §2; and the time axis is not free — a modulated surface
+needs an active switching element in every cell, driven at the modulation
+frequency, spending exactly the virtue that made the passive hologram
+attractive: no per-element electronics. So it is a <em>tier</em>, not a
+replacement — passive <code>Z(r)</code> where a fixed transform suffices,
+active <code>Z(r,t)</code> where frequency agility or nonreciprocity is
+worth the wiring. A hologram is recorded for one reference/object pair —
+multi-function needs multiplexing and pays crosstalk; a printed hologram is
+fixed, so steering is by frequency, not at will; and leaky-wave apertures
+trade aperture efficiency against taper (radiate too early and the far end
+is starved). It is a synthesis <em>method</em>, not new physics — it changes
+how the pattern is computed, not what the machine can do.</div>
+
+<div class="figure" id="fig-cap">
+<svg viewBox="0 0 740 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Circular EM cap: radial section and spiral-grating face">
+  <defs>
+    <marker id="ca" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5a6470"/></marker>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#c8c2b2" stroke-width="1.6"/>
+    </pattern>
+    <!-- one equiangular-spiral arm: r(phi)=r0*e^(b*phi), 45->145mm over 0.75 turn -->
+    <path id="sparm" fill="none" d="M560,201 L572.2,199.9 L585.1,202.4 L597.5,209.2 L608.3,220.0
+      L615.9,234.4 L619.4,251.8 L617.4,270.7 L609.6,289.4 L595.6,306.5 L575.9,319.5 L551.5,326.9
+      L524.2,326.8 L496.0,318.1 L469.7,300.5 L448.2,274.2 L434.1,239.8"/>
+  </defs>
+  <text x="24" y="26" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">The circular EM cap — radial section (left) &amp; grating face (right)</text>
+
+  <!-- ================= RADIAL SECTION ================= -->
+  <text x="40" y="56" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">RADIAL HALF-SECTION — thickness exaggerated ×4</text>
+  <!-- axis -->
+  <line x1="60" y1="70" x2="60" y2="330" stroke="#7a1f1f" stroke-width="1" stroke-dasharray="6 4"/>
+  <text x="60" y="66" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">axis</text>
+  <!-- bore void -->
+  <rect x="60" y="150" width="64" height="60" fill="url(#hatch)" opacity=".7"/>
+  <text x="92" y="228" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">Ø80 bore</text>
+  <text x="92" y="240" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#5a6470">feed · optics</text>
+
+  <!-- layer stack, r = 40 -> 150 mm  (x 124 -> 300) -->
+  <rect x="124" y="150" width="176" height="9"  fill="#f2d99a" stroke="#b88a2a" stroke-width="1.2"/>
+  <g fill="#2b2926">
+    <rect x="140" y="151" width="8" height="7"/><rect x="166" y="151" width="9" height="7"/>
+    <rect x="194" y="151" width="10" height="7"/><rect x="224" y="151" width="11" height="7"/>
+    <rect x="256" y="151" width="12" height="7"/>
+  </g>
+  <rect x="124" y="159" width="176" height="16" fill="#f2ecf5" stroke="#6a4a8a" stroke-width="1.2"/>
+  <g stroke="#6a4a8a" stroke-width="1">
+    <line x1="136" y1="159" x2="136" y2="175"/><line x1="156" y1="159" x2="156" y2="175"/>
+    <line x1="176" y1="159" x2="176" y2="175"/><line x1="196" y1="159" x2="196" y2="175"/>
+    <line x1="216" y1="159" x2="216" y2="175"/><line x1="236" y1="159" x2="236" y2="175"/>
+    <line x1="256" y1="159" x2="256" y2="175"/><line x1="276" y1="159" x2="276" y2="175"/>
+  </g>
+  <rect x="124" y="175" width="176" height="35" fill="#efece2" stroke="#5a6470" stroke-width="1.2"/>
+  <!-- rim annulus -->
+  <rect x="266" y="175" width="34" height="35" fill="#fff8e8" stroke="#b88a2a" stroke-width="1.3"/>
+  <g fill="#b88a2a"><rect x="272" y="182" width="8" height="6"/><rect x="286" y="182" width="8" height="6"/>
+     <rect x="272" y="196" width="8" height="6"/><rect x="286" y="196" width="8" height="6"/></g>
+  <!-- bore winding: torus cross-section just outside the bore -->
+  <circle cx="140" cy="192" r="13" fill="#fdf6ec" stroke="#7a1f1f" stroke-width="1.4"/>
+  <g stroke="#7a1f1f" stroke-width="1.1" fill="none">
+    <path d="M131,185 a13,13 0 0 1 18,0"/><path d="M131,192 a13,13 0 0 1 18,0"/><path d="M131,199 a13,13 0 0 1 18,0"/>
+  </g>
+  <!-- ring feed -->
+  <line x1="128" y1="145" x2="128" y2="120" stroke="#3a5a7d" stroke-width="1.2" marker-end="url(#ca)"/>
+  <text x="132" y="116" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#3a5a7d">radial ring feed (coax) at the bore rim</text>
+
+  <!-- section labels -->
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5">
+    <line x1="206" y1="146" x2="206" y2="132" stroke="#5a6470" stroke-width=".8"/>
+    <text x="206" y="128" text-anchor="middle" fill="#7a5d12" font-weight="700">1 spiral slot grating — FR4 gold/copper</text>
+    <line x1="310" y1="167" x2="332" y2="167" stroke="#5a6470" stroke-width=".8"/>
+    <text x="336" y="164" fill="#6a4a8a" font-weight="700">2 EBG reflector</text>
+    <text x="336" y="176" fill="#5a6470">via-grounded cells → radiates forward, thin</text>
+    <line x1="310" y1="205" x2="332" y2="205" stroke="#5a6470" stroke-width=".8"/>
+    <text x="336" y="202" fill="#5a6470" font-weight="700">3 backing — ribbed aluminium</text>
+    <line x1="283" y1="216" x2="283" y2="240" stroke="#5a6470" stroke-width=".8"/>
+    <text x="283" y="253" text-anchor="middle" fill="#7a5d12" font-weight="700">4 rim annulus</text>
+    <text x="283" y="265" text-anchor="middle" fill="#5a6470">electronics + rectenna</text>
+    <line x1="140" y1="207" x2="140" y2="285" stroke="#7a1f1f" stroke-width=".8"/>
+    <text x="140" y="298" text-anchor="middle" fill="#7a1f1f" font-weight="700">5 bore winding</text>
+    <text x="140" y="310" text-anchor="middle" fill="#5a6470">44 turns · induction + potential port</text>
+  </g>
+  <!-- radius dimension -->
+  <line x1="124" y1="340" x2="300" y2="340" stroke="#8a8676" stroke-width="1" marker-start="url(#ca)" marker-end="url(#ca)"/>
+  <text x="212" y="354" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">r = 40 → 150 mm</text>
+
+  <!-- ================= FACE ================= -->
+  <text x="440" y="56" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">FACE — Ø300 mm, 12-arm equiangular spiral</text>
+  <circle cx="560" cy="240" r="130" fill="#f6ecd2" stroke="#1c1c1c" stroke-width="1.3"/>
+  <circle cx="560" cy="240" r="117" fill="none" stroke="#b88a2a" stroke-width="10" opacity=".35"/>
+  <g stroke="#2b2926" stroke-width="2.6" stroke-linecap="round" opacity=".92">
+    <use href="#sparm"/>
+    <use href="#sparm" transform="rotate(30 560 240)"/>
+    <use href="#sparm" transform="rotate(60 560 240)"/>
+    <use href="#sparm" transform="rotate(90 560 240)"/>
+    <use href="#sparm" transform="rotate(120 560 240)"/>
+    <use href="#sparm" transform="rotate(150 560 240)"/>
+    <use href="#sparm" transform="rotate(180 560 240)"/>
+    <use href="#sparm" transform="rotate(210 560 240)"/>
+    <use href="#sparm" transform="rotate(240 560 240)"/>
+    <use href="#sparm" transform="rotate(270 560 240)"/>
+    <use href="#sparm" transform="rotate(300 560 240)"/>
+    <use href="#sparm" transform="rotate(330 560 240)"/>
+  </g>
+  <circle cx="560" cy="240" r="35" fill="#fdfcf8" stroke="#7a1f1f" stroke-width="1.4"/>
+  <circle cx="560" cy="240" r="43" fill="none" stroke="#7a1f1f" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="560" y="238" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">bore</text>
+  <text x="560" y="249" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8" fill="#7a1f1f">Ø80</text>
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5">
+    <text x="560" y="392" text-anchor="middle" fill="#5a6470">r(φ) = r₀·e^(cot α · φ) — angle-only geometry, so bandwidth comes from</text>
+    <text x="560" y="404" text-anchor="middle" fill="#5a6470">shape, not resonance; slot widens 2.8 → 6.0 mm outward</text>
+    <text x="676" y="150" text-anchor="end" fill="#7a5d12" font-weight="700">rim annulus</text>
+  </g>
+  <text x="24" y="440" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">The two caps are mirror-imaged: winding sense reverses, so handedness is opposite — counter-drive covers twist, cancellation, and the CPA verb.</text>
+  <text x="24" y="456" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#5a6470">Slots are openings in the conductor — the dark arms above are voids, not traces.</text>
+</svg>
+<div class="caption"><b>Fig. 3 — Circular EM cap construction.</b> A flattened
+coaxial horn: the radial ring feed at the bore rim launches into a 12-arm
+equiangular-spiral slot grating, with the EBG reflector behind it making a
+thin one-sided radiator (no λ/4 depth). The same aperture reads back for
+super-resolution positioning. The bore winding threads the axis, and the
+rim annulus keeps electronics and harvest out of the field volume.</div>
+</div>
+
+<p>Bandwidth here comes from angle-defined geometry (Rumsey), not resonance —
+the same Bode–Fano/Chu discipline the spec applies, on the EM side.</p>
+
+<div class="box"><b>Why not co-locate the two carriers?</b> The spec's earlier
+"dual-carrier doublet" put acoustic and EM on one site through a diplexer — a
+channel-count economy that <em>gave up the launcher-disc geometry</em>.
+Separating them by surface lets each hit its own optimum (spiral disc for EM,
+large panel for acoustic) and drops the diplexer entirely. The one thing
+co-location bought — both carriers overlapping at a point — is recovered where
+it actually matters: the caps' EM and the panels' acoustic <b>overlap in the
+build volume</b>, on the workpiece, not on the plate — multi-field addressing
+moves from the boundary to the target.</div>
+
+<h2>3b · Rev 2026-07-30 — the acoustic front end joins the cap</h2>
+
+<p>Rulings R3–R5 (<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>)
+extend the §3 build. The cap becomes a compression driver whose phase plug is a
+hologram:</p>
+
+<table>
+<tr><th>layer / role</th><th>optimum</th><th>basis</th></tr>
+<tr><td><b>throat</b></td><td>3 PZT elements at 120° around a common throat
+behind the plate; acoustic OAM m=±1 synthesized by drive phasing alone (0°/120°/240°
+vs reverse) — drive-side chirality, no geometric doubling</td><td>compression-driver
+topology; phased ring art</td></tr>
+<tr><td><b>horn</b></td><td>the bore-winding torus doubles as a <b>ring-radial
+horn</b> — the outward sweep does the flaring (A(s)=2πr(s)·gap(s)) so the 20&nbsp;mm
+stack affords a "long" horn; section = ellipse least-squares-fitted to the Webster
+area law, aspect ratio <em>reported</em> (a φ-class elongation corresponds to
+~6.7:1 radius compression — let the physics choose)</td><td>radial-horn /
+ring-radiator art; Webster equation</td></tr>
+<tr><td><b>volume</b></td><td>density-graded <b>ceramic gyroid</b>: cells
+2–5&nbsp;mm (viscothermal floor δ=5–11&nbsp;µm; loss-optimal cell size coincides
+with the strong-scattering regime), graded + golden-angle perturbed — a uniform
+gyroid is a periodic phononic crystal (a filter, not a library). Dielectric
+skeleton preserves the EM effective-medium reading (graded index for the
+toroidal pulses); terminal cells open into the plate perforations — no fine-pore
+skin. σ(x) placed only as skin-depth shells (terminal EBG metasurface, slot
+edges, winding filaments) — never a fully connected network at the launch band
+(wire-medium exclusion)</td><td>Kruizinga-class volumetric coding mask;
+graded-taper doctrine; printed GRIN lens art</td></tr>
+<tr><td><b>plate face</b></td><td>crossed golden log-spiral V-grooves from both
+faces, <b>Fibonacci arm counts (21×34)</b> — crossings form the Vogel lattice
+(sunflower parastichies) as V-flared diamond through-cells = a micro-horn mesh;
+the 12 single-handed equiangular slots cut through it, unchanged (mesh reads as
+solid conductor at GHz)</td><td>phyllotaxis; scale separation as diplexer</td></tr>
+<tr><td><b>windings (supersedes the single 44-turn winding of §5 as the
+target)</b></td><td><b>contrawound pair, two independent feeds</b>: sum = confined
+poloidal (induction + potential port), difference = ring dipole, blend = helicity
+knob. Gen-0 renders as two wound wires; gen-N as embedded σ(x) torus-knot
+filaments — the two-feed requirement is generational-invariant</td>
+<td>contrawound toroidal helix antennas (Corum)</td></tr>
+<tr><td><b>Q budget</b></td><td>damping is purchased calibration lifetime:
+session-calibrated bench builds damp (lossy skeleton / ABH, Q≈300); the
+continuously self-calibrating machine (verb-2 readout, beacons, reference paths)
+keeps high-Q bins. Avoid parallel paths in different media (differential drift
+is high-rank)</td><td>ruling R6</td></tr>
+</table>
+
+<h2>3c · The plate geometry, worked exactly <em>(added 2026-08-03, revised
+same day — bore resized)</em></h2>
+<p>§3b names the layer stack; here the layer stack gets numbers. Geometry
+below is for the free-standing plate (Ø410); the desktop variant's Ø300
+numbers scale proportionally.</p>
+
+<div class="box"><b>Revision: the Ø130 bore was sized for a capability the
+machine doesn't need — dropped, not just corrected (operator, 2026-08-03).</b>
+The first pass through this section corrected the throat (Ø110→Ø220) but
+left the recorded Ø130 bore unquestioned. It shouldn't have been: neither
+of the two things the bore is credited with — the optical stem and feed
+transport — needs anywhere near that diameter. Keeping a structured
+(flying-doughnut) pulse collimated over the 300&nbsp;mm plate-to-plate span
+needs a clear aperture of order <b>2–3&nbsp;mm</b> (Gaussian-beam estimate,
+w₀=√(λz_R/π) at z_R=300&nbsp;mm). Fine-powder or melt-droplet transport at
+the target build rate (~200&nbsp;g object in ~10&nbsp;min) is a volumetric
+flow of ~0.08&nbsp;cm³/s — a <b>~1&nbsp;mm</b> channel carries that easily
+even at a lazy 0.2&nbsp;m/s. Neither number is near Ø130.</p>
+
+<p>What actually sizes Ø130: the material-class table below credits the
+bore winding with "in-plate induction... ingot-bay crucible" — bulk
+induction melting of solid ingot-scale conductive feedstock, not fine
+powder. Induction levitation coils typically want an ID 1.5–3× the sample
+diameter for workable coupling; back-solving, a ~40&nbsp;mm ingot at a
+generous 3× ratio gives a coil bore of ~120&nbsp;mm — right at Ø130. That
+is almost certainly the real size driver, with the optical stem and powder
+transport riding along on an axis that was already there for free.</p>
+
+<p><b>Ruling (operator, 2026-08-03): drop bulk ingot-scale induction
+melting from the shared plate/bore axis as a baseline capability.</b> It
+was never separately justified — it rode in silently, oversizing three
+identical plate assemblies to serve a function that, on inspection, wants
+its own coil sized for its own sample, not a shared Ø130 axis. The bore
+shrinks to <b>Ø12</b> (chosen: a 2&nbsp;mm largest-feed-element budget ×
+4 for clog-avoidance margin, rounded to a practical drilled dimension —
+comfortably covers the optical stem too, and the flying-doughnut pulse's
+on-axis null means a feed stream riding the axis doesn't even clip the
+ring intensity). <span class="chip c-open">OPEN</span> follow-up: if the
+machine still wants to melt ingots in-house, that needs its own
+independently-sized induction station, not a shared bore — not designed
+here. Ripple: <code>desktop_replicator_hardware_spec.html</code> §3/§6.0/
+§6.1/§8 and <code>replicator_architecture.html</code>'s transport-phase
+ladder credited the dropped capability and are being updated to match.</p>
+
+<p><b>The throat is now sized by PZT packing, not bore clearance.</b> With
+the bore this small, bore clearance no longer constrains the throat at
+all. Three PZT discs (Ø25&nbsp;mm assumed — a small piezo element, not
+measured) arranged at 120° on a common throat must not overlap: minimum
+pitch radius = d/(2·sin60°) ≈ 14.4&nbsp;mm. Adding a small margin gives
+<b>throat r = 18&nbsp;mm → Ø36</b>.</p>
+
+<p><b>The horn profile, refitted.</b> Same construction as before — a
+quarter-ellipse meridian, tangent to the axial direction at the throat
+(PZTs push straight in), tangent to the plate plane at the mouth (wave
+exits parallel to the face) — but now throat r=18, mouth r=202 (radial
+throw <b>184&nbsp;mm</b>, more than double the earlier corrected-throat
+case), over the same 20&nbsp;mm throat-to-mouth thickness taper. Ellipse
+semi-axes: 184&nbsp;mm (radial), 20&nbsp;mm (axial) — a folded meridian
+arc length of <b>≈187&nbsp;mm inside only 20&nbsp;mm of axial depth</b>,
+an even more dramatic fold than before.</p>
+
+<p><b>Checked against Webster again.</b> Area ratio (mouth:throat, linear
+— it's an annulus) is now 202:18&nbsp;≈&nbsp;11.2:1; at the same
+35&nbsp;kHz cutoff the exponential-horn minimum length is still under
+2&nbsp;mm. The 187&nbsp;mm folded profile remains nowhere near that floor
+— the gyroid's length is still doing acoustic-library work (R3), not
+loading work; that conclusion didn't change with the bore.</p>
+
+<p><b>Radius compression, honestly reported again.</b> Mouth:throat =
+202:18 = <b>11.2:1</b> — this time <em>overshooting</em> the 6.7:1
+φ-class reference point in R3, from the other side. First pass undershot
+at 1.84:1; this pass overshoots. Landing on opposite sides of the φ-class
+number across two independent geometry revisions is a reasonable argument
+that the fit tracks the actual constraints each time, not a thumb on the
+scale toward or away from φ.</p>
+
+<p><b>Cell counts, updated.</b> At the graded 2–5&nbsp;mm cell size
+(viscothermal floor, R3), the annulus (mean radius ~110&nbsp;mm, radial
+throw 184&nbsp;mm) holds roughly 138–346 cells around the circumference
+and 37–92 across the radial throw depending where in the grade a given
+ring sits.</p>
+
+<div class="figure" id="fig-plate-section">
+<svg viewBox="0 0 780 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dual-carrier plate assembly, redesigned around a small feed/optics bore: radial section and perforated face">
+  <defs>
+    <marker id="pha" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5a6470"/></marker>
+    <pattern id="phatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#c8c2b2" stroke-width="1.6"/>
+    </pattern>
+    <linearGradient id="gyroidgrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e2ead6"/><stop offset="1" stop-color="#c9d9b8"/>
+    </linearGradient>
+  </defs>
+  <text x="20" y="24" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">The dual-carrier plate assembly — radial section (left) &amp; perforated face (right)</text>
+  <text x="20" y="41" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#5a6470">One of three identical assemblies (R3–R5). Bore sized by feed + optics, not ingot induction (2026-08-03 revision). Axial depth exaggerated for legibility.</text>
+
+  <!-- ================= SECTION ================= -->
+  <text x="40" y="66" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">RADIAL HALF-SECTION</text>
+
+  <!-- axis -->
+  <line x1="70" y1="82" x2="70" y2="308" stroke="#7a1f1f" stroke-width="1" stroke-dasharray="6 4"/>
+  <text x="70" y="78" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">axis</text>
+
+  <!-- bore: now tiny (Ø12) -->
+  <rect x="70" y="116" width="9" height="194" fill="url(#phatch)" opacity=".85"/>
+  <line x1="74" y1="300" x2="48" y2="300" stroke="#7a1f1f" stroke-width=".8"/>
+  <text x="15" y="296" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#7a1f1f">Ø12 bore</text>
+  <text x="15" y="307" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8" fill="#5a6470">feed + optical stem</text>
+
+  <!-- plate slab, r 6->205, z -12->0 (front cap) -->
+  <rect x="79" y="116" width="298.5" height="24" fill="#f2f5ee" stroke="#5a7d3a" stroke-width="1.3"/>
+  <g fill="none" stroke="#5a7d3a" stroke-width=".7" opacity=".85">
+    <path d="M150,116 L146,122 L150,128 L154,122 Z"/><path d="M150,128 L146,134 L150,140 L154,134 Z"/>
+    <path d="M190,116 L185,122 L190,128 L195,122 Z"/><path d="M190,128 L185,134 L190,140 L195,134 Z"/>
+    <path d="M250,116 L243,122 L250,128 L257,122 Z"/><path d="M250,128 L243,134 L250,140 L257,134 Z"/>
+    <path d="M310,116 L302,122 L310,128 L318,122 Z"/><path d="M310,128 L302,134 L310,140 L318,134 Z"/>
+    <path d="M355,116 L346,122 L355,128 L364,122 Z"/><path d="M355,128 L346,134 L355,140 L364,134 Z"/>
+  </g>
+  <rect x="200" y="112" width="7" height="32" fill="#fbfaf6" stroke="#1c1c1c" stroke-width="1"/>
+  <rect x="330" y="112" width="7" height="32" fill="#fbfaf6" stroke="#1c1c1c" stroke-width="1"/>
+
+  <!-- copper inner cone, r 6->18, z 0->20 (now a thin sliver) -->
+  <polygon points="79,140 97,140 97,180 79,172" fill="#f2ecf5" stroke="#6a4a8a" stroke-width="1.3"/>
+
+  <!-- gyroid horn wedge: throat(thick,20mm) -> mouth(thin) -->
+  <path d="M97,140 L97,180 L117.6,179.9 L138.1,179.6 L158.4,179.0 L178.4,178.2 L197.8,177.2 L216.8,176.0 L235.0,174.6 L252.5,173.0 L269.1,171.3 L284.7,169.3 L299.3,167.2 L312.8,164.9 L325.0,162.5 L336.0,160.0 L345.7,157.4 L353.9,154.6 L360.7,151.8 L366.1,148.9 L369.9,146.0 L372.2,143.0 L373.0,140.0 Z"
+    fill="url(#gyroidgrad)" stroke="#5a7d3a" stroke-width="1.3"/>
+  <g stroke="#5a7d3a" stroke-width=".5" opacity=".55" fill="none">
+    <path d="M102,144 h6 M102,150 h6 M102,156 h6 M102,162 h6 M102,168 h6 M102,174 h6"/>
+    <path d="M120,145 h6 M120,152 h6 M120,159 h6 M120,166 h6 M120,173 h6"/>
+    <path d="M160,148 h8 M160,156 h8 M160,164 h8 M160,172 h8"/>
+    <path d="M220,150 h10 M220,159 h10 M220,168 h10"/>
+    <path d="M290,148 h13 M290,158 h13"/>
+    <path d="M350,144 h9"/>
+  </g>
+  <line x1="97" y1="138" x2="97" y2="182" stroke="#b88a2a" stroke-width="1.4"/>
+
+  <!-- PZT throat drive -->
+  <rect x="74" y="180" width="46" height="28" rx="3" fill="#efece2" stroke="#5a6470" stroke-width="1.2"/>
+  <g fill="#b9b3a2" stroke="#5a6470" stroke-width=".8">
+    <rect x="80" y="187" width="14" height="14" rx="1.5"/>
+    <rect x="100" y="187" width="14" height="14" rx="1.5"/>
+  </g>
+
+  <!-- torus cross-section (unchanged: Ø290 major is independent of bore/throat) -->
+  <circle cx="287.5" cy="260" r="50" fill="#fdf6ec" stroke="#7a1f1f" stroke-width="1.4"/>
+  <g stroke="#7a1f1f" stroke-width="1.1" fill="none">
+    <path d="M251,244 a50,50 0 0 1 73,0"/>
+    <path d="M251,260 a50,50 0 0 1 73,0"/>
+    <path d="M251,276 a50,50 0 0 1 73,0"/>
+  </g>
+  <line x1="200" y1="230" x2="245" y2="245" stroke="#8a8676" stroke-width=".8" marker-end="url(#pha)"/>
+  <text x="196" y="228" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#5a6470">torus sits behind the throat —</text>
+  <text x="196" y="238" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#5a6470">its own Ø290 is bore-independent</text>
+
+  <!-- numbered callout markers -->
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" font-weight="700">
+    <circle cx="260" cy="128" r="8" fill="#3f5a28"/><text x="260" y="131" text-anchor="middle" fill="#fff">1</text>
+    <circle cx="88" cy="150" r="8" fill="#6a4a8a"/><text x="88" y="153" text-anchor="middle" fill="#fff">2</text>
+    <circle cx="230" cy="170" r="8" fill="#3f5a28"/><text x="230" y="173" text-anchor="middle" fill="#fff">3</text>
+    <circle cx="106" cy="176" r="8" fill="#7a5d12"/><text x="106" y="179" text-anchor="middle" fill="#fff">4</text>
+    <circle cx="287.5" cy="260" r="8" fill="#7a1f1f"/><text x="287.5" y="263" text-anchor="middle" fill="#fff">5</text>
+  </g>
+
+  <!-- radius dimension -->
+  <line x1="79" y1="326" x2="373" y2="326" stroke="#8a8676" stroke-width="1" marker-start="url(#pha)" marker-end="url(#pha)"/>
+  <text x="226" y="340" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">r = 6 (bore) → 18 (throat) → 202 mm (mouth)</text>
+
+  <!-- z dimension -->
+  <line x1="392" y1="140" x2="392" y2="180" stroke="#8a8676" stroke-width="1" marker-start="url(#pha)" marker-end="url(#pha)"/>
+  <text x="398" y="164" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#8a8676">20 mm</text>
+
+  <!-- legend -->
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#333">
+    <circle cx="46" cy="366" r="7" fill="#3f5a28"/><text x="46" y="369" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">1</text>
+    <text x="60" y="369"><tspan font-weight="700">perforated plate</tspan> — Ø410, 12 mm; mesh (21×34) + 12 EM slots</text>
+
+    <circle cx="46" cy="386" r="7" fill="#6a4a8a"/><text x="46" y="389" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">2</text>
+    <text x="60" y="389"><tspan font-weight="700">copper inner cone</tspan> — coax center conductor, Ø12 rim→throat</text>
+
+    <circle cx="46" cy="406" r="7" fill="#3f5a28"/><text x="46" y="409" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">3</text>
+    <text x="60" y="409"><tspan font-weight="700">graded ceramic gyroid</tspan> — 20 mm at throat,</text>
+    <text x="60" y="421">tapers to ~0 at mouth; cells 2–5 mm, graded</text>
+
+    <circle cx="46" cy="441" r="7" fill="#7a5d12"/><text x="46" y="444" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">4</text>
+    <text x="60" y="444"><tspan font-weight="700">throat, Ø36</tspan> — sized so 3× PZT at 120°</text>
+    <text x="60" y="456">don't overlap (common throat, 1 shown); see text</text>
+
+    <circle cx="46" cy="476" r="7" fill="#7a1f1f"/><text x="46" y="479" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">5</text>
+    <text x="60" y="479"><tspan font-weight="700">contrawound torus</tspan> — Ø290/Ø60 tube, 2 feeds (R5)</text>
+  </g>
+  <text x="20" y="503" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#8a8676">radius compression (mouth:throat) = 11.2:1 — overshoots the 6.7:1 φ-class point in R3 from the other side; still not tuned to it.</text>
+
+  <!-- ================= FACE ================= -->
+  <text x="440" y="66" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">FACE — Ø410</text>
+  <circle cx="560" cy="250" r="127" fill="#f6ecd2" stroke="#1c1c1c" stroke-width="1.3"/>
+  <circle cx="560" cy="250" r="90" fill="none" stroke="#7a1f1f" stroke-width="1" stroke-dasharray="3 4" opacity=".55"/>
+
+  <defs>
+    <path id="slotarm" fill="none" stroke="#2b2926" stroke-width="2.2" stroke-linecap="round"
+      d="M573.6,250.0 L574.4,253.9 L574.0,258.2 L572.5,262.6 L569.6,266.9 L565.3,270.5 L559.7,273.1 L553.1,274.3 L545.8,273.6 L538.3,270.9 L531.2,265.8 L525.2,258.5 L520.9,249.0 L519.0,237.8 L520.3,225.5 L525.1,212.8 L533.8,200.9 L546.4,190.8 L562.5,183.7 L581.5,180.8 L602.4,183.2 L623.7,191.7 L643.8,206.7 L660.6,228.2 L672.3,255.6 L676.8,287.9"/>
+  </defs>
+  <g opacity=".92">
+    <use href="#slotarm"/><use href="#slotarm" transform="rotate(30 560 250)"/>
+    <use href="#slotarm" transform="rotate(60 560 250)"/><use href="#slotarm" transform="rotate(90 560 250)"/>
+    <use href="#slotarm" transform="rotate(120 560 250)"/><use href="#slotarm" transform="rotate(150 560 250)"/>
+    <use href="#slotarm" transform="rotate(180 560 250)"/><use href="#slotarm" transform="rotate(210 560 250)"/>
+    <use href="#slotarm" transform="rotate(240 560 250)"/><use href="#slotarm" transform="rotate(270 560 250)"/>
+    <use href="#slotarm" transform="rotate(300 560 250)"/><use href="#slotarm" transform="rotate(330 560 250)"/>
+  </g>
+
+  <g fill="#5a7d3a" opacity=".8">
+    <circle cx="549.1" cy="260.0" r="1.6"/><circle cx="561.8" cy="229.2" r="1.6"/><circle cx="575.5" cy="270.3" r="1.6"/><circle cx="531.0" cy="244.9" r="1.6"/><circle cx="587.8" cy="232.3" r="1.6"/><circle cx="550.6" cy="284.9" r="1.6"/><circle cx="542.0" cy="215.4" r="1.6"/><circle cx="599.1" cy="264.3" r="1.6"/><circle cx="519.1" cy="266.9" r="1.6"/><circle cx="579.8" cy="207.8" r="1.6"/><circle cx="574.6" cy="296.6" r="1.6"/><circle cx="515.8" cy="224.4" r="1.6"/><circle cx="611.9" cy="238.6" r="1.6"/><circle cx="528.3" cy="295.1" r="1.6"/><circle cx="552.7" cy="193.4" r="1.6"/><circle cx="605.1" cy="288.0" r="1.6"/><circle cx="499.3" cy="252.5" r="1.6"/><circle cx="604.3" cy="205.9" r="1.6"/><circle cx="557.0" cy="314.2" r="1.6"/><circle cx="517.8" cy="199.4" r="1.6"/><circle cx="626.9" cy="259.0" r="1.6"/><circle cx="503.3" cy="289.5" r="1.6"/><circle cx="575.5" cy="181.1" r="1.6"/><circle cx="595.9" cy="312.6" r="1.6"/><circle cx="489.8" cy="227.6" r="1.6"/><circle cx="628.2" cy="218.5" r="1.6"/><circle cx="530.4" cy="320.6" r="1.6"/><circle cx="533.6" cy="176.6" r="1.6"/><circle cx="630.2" cy="286.9" r="1.6"/><circle cx="482.0" cy="270.6" r="1.6"/><circle cx="604.4" cy="181.0" r="1.6"/><circle cx="574.1" cy="332.2" r="1.6"/><circle cx="493.1" cy="198.2" r="1.6"/><circle cx="645.6" cy="242.9" r="1.6"/><circle cx="500.8" cy="314.0" r="1.6"/><circle cx="560.4" cy="161.6" r="1.6"/><circle cx="620.2" cy="316.4" r="1.6"/><circle cx="469.6" cy="241.6" r="1.6"/><circle cx="633.3" cy="194.4" r="1.6"/><circle cx="543.3" cy="341.7" r="1.6"/><circle cx="509.7" cy="170.1" r="1.6"/><circle cx="652.1" cy="275.2" r="1.6"/><circle cx="474.0" cy="294.1" r="1.6"/><circle cx="594.0" cy="158.4" r="1.6"/><circle cx="597.3" cy="341.6" r="1.6"/><circle cx="469.7" cy="207.2" r="1.6"/><circle cx="656.5" cy="220.2" r="1.6"/><circle cx="508.4" cy="338.1" r="1.6"/><circle cx="538.3" cy="149.1" r="1.6"/><circle cx="644.9" cy="310.3" r="1.6"/><circle cx="455.6" cy="263.0" r="1.6"/><circle cx="628.9" cy="169.1" r="1.6"/><circle cx="563.9" cy="357.2" r="1.6"/><circle cx="484.0" cy="172.9" r="1.6"/><circle cx="669.1" cy="255.6" r="1.6"/><circle cx="475.0" cy="320.2" r="1.6"/><circle cx="575.4" cy="139.8" r="1.6"/><circle cx="623.6" cy="342.4" r="1.6"/><circle cx="449.7" cy="224.6" r="1.6"/><circle cx="659.3" cy="193.7" r="1.6"/><circle cx="524.5" cy="359.5" r="1.6"/><circle cx="511.8" cy="144.4" r="1.6"/><circle cx="667.7" cy="295.7" r="1.6"/><circle cx="448.9" cy="289.4" r="1.6"/><circle cx="615.8" cy="145.1" r="1.6"/><circle cx="589.9" cy="365.9" r="1.6"/><circle cx="458.9" cy="184.3" r="1.6"/><circle cx="679.9" cy="230.0" r="1.6"/><circle cx="484.6" cy="346.4" r="1.6"/><circle cx="550.4" cy="127.1" r="1.6"/>
+  </g>
+
+  <!-- bore: now a small dot, not a large ring -->
+  <circle cx="560" cy="250" r="9" fill="#f6ecd2"/>
+  <circle cx="560" cy="250" r="4" fill="#7a1f1f"/>
+  <line x1="560" y1="254" x2="560" y2="278" stroke="#7a1f1f" stroke-width=".8"/>
+  <text x="560" y="291" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">bore Ø12 — feed + optical stem</text>
+
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">
+    <text x="683" y="400" text-anchor="end">golden-angle sunflower field, N=380 (61 shown)</text>
+    <text x="683" y="413" text-anchor="end">parastichies read as 21 CW × 34 CCW —</text>
+    <text x="683" y="426" text-anchor="end">consecutive Fibonacci numbers, not a choice</text>
+    <text x="683" y="145" fill="#7a1f1f" font-weight="700" text-anchor="end">torus, Ø290</text>
+    <text x="683" y="157" fill="#7a1f1f" text-anchor="end">(hidden behind)</text>
+  </g>
+  <text x="460" y="459" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">Dark arms are slot voids (EM), not traces; dots are the through-plate</text>
+  <text x="460" y="472" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">acoustic micro-horn perforations. Both patterns span the full mouth —</text>
+  <text x="460" y="485" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">one plate, one aperture, scale separation is the diplexer (R4).</text>
+</svg>
+<div class="caption"><b>Fig. 3b — The dual-carrier plate assembly, dimensioned (revised 2026-08-03).</b>
+Bore shrunk from Ø130 to Ø12 — ingot-scale induction melting is dropped as a
+baseline capability (see text); the bore is now sized by feed clog-avoidance
+margin and the optical stem, both of which need only a few mm. The throat
+(Ø36) is set by 3× PZT elements not overlapping at 120°, not by bore
+clearance. Radial throw more than doubled (184&nbsp;mm), pushing radius
+compression to 11.2:1 — overshooting the 6.7:1 φ-class point in R3 from the
+other side, which is the same honest result as before: the fit follows the
+physics, not the aesthetic prior. Face view at reduced dot density (61 of
+the full 380) for legibility.</div>
+</div>
+
+<h2>4 · The active back-wall — the "transporter sheets" <em>(plan-B
+upgrade; baseline ships without)</em></h2>
+<p>The six panels sit between <b>seven columns</b> (40×40 mm) that carry the
+structure, the dense RX strips, and — on three of them — the service bundles.
+Each panel is a driven reconfigurable phononic + EM metasurface, a hex lattice
+of addressable cells, doing three jobs at once:</p>
+<ol>
+<li><b>Boundary control</b> — sets the acoustic boundary condition on the
+equator, shaping the field from the sides.</li>
+<li><b>Passive mode expansion</b> — the lattice expands the few column feeds
+into many spatially-addressable field DOF.</li>
+<li><b>State display</b> — the cells are emissive, so a panel <em>shows its
+own drive pattern</em> as a live hex wave. The wavy lit sheet is the boundary
+condition made visible — the same make-the-invisible-visible contract as the
+compiler's field view (<a href="replicator_field_compiler.html">RSW-1</a>).
+This is also where power-up is read (§7).</li>
+</ol>
+
+<div class="figure">
+<svg viewBox="0 0 740 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rear active boundary elevation">
+  <text x="24" y="26" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">Active back-wall — 7 columns · 6 phononic panels</text>
+  <g>
+    <rect x="70" y="46" width="82" height="170" fill="#eef3e8" stroke="#5a7d3a" stroke-width="1"/>
+    <rect x="170" y="46" width="82" height="170" fill="#e7efe0" stroke="#5a7d3a" stroke-width="1"/>
+    <rect x="270" y="46" width="82" height="170" fill="#eef3e8" stroke="#5a7d3a" stroke-width="1"/>
+    <rect x="370" y="46" width="82" height="170" fill="#e7efe0" stroke="#5a7d3a" stroke-width="1"/>
+    <rect x="470" y="46" width="82" height="170" fill="#eef3e8" stroke="#5a7d3a" stroke-width="1"/>
+    <rect x="570" y="46" width="82" height="170" fill="#e7efe0" stroke="#5a7d3a" stroke-width="1"/>
+    <g opacity=".8">
+      <path d="M270,80 q41,-16 82,0" fill="none" stroke="#b88a2a" stroke-width="3"/>
+      <path d="M270,108 q41,18 82,0" fill="none" stroke="#d8a72e" stroke-width="4"/>
+      <path d="M270,140 q41,-22 82,0" fill="none" stroke="#e8bd4a" stroke-width="5"/>
+      <path d="M270,175 q41,20 82,0" fill="none" stroke="#d8a72e" stroke-width="4"/>
+      <path d="M270,200 q41,-14 82,0" fill="none" stroke="#b88a2a" stroke-width="3"/>
+    </g>
+    <text x="311" y="234" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#7a5d12">panel driven — boundary state, lit</text>
+    <g fill="#5a6470">
+      <rect x="52" y="40" width="18" height="182" rx="2"/><rect x="152" y="40" width="18" height="182" rx="2"/>
+      <rect x="252" y="40" width="18" height="182" rx="2"/><rect x="352" y="40" width="18" height="182" rx="2"/>
+      <rect x="452" y="40" width="18" height="182" rx="2"/><rect x="552" y="40" width="18" height="182" rx="2"/>
+      <rect x="652" y="40" width="18" height="182" rx="2"/>
+    </g>
+    <g fill="#b88a2a"><rect x="58" y="50" width="6" height="162"/><rect x="158" y="50" width="6" height="162"/><rect x="258" y="50" width="6" height="162"/><rect x="358" y="50" width="6" height="162"/><rect x="458" y="50" width="6" height="162"/><rect x="558" y="50" width="6" height="162"/><rect x="658" y="50" width="6" height="162"/></g>
+  </g>
+  <text x="24" y="246" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#5a6470">columns carry drivers + RX strips (3 also carry service bundles); 6 hex metasurface panels close the gaps and drive the side boundary.</text>
+</svg>
+<div class="caption"><b>Fig. 4 — The active back-wall (plan B).</b> The Trek
+transporter sheet, read as engineering: a reconfigurable boundary showing its
+state. The free-standing baseline ships the bays <em>empty</em> (RX-only
+columns, glass EMC closure — walls demoted to instrument, R8); fitting and
+driving the panels is the plan-B rung for applications needing extra muscle
+band or side-boundary drive.</div>
+</div>
+
+<h2>5 · The windings — three contrawound pairs <em>(rev 2026-07-30,
+supersedes the single 44-turn winding)</em></h2>
+<p>Each of the three plate assemblies carries one <b>contrawound
+(enantiomeric torus-knot) winding pair</b> on its Ø290 torus — <b>two
+independent feed circuits per pair, always</b> (R5; one both-handed wire
+on one amplifier is racemic rank-1, forbidden). These are the only
+<em>wound conductors</em> in the machine — the spiral gratings are
+printed, flat, and not coils. The pair does three jobs, selected by
+drive:</p>
+<ul>
+<li><b>Sum mode — the strong field</b>: confined poloidal flux; induction
+levitation of small conductive droplets in the bore column — established
+art at that scale. <span class="chip c-measured">MEASURED</span>. (Bulk
+ingot-scale induction melting through this same coil is <b>dropped</b>,
+2026-08-03, §3c — the Ø12 bore no longer has room for it; an ingot-scale
+melt stage, if wanted, needs its own independently-sized coil.)</li>
+<li><b>Difference mode — the fast field</b>: the poloidal parts cancel,
+leaving an effective single-turn ring current — low-inductance, fast: the
+toroidal-pulse exciter at the coax-horn throat, and (three pairs stacked =
+six circuits) the traveling-wave bore lift of spec §4.
+<span class="chip c-measured">MEASURED</span> art (contrawound toroidal
+helix antennas)</li>
+<li><b>The potential port</b> — a wound toroid confines <b>B</b> inside itself
+and leaves a structured external vector potential <b>A</b>. Whether that
+couples usefully to matter phase (beyond the measured Aharonov–Bohm /
+Josephson effects) is the program's phase-sector experiment.
+<span class="chip c-open">OPEN</span></li>
+</ul>
+<blockquote>The four-channel mnemonic, corrected again (2026-07-30): sound
+and microwave both live on <b>the plates</b> (muscle and ears share the
+aperture; panels are plan B), light is the fingertip and the eyes (the
+bidirectional bore stem), and <b>the windings are the strong field and the
+experiment</b> — sum mode powers, difference mode excites, and the
+potential-sector claim they carry is the one thing here still OPEN.</blockquote>
+
+<h2>6 · The energy loop — harvest to coil</h2>
+<p>The boundary that shapes the field also recovers energy from it. Four
+measured harvest paths return power to the drive rail, which feeds the drivers
+and the bore windings — an ordinary open-system loop, no thermodynamic
+heterodoxy required:</p>
+<div class="overflow"><table>
+<tr><th>source</th><th>device</th><th>tier</th></tr>
+<tr><td>microwave field</td><td>rim <b>rectenna</b> (MIM/tunnel rectifier)</td><td><span class="chip c-measured">MEASURED</span> (&gt;80% at microwave)</td></tr>
+<tr><td>melt glow (cooling)</td><td><b>TPV ring</b> in the harvest layer</td><td><span class="chip c-measured">MEASURED</span> (~40%)</td></tr>
+<tr><td>acoustic / vibration</td><td>the plate throat elements (and plan-B panels where fitted) — <b>piezo is bidirectional</b>, generating charge under stress</td><td><span class="chip c-measured">MEASURED</span> (piezo harvesting)</td></tr>
+<tr><td>coherent extraction</td><td>the <b>REMOVE verb</b> — time-reversed lasing pulls amplitude out of chosen modes as work, not heat</td><td>the recovery term of §6.8; open-system</td></tr>
+</table></div>
+<div class="warn"><b>Register — the ZPE thread stays OPEN and off the deck.</b>
+The rim rectenna and the ZPE lane's device are the <em>same rectifier
+lineage</em> — a MIM tunnel diode behind a cavity — separated only by band
+(microwave here, optical/IR there). That resemblance tempts a big claim: push
+the harvest layer to the Casimir/MIM optical device and the boundary plates
+become a net power source, drawing on the thermal/vacuum reservoir. That would
+be the largest unlock in the program — and it is exactly why it stays a
+tagged, firewalled hypothesis. The plates powering the coil is
+<span class="chip c-measured">MEASURED</span> engineering (ordinary harvest,
+open-system). The plates powering the coil <em>with more than you put in</em>
+is the ZPE lane's <span class="chip c-open">OPEN</span> bet — magnitude
+bracketed across nine orders, unproven, and never over-unity (a heat engine
+against a reservoir, per the lane's second-reservoir frame). Design toward the
+elegance; do not smuggle in the energy.</div>
+
+<h2>7 · Power-up — initialization and coupling-lock</h2>
+<p>On power-up the coupled plate–winding system (plus plan-B panels where
+fitted) is brought to operating state in a fixed sequence — this is the
+honest reading of the transporter's white-glowing bars ("energy
+initialization"):</p>
+<ol>
+<li><b>Self-calibration.</b> Every element pings every other; the machine
+measures its TX→RX identity matrix and runs the empty-cavity reference (the
+same reference run the compiler takes before a scan). Without this matrix the
+field compile is blind.</li>
+<li><b>Coupling-lock.</b> The three plate assemblies and their contrawound
+windings are tuned into resonant lock — a tune-and-match, exactly like
+locking an NMR probe or a laser cavity — and the facing plate pairs settle
+onto the open-resonator mode (the focusing term, R8). A resonant
+handshake, established once at start-up; plan-B panels join the lock where
+fitted.</li>
+<li><b>Cavity ring-up.</b> The high-Q coupled mode is pumped to its operating
+energy over many cycles — the cavity is charged before the first verb.</li>
+</ol>
+<p>The columns' vertical light strips (and the panels) display this sequence:
+calibrating, locking, ringing-up, ready. The glowing bars are not decoration
+— they are the initialization state, made visible.</p>
+
+<h2>8 · The signal chain — element to electronics</h2>
+<p>With the carriers separated by surface, there is <b>no diplexer</b>: each
+element rides a single band on a single line. Two simple chains, one per plate
+type.</p>
+
+<div class="figure">
+<svg viewBox="0 0 740 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two signal chains, no diplexer">
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5a6470"/></marker>
+  </defs>
+  <text x="24" y="26" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">Two chains — no diplexer</text>
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5">
+    <!-- shared engine -->
+    <rect x="30" y="95" width="130" height="60" rx="5" fill="#faf7ef" stroke="#8a8676" stroke-width="1.2"/>
+    <text x="95" y="120" text-anchor="middle" fill="#5a6470" font-weight="700">RP2350 PIO</text>
+    <text x="95" y="135" text-anchor="middle" fill="#5a6470" font-size="9">phase engine + RX ADC</text>
+    <!-- EM chain -->
+    <rect x="220" y="52" width="120" height="30" rx="4" fill="#f2ecf5" stroke="#6a4a8a" stroke-width="1.1"/>
+    <text x="280" y="71" text-anchor="middle" fill="#6a4a8a">RF driver</text>
+    <rect x="380" y="52" width="150" height="30" rx="4" fill="#eaf0f5" stroke="#3a5a7d" stroke-width="1.1"/>
+    <text x="455" y="71" text-anchor="middle" fill="#3a5a7d">spiral grating (cap)</text>
+    <line x1="160" y1="110" x2="220" y2="72" stroke="#5a6470" stroke-width="1.6" marker-end="url(#a)"/>
+    <line x1="340" y1="67" x2="380" y2="67" stroke="#5a6470" stroke-width="1.6" marker-end="url(#a)"/>
+    <text x="440" y="44" text-anchor="middle" fill="#6a4a8a" font-size="9">EM chain — 3 plate assemblies (slots + windings)</text>
+    <!-- Acoustic chain -->
+    <rect x="220" y="120" width="120" height="30" rx="4" fill="#eef3e8" stroke="#5a7d3a" stroke-width="1.1"/>
+    <text x="280" y="139" text-anchor="middle" fill="#3f5a28">piezo amp</text>
+    <rect x="380" y="120" width="150" height="30" rx="4" fill="#eef3e8" stroke="#5a7d3a" stroke-width="1.1"/>
+    <text x="455" y="139" text-anchor="middle" fill="#3f5a28">3-PZT throat + gyroid horn (plate)</text>
+    <line x1="160" y1="140" x2="220" y2="135" stroke="#5a6470" stroke-width="1.6" marker-end="url(#a)"/>
+    <line x1="340" y1="135" x2="380" y2="135" stroke="#5a6470" stroke-width="1.6" marker-end="url(#a)"/>
+    <text x="440" y="170" text-anchor="middle" fill="#3f5a28" font-size="9">acoustic chain — same 3 plates (panels = plan B)</text>
+    <!-- RX return -->
+    <line x1="380" y1="100" x2="165" y2="112" stroke="#b88a2a" stroke-width="1.3" marker-end="url(#a)"/>
+    <text x="300" y="103" text-anchor="middle" fill="#7a5d12" font-size="9">RX tap → ADC (both)</text>
+    <!-- bus + coil -->
+    <rect x="220" y="185" width="310" height="24" rx="4" fill="#fff8e8" stroke="#b88a2a" stroke-width="1.1"/>
+    <text x="375" y="201" text-anchor="middle" fill="#7a5d12">drive rail ← harvest (rectenna · TPV · piezo-regen) → bore winding</text>
+    <rect x="560" y="120" width="150" height="30" rx="5" fill="#f3e7e7" stroke="#7a1f1f" stroke-width="1.2"/>
+    <text x="635" y="139" text-anchor="middle" fill="#7a1f1f">contrawound pairs (×3, 2 feeds each)</text>
+    <line x1="530" y1="197" x2="635" y2="152" stroke="#7a1f1f" stroke-width="1.3" marker-end="url(#a)"/>
+    <text x="24" y="235" font-size="10" fill="#5a6470">One band per line per surface — the wiring is simpler than the doublet it replaces. Harvest returns to the bus; the bus powers the windings and the drivers.</text>
+  </g>
+</svg>
+<div class="caption"><b>Fig. 5 — The two chains.</b> EM slots and acoustic
+throats share each plate assembly, but every <em>element</em> still rides one
+band on one line — the physics is the diplexer, no diplexer part exists. The
+energy loop (§6) closes through the drive rail into the contrawound
+windings.</div>
+</div>
+
+<h2>9 · System wiring — where the bundles run</h2>
+<p><em>Status note (2026-07-30): the routing below is the desktop-variant
+(two-plate) wiring plan; it generalizes to the free-standing stack by
+adding the middle assembly's bundle (routes with the lower plate's) and
+the storage-deck bundle (routes direct to base). "Panels" rows apply only
+where plan-B panels are fitted.</em></p>
+<p>Bundles leave each surface as one <b>8-conductor shielded run</b> (drive
+pair · RX pair · power · ground · shield/aux). The <b>lower cap</b> connects
+straight into the base deck; the <b>upper cap</b>'s run, its bore-winding
+pair, feed riser, and crown power descend <b>three of the seven columns</b>.
+The <b>panel</b> drives and column RX strips run down all seven.</p>
+<div class="overflow"><table>
+<tr><th>run</th><th>from → to</th><th>carries</th></tr>
+<tr><td>lower cap</td><td>plate rim → base deck (direct)</td><td>EM drive/RX, bore-winding pair, power, harvest return</td></tr>
+<tr><td>upper cap</td><td>crown → 3 service columns → base</td><td>EM drive/RX, bore-winding pair, crown power, exhaust</td></tr>
+<tr><td>panels</td><td>6 panels → adjacent columns → base</td><td>acoustic drive + panel RX + display</td></tr>
+<tr><td>columns</td><td>7 columns → base ADC banks</td><td>dense RX strips (MIMO listen aperture)</td></tr>
+<tr><td>power</td><td>supply → drive rail → caps + panels + windings + logic</td><td>one rail; harvest returns into it (§6). Rail voltage and total draw follow the build's size and band — they are not architectural constants</td></tr>
+</table></div>
+<blockquote>Interlock, unchanged: a Hall sensor at the sealed detent gates all
+drive power above metrology level. Front glass open → only mW-class listening
+is electrically possible.</blockquote>
+
+<h2>10 · Build sheet — for the model and the first chassis</h2>
+<div class="overflow"><table>
+<tr><th>item</th><th>count</th><th>dimension</th><th>placement</th></tr>
+<tr><td>circular EM cap</td><td>2</td><td>Ø300, Ø80 bore, ~20 mm stack</td><td>deck level (lower) &amp; crown face-down (upper), 300 mm apart</td></tr>
+<tr><td>spiral grating</td><td>2 faces</td><td>etched, radial ring feed at bore rim</td><td>the cap build face; mirror-imaged handedness</td></tr>
+<tr><td>bore winding</td><td>2</td><td>toroid around Ø80 bore</td><td>threads each cap bore</td></tr>
+<tr><td>rectangular phononic panel</td><td>6</td><td><b>42.5 mm wide</b> × 300 mm tall × 5 mm, hex metasurface + piezo (true chord of the 15.7° clear gap at r = 155 mm — an earlier "~82 mm" figure was a sketch estimate, corrected against the CAD)</td><td>the back wall at r = 155 mm, between the 7 columns</td></tr>
+<tr><td>single-crystal piezo</td><td>per panel</td><td>PMN-PT stack + graded taper</td><td>behind each panel's hex screen</td></tr>
+<tr><td>column</td><td>7</td><td><b>40 mm tangential × 20 mm radial</b> × 300 mm tall, light strip on inner face</td><td>rear 180°, 30° spacing, centred r = 160 mm (spans r = 150–170); 3 with service bundles</td></tr>
+<tr><td>glass door</td><td>1</td><td>Ø364 rotating half-cylinder</td><td>the front; roller-track rings (spec §5)</td></tr>
+<tr><td>base bay</td><td>1</td><td>Ø360 × 180 mm</td><td>controller, drivers, PSU, feedstock, UI</td></tr>
+</table></div>
+<p>Modeler's note: the caps read as the amber-lit bullseye (spiral face, lit
+bore); the six back panels as hex-tiled sheets glowing with their live
+boundary state; the columns as dark bars with white light strips (the
+power-up indicators of §7). Two round pads on the axis, a faceted glowing
+back wall, a glass door — the transporter chamber, built to function.</p>
+
+<div class="warn"><b>Scope &amp; register.</b> Mechanical and electrical, at
+the engineering optimum — the best arrangement of <em>established</em> physics
+(single-crystal piezo, graded phononic matching, rainbow-trap multiplexing,
+spiral-grating toroidal launch, EBG radiators, MIM rectennas, induction melt).
+It fixes the physics of none of it (see the
+<a href="desktop_replicator_hardware_spec.html">spec</a> §6.0–§6.1, the
+<a href="transmutation.html">science paper</a> §6, and the
+<a href="replicator_architecture.html">architecture paper</a>). The bore winding's
+potential-port role and any ZPE net-harvest are
+<span class="chip c-open">OPEN</span> and firewalled; transmutation appears
+nowhere in this build.</div>
+
+</body>
+</html>

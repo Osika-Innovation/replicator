@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Replicator — Architecture</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px; font-size:.85em; padding:.05em .3em}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+  .figure{margin:1.8rem 0; text-align:center}
+  .figure svg{max-width:100%; height:auto; background:#fdfcf8;
+    border:1px solid var(--rule); border-radius:3px}
+  .caption{font-size:.85rem; color:var(--soft); font-style:italic;
+    margin-top:.5rem; text-align:left}
+  .caption b{font-style:normal; font-family:"Helvetica Neue",Helvetica,sans-serif; color:#555}
+</style>
+</head>
+<body>
+
+<div class="banner">Machine-topology member of the Replicator paper network ·
+read first: <a href="replicator_principles.html">Principles</a> ·
+carriers: <a href="the_two_carriers.html">The Two Carriers</a> ·
+<a href="replicator_phonons.html">Phonons</a> ·
+<a href="replicator_photons.html">Photons</a> ·
+matter sector: <a href="transmutation.html">Transmutation</a> ·
+software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
+instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec (RH-1)</a> ·
+instance build: <a href="replicator_mechanical_construction.html">Mechanical Construction</a></div>
+
+<h1>The Replicator — Architecture</h1>
+<p class="sub">The machine's topology, stated size-free: how many boundary
+surfaces, how many channels, in what arrangement, and why — counts, ratios,
+and ladders rather than millimetres. Millimetre numbers appear only as
+clearly-marked instance examples pointing at the hardware spec.</p>
+<p class="meta">draft v1.0 · 2026-08-01 · extracted from
+<code>the_replicator.html</code> §6 (v0.7) and
+<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30</code>. Register chips
+(<span class="chip c-measured">MEASURED</span> /
+<span class="chip">DERIVED</span> /
+<span class="chip c-open">OPEN</span>) travel with each claim exactly as
+tagged at the source; no claim's register was upgraded in the move.</p>
+
+<div class="box"><b>The single-home rule.</b> This paper is the single
+canonical home for the Replicator's machine topology — the boundary-coverage
+ladder, the plate assembly and its channel topology, the stack, the windings,
+and the matter loop. Other papers in the network <em>link here</em> rather
+than restating this material; if another paper is found restating it, that
+paper gets the pointer and this one keeps the text. Conversely this paper
+does not own: the wave principles (<a
+href="replicator_principles.html">Principles</a>), carrier element physics
+(<a href="replicator_phonons.html">Phonons</a>, <a
+href="replicator_photons.html">Photons</a>, <a
+href="the_two_carriers.html">Two Carriers</a>), the control software
+(<a href="replicator_field_compiler.html">Field Compiler</a>), the nuclear
+sector (<a href="transmutation.html">Transmutation</a>), or any specific
+build's dimensions (<a href="desktop_replicator_hardware_spec.html">Hardware
+Spec</a>, <a href="replicator_mechanical_construction.html">Mechanical
+Construction</a> — RH-1 is one instance of this architecture, not the
+architecture).</div>
+
+<p>Everything below fixes <em>topology</em> — what encloses what, how many
+of each, which ratios the physics pins — and leaves size to the instance
+papers. The license for boundary-only control (the Kirchhoff–Helmholtz
+theorem: the field on a closed surface determines the field everywhere
+inside it) is owned by <a href="replicator_principles.html">Principles
+§2</a>; this paper takes it as given and builds the machine family it
+implies.</p>
+
+<h2 id="s1">1 · The boundary-coverage ladder</h2>
+
+<h3 id="s1-1">1.1 Why two plates — the minimal machine</h3>
+<p>The entry rung is two opposed concentric-ring phased-array plates — a
+bullseye above, a bullseye below — enclosing a build volume. Both of the
+machine's jobs force the transporter geometry:</p>
+<ol>
+<li><b>The mold.</b> A standing-wave field whose nodal manifold holds the
+object's pattern requires counter-propagating fields; opposed arrays are the
+canonical realization, and opposed-array levitation rigs are published,
+working art <span class="chip c-measured">MEASURED</span>.</li>
+<li><b>The drain.</b> The REMOVE verb is coherent perfect absorption
+(<a href="replicator_principles.html">Principles</a>); CPA of a mode
+radiating into both half-spaces requires conjugate control of <em>both</em>
+counter-propagating channels — one plate cannot absorb what escapes toward
+the other side. The transporter look is the CPA boundary condition made
+visible <span class="chip c-measured">MEASURED</span> (CPA/anti-laser
+demonstrated in optics and acoustics).</li>
+</ol>
+<div class="figure">
+<svg viewBox="0 0 740 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The two-plate Replicator in cross-section">
+  <defs>
+    <marker id="ab" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3a5a7d"/></marker>
+    <marker id="am" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#b88a2a"/></marker>
+  </defs>
+  <text x="24" y="28" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">The transporter configuration — two plates, one field (cross-section)</text>
+
+  <!-- top plate: ring segments with center bore -->
+  <g stroke="#1c1c1c" stroke-width="1.2">
+    <rect x="90" y="60" width="82" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="182" y="60" width="82" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="274" y="60" width="60" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="406" y="60" width="60" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="476" y="60" width="82" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="568" y="60" width="82" height="16" rx="3" fill="#d9d2c0"/>
+  </g>
+  <rect x="66" y="56" width="18" height="24" rx="3" fill="#f2e3bd" stroke="#b88a2a" stroke-width="1.4"/>
+  <rect x="656" y="56" width="18" height="24" rx="3" fill="#f2e3bd" stroke="#b88a2a" stroke-width="1.4"/>
+  <!-- bottom plate mirrored -->
+  <g stroke="#1c1c1c" stroke-width="1.2">
+    <rect x="90" y="364" width="82" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="182" y="364" width="82" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="274" y="364" width="60" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="406" y="364" width="60" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="476" y="364" width="82" height="16" rx="3" fill="#d9d2c0"/>
+    <rect x="568" y="364" width="82" height="16" rx="3" fill="#d9d2c0"/>
+  </g>
+  <rect x="66" y="360" width="18" height="24" rx="3" fill="#f2e3bd" stroke="#b88a2a" stroke-width="1.4"/>
+  <rect x="656" y="360" width="18" height="24" rx="3" fill="#f2e3bd" stroke="#b88a2a" stroke-width="1.4"/>
+
+  <text x="90" y="52" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#5a6470">ring elements — cone basis, 6 modes × I/Q = 12 channels (§2.2)</text>
+  <text x="674" y="52" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#7a5d12">rectenna rim (harvest)</text>
+
+  <!-- axis bore -->
+  <line x1="370" y1="46" x2="370" y2="394" stroke="#5a6470" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="370" y="416" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#5a6470">axis bore — feedstock in · metrology sightline · the 13th</text>
+
+  <!-- opposing cones -->
+  <path d="M182,80 L370,215 L264,80" fill="#eaf0f5" opacity=".8" stroke="#3a5a7d" stroke-width="1"/>
+  <path d="M182,360 L370,225 L264,360" fill="#eaf0f5" opacity=".8" stroke="#3a5a7d" stroke-width="1"/>
+  <path d="M476,80 L370,215 L558,80" fill="#eaf0f5" opacity=".55" stroke="#3a5a7d" stroke-width="1"/>
+  <path d="M476,360 L370,225 L558,360" fill="#eaf0f5" opacity=".55" stroke="#3a5a7d" stroke-width="1"/>
+
+  <!-- nodal lines and voxels -->
+  <g stroke="#8a8676" stroke-width=".7" stroke-dasharray="2 4">
+    <line x1="130" y1="150" x2="610" y2="150"/>
+    <line x1="130" y1="220" x2="610" y2="220"/>
+    <line x1="130" y1="290" x2="610" y2="290"/>
+  </g>
+  <g fill="#2f6d5e">
+    <circle cx="330" cy="220" r="4.5"/><circle cx="370" cy="220" r="4.5"/><circle cx="410" cy="220" r="4.5"/>
+    <circle cx="350" cy="150" r="3" opacity=".55"/><circle cx="390" cy="150" r="3" opacity=".55"/>
+    <circle cx="350" cy="290" r="3" opacity=".55"/><circle cx="390" cy="290" r="3" opacity=".55"/>
+  </g>
+  <text x="424" y="224" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10.5" fill="#2f6d5e">voxels settle at the written nodes — the mold</text>
+
+  <!-- verbs -->
+  <path d="M112,136 L162,178" stroke="#3a5a7d" stroke-width="1.6" marker-end="url(#ab)"/>
+  <text x="42" y="112" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#3a5a7d">ADD — in-phase</text>
+  <text x="42" y="126" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#3a5a7d">pump the pattern</text>
+  <path d="M608,178 L656,138" stroke="#b88a2a" stroke-width="1.6" marker-end="url(#am)"/>
+  <text x="698" y="112" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#7a5d12">REMOVE — conjugate (CPA)</text>
+  <text x="698" y="126" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#7a5d12">needs BOTH plates — hence the look</text>
+</svg>
+<div class="caption"><b>Fig. 1 — The minimal machine (§1.1).</b>
+Counter-propagating cone-basis fields write the standing-wave mold; the
+phase-conjugate REMOVE verb needs <em>both</em> escape channels — hence the
+transporter look; the axis bore carries feedstock and metrology; the rim
+harvests drained power. One plate alone is the table replicator — full ADD,
+partial REMOVE (§1.2).</div>
+</div>
+
+<h3 id="s1-2">1.2 The ladder — more boundary, more addressable interior</h3>
+<p>Boundary coverage read as a design axis gives a ladder, unifying the
+two-plate machine with the icosahedral chamber lane:</p>
+<div class="overflow"><table>
+<tr><th>rung</th><th>boundary</th><th>capability</th></tr>
+<tr><td>1 plate</td><td>single disc (the table replicator, §2.2)</td><td>half-space control (Rayleigh–Sommerfeld); molds fully, drains partially</td></tr>
+<tr><td>2 plates</td><td>opposed discs (the baseline Replicator)</td><td>minimal CPA-capable rung; molds and drains the axial mode family</td></tr>
+<tr><td>6 faces</td><td>full rectilinear boundary (the cube)</td><td>rectilinear mode control on all three axes</td></tr>
+<tr><td>12 ports</td><td>icosahedral vertices (LPOH chamber; the A₅ scaffold; the screen's twelve pentagons)</td><td>symmetric sphere approximation; the scaffold OPH assigns to microphysics itself</td></tr>
+<tr><td>fullerene shell</td><td>geodesic transducer surface at Goldberg resolution GP(m,n)</td><td>the screen itself, built: twelve pentagonal defect sites (Euler-forced, always exactly twelve — all disclination charge lives there) as drive ports; hexagonal sites as sense elements; interior reconstructed by Kirchhoff–Helmholtz. Resolution (m,n) sets addressable bulk depth; chirality (m≠n) sets the spiral winding of inward transport</td></tr>
+</table></div>
+<div class="figure">
+<svg viewBox="0 0 740 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The boundary-coverage ladder from one plate to the fullerene shell">
+  <defs><marker id="al" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#8a8676"/></marker></defs>
+  <text x="24" y="28" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">The boundary ladder — more boundary, more addressable interior</text>
+
+  <ellipse cx="90" cy="105" rx="40" ry="9" fill="#d9d2c0" stroke="#1c1c1c" stroke-width="1.2"/>
+  <text x="90" y="150" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#444">1 · table</text>
+  <text x="90" y="165" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">ADD full · REMOVE partial</text>
+
+  <ellipse cx="235" cy="72" rx="40" ry="9" fill="#d9d2c0" stroke="#1c1c1c" stroke-width="1.2"/>
+  <ellipse cx="235" cy="138" rx="40" ry="9" fill="#d9d2c0" stroke="#1c1c1c" stroke-width="1.2"/>
+  <text x="235" y="150" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#444" dy="15">2 · transporter</text>
+  <text x="235" y="180" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">CPA closes (axial family)</text>
+
+  <rect x="345" y="70" width="66" height="66" fill="none" stroke="#1c1c1c" stroke-width="1.2"/>
+  <path d="M345,70 L365,54 L431,54 L411,70 M431,54 L431,120 L411,136 M365,54 L365,70" fill="none" stroke="#1c1c1c" stroke-width="1" opacity=".6"/>
+  <text x="382" y="152" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#444">6 · cube</text>
+  <text x="382" y="167" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">rectilinear mode control</text>
+
+  <g stroke="#1c1c1c" stroke-width="1" fill="none">
+    <polygon points="530,58 566,78 566,120 530,140 494,120 494,78" />
+    <line x1="530" y1="58" x2="530" y2="140" opacity=".4"/>
+    <line x1="494" y1="78" x2="566" y2="120" opacity=".4"/>
+    <line x1="566" y1="78" x2="494" y2="120" opacity=".4"/>
+  </g>
+  <g fill="#3a5a7d"><circle cx="530" cy="58" r="3.4"/><circle cx="566" cy="78" r="3.4"/><circle cx="566" cy="120" r="3.4"/><circle cx="530" cy="140" r="3.4"/><circle cx="494" cy="120" r="3.4"/><circle cx="494" cy="78" r="3.4"/></g>
+  <text x="530" y="158" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#444">12 · icosa ports</text>
+  <text x="530" y="173" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">the A₅ scaffold · LPOH chamber</text>
+
+  <circle cx="666" cy="99" r="42" fill="none" stroke="#1c1c1c" stroke-width="1.2"/>
+  <g fill="#5a7d3a">
+    <circle cx="666" cy="57" r="3"/><circle cx="702" cy="78" r="3"/><circle cx="702" cy="120" r="3"/>
+    <circle cx="666" cy="141" r="3"/><circle cx="630" cy="120" r="3"/><circle cx="630" cy="78" r="3"/>
+    <circle cx="684" cy="63" r="1.6" opacity=".6"/><circle cx="700" cy="99" r="1.6" opacity=".6"/><circle cx="648" cy="63" r="1.6" opacity=".6"/>
+    <circle cx="632" cy="99" r="1.6" opacity=".6"/><circle cx="648" cy="135" r="1.6" opacity=".6"/><circle cx="684" cy="135" r="1.6" opacity=".6"/>
+  </g>
+  <text x="666" y="158" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#3f5a28">shell · GP(m,n)</text>
+  <text x="666" y="173" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">drive the 12 defects, read the hexagons</text>
+
+  <g stroke="#8a8676" stroke-width="1.3">
+    <line x1="140" y1="105" x2="185" y2="105" marker-end="url(#al)"/>
+    <line x1="286" y1="105" x2="335" y2="105" marker-end="url(#al)"/>
+    <line x1="436" y1="105" x2="480" y2="105" marker-end="url(#al)"/>
+    <line x1="580" y1="105" x2="614" y2="105" marker-end="url(#al)"/>
+  </g>
+  <text x="716" y="200" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-style="italic" fill="#8a8676">each rung = more controllable interior modes (the programmability axis)</text>
+</svg>
+<div class="caption"><b>Fig. 2 — The boundary ladder (§1.2).</b> One standard
+12-channel plate tiles every topology: table → transporter → cube →
+the icosahedral 12-port → the fullerene screen itself, where the twelve
+Euler-forced pentagonal defects are the drive ports. Kirchhoff–Helmholtz
+licenses the whole column: the boundary suffices
+(<a href="replicator_principles.html">Principles §2</a>).</div>
+</div>
+<p>The top rung is the design hypothesis:
+<em>drive the twelve defects, read the hexagons</em>
+<span class="chip c-open">OPEN</span> (port-sufficiency conjecture; also
+the retrospective justification of the twelve-port chamber lane).</p>
+<p>Each rung upward buys more controllable interior modes — the
+programmability axis of <code>optimizing_compute.html</code>; the two-plate
+build is the entry rung because it is the cheapest geometry that executes
+both verbs.</p>
+<p>Status honesty: mesoscale field-molding (levitation, acoustic holograms,
+trap arrays) is established art
+<span class="chip c-measured">MEASURED</span>; molecular-scale assembly in
+such molds is <span class="chip c-open">OPEN</span>. The nuclear sector is
+out of scope — it lives, with its own register and experimental program, in
+<a href="transmutation.html">Transmutation</a>.</p>
+
+<h2 id="s2">2 · The plate assembly</h2>
+
+<h3 id="s2-1">2.1 Addressing</h3>
+<p>Each plate is an addressing surface for the field between them:</p>
+<ul>
+<li><b>Ring n ↔ band n</b>: rings carry transducers for frequency band
+f₀·2ⁿ — literal octaves. (First builds are single-band; multiband is the
+design intent.)</li>
+<li><b>Azimuthal phase ↔ tone</b>: a phase winding e<sup>iℓθ</sup> around a
+ring selects azimuthal mode ℓ; (band, ℓ) is the mode address.</li>
+<li><b>Differential pairs</b>: elements mirrored across the plate axis are
+driven push–pull, giving every address a signed (±) drive — the polarity
+axis.</li>
+<li><b>Scaffold patterns</b>: the icosahedral projection printed on the
+plates makes the twelve-port A₅ drive patterns available as a basis; the
+science paper's primary geometric control
+(<a href="transmutation.html">Transmutation</a> §8) compares A₅-symmetric
+drive to scrambled-phase drive of identical power.</li>
+</ul>
+
+<h3 id="s2-2">2.2 The twelve-channel plate (cone basis)</h3>
+<p>The bullseye's natural mode family is conical: a ring driven at radial
+wavevector k<sub>r</sub> with azimuthal winding ℓ synthesizes a Bessel
+(axicon) beam — a cone whose angle is set by ring geometry and whose
+orientation by the phase winding <span class="chip c-measured">MEASURED</span>.
+Six chosen (angle, azimuth) cone-modes form a six-element basis — Russell's
+six-cones-from-the-cube (his BB/DD panels) as the plate's eigenbasis rather
+than an imposed pattern (provenance only, never load-bearing).</p>
+<p>We standardize on <b>twelve drive channels = six cones × two</b>, two
+hardware-real readings composing: an <b>I/Q pair</b> gives each cone an
+arbitrary complex weight (twelve real channels = six complex degrees of
+freedom), and a <b>differential pair</b> gives push–pull drive natively on
+dual-H-bridge hardware — the ± polarity axis as circuit topology. Six
+complex axes are the icosahedron's twelve vertices in antipodal pairs:
+<em>the plate is the projected twelve-port screen</em>, and twelve channels
+is the port count the existing chamber firmware stack (per-port PIO
+arrays, twelve-channel drivers) already speaks. One module, every
+topology:</p>
+<div class="overflow"><table>
+<tr><th>tiles</th><th>machine</th><th>verbs available</th></tr>
+<tr><td>1 plate</td><td>table replicator</td><td>ADD at full strength; REMOVE partial (only the returning channel is controllable) — assembler-grade</td></tr>
+<tr><td>2 plates</td><td>transporter (the baseline)</td><td>both verbs on the axial mode family (CPA closes)</td></tr>
+<tr><td>6 plates</td><td>cube faces</td><td>both verbs, rectilinear mode control</td></tr>
+<tr><td>tiled shell</td><td>the fullerene screen (§1.2 top rung)</td><td>both verbs on every interior mode</td></tr>
+</table></div>
+<p>The single-plate rung is not speculative: single-sided acoustic
+holography — twin traps, bottle beams, levitation against gravity from one
+flat array — is published, working art
+<span class="chip c-measured">MEASURED</span>, licensed by the
+Rayleigh–Sommerfeld integral (the half-space case of §1.2).</p>
+
+<h3 id="s2-3">2.3 Substrate: the electrical bus and the coil final stage —
+with the supersession history</h3>
+<p>The channel architecture is substrate-agnostic: every candidate
+transducer is electrically driven — a piezo disc is an EM→pressure
+converter, a laser diode an EM→optical converter, a coil is EM undisguised.
+The twelve-channel I/Q bus is the standard; the final stage is a per-ring
+configuration. What the bare EM field does without a converter, with
+measured anchors:</p>
+<ul>
+<li><b>Conductive feedstock</b>: EM levitation melting / cold-crucible
+practice — coils levitate, contain, stir and heat melts contactlessly
+<span class="chip c-measured">MEASURED</span> (industrial).</li>
+<li><b>Charged feedstock</b>: ion trapping is the most precise matter
+placement in existence (single-atom Paul traps)
+<span class="chip c-measured">MEASURED</span>. Once matter is ionized, EM
+coupling is total — the purist strategy is to change the matter's phase,
+not the field.</li>
+<li><b>Neutral polarizable feedstock</b>: dielectrophoresis
+<span class="chip c-measured">MEASURED</span>; diamagnetic levitation at
+brute-force fields <span class="chip c-measured">MEASURED</span>. The
+honest weak spot is cold neutral insulators (χ ~ 10⁻⁵) — the one regime
+where an acoustic final stage genuinely earns its place.</li>
+<li><b>The nuclear sector is EM-native by necessity</b> — every knob there
+is a charge-sector variable; argument and sector live in
+<a href="transmutation.html">Transmutation</a>.</li>
+<li><b>Octave addressing is native only to EM</b>: coils and antennas span
+Hz→GHz on one channel type, whereas piezo elements are narrowband
+mechanical resonators. The ring-n = f₀·2ⁿ scheme of §2.1 is an EM dial by
+construction.</li>
+<li><b>The coil wants to be conical</b>, on three established grounds
+<span class="chip c-measured">MEASURED</span>: (i) conical inductors have no
+single self-resonance (every turn a different diameter) and are the standard
+component of ultra-broadband bias-tees — the exact per-channel part the
+dual-band scheme below requires; (ii) the conical log-spiral antenna
+(Rumsey 1957; Dyson 1959) is frequency-independent because its geometry is
+defined by angles alone, and its active region moves along the cone with
+frequency — high octaves radiate near the tip, low near the base — so the
+octave ladder is laid out spatially along the axis; (iii) tapered/conical
+coils are the incumbent geometry of EM levitation-melting, because the cone
+produces the supporting field gradient.</li>
+<li><b>The flat-plate version exists as current hardware</b>
+<span class="chip c-measured">MEASURED</span>: EBG-backed Archimedean spiral
+antennas (e.g. Luadang et al., <i>Sci. Rep.</i> 2025) put 3.4 octaves
+(1.34–14 GHz, 165% bandwidth) on a printed disc — two spiral arms
+(the ± differential pair in copper; winding sense sets circular
+polarization) over concentric rings of high-impedance EBG cells (an
+artificial magnetic conductor: engineered zero-phase boundary that keeps
+a <em>one-sided</em> plate thin and forward-directed — directly the
+single-plate table rung's need). The octaves stack radially (active
+region at circumference ≈ λ: high bands at center, low at rim) — §2.1's
+ring-addressing as published GHz practice.</li>
+</ul>
+<p>The two final stages coexist in one part: a voice-coil exciter
+<em>is</em> a coil in a permanent magnet's gap — in the audio band the
+coil's force moves the mass (sound); above the mechanical rolloff the same
+current radiates a near-field magnetic field, a loop inductor by
+construction. A summed waveform through a per-channel bias-T thus
+frequency-division-multiplexes both substrates on the same twelve
+channels: acoustic octaves on the mechanical stage, RF octaves (up to the
+coil's self-resonance, roughly low-MHz — induction and dielectrophoresis
+territory) on the electromagnetic stage — the octave ladder continuing
+through a single device. The permanent magnet adds a colocated static bias
+field B₀, which with the RF field B₁ is the magnetic-resonance addressing
+configuration, plus pressure on the same spot: a three-field port from a
+commodity part <span class="chip">DERIVED</span> (multiplexing physics is
+textbook; the three-field port as a fabrication tool is untested).</p>
+
+<p><b>The carrier-placement supersession history</b> — kept dated and in
+order, because three successive rulings changed where each carrier lives
+and each ruling's <em>rationale</em> partly survives its letter:</p>
+
+<p><b>[SUPERSEDED 2026-07-22 — kept as the record of the earlier design.]</b>
+Channel-architecture ruling (2026-07-19): the carriers are <em>not</em>
+split across channels (no "6 EM + 6 acoustic") — their disjoint spectra
+make frequency-division free, so 12 electrical lines carry 12+12 logical
+channels, preserving each carrier's full aperture and the co-location the
+crossings require. Specialization happens at the <b>element</b> level:
+each site may host a <b>co-located doublet</b> (one acoustic-optimized +
+one EM-optimized element on one diplexer-fed channel) — 12 channels, up
+to 24 elements, "12 dual-carrier sites." The energy×bandwidth ceiling is
+the Bode–Fano/Chu limit <span class="chip c-measured">MEASURED</span>; the
+three licensed evasions are self-similar geometry (Rumsey), active-area
+fraction (the whole-surface-transducer optimum), and non-Foster active
+matching.</p>
+<p><b>[SUPERSEDED 2026-07-30 — kept as the record of the intermediate
+design.]</b> Superseding rev, 2026-07-22 (mechanical-construction lane):
+the carrier split moved from co-located doublets to <b>surface
+separation</b> — EM lives on the two circular caps, acoustic on six
+back-wall transporter panels; no per-site diplexer. The cap's EM face is
+an <b>equiangular-spiral slot grating</b> with a radial ring feed at the
+bore rim — a flattened coaxial horn that launches single-cycle,
+space-time-nonseparable <b>toroidal and toroidal-helical pulses</b>; the
+TE/TM mix α, relative phase β, and handedness enter as drive parameters,
+so the chord alphabet gains a helicity axis. Launcher art
+<span class="chip c-measured">MEASURED</span>: Wang et al., <i>Commun.
+Phys.</i> 7:356 (2024); Shi et al., <i>Commun. Phys.</i> (2026, in press —
+toroidal helical pulses, hybrid EM skyrmion texture, helicity tuned by the
+grating angle).</p>
+<p><b>[CURRENT RULING — R3 amendment, operator, 2026-07-30 late.]</b>
+<b>The plates are primary for both carriers.</b> The 2026-07-22 letter
+"muscle stays on the panels" is superseded: the plate assemblies
+(dual-carrier coaxial horns — §2.5) are the machine's primary phonon
+<em>and</em> photon aperture; <b>side paneling is plan B</b> — an auxiliary
+muscle/coverage extension an application may add, not part of the
+free-standing baseline. The toroidal drivers are load-bearing architecture.
+The walls' standing duties under the open-resonator ruling (§3.1 — EMC,
+safety, high-angle RX) live in the enclosure coating and the arcade
+strips. The 2026-07-22 rev is thereby fully superseded in letter; its
+rationale survives (physics-as-diplexer, one-element-one-band; what does
+not survive is carriers-on-different-surfaces).</p>
+
+<p><em>Instance note (RH-1 Phase 1, not doctrine):</em> coil final stages
+throughout (wideband, driven directly by the existing PIO + H-bridge
+stack), demonstrated on conductive or ionized feedstock; a piezo ring as
+optional daughter stage for the neutral-insulator regime. Russell's
+"electricity and magnetism suffice" survives audit in this specific form:
+the drive is always electrical; only the last centimeter is negotiable.
+(Provenance note only; see
+<a href="desktop_replicator_hardware_spec.html">Hardware Spec</a>.)</p>
+
+<h3 id="s2-4">2.4 The carbon realization (graphene / CNT)</h3>
+<p>Carbon's ground-state chemistry <em>self-assembles the screen
+geometry</em>: C₆₀ is a Goldberg sphere; a nanotube's chirality indices
+(n,m) are the screen's GP(m,n) indices on a cylinder, with
+metallic-vs-semiconducting function set by n−m mod 3 (chirality determines
+function — the screen-parity story as materials science); and carbon
+nanocones take <em>quantized</em> cone angles set by the number of
+pentagonal disclinations in the tip (1–5) — Dyson cones with the
+port-count written into the apex <span class="chip c-measured">MEASURED</span>
+throughout. Engineering consequences:</p>
+<ul>
+<li><b>The missing octaves</b>: gated-graphene plasmonics compresses
+wavelengths ~100× and owns the THz band — precisely the gap between the
+coil band (dies at low-MHz self-resonance) and optical. The Rumsey spiral
+in graphene keeps its geometry and gains the middle of the ladder
+<span class="chip c-measured">MEASURED</span> (THz graphene-antenna
+literature).</li>
+<li><b>Address as software</b>: the plasmon resonance is Fermi-level
+(gate-voltage) tunable — the active region moves electrically, making
+ring/band addressing reprogrammable without changing drive frequency.</li>
+<li><b>Cold ionization</b>: CNT field-emission tips (enhancement ~10³)
+provide low-voltage feedstock ionization — the enabling part for the
+ionized-matter purist route of §2.3
+<span class="chip c-measured">MEASURED</span>.</li>
+<li><b>Feedstock plumbing</b>: aligned sub-nm CNT membranes
+(industrial-scale since 2018, MatterShift / <i>Sci. Adv.</i>) impose
+<em>single-file 1D confinement</em> — encounter geometry forced by the
+pore rather than left to 3D diffusion — with anomalously fast (slip-flow)
+transport <span class="chip c-measured">MEASURED</span>. Their
+collar-side role belongs to
+<a href="transmutation.html">Transmutation</a> §5.1.</li>
+<li><b>The REMOVE verb in carbon</b>: coherent perfect absorption is
+demonstrated in graphene systems — a gate-tunable CPA sheet
+<span class="chip c-measured">MEASURED</span>.</li>
+<li><b>The harvest layer (rectennas)</b>: a rectenna — antenna + tunnel
+diode — converts coherent field directly to DC, closing the REMOVE verb's
+energy loop (drained field returns to the bus instead of becoming heat).
+For coherent narrowband fields — precisely our drained-mode
+regime — rectenna conversion is measured at &gt;80–90% at microwave
+(power-beaming heritage) <span class="chip c-measured">MEASURED</span>;
+CNT optical rectennas (vertically aligned forests with femtosecond MIM
+tunnel-diode tips, Cola group 2015) extend the principle to light but at
+≪1% demonstrated efficiency — deploy-grade at microwave/THz, frontier at
+optical <span class="chip c-open">OPEN</span> there. Doctrine note: the
+tunnel diode is the χ nonlinearity at the port — antenna and nonlinear
+element fused in one carbon structure.</li>
+</ul>
+<p>Efficiency honesty: single-CNT radiators are impedance-mismatched
+(quantum resistance ~6.5 kΩ) and graphene plasmons are lossy at room
+temperature — the carbon gains are size (~100×), band access, and
+electrical programmability, delivered by arrays and bundles, not
+per-element radiation efficiency.</p>
+
+<h3 id="s2-5">2.5 The dual-carrier plate assembly — front end and face
+(rulings R2–R4, topology summary)</h3>
+<p>Under the current ruling (§2.3, R3 amendment) each plate assembly
+carries both carriers. The topology, summarized here with element-level
+detail owned by the carrier papers
+(<a href="replicator_phonons.html">Phonons</a>,
+<a href="replicator_photons.html">Photons</a>):</p>
+<ul>
+<li><b>Acoustic front end (R3 — horn + gyroid, architecture B).</b> Three
+piezo elements at a common throat → <b>torus ring-radial horn</b> (the
+bore-winding torus doubles as the horn flare — compact-depth because the
+outward sweep does the flaring) → graded gyroid volume → patterned plate.
+The horn section is an ellipse <em>fit to the Webster area law</em> — the
+fitted aspect ratio is reported, never decreed <span class="chip">DERIVED</span>.
+The gyroid is a ceramic (dielectric) skeleton, density <b>graded and
+golden-angle perturbed, never uniform</b> — a uniform gyroid is a periodic
+phononic crystal (a filter); graded is a 3D rainbow library. Terminal layer
+opens into the plate perforations. Compression-driver framing: piezos =
+diaphragms, horn = transformer, plate = a deliberately rich, known phase
+plug. Cell-size law, viscothermal floor,
+and drive detail: <a href="replicator_phonons.html">Phonons</a>.</li>
+<li><b>Plate face (R4 — Fibonacci crossed-spiral micro-horn mesh).</b> One
+milled/printed conductor plate carries both carriers by scale separation:
+crossed golden log-spiral V-groove families from both faces with
+<b>Fibonacci-different arm counts</b> (equal counts give a degenerate
+periodic rhombic lattice — forbidden; Fibonacci counts make the crossing
+cells the Vogel lattice, the whole aperiodic dimple field from two spiral
+toolpaths) <span class="chip">DERIVED</span>; grooves deep enough to
+intersect, each diamond cell perforating as a biconical <b>micro-horn</b>;
+and <b>12 single-handed equiangular through-slots</b> (the EM
+toroidal-pulse launcher) cut through the mesh. At the EM launch band the
+sub-λ mesh reads as solid conductor; acoustically both slots and mesh
+transmit — <em>physics is the diplexer</em>. Groove/slot element detail:
+<a href="replicator_photons.html">Photons</a> (EM) and
+<a href="replicator_phonons.html">Phonons</a> (acoustic).</li>
+<li><b>Chirality doctrine (R4, one sentence): driven structures are chiral
+and separately addressable; passive structures are achiral and neutral.</b>
+Racemic mixing at cell scale cancels (the double gyroid is achiral —
+<span class="chip c-measured">MEASURED</span> photonics); both-handedness
+capability lives only in independently fed enantiomeric substructures. The
+3-element ring synthesizes acoustic OAM m = ±1 by phasing alone —
+drive-side chirality, no geometric doubling needed.</li>
+<li><b>The optical stem (R2/R2-b, summary).</b> The bore optical channel is
+one <b>bidirectional holographic port</b>: it writes a programmable
+acoustic source aperture on any optically visible surface (patterned
+Hadamard-class bases, not spot-scanning), speaks the caps' toroidal-pulse
+alphabet at optical frequency (self-healing, isodiffracting), and reads
+back by state tomography. The full treatment — launcher art, tomography,
+topological alphabet — is owned by
+<a href="replicator_photons.html">Photons</a> and
+<a href="replicator_field_compiler.html">Field Compiler §17.7</a>.</li>
+</ul>
+
+<h2 id="s3">3 · The stack — open resonator, three plates, two chambers</h2>
+<p>The machine is a cylinder: plates facing each other <em>is</em> the
+transporter configuration, and the column is the smallest polite body
+around a stack of them. The stack topology below is the free-standing
+baseline adopted by the 2026-07-30 rulings session
+(<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>, R8–R11),
+rendered here as the canonical text; provenance table in §7.</p>
+
+<h3 id="s3-1">3.1 Open resonator: fields aim, walls watch (R8)</h3>
+<p>Each cap hologram carries a <b>focusing (quadratic phase) term</b> so
+the cap pair forms a stable open resonator (flat-parallel is the worst
+case) — plate-to-plate energy topology with exponentially small spill
+where the <b>Fresnel gate N = a²/λL</b> permits (a = aperture radius,
+L = plate spacing). Confinement by aiming is a high-frequency privilege;
+which bands clear the gate depends only on N, a size-free ratio.
+<em>Instance example (RH-1: a = 140 mm, L = 300 mm — see
+<a href="desktop_replicator_hardware_spec.html">Hardware Spec</a>):</em></p>
+<div class="overflow"><table>
+<tr><th>band</th><th>N</th><th>confined?</th></tr>
+<tr><td>200 kHz acoustic</td><td>~38</td><td>yes</td></tr>
+<tr><td>40 kHz acoustic</td><td>~7.6</td><td>yes (TinyLev regime — <span class="chip c-measured">MEASURED</span>)</td></tr>
+<tr><td>30 GHz EM</td><td>~6.5</td><td>yes</td></tr>
+<tr><td>10 GHz EM</td><td>~2.2</td><td>fundamental only</td></tr>
+<tr><td>≤1 GHz EM / kHz muscle / induction</td><td>≲1</td><td>no — volume-filling</td></tr>
+</table></div>
+<p><b>Walls demoted from boundary to instrument</b>: they close EMC for the
+unbeamable bands, drive the muscle band, provide high-angle coverage (the
+specular gap needs steep rays), hold the reverberant DOF budget, and
+contain the acoustic field for the room's sake.</p>
+
+<h3 id="s3-2">3.2 Three-plate stack, two mirrored chambers (R9)</h3>
+<p>Top, middle, and bottom plate assemblies; <b>build chamber above,
+storage chamber below; the middle plate is double-faced</b> — two cap
+stacks back to back, the mirrored-pair logic promoted to an interior
+bulkhead, radiating up into the build volume and down into storage. The
+storage chamber is an <b>active instrument</b>, not a bin: acoustophoretic
+sorting (the same Δκ/Δρ contrast the machine senses and grips —
+<span class="chip c-measured">MEASURED</span> art), incoming QC via the
+identical tomography stack, staging and pre-heat. Same-size twin = one
+bill of materials; later options: calibration chamber,
+disassembly/reclaim chamber.</p>
+
+<h3 id="s3-3">3.3 Axial field-driven transport (R10)</h3>
+<p>Feedstock moves <b>through the co-axial bores</b> (doctrine already
+routes it there; preserves azimuthal symmetry; shortest path). Three
+contrawound winding pairs stacked on one axis = <b>six independent
+circuits = traveling-wave synthesis</b>: a linear-induction elevator for
+conductive feedstock plus acoustic tube conveying for the rest. <em>The
+lift is a field, not a mechanism.</em> The bore shares duty with the
+optical sightline by aperture partition or time-multiplex.</p>
+
+<h3 id="s3-4">3.4 Presented form: free-standing; plan A is ordinary air
+(R11)</h3>
+<p><b>Ruling (operator, 2026-07-30): the machine operates in normal
+atmosphere.</b> The plan-A working band is whatever plain air supports
+across the chamber; absorption per pass stays single-digit dB because the
+short closed geometry is itself the mitigation (dB per pass, not dB/m of
+sonar range). Medium conditioning (dry gas, pressurization, fluid coupling
+— absorption ∝ f², classical part ∝ 1/P; each rung
+<span class="chip c-measured">MEASURED</span> physics) is <b>demoted to
+the roadmap shelf</b>: real levers, not preconditions, and nothing in the
+architecture forecloses them.</p>
+<p>The free-standing form stands on the stack itself: <b>top = build
+chamber, middle = storage twin, base = feedstock reserve + power +
+compute.</b> Deck line: <em>two chambers — one holds the object, one holds
+the matter it will become; between them, one plate.</em></p>
+
+<h2 id="s4">4 · Windings — contrawound pairs, separately fed (R5)</h2>
+<p>Every winding assembly is an <b>enantiomeric (contrawound) torus-knot
+pair with two independent feed circuits</b>
+(<span class="chip c-measured">MEASURED</span> art: contrawound toroidal
+helical antennas). <b>Sum mode</b> = pure confined poloidal flux
+(induction / potential port); <b>difference mode</b> = ring dipole;
+<b>blend</b> = continuous helicity/twist knob. One both-handed wire on one
+amp is racemic rank-1 — forbidden (the chirality doctrine of §2.5 applied
+to windings). With atom-placement manufacturing the pair renders as
+embedded σ(x) filaments; <b>the two-feed requirement survives every
+generation</b> — it is an information constraint, not a fabrication one.
+Winding-element detail (turns, feed networks, materials):
+<a href="replicator_photons.html">Photons</a> and, for the instance, <a
+href="replicator_mechanical_construction.html">Mechanical Construction</a>.</p>
+
+<h2 id="s5">5 · The matter loop — feedstock and reclamation</h2>
+<p>Baryon conservation makes the machine a rearranger, so it needs a
+matter inventory — and it makes "dematerialization" not disappearance but
+<em>return to stores</em>. The loop, with tiers:</p>
+<p><b>Single-home note (2026-08-01):</b> store-level detail — the bulk
+stores, the trace rack, the salt/ash split and its provenance, the
+noble-gas cartridge, the container ladder, stored-vs-transport form, and
+mass bookkeeping — now lives in
+<a href="replicator_stores.html">The Stores</a>, which owns it. This
+section keeps the loop's <em>machinery</em>: disassembly, sorting,
+energy recovery, and the transport-phase ladder.</p>
+<div class="overflow"><table>
+<tr><th>subsystem</th><th>design</th><th>tier</th></tr>
+<tr><td>disassembly ("the dishes vanish")</td><td>mold field holds the object → <b>plasma gasification</b> to atomic/molecular vapor — industrial waste-processing art</td><td><span class="chip c-measured">MEASURED</span></td></tr>
+<tr><td>sorting</td><td><b>lowest-rung rule (the energy ladder applied to separation)</b>: chemistry sorts the bulk (combustion/condensation/distillation, ~MJ/kg); electromagnetic m/q separation (calutron-class, <span class="chip c-measured">MEASURED</span>) reserved for the trace residue only — full atomic EM sorting costs ~keV/ion ≈ 10³ kWh/kg and is never the bulk path</td><td>design rule</td></tr>
+<tr><td>energy recovery</td><td>recombination energy on re-forming simple molecules is captured by the harvest layer (§2.4); derez is modest-net-cost, not free</td><td><span class="chip c-measured">MEASURED</span> components</td></tr>
+<tr><td>patterns</td><td>disassembly needs no pattern save; replication patterns are classical molecular-resolution blueprints — data-cheap because objects are bulk phases + structure, not 10²⁵ independent coordinates</td><td>frame</td></tr>
+</table></div>
+<p><b>The transport-phase ladder — how an ingot becomes an object.</b> The
+lowest-rung rule applies to <em>phases</em> as it does to energies and
+sorting: use the least-unbound state the field can still grip. For iron:
+powder (~0 MJ/kg; acoustic + magnetic grip) → <b>melt/droplets (~1 MJ/kg;
+EM-levitation grip — industrial cold-crucible art; a 100 µm droplet =
+4×10¹⁶ atoms, so a 0.25 kg object is only ~7×10⁷ placements →
+minutes-to-hours at field-parallel 10⁴–10⁵ drops/s, welding on
+contact)</b> → vapor (~8 MJ/kg; the ingot-under-the-volume geometry is
+literally industrial EBPVD, kg/hr) → plasma (~22 MJ/kg; perfect charge
+grip, atomic voxels). <b>Plasma is reserved for three jobs</b>: the atomic
+finishing pass (an object's surface is only ~10¹⁸ atoms — polished in
+minutes while the bulk went in as droplets: roughing vs finishing), m/q
+element sorting, and the <a href="transmutation.html">nuclear-sector
+stage</a>. <b>Revised 2026-08-03</b>: the earlier claim here — that the
+lowest plate's EM octaves double as an induction crucible for an ingot
+bay in the base — rode on an oversized shared bore that has since been
+corrected away (Ø130→Ø12; the optical stem and droplet feed it was
+credited with both need only a few mm — see
+<a href="replicator_mechanical_construction.html">Mechanical
+Construction</a> §3c). Bulk ingot-to-droplet induction melting is
+<b>dropped</b> as a baseline capability of the shared plate/bore axis;
+what is not dropped is the transport half — droplets, however they are
+produced, still rise through the axis into the mold. Where the melt comes
+from is <span class="chip c-open">OPEN</span>: a dedicated,
+independently-sized induction stage is a roadmap item, not specified
+here. Note for
+§6: mesoscale voxels cut the required placement rate by the voxel's atom
+count (~16 orders), so bulk transport is rate-tractable even semi-serially;
+whole-boundary parallelism remains mandatory for the mold field itself and
+the finishing pass.</p>
+<p>The honest inversion: <b>the vanishing verb is the easy half.</b> Every
+stage of disassembly-and-return is measured industrial art; assembly
+carries the research program. A chemistry-only Replicator with these
+stores — no transmutation at all — already covers food, ceramics, and most
+plastics: roughly ten cheap elements. The fiction agrees on the mundane
+side too: shipboard replicators run on matter reclamation — the dishes
+<em>are</em> next week's tea — conservation law, not scriptwriting.</p>
+
+<h2 id="s6">6 · Where the binding constraint lives — patterning
+bandwidth</h2>
+<p><b>The placement-rate argument is decisive.</b> A cup is
+~3×10²⁴ atoms; a five-minute build requires ~10²² placements per second.
+Serial architectures are dead on arrival; only whole-boundary parallel
+patterning survives (table). The doctrine's "the drive pattern is the
+tool, addressing the whole volume at once" is thereby promoted from
+elegant to <b>mandatory</b>: no serial machine can ever be a
+replicator.</p>
+<div class="overflow"><table>
+<tr><th>architecture</th><th>rate</th><th>cup build time</th></tr>
+<tr><td>nozzle/beam, 10⁹ atoms/s</td><td>serial</td><td>~95 million years</td></tr>
+<tr><td>10⁶-tip parallel (MEMS-extreme)</td><td>10¹⁵/s</td><td>~95 years</td></tr>
+<tr><td><b>whole-boundary holographic drive</b>, 10⁸–10¹⁰ modes × 10¹² Hz</td><td>10²⁰–10²²/s</td><td><b>minutes</b></td></tr>
+</table></div>
+<blockquote><b>The synthesis:</b> energy was never the deep constraint.
+Both residual constraints — patterning bandwidth and
+<a href="transmutation.html">the nuclear sector's dynamics</a> — reduce to
+one knob: <b>coherence/fidelity of the boundary drive pattern</b>. The
+mining doctrine reached the identical conclusion from the opposite
+direction ("there is one knob: EML-tree fidelity"), and it is the honest
+reading of every fabricator account in the lore corpus: the impressive
+thing was never the power source — <em>the field pattern is the
+factory</em>.</blockquote>
+
+<h2 id="s7">7 · Register, and rulings provenance</h2>
+<p>Register discipline: every load-bearing claim above carries the chip it
+had at its source —
+<span class="chip c-measured">MEASURED</span> (published or
+bench-verified), <span class="chip">DERIVED</span> (arithmetic on measured
+quantities), <span class="chip c-open">OPEN</span> (registered bet with
+named falsification). No register was upgraded in the move, and this paper
+adds no new claims. The 2026-07-30 rulings map onto this paper as
+follows:</p>
+<div class="overflow"><table>
+<tr><th>ruling</th><th>content</th><th>lives in</th></tr>
+<tr><td>R1</td><td>control/muscle principle (light addresses, sound/induction exert, electrons amplify at the edge)</td><td><a href="replicator_principles.html">Principles §8c</a>; assumed throughout here</td></tr>
+<tr><td>R2 / R2-b</td><td>verb-3 holographic; the optical stem as bidirectional holographic port</td><td>§2.5 (summary); full: <a href="replicator_photons.html">Photons</a>, <a href="replicator_field_compiler.html">Field Compiler §17.7</a></td></tr>
+<tr><td>R3 + amendment</td><td>horn + gyroid acoustic front end; plates primary for both carriers, panels plan B</td><td>§2.3 (supersession history), §2.5; element detail: <a href="replicator_phonons.html">Phonons</a></td></tr>
+<tr><td>R4</td><td>Fibonacci crossed-spiral micro-horn mesh face; chirality doctrine</td><td>§2.5; element detail: <a href="replicator_phonons.html">Phonons</a> / <a href="replicator_photons.html">Photons</a></td></tr>
+<tr><td>R5</td><td>contrawound winding pairs, two feeds always</td><td>§4</td></tr>
+<tr><td>R6</td><td>the Q budget law</td><td><a href="replicator_principles.html">Principles §8c</a></td></tr>
+<tr><td>R7</td><td>materials are fields; generational DFM</td><td><a href="replicator_principles.html">Principles §8c</a></td></tr>
+<tr><td>R8</td><td>open resonator, Fresnel gate, walls demoted to instrument</td><td>§3.1</td></tr>
+<tr><td>R9</td><td>three-plate stack, two mirrored chambers, storage as instrument</td><td>§3.2</td></tr>
+<tr><td>R10</td><td>axial field-driven bore transport</td><td>§3.3</td></tr>
+<tr><td>R11</td><td>free-standing form; plan A = normal atmosphere</td><td>§3.4</td></tr>
+<tr><td>R12</td><td>sensing-claim ladder</td><td><a href="replicator_photons.html">Photons</a> / <a href="transmutation.html">Transmutation §6b</a> — sensing, not topology</td></tr>
+<tr><td>R13</td><td>the topological alphabet</td><td><a href="replicator_principles.html">Principles §8c</a>, <a href="replicator_photons.html">Photons</a></td></tr>
+<tr><td>R14</td><td>plasma verb; alchemy dictionary</td><td><a href="transmutation.html">Transmutation</a> / <a href="replicator_as_alchemy.html">As Alchemy</a> (firewalled)</td></tr>
+</table></div>
+<p class="meta">Maintenance rule (restated): this paper owns machine
+topology. A change to the ladder, the plate topology, the stack, the
+windings, or the matter loop lands here first; instance papers and the
+principles overview then point at it. Extraction provenance:
+<code>the_replicator.html</code> §6.1–6.3.2, §6.6, §6.8–6.9, §6b (v0.7);
+<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>;
+<code>desktop_replicator_hardware_spec.html</code> §2 (size-free stack
+logic only).</p>
+
+</body>
+</html>

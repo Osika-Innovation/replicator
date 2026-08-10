@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Field Compiler — Replicator Software RSW-1 · Build Specification</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:1.9rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.24rem;
+     margin-top:2.4rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .part{font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem;
+     letter-spacing:.1em; text-transform:uppercase; color:var(--soft);
+     margin-top:2.8rem; border-top:2px solid var(--ink); padding-top:.7rem}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code,pre{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px}
+  code{font-size:.85em; padding:.05em .3em}
+  pre{font-size:.78rem; padding:.8rem 1rem; overflow-x:auto; border:1px solid var(--rule); line-height:1.5}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">
+Overview → <a href="replicator_principles.html">Replicator Principles</a> ·
+Software member of the Replicator set ·
+architecture: <a href="replicator_architecture.html">Architecture</a> ·
+carriers: <a href="replicator_phonons.html">Phonons</a> +
+<a href="replicator_photons.html">Photons</a> ·
+science: <a href="transmutation.html">Transmutation</a> ·
+hardware: <a href="desktop_replicator_hardware_spec.html">RH-1 spec</a> ·
+construction: <a href="replicator_mechanical_construction.html">RH-1 mechanical</a> ·
+KOSMOS doctrine: <code>lpoh/kosmos.html</code>
+</div>
+
+<h1>The Field Compiler</h1>
+<p class="sub">Replicator software RSW-1 &mdash; a native macOS slicer whose
+output is boundary field states, and whose viewport is the RH-1 build volume
+with the whole machine running on the GPU: scanning real objects, and growing
+new ones out of feedstock.</p>
+
+<p class="meta">v0.8 &middot; 2026-07-27 &middot; <strong>supersedes v0.2</strong>
+(browser / WebGPU / sphere-first). Part 0 = what changed. Part I = concepts.
+Part II = the end state (what "done" looks like). Part III = the build
+specification. Part IV = the test harness &mdash; <em>load-bearing, not an
+appendix</em>. Part V = milestones and gates. Part VI = register.
+<br><strong>v0.4 additions</strong> (same day, after an open-source survey and
+a round of benchmarking on the target machine): the three-layer epistemic
+viewport and the Machine View reconstruction renderer (&sect;16.2&ndash;16.3);
+the T0.5 BEM and T1f CBS solver tiers (&sect;5); AcousTools adopted as the
+validation twin in place of a hand-rolled one (&sect;8); and learned components
+ruled on &mdash; mostly rejected, with evidence (&sect;17).
+<br><strong>v0.5</strong> (operator review, same day): the four-way diversity
+budget &mdash; what can and cannot enlarge what the machine knows, including
+adaptive selection as <em>policy not source</em>, and detail-adaptive chord
+budgeting (&sect;16.3); <strong>measured/inferred provenance</strong> on every
+chord and reconstruction, enforced in the schema and by gate G17 (&sect;16.3,
+&sect;19); and &sect;18 rewritten &mdash; multi-bounce virtual apertures ranked
+first <em>because the machine measures its own cavity</em>.
+<br><strong>v0.6</strong> (operator ruling, same day): <strong>zero moving parts
+is Plan A</strong>. The turntable is removed from the plan entirely rather than
+demoted; G18 is rewritten around <strong>held-out gate/frequency
+prediction</strong> (a wrong Green's function cannot predict a measurement it
+was not fitted to), and G19 adds a static machined phantom for absolute
+accuracy (&sect;18).</p>
+
+<div class="box">
+<strong>One-line north star.</strong> Drag in an STL, pick a material, press
+Build &mdash; and watch matter leave the cartridge, rise through the bore, and
+settle into the object inside a 280&nbsp;&times;&nbsp;300&nbsp;mm cylinder,
+in real time, on the GPU. Press Scan instead and the same machine runs
+backwards: an object in the chamber becomes a <code>.pattern</code> file.
+Every pixel of that is a simulation today and a hardware backend later, with
+no rewrite in between.
+</div>
+
+<p class="part">Part 0 &mdash; What changed from v0.2, and why</p>
+
+<h2>0 &middot; Three reversals</h2>
+
+<table>
+<tr><th>&nbsp;</th><th>v0.2 (2026-07-21)</th><th>v0.3 (this document)</th><th>why</th></tr>
+<tr>
+  <td><strong>platform</strong></td>
+  <td>Browser app; React + TS + Tailwind; WebGPU/WGSL; handed to a Lovable
+      builder session</td>
+  <td><strong>Native macOS app.</strong> Swift 6 + SwiftUI + Metal, built with
+      SwiftPM. Single window, single process, plus a <code>fieldc</code> CLI
+      that links the same core</td>
+  <td>The matter layer is the product, and it is not a browser workload. Four
+      GPU tiers must share buffers with the renderer with zero readback and no
+      4&nbsp;GB / workgroup / storage-buffer ceilings; the particle and
+      occupancy state must live in unified memory beside the field. Native also
+      buys the one thing v0.2 had no answer for &mdash;
+      <strong>a headless screenshot path</strong> (&sect;16)</td>
+</tr>
+<tr>
+  <td><strong>geometry</strong></td>
+  <td>The ideal KOSMOS sphere (R<sub>c</sub>&nbsp;=&nbsp;200&nbsp;mm, Goldberg
+      screen at 150&nbsp;mm). "RH-1 cylindrical geometry is a later config
+      preset, not v0"</td>
+  <td><strong>The RH-1 cylinder is the default preset and the product surface.</strong>
+      The sphere survives as <code>sphere-v0</code>, a validation-only preset
+      whose sole job is to keep the analytic Mie gate runnable</td>
+  <td>A slicer's viewport <em>is</em> its build volume; you cannot ship a
+      slicer for a cylinder that shows a sphere. Keeping the sphere as a gate
+      fixture costs one preset and preserves the acceptance discipline &mdash;
+      no gate is weakened, one is relocated</td>
+</tr>
+<tr>
+  <td><strong>scope</strong></td>
+  <td>"v0 is the converter": import &rarr; emulated scan &rarr;
+      <code>.pattern</code>. Gor'kov particle layer deferred to M6+</td>
+  <td><strong>The matter layer is in scope from M4.</strong> Radiation force,
+      particle transport, melt, solidification, and a growing occupancy volume
+      are first-class</td>
+  <td>Because that is the request, and because the machine's own doctrine
+      demands it: KOSMOS &sect;8 mandates a twin of "acoustic FEM + thermal +
+      particle dynamics" so the machine is "sized, not guessed," and every
+      force, pressure, trap-stiffness and weld-power number in the corpus is
+      deferred to "a number the digital twin pins." <strong>This app is where
+      that debt gets paid</strong></td>
+</tr>
+</table>
+
+<div class="warn">
+<strong>Honest inventory before we start.</strong> A survey of the repo found
+that the acoustic side of the twin does not exist yet, in text or in code:
+there is <em>no</em> acoustic forward model, <em>no</em> Gor'kov evaluator,
+<em>no</em> phase-retrieval solver, and <em>no</em> force or pressure number
+anywhere in <code>lpoh/</code> or <code>papers/</code> &mdash; not one Pa, not
+one mN. The only propagator ever written down is the discrete
+Kirchhoff&ndash;Helmholtz monopole sum in
+<code>lpoh/sims/S3_e_screen_renders_bulk.py</code>, explicitly labelled "a
+stated convention, not a claim." What <em>does</em> exist is ~2,400 lines of
+real algorithm in the v0.2 web build (<code>resonance-weaver</code>): FDTD in
+WGSL, matrix pencil, Goldberg tessellation, voxelizer, Mie, STL import.
+<strong>Those are the port source; everything in &sect;&sect;10&ndash;13 below
+is new work.</strong> Say so in commit messages; do not let the spec's
+confidence read as existing capability.
+</div>
+
+<p class="part">Part I &mdash; Concepts</p>
+
+<h2>1 &middot; What this software is</h2>
+
+<p>A 3D-printer slicer converts geometry into toolpaths because its tool is a
+point. The Replicator's tool is the entire boundary field, so this compiler
+converts geometry into <strong>time-sequences of boundary drive states</strong>
+&mdash; and, in reverse, converts measured boundary responses into stored
+object patterns. One architectural law governs everything:</p>
+
+<blockquote>
+<strong>The emulator API is the hardware API.</strong> All physics targets an
+abstract gated machine; whether frames are consumed by the GPU wave emulator or
+by physical electronics is a backend swap. The product is real software from
+day one: a converter and simulator now, the control stack later, no rewrite.
+</blockquote>
+
+<p>The unfamiliar part is that a slicer for this machine must simulate its own
+output to be useful at all. A FDM slicer can emit G-code without modelling
+plastic, because a nozzle's effect is local and obvious. A boundary field's
+effect is global and non-obvious &mdash; you cannot look at 24 complex drive
+amplitudes and know what shape they mold. <strong>The emulator is not a
+preview feature bolted onto the compiler; it is the compiler's error
+function.</strong> That is why the four solver tiers of &sect;&sect;10&ndash;13
+carry as much of this document as the UI does.</p>
+
+<h2>2 &middot; The machine model &mdash; eight faces, gated</h2>
+
+<p>RH-1 is a cylinder because its work happens between two circular boundary
+plates. The mechanical paper models it as <strong>eight active faces of a
+would-be shell</strong> &mdash; between the "6" and "12" rungs of the boundary
+ladder:</p>
+
+<table>
+<tr><th>surface</th><th>n</th><th>carrier</th><th>role</th></tr>
+<tr><td>circular caps (top &amp; bottom)</td><td>2</td><td>EM microwave</td>
+    <td>toroidal-pulse launch + super-resolution sensing; each holds the
+        &Oslash;80 bore, the bore winding, and the optical sightline &mdash;
+        <em>the axis</em></td></tr>
+<tr><td>back-wall phononic panels</td><td>6</td><td>acoustic</td>
+    <td>force and momentum: holds, moves, sculpts matter &mdash; the only
+        channel with real force-per-watt &mdash; <em>the equator</em></td></tr>
+<tr><td>front glass (rotating door)</td><td>1</td><td>&mdash;</td>
+    <td>the one uncommanded face; passive, but its rotation adds
+        aperture diversity to the scan</td></tr>
+<tr><td>base bay</td><td>1</td><td>&mdash;</td>
+    <td>generation only; no field elements</td></tr>
+</table>
+
+<p>The mnemonic the hardware spec fixes, and which the UI should teach without
+a tutorial: <em>sound is the muscle, microwave is the ears and the axial
+drive, light is the fingertip and the eyes, the bore winding is the
+experiment.</em></p>
+
+<p>Above the physical surfaces sits the abstract machine the compiler actually
+targets. At any frequency f, machine&ndash;object interaction is completely
+described by the <strong>scattering matrix S(f)</strong>: drive vector
+<strong>a</strong> in (each component = amplitude and phase at one gate &mdash;
+a chord), response <strong>b = S(f)&middot;a</strong> out. For the canonical
+12-gate abstraction, reciprocity leaves 78 independent complex entries.
+Everything the machine can learn about an object through its gates is S(f).</p>
+
+<p>Three special drive states give physical intuition and, later, scan
+strategy: <strong>zeros of S</strong> &mdash; drives the object completely
+absorbs (coherent perfect absorption; the field "hugs" the object and nothing
+echoes); <strong>eigenvectors of S</strong> &mdash; patterns scattered back
+into themselves, changed only in phase (characteristic modes);
+<strong>poles of S</strong> &mdash; the object's ring-down resonances, its
+acoustic fingerprint.</p>
+
+<div class="box">
+<strong>The gate count is a preset, not a constant.</strong> RH-1's physical
+channels are 24 acoustic (6 panels &times; 4 PMN-PT drivers) + 12 modal EM
+ports per cap (6 cone-modes &times; I/Q). The abstract 12-gate machine of the
+boundary ladder is a <em>different</em> 12 from LPOH's 12 icosahedral
+transducers, which is a different 12 again from the Goldberg screen's 12
+Euler-forced pentagons. The app must therefore carry gate count and gate
+geometry as machine-preset data, never as a hard-coded 12. This has bitten
+this document family before.
+</div>
+
+<h2>3 &middot; Chords &mdash; the format that replaces STL</h2>
+
+<p>Causality makes S(f) an analytic function of frequency, hence determined by
+its discrete resonances. The compressed, physical, machine-native
+representation of an object is therefore the <strong>chord list</strong>:</p>
+
+<pre>chord[k] = ( complex frequency p_k , port-vector r_k )
+#  where the object rings, and the gate pattern that
+#  addresses that ringing.  ~100 bytes per chord.</pre>
+
+<p>Properties: <strong>resolution = number of chords stored</strong> (ordered
+by contribution; progressive streaming &mdash; objects sharpen as chords
+arrive); <code>.pattern</code> (scan output) and <code>.fcode</code> (build
+input) <strong>share this alphabet</strong> &mdash; the scanner measures
+chords, the builder plays them; and the format stores what triangles cannot:
+response = geometry + material + interior in one object. Known caveat, handled:
+bare eigenfrequency lists have rare "isospectral drum" ambiguities;
+port-vectors add the spatial information that breaks them.</p>
+
+<h2>4 &middot; Call and response</h2>
+
+<p>The unifying operational picture: <strong>scan is call-and-response; build
+is call-and-response run until the response matches.</strong></p>
+
+<ul>
+<li><strong>Scan</strong> &mdash; send a chord, record the ring. S(f) is the
+collected call-and-response book; <code>.pattern</code> is its compressed
+form.</li>
+<li><strong>Build</strong> &mdash; the chord list is not only the drive recipe,
+it is the <strong>acceptance criterion</strong>. The loop is model-reference
+control: drive &rarr; the growing object shifts S(f) &rarr; keep listening
+&rarr; done when the object <em>rings true</em>.</li>
+</ul>
+
+<p>Two consequences the software must reflect. The build verifies itself
+continuously &mdash; listening is mW-class and always on, so <em>every instant
+of fabrication is also a scan</em>, and the UI should never present "build"
+and "inspect" as disjoint modes with a wall between them. And feedback beats
+open-loop fidelity: the machine needs to <em>recognize the target ring</em>,
+not to possess a perfect forward model. That is the luthier's method
+(tap-tuning plates to target tones) and industrial resonant-ultrasound QC,
+made exact.</p>
+
+<p>Throughput = bandwidth, with one hard limit: a resonance of quality factor
+Q at frequency f takes ~Q/f to ring up or resolve &mdash; no electronics
+outruns the ring. The win is parallelism across the band. Acoustic ~10&#8309;/s
+across a 100&nbsp;kHz band; EM ~10&#8313;&#8314;/s across GHz bands. Hence the
+loop's natural role split: <strong>acoustic builds, EM verifies</strong>
+&mdash; matter-moving chords are acoustic and slow; the EM octaves listen at
+~10&#8308;&times; the rate.</p>
+
+<h2>5 &middot; Solver tiers, because one solver cannot be both true and fast</h2>
+
+<p>This is the single most important architectural decision in the document.
+The naive design &mdash; one FDTD, used for everything &mdash; fails on
+arithmetic. FDTD in this chamber at 40&nbsp;kHz is ~8&nbsp;M cells and
+~1&nbsp;&micro;s timesteps; a single 40&nbsp;ms capture is ~30k steps, tens of
+seconds of wall clock. A viewport that updates when you drag a slider needs
+milliseconds. Those are not the same program.</p>
+
+<table>
+<tr><th>tier</th><th>model</th><th>cost</th><th>used for</th></tr>
+<tr><td><strong>T0 &mdash; propagator</strong></td>
+    <td>Rayleigh&ndash;Sommerfeld / angular-spectrum monopole sum over surface
+        elements. A dense <em>linear</em> operator <strong>H</strong>:
+        drive &rarr; complex field</td>
+    <td>~ms</td>
+    <td>the interactive viewport; the forward model inside the inverse solver;
+        trap placement; everything you touch with a slider</td></tr>
+<tr><td><strong>T0.5 &mdash; BEM</strong>
+    <em>(added v0.4)</em></td>
+    <td>Boundary-element scattering off the workpiece. For a rigid scatterer
+        in air only the <strong>surface</strong> is unknown, so the problem is
+        orders smaller than a volume solve</td>
+    <td>~0.1&ndash;2&nbsp;s</td>
+    <td><strong>The missing middle.</strong> T0 ignores scattering; T1 is too
+        slow to iterate. T0.5 is scattering-aware and still interactive-ish
+        &mdash; it is what the compile loop should actually run against</td></tr>
+<tr><td><strong>T1 &mdash; FDTD</strong></td>
+    <td>Staggered-grid linear acoustic FDTD with a sponge layer. Scattering,
+        transients, ring-down, material interiors</td>
+    <td>~10&ndash;60&nbsp;s/run</td>
+    <td>scan runs, S(f) assembly, and <strong>the truth against which T0 and
+        T0.5 are validated</strong> (gate G5). Time-domain is
+        <em>mandatory</em> here: the matrix pencil eats ring-down, which a
+        frequency-domain solver cannot produce</td></tr>
+<tr><td><strong>T1f &mdash; CBS</strong>
+    <em>(added v0.4, optional)</em></td>
+    <td>Convergent Born Series in the frequency domain &mdash; matrix-free,
+        FFT-based</td>
+    <td>~1&ndash;4&nbsp;s</td>
+    <td>Steady state at one frequency does not need 3,500 timesteps. Measured
+        on the target machine: a 200&sup3; complex FFT pair is
+        <strong>34.6&nbsp;ms</strong>, so 30 iterations &asymp; 1.0&nbsp;s
+        &mdash; 13&ndash;45&times; faster than T1, converged and exact.
+        <strong>Caveat:</strong> CBS convergence degrades with impedance
+        contrast, and rigid-in-air (~10&sup3;) is the worst case &mdash; which
+        is exactly why T0.5 BEM is listed above it</td></tr>
+<tr><td><strong>T2 &mdash; matter</strong></td>
+    <td>Gor'kov radiation potential + drag + gravity; GPU particle
+        integration</td>
+    <td>~ms/frame</td>
+    <td>levitation, traps, droplet transport, the build's visible motion</td></tr>
+<tr><td><strong>T3 &mdash; consolidation</strong></td>
+    <td>Lumped-capacity thermal per particle; melt/wet/latch; occupancy grid;
+        surface extraction</td>
+    <td>~ms/frame</td>
+    <td>the object appearing; build progress; inspect-vs-target diff</td></tr>
+</table>
+
+<p>T0 and T1 are the same physics at different fidelity, and they are wired
+together by an acceptance gate rather than by faith: G5 requires T0's field to
+match T1's steady state inside the build volume to better than 5% relative
+L2. When that gate holds, the interactive tier is trustworthy; when it breaks,
+the UI is lying and the build fails loudly.</p>
+
+<p class="part">Part II &mdash; The end state</p>
+
+<h2>6 &middot; What "done" looks like</h2>
+
+<p>Written as a walkthrough, because that is the specification most likely to
+be read correctly. Nothing below is aspirational framing; each numbered step
+maps to a milestone in &sect;20.</p>
+
+<ol>
+<li><strong>Open.</strong> A dark instrument-panel window. Centre: the RH-1
+machine, drawn honestly &mdash; two &Oslash;300 caps 300&nbsp;mm apart with
+their 12-arm spiral gratings and &Oslash;80 bores, six hex-screened phononic
+panels standing at r&nbsp;=&nbsp;155 across the back, seven dark columns
+between them, the front glass a faint arc you can rotate open. A translucent
+cylinder &mdash; &Oslash;280&nbsp;&times;&nbsp;300&nbsp;mm &mdash; marks the
+build volume, ticked and gridded. Nothing else. This is the empty-state
+screenshot and it should be good enough to put on a slide.</li>
+
+<li><strong>Import.</strong> Drop in an STL. It lands centred on the deck,
+scaled and clamped to the cylinder, with the out-of-bounds indicator a slicer
+user already understands. Assign a material from the preset list. The left
+rail behaves like a slicer's object list because it <em>is</em> one.</li>
+
+<li><strong>Compile.</strong> Press Compile. The inverse solver
+(&sect;14) turns the target volume into a schedule of boundary drive states:
+per-channel, per-band complex amplitudes with a verb (ADD / REMOVE) and RX
+gates. Progress is shown as the residual of the phase-retrieval loop, not a
+fake bar. Output is a <code>.fcode</code> file &mdash; the artifact this whole
+program exists to produce.</li>
+
+<li><strong>Watch the field.</strong> The Field overlay draws a slice of |p|
+through the build volume, log-compressed, with the Gor'kov trap set marked.
+Drag the slice plane; it updates at frame rate because T0 is doing it. This is
+where a user develops intuition about what a boundary can and cannot mold
+&mdash; the thing no amount of documentation conveys.</li>
+
+<li><strong>Build.</strong> Press Build and the transport bar comes alive.
+Particles leave the cartridge, rise through the lower bore, get caught by
+traps, migrate to nodes, glow as they pass the heat stage, wet onto their
+neighbours, and latch. The occupancy volume fills; a marching-cubes surface
+thickens inside the ghost of the target mesh. Build percentage is real
+&mdash; latched voxels over target voxels &mdash; and so is the overspill
+number beside it. You can scrub back and forth over the whole sequence.</li>
+
+<li><strong>It listens while it builds.</strong> The S(f) error curve runs
+along the bottom the entire time. The build is done when the object rings
+true, not when the frame counter runs out. That curve is the same metric the
+verify module reports, which is the same metric the acceptance gate reads
+&mdash; one number, three consumers.</li>
+
+<li><strong>Scan.</strong> Switch to Scan with a real object in the emulated
+chamber. The machine runs its power-up sequence &mdash; self-calibration
+(every element pings every other; the TX&rarr;RX identity matrix is measured),
+coupling-lock, cavity ring-up &mdash; with the column light strips reporting
+each stage, exactly as the hardware will. Then 12 or 24 coded runs, S(f)
+assembly against the cached empty-chamber reference, matrix-pencil extraction,
+and a <code>.pattern</code> file. Chords stream in and the reconstruction
+sharpens as they arrive.</li>
+
+<li><strong>Copy.</strong> Scan &rarr; pattern &rarr; viewport &rarr; build.
+The loop closes inside one application, with no hardware in the room.</li>
+
+<li><strong>Swap the backend.</strong> The <code>MachineBackend</code> protocol
+has two implementations: <code>Emulated</code> (the four tiers) and
+<code>Serial</code> (frames to an RP2350 over USB). The same
+<code>.fcode</code> drives both. On the day hardware exists, the app does not
+change &mdash; a picker in the machine panel changes.</li>
+
+<li><strong>Prove it, in one image.</strong>
+<code>fieldc shot --contact-sheet</code> renders every screen of the
+application, both themes, into a single labelled PNG. That is how a session
+&mdash; human or agent &mdash; checks the whole UI in one look. See Part IV;
+this is not a nice-to-have.</li>
+</ol>
+
+<h2>7 &middot; Non-goals for v1</h2>
+
+<ul>
+<li><strong>No transmutation, no open-sector mechanism, of any kind.</strong>
+The hardware spec is explicit that the transmuter stage is not in the product;
+the bore winding's "potential port" role is tagged OPEN and firewalled. In
+this app the bore winding appears as inert labelled geometry and is not a
+driveable channel. A UI that implied otherwise would violate the papers' own
+stated contract.</li>
+<li><strong>No EM carrier solver.</strong> v1 is acoustic. The EM caps are
+drawn, and are drive-addressable in the data model, but no Maxwell solver
+ships. The toroidal-pulse position dictionary is M9+ material.</li>
+<li><strong>No nonlinear acoustics.</strong> No Westervelt, no KZK. Radiation
+force enters through Gor'kov's second-order potential over a linear field
+&mdash; which is standard, and is also the honest boundary: the corpus asserts
+nonlinear onset qualitatively and has never written the equation.</li>
+<li><strong>No molecular chemistry.</strong> T3 consolidates particles; it does
+not model bonds.</li>
+<li><strong>No cloud, no account, no telemetry.</strong> Local files, local
+GPU.</li>
+</ul>
+
+<p class="part">Part III &mdash; Build specification</p>
+
+<h2>8 &middot; Stack and platform rulings</h2>
+
+<p>These were verified on the target machine (Apple M5, 10 GPU cores, macOS
+26, Swift 6.2.3, Command Line Tools only &mdash; <strong>no Xcode
+installed</strong>) before being written down. They are rulings, not
+preferences.</p>
+
+<table>
+<tr><th>ruling</th><th>decision</th><th>verified</th></tr>
+<tr><td>platform</td>
+    <td>macOS 14+. Swift 6 + SwiftUI + Metal. Built with <strong>SwiftPM</strong>
+        (<code>swift build</code>), no <code>.xcodeproj</code></td>
+    <td>SwiftUI / Metal / MetalKit / ModelIO all import and link under the
+        CommandLineTools SDK. A SwiftUI <code>App</code> compiles with
+        <code>swiftc -parse-as-library</code></td></tr>
+<tr><td>shaders</td>
+    <td>Written as <code>.metal</code> source, shipped as package
+        <strong>resources</strong>, compiled at <strong>runtime</strong> via
+        <code>device.makeLibrary(source:options:)</code></td>
+    <td>Confirmed working with no Xcode present (the offline <code>metal</code>
+        compiler is unavailable; the runtime compiler is part of the OS). Two
+        bonuses fall out: no build-system coupling, and
+        <strong>hot-reloadable kernels</strong> &mdash; edit a
+        <code>.metal</code> file, hit reload, see the field change</td></tr>
+<tr><td><strong>testing</strong>
+    <em>(corrected v0.6)</em></td>
+    <td><strong>Not XCTest.</strong> A ~60-line harness inside
+        <code>FieldCore/Testing</code>, run via <code>fieldc test</code></td>
+    <td><strong>XCTest ships with Xcode</strong>, which is not installed, so
+        <code>swift test</code> fails with <em>no such module 'XCTest'</em>.
+        Requiring a 10&nbsp;GB Xcode install to run the suite would contradict
+        the zero-dependency ruling. Verified consequence: the suite runs
+        anywhere Swift does, including bare CI containers. An earlier draft of
+        this spec assumed <code>Tests/FieldCoreTests</code> XCTest targets;
+        that was wrong for this toolchain</td></tr>
+<tr><td>dependencies</td>
+    <td><strong>Zero external packages in the shipped app.</strong> No ML
+        framework, no numeric library, no 3D engine. SVD via Accelerate
+        (<code>zgesvd</code>) or one-sided Jacobi, FFT hand-rolled, mesh
+        loading via ModelIO. <strong>Two sanctioned code liftings</strong>,
+        both permissive and both attributed: <strong>Inviwo</strong> (BSD-2)
+        for the volume-raycast shaders, and <strong>Deepwave</strong> (MIT) as
+        the reference to port PML + adjoint <em>from</em></td>
+    <td>Everything needed is in Foundation / simd / Accelerate / Metal /
+        SwiftUI. Zero runtime deps means <code>swift build</code> works
+        offline and the harness has nothing to mock. Writing a raycaster or a
+        PML from scratch when a BSD-2/MIT reference exists is not
+        craftsmanship, it is a schedule risk</td></tr>
+<tr><td><strong>the twin</strong>
+    <em>(revised v0.4)</em></td>
+    <td><strong>Do not hand-roll it.</strong> Use
+        <strong>AcousTools</strong> (MIT, <code>pip install acoustools</code>,
+        v1.1.2 2026-06-05, UCL, actively maintained) as the primary reference
+        implementation, and <strong>k-wave-python</strong> (LGPL-3, native
+        arm64) as the independent second oracle</td>
+    <td>AcousTools is PyTorch-tensor-native and implements
+        <em>exactly this architecture</em>: a free-field piston/Rayleigh
+        propagator, a <strong>BEM scattering propagator</strong>, analytic
+        Gor'kov gradients, and explicit propagation-matrix caching for static
+        geometry. It is T0, T0.5 and T2 with the inverse problem attached,
+        already published and validated. A twin I write myself is a worse
+        oracle than one built by the group that builds these machines.
+        <strong>LGPL note:</strong> link k-wave-python, do not transcribe it</td></tr>
+<tr><td>MLX?</td>
+    <td><strong>Not in the app.</strong> MLX/Python remains the
+        <em>offline validation twin</em> only (&sect;19)</td>
+    <td>The in-app hot loop is a memory-bound stencil, a scatter-gather
+        particle push, and a dense complex matvec &mdash; three things
+        hand-written Metal does better than any tensor framework, and which
+        must share buffers with the render pass with no readback. The one place
+        a tensor framework would earn its keep is the inverse solver's
+        autodiff, and that need vanishes because T0 is linear: its adjoint is
+        H<sup>H</sup>, exact and free (&sect;14)</td></tr>
+<tr><td>viewport</td>
+    <td>One <code>MTKView</code>, one renderer. Field, particles, surfaces and
+        machine geometry are drawn from the <strong>same buffers the compute
+        passes write</strong>. No readback anywhere in the display path</td>
+    <td>This is the reason the whole program is native and single-process</td></tr>
+<tr><td>persistence</td>
+    <td>Project files, <code>.pattern</code> and <code>.fcode</code> as JSON
+        headers with binary Float32 payloads in a sidecar or appended blob.
+        Documented, versioned, round-trip tested</td>
+    <td>&mdash;</td></tr>
+<tr><td>the web build</td>
+    <td><code>resonance-weaver</code> becomes <strong>port source, then
+        reference</strong>. Its <code>matrixPencil.ts</code>,
+        <code>goldberg.ts</code>, <code>voxelizer.ts</code>,
+        <code>mie.ts</code>, <code>stlImport.ts</code>,
+        <code>fdtd.wgsl.ts</code> port to Swift/Metal nearly line-for-line.
+        After M7 it is archived, not maintained in parallel</td>
+    <td>~2,400 lines of physics/scan/geom/verify/io already written and
+        partially gated</td></tr>
+</table>
+
+<h2>9 &middot; Package layout and the module map</h2>
+
+<pre>field-compiler/
+  Package.swift
+  Sources/
+    FieldCore/          # PURE. No AppKit, no SwiftUI, no Metal.
+      Geometry/         machinePreset.swift  rh1.swift  sphereV0.swift
+                        goldberg.swift  spiralGrating.swift  scene.swift
+      Model/            schemas.swift  materials.swift  fcode.swift  pattern.swift
+      Solvers/          propagator.swift(protocol)  fdtd.swift(protocol)
+                        gorkov.swift  thermal.swift  inverse.swift
+                        referenceCPU/   # small, slow, obviously-correct twins
+      Scan/             scanRunner.swift  spectra.swift  matrixPencil.swift
+                        chords.swift  calibration.swift
+      Verify/           mie.swift  sfError.swift  energy.swift  gates.swift
+      IO/               stl.swift  project.swift  receipts.swift
+    FieldGPU/           # Metal. Implements the Solver protocols.
+      device.swift  bufferPool.swift  kernelLibrary.swift
+      propagatorGPU.swift  fdtdGPU.swift  particlesGPU.swift  occupancyGPU.swift
+      Renderer/  renderer.swift  passes/  offscreen.swift
+    FieldUI/            # SwiftUI. Every view is a pure function of a value struct.
+      Shell/     appShell.swift  toolbar.swift  transportBar.swift
+      Viewport/  viewportView.swift  overlayChips.swift  cameraController.swift
+      Panels/    objectList.swift  inspector.swift  chordList.swift
+                 gateReport.swift  logDrawer.swift
+      Scenes/    sceneRegistry.swift   # THE screenshot registry (&sect;16)
+      Theme/     tokens.swift  dark.swift  light.swift
+    FieldCompilerApp/   # @main. Target ~200 lines. Wires Core+GPU+UI. No logic.
+    fieldc/             # CLI. Same core. sim|scan|compile|build|shot|film|gate|twin-export
+  Shaders/              # .metal sources, shipped as resources, compiled at runtime
+    propagator.metal  fdtd.metal  particles.metal  occupancy.metal  render.metal
+  Tests/
+    FieldCoreTests/     # unit + physics gates
+    FieldUITests/       # snapshot tests
+    __snapshots__/      # golden PNGs, committed
+  Scripts/
+    twin/               # MLX/Python validation twin (&sect;19)
+    contact_sheet.py
+  Receipts/             # every gate run writes here; committed
+</pre>
+
+<h2>10 &middot; Geometry &mdash; the RH-1 preset</h2>
+
+<p>Cylindrical frame: z along the axis, <strong>origin at the lower plate
+face</strong>, z increasing upward. All mm. These are the canonical numbers
+from the hardware spec &sect;3/&sect;8 and the mechanical build sheet
+&sect;10; they are the same numbers the Blender renders use, and the app
+should agree with those renders pixel-for-pixel in silhouette.</p>
+
+<table>
+<tr><th>element</th><th>geometry</th></tr>
+<tr><td><strong>build volume</strong></td>
+    <td>cylinder, <strong>&Oslash;280 &times; 300</strong> &mdash; r &le; 140,
+        z &isin; [0, 300]. <em>This is the viewport's subject.</em></td></tr>
+<tr><td>caps &times;2</td>
+    <td>&Oslash;300 discs (r &le; 150) with &Oslash;80 bores (r &ge; 40) at
+        z = 0 and z = 300; ~20 stack thickness; mirror-imaged (opposite
+        handedness). Lower face = base deck; upper face-down in the crown</td></tr>
+<tr><td>spiral grating</td>
+    <td>12 arms at 30&deg; increments; r(&phi;) = r&#8320;&middot;e<sup>cot&alpha;&middot;&phi;</sup>;
+        one arm sweeps r = 45 &rarr; 145 over 0.75 turn (&rArr; cot&alpha; &asymp; 0.2483,
+        &alpha; &asymp; 76.0&deg;); slot widens 2.8 &rarr; 6.0 outward. Slots are
+        <em>voids in the conductor</em>, not traces &mdash; get this right in the
+        render or the caps look wrong</td></tr>
+<tr><td>bore winding</td>
+    <td>44 turns toroidal at the bore rim. <strong>Inert in v1</strong> (&sect;7)</td></tr>
+<tr><td>panels &times;6</td>
+    <td>42.5 wide &times; 300 tall &times; 5 thick, at <strong>r = 155</strong>,
+        centred in the 15.7&deg; clear gaps of the 30&deg;-pitch column ring.
+        Face: graded hex phononic screen standing 0.9 proud, cells large at the
+        bottom (low f) grading small at the top (high f) &mdash; rainbow
+        trapping. 4 PMN-PT drivers behind each &rArr; <strong>24 acoustic
+        channels</strong></td></tr>
+<tr><td>columns &times;7</td>
+    <td><strong>40 tangential &times; 20 radial</strong> &times; 300 tall, at
+        r = 160 (spanning 150&ndash;170), 30&deg; spacing across the rear.
+        Light strip on the inner face &mdash; this is the power-up progress
+        indicator. All 7 carry RX strips; 3 carry service bundles</td></tr>
+<tr><td>glass</td>
+    <td>two 4&nbsp;mm low-iron half-cylinders: rear &Oslash;344 fixed, front
+        &Oslash;364 rotating outside it, detents at 0&deg; (sealed) and
+        180&deg; (open). Door state is a model property: open &rArr; drive
+        power gated to mW listening (the Hall interlock), which the UI must
+        enforce, not merely depict</td></tr>
+<tr><td>body</td>
+    <td>&Oslash;360 &times; 560 overall (&Oslash;380 over the front glass);
+        base 180 below the deck, build 300, crown 80. Mass &asymp; 14&nbsp;kg</td></tr>
+</table>
+
+<div class="warn">
+<strong>Two documented conflicts &mdash; resolve in code, and record the
+resolution.</strong>
+(1) Column section: the mechanical paper &sect;4 says 40&times;40, but
+&sect;10 and the hardware spec say 40&times;20 with an explicit CAD-correction
+note (a square section does not fit the 22&nbsp;mm annulus between the plate
+rim at r=150 and the rear glass at r=172). <strong>Use 40&times;20</strong>;
+&sect;4 is stale.
+(2) Azimuthal coverage: mechanical Fig. 1 says panels command ~240&deg; and the
+door ~120&deg;, while the hardware spec says the arcade spans the rear
+180&deg; (7 columns &times; 30&deg; = 180&deg;). These cannot both hold for the
+same parts. <strong>Build to the 180&deg; arcade</strong>, expose the span as a
+preset parameter, and file the discrepancy back to the mechanical paper rather
+than silently picking one.
+</div>
+
+<p><strong>Other presets.</strong> <code>sphere-v0</code>: R<sub>c</sub> =
+200&nbsp;mm chamber, Goldberg screen at R<sub>s</sub> = 150&nbsp;mm, 12 gates
+at icosahedral vertex directions (class-I geodesic, n=4, take the dual; the 12
+cells dual to the original icosahedral vertices are the pentagons = the
+gates). Exists <em>only</em> so gate G4 (analytic Mie) stays runnable &mdash;
+a sphere is where closed-form truth lives. <code>table-1plate</code>: single
+cap, half-space, Rayleigh&ndash;Sommerfeld; the cheapest sanity preset.
+<code>lpoh-icosa12</code>: 12 transducers on the icosahedral directions
+(&plusmn;1,&plusmn;&phi;,0 and cyclic, normalized), ~50&nbsp;mm gap &mdash; so
+the app can also drive the bench hardware that actually exists.</p>
+
+<h2>11 &middot; T0 &mdash; the propagator</h2>
+
+<p>Discretize each active surface into elements of area
+&le;&nbsp;(&lambda;/2)&sup2;. Each element e at
+<strong>x</strong><sub>e</sub> with outward normal
+<strong>n</strong><sub>e</sub>, area A<sub>e</sub>, and complex drive
+u<sub>e</sub> contributes a Rayleigh&ndash;Sommerfeld (baffled-piston,
+far-from-element) term to the complex pressure at field point
+<strong>x</strong>:</p>
+
+<pre>p(x) = &Sigma;_e  u_e &middot; H_e(x),
+
+H_e(x) = (i &rho;&#8320; c&#8320; k A_e / 2&pi;) &middot; D_e(&theta;) &middot; e^{ i k r } / r ,
+         r = |x &minus; x_e| ,  cos&theta; = (x &minus; x_e)&middot;n_e / r ,
+         D_e(&theta;) = directivity;  v1 uses the circular-piston form
+                        2 J&#8321;(k a sin&theta;) / (k a sin&theta;)  with a = equivalent
+                        element radius, falling back to cos&theta; for a&nbsp;&#8810;&nbsp;&lambda;.</pre>
+
+<p>Stack the H<sub>e</sub> over field points and you have a dense complex
+matrix <strong>H</strong> of shape (N<sub>voxels</sub> &times;
+N<sub>channels</sub>), and the forward model is one matvec:
+<strong>p = H u</strong>. For RH-1 at 40&nbsp;kHz with a 2&nbsp;mm evaluation
+lattice over the build volume, N<sub>voxels</sub> &asymp; 1.4&nbsp;M and
+N<sub>channels</sub> = 24 &rarr; ~34&nbsp;M complex MACs per evaluation:
+sub-millisecond on the M5, and the matrix is small enough (~270&nbsp;MB at
+Float32 complex) to precompute and cache per (preset, frequency, lattice).
+<strong>That cache is what makes the viewport interactive and the inverse
+solver cheap.</strong></p>
+
+<p>Two exactness notes worth writing into the code as comments, because they
+will otherwise be rediscovered painfully. First, H is <em>linear in u</em>, so
+the adjoint needed by the inverse solver is literally
+<strong>H</strong><sup>H</sup> &mdash; no autodiff, no framework, no
+approximation. Second, T0 knows nothing about scattering off the workpiece;
+it is a free-field propagator. That is exactly why G5 exists (T0 vs T1 in an
+<em>empty</em> chamber) and exactly why T1 owns the scan path (where the object
+is the whole point).</p>
+
+<p>Velocity for Gor'kov comes from the same sum, differentiated analytically:
+<strong>v</strong> = &minus;(1/i&omega;&rho;&#8320;)&nabla;p, with &nabla;H<sub>e</sub>
+in closed form. Do not finite-difference the pressure field for this &mdash;
+the force is a gradient of a quantity that is already a gradient, and the
+error compounds visibly as trap jitter.</p>
+
+<h2>12 &middot; T1 &mdash; acoustic FDTD</h2>
+
+<p>Standard staggered-grid (Yee-style) acoustic FDTD, ported from the v0.2
+WGSL kernel. Two coupled fields on the voxel grid: pressure p at cell centres,
+velocity v at face centres. Per-cell material arrays <code>rho[]</code>,
+<code>c2[]</code> from the voxelizer.</p>
+
+<pre>v[f] &minus;= dt/(rho_face &middot; dx) &middot; (p[cell+] &minus; p[cell&minus;])       // 3 components
+p[c] &minus;= rho[c]&middot;c2[c]&middot;dt/dx &middot; ( &Sigma;_faces v_out )        // divergence
+
+stability : dt = 0.5 &middot; dx / (c_max &middot; &radic;3)                  // CFL with margin
+boundary  : cylinder wall + caps rigid (v&middot;n = 0);
+            16-cell sponge shell inside every wall,
+            p,v *= exp(&minus;&sigma;(d)&middot;dt), &sigma; ramping quadratically in
+            depth d &mdash; models real chamber loss and guarantees
+            ring-down decays (a lossless closed cavity never stops
+            ringing, and its S(f) is garbage)
+source    : soft source over the active gate's element patch,
+            p += A &middot; exp(&minus;((t&minus;t&#8320;)/&tau;)&sup2;) &middot; sin(2&pi; f&#8320; t)
+record    : every step, average p over each gate patch
+            &rarr; portRecord[gate][step]</pre>
+
+<p><strong>Sizing, with the arithmetic shown</strong> &mdash; because this is
+where a design either is or is not feasible, and the number should not be a
+surprise at M3. Domain 340&sup3;&nbsp;mm bounds the panels at r=155 plus a
+sponge margin. At 40&nbsp;kHz, &lambda; = 8.575&nbsp;mm and dx = &lambda;/5 =
+1.715&nbsp;mm &rarr; 198&sup3; &asymp; <strong>7.8&nbsp;M cells</strong>;
+p + 3v at Float32 = ~125&nbsp;MB plus material arrays. dt = 0.5 &middot;
+1.715e&minus;3 / (343&middot;&radic;3) = <strong>1.44&nbsp;&micro;s</strong>,
+i.e. ~17 steps per period. An axial round trip is 0.6&nbsp;m / 343 =
+1.75&nbsp;ms &rarr; ~1,200 steps; a 30k-step capture is ~43&nbsp;ms simulated,
+~25 round trips &mdash; enough ring-down for the matrix pencil. At a
+memory-bound ~10<sup>10</sup> cell-updates/s that is
+<strong>~45&nbsp;s per run, ~10&nbsp;min for a 12-run scan</strong>. Show the
+live field while it runs; the wait is the show.</p>
+
+<div class="warn">
+<strong>Two sizing traps to design around, not discover.</strong>
+(1) <strong>CFL is set by the fastest material in the grid.</strong> Put steel
+(c&nbsp;=&nbsp;5900) in the chamber and dt drops 17&times; &mdash; a 45-second
+run becomes 13 minutes. Surface this in the UI as an estimated runtime before
+the user presses go, and default metals to a sub-domain or to T0.
+(2) <strong>High bands do not fit.</strong> At the air band's 200&ndash;300&nbsp;kHz
+ceiling, dx = 0.343&nbsp;mm &rarr; ~10<sup>9</sup> cells. Full-domain FDTD is
+available at 20&ndash;80&nbsp;kHz only; above that the app runs T0, or T1 on a
+bounded sub-domain around the workpiece with T0 supplying the incident field.
+Make this a visible, explained constraint rather than a silent quality cliff.
+</div>
+
+<p>Material presets (&rho; kg/m&sup3;, c m/s), carried forward from v0.2:
+air (1.204, 343), PLA (1240, 2220), aluminium (2700, 6320), steel (7850, 5900),
+glass (2500, 5640), water (998, 1481), rubber (1100, 1600).</p>
+
+<h2>13 &middot; T2 and T3 &mdash; the matter layer</h2>
+
+<p>This is the new physics, the thing the corpus has been deferring to "the
+digital twin," and the reason the app is worth building rather than reading
+about.</p>
+
+<h3>13.1 Radiation force (Gor'kov)</h3>
+
+<p>For a particle of radius a &#8810; &lambda;, density &rho;<sub>p</sub>,
+sound speed c<sub>p</sub>, in a time-harmonic field with local complex
+amplitudes p and <strong>v</strong>, the acoustic radiation potential is (Bruus
+2012 form of Gor'kov 1962):</p>
+
+<pre>U_rad = (4/3)&pi;a&sup3; [ f&#8321; &middot; (&frac12;)&kappa;&#8320; &lang;p&sup2;&rang; &minus; f&#8322; &middot; (&frac34;)&rho;&#8320; &lang;v&sup2;&rang; ]
+
+  &kappa;&#8320; = 1/(&rho;&#8320;c&#8320;&sup2;)                  (compressibility of the medium)
+  f&#8321; = 1 &minus; &kappa;_p/&kappa;&#8320;                  (monopole  contrast)
+  f&#8322; = 2(&rho;_p &minus; &rho;&#8320;) / (2&rho;_p + &rho;&#8320;)      (dipole    contrast)
+  &lang;p&sup2;&rang; = &frac12;|p|&sup2; ,  &lang;v&sup2;&rang; = &frac12;|v|&sup2;   (time averages of the complex amplitudes)
+
+  F_rad = &minus;&nabla;U_rad</pre>
+
+<p>The acoustic contrast factor &Phi; = f&#8321; + (3/2)f&#8322; decides the
+physics: &Phi;&nbsp;&gt;&nbsp;0 traps at pressure nodes (which is every
+solid-in-air case we care about), &Phi;&nbsp;&lt;&nbsp;0 at antinodes. Compute
+U on the same lattice T0 evaluates, take &minus;&nabla;U by central differences
+<em>of the potential</em> (which is smooth), and sample per particle with
+trilinear interpolation.</p>
+
+<div class="warn">
+<strong>Convention trap in the closed form &mdash; corrected 2026-07-26, after
+gate G7 caught it in the implementation.</strong> For a 1-D standing wave with
+<strong>p = P&#8320;&nbsp;sin(kz)</strong>, the correct force is
+<pre>F_z = &minus;(4/3) &pi; a&sup3; k E_ac &Phi; sin(2kz),   &Phi; = f&#8321; + (3/2)f&#8322;,   E_ac = P&#8320;&sup2;/(4&rho;&#8320;c&#8320;&sup2;)</pre>
+An earlier draft quoted the literature's
+<em>F_z = 4&pi;a&sup3;kE_ac&Phi;sin(2kz)</em>, which is wrong here for
+<strong>two independent reasons</strong> that happen to compound:
+(i) the commonly-tabulated &Phi;<sub>B</sub> is the Settnes&ndash;Bruus
+<em>acoustophoretic</em> contrast factor and carries a factor 1/3
+(&Phi;<sub>B</sub> = &Phi;/3); and (ii) the sign follows the pressure
+convention &mdash; with a sin() field the pressure node sits at z = 0, so a
+positive-contrast particle must be pushed <em>toward</em> it, which requires the
+leading minus. Quoting the literature form against a sin() field
+<strong>silently inverts the trap, turning nodes into antinodes</strong> &mdash;
+a bug that yields a plausible-looking levitation sim that is wrong everywhere.
+Verified by symbolic differentiation of the potential; both normalizations agree
+once matched. This is exactly the class of error the gate ladder exists to
+catch, and it was caught on the first run.
+</div>
+
+<p>Particle equation of motion, integrated with velocity Verlet on the GPU:</p>
+
+<pre>m &middot; dv/dt = F_rad  +  m&<strong>g</strong>  &minus;  6&pi;&mu;a(v_p &minus; v_fluid)  +  F_contact
+&mu;_air = 1.81e&minus;5 Pa&middot;s ;  optional F_stream from acoustic streaming (off by default,
+                            behind a flag, because it is not gated)</pre>
+
+<p>Trap capture is the condition |F<sub>rad</sub>| &gt; mg, and the standing-wave
+case gives the closed form the gate needs: for a 1D standing wave
+p = P&#8320;sin(kz), F<sub>z</sub> = 4&pi;a&sup3;kE<sub>ac</sub>&Phi;sin(2kz) with
+E<sub>ac</sub> = P&#8320;&sup2;/(4&rho;&#8320;c&#8320;&sup2;). That closed form
+<em>is</em> gate G7.</p>
+
+<h3>13.2 Consolidation (T3)</h3>
+
+<p>Per-particle lumped-capacity thermal state, driven by whichever heat stage
+the preset selects (the doctrine is emphatic that <strong>"the sound IS the
+heat" is superseded</strong> &mdash; 40&nbsp;kHz absorption in a sub-mm bead
+cannot sinter PLA, and the "nanosecond weld" figure is dropped as having no
+bench basis; printing takes a separate heat source):</p>
+
+<pre>m c_p dT/dt = Q_stage(z) &minus; h A (T &minus; T_amb)
+
+states:  FEEDSTOCK &rarr; IN_TRANSIT &rarr; MOLTEN (T &gt; T_melt)
+                   &rarr; WETTED (contact with a latched neighbour)
+                   &rarr; LATCHED (T &lt; T_glass; position frozen into the
+                                occupancy grid, particle retired)</pre>
+
+<p>Anchors to calibrate against, from the printer-concept doc: a 200&nbsp;&micro;m
+PLA bead is ~5&nbsp;&micro;g and needs ~0.8&nbsp;mJ to melt (~8&nbsp;mW over a
+100&nbsp;ms transit); tin, nylon, PETG and soda-lime glass are tabulated
+alongside; a 200&nbsp;&micro;m PLA droplet cools below T<sub>g</sub> in
+1&ndash;10&nbsp;ms in still air. The occupancy grid is a 3D
+<code>uint8</code> texture at build resolution; the visible surface is
+marching cubes over it, re-extracted on change with a dirty-region queue.
+Build progress = latched-and-inside-target / target; overspill =
+latched-and-outside-target / target. Both are shown; the second is the honest
+one.</p>
+
+<h2>14 &middot; The inverse solver &mdash; target field to drive</h2>
+
+<p>Given a target amplitude distribution |p|* over a set of control points
+(trap positions, or the target's surface shell), find the complex drive
+<strong>u</strong>. Three methods, all sharing the cached <strong>H</strong>,
+selectable in the inspector and raced against each other in the gate report:</p>
+
+<table>
+<tr><th>method</th><th>iteration</th><th>character</th></tr>
+<tr><td><strong>IBP</strong> (iterative back-propagation)</td>
+    <td>u &larr; H<sup>H</sup>&nbsp;(target phase applied to current field);
+        normalize</td>
+    <td>trivial, fast, mediocre contrast &mdash; the honest baseline every
+        other method must beat</td></tr>
+<tr><td><strong>GS-PAT</strong></td>
+    <td>Gerchberg&ndash;Saxton on the reduced point-to-point matrix
+        H<sub>c</sub><sup>H</sup>H<sub>c</sub> (control points only, so the
+        matrices are tiny), then one back-projection</td>
+    <td>the standard for multi-trap holography; milliseconds; the default</td></tr>
+<tr><td><strong>Diff-PAT</strong></td>
+    <td>gradient descent (Adam) on
+        L(u) = &Sigma;<sub>c</sub> w<sub>c</sub>(|Hu|<sub>c</sub> &minus; |p|*<sub>c</sub>)&sup2;
+        + &lambda;&#8231;&#8214;u&#8214;&sup2;, with
+        &nabla;L supplied <strong>analytically</strong> via H<sup>H</sup></td>
+    <td>slower, best fidelity, handles amplitude constraints and
+        per-channel power limits; the one to use when compiling a whole
+        object rather than a handful of traps</td></tr>
+</table>
+
+<p>Hardware constraints enter as projection steps inside the loop, not as
+post-hoc rounding: per-channel amplitude ceiling, phase quantization (the
+bench anchor is ~1&deg; at 40&nbsp;kHz on an RP2350 at 150&nbsp;MHz), and the
+spec's <strong>&lambda;/20 per-band phase tolerance</strong>. A drive that only
+works at infinite precision is not a compile result; it is a bug that will
+reappear on hardware.</p>
+
+<p>The measured calibration matrix multiplies in ahead of H: the power-up
+self-calibration measures every element's TX&rarr;RX transfer and stores it as
+that machine's identity matrix, and the mechanical paper is blunt that
+"without this matrix the field compile is blind." The emulator therefore
+<em>simulates</em> a calibration &mdash; with configurable per-element gain and
+phase error &mdash; so that the compile path exercises the same code the
+hardware will.</p>
+
+<h2>15 &middot; Scan pipeline</h2>
+
+<ol>
+<li><strong>Empty-chamber reference.</strong> One run per preset+band, cached,
+keyed by config hash. Everything downstream normalizes against it.</li>
+<li><strong>Coded runs.</strong> v1 ships identity coding (one gate per run).
+Also implement the <strong>Welch&ndash;Costas</strong> schedule from M5 on
+&mdash; 13 is prime with primitive root 2, so a perfect thumbtack-ambiguity
+schedule exists for exactly 12 gates:
+<code>slot k &rarr; gate 2&#7503; mod 13 = 2, 4, 8, 3, 6, 12, 11, 9, 5, 10, 7, 1</code>.
+It is ~20 lines and it is the thing to race in the scan-policy comparison.</li>
+<li><strong>S(f) assembly.</strong> FFT every port record; column r of S(f) =
+spectra normalized by the source spectrum from the reference run.</li>
+<li><strong>Chord extraction.</strong> Matrix pencil: build Hankel matrices
+H&#8320;, H&#8321; per record (window L &asymp; N/3), stack all gates'
+Hankels vertically (joint poles &mdash; one object, one set of resonances),
+SVD(H&#8320;) truncated to K, generalized eigenvalues &rarr; poles p<sub>k</sub>,
+least squares &rarr; port-vectors r<sub>k</sub>, order by contribution weight.
+SVD by one-sided Jacobi; matrices are at most a few hundred rows.</li>
+<li><strong>Emit</strong> <code>.pattern</code>, with the calibration reference
+recorded in the metadata.</li>
+</ol>
+
+<h2>16 &middot; The interface</h2>
+
+<p>The design brief is a clean slicer, and the discipline that implies is
+<em>subtractive</em>: a person who has used Bambu Studio or PrusaSlicer should
+be productive without a manual, and every control that cannot justify its
+pixels should be in a disclosure triangle or gone. The instrument content
+&mdash; and there is a lot of it &mdash; earns its place by being the
+<em>viewport</em>, not by being more panels.</p>
+
+<h3>16.1 Layout</h3>
+
+<pre>┌─ toolbar ──────────────────────────────────────────────────────────────┐
+│  [Scan | Compile | Build | Inspect]   RH-1 v   PLA v      [ Compile ]  │
+├───────────┬────────────────────────────────────────┬───────────────────┤
+│  objects  │ [field][traps][matter][solid][bnd]     │  inspector        │
+│  240pt    │                                        │  300pt            │
+│           │                                        │                   │
+│  cup.stl  │      T H E   V I E W P O R T           │  machine          │
+│   PLA     │                                        │  carrier / band   │
+│           │  (cylindrical build volume, the        │  field / verb     │
+│           │   machine around it, overlays on)      │  matter           │
+│           │                                        │  solver           │
+│           │                                        │  quality          │
+├───────────┴────────────────────────────────────────┴───────────────────┤
+│  > ||  < >   -----o---------   t=12.4 ms   build 34%   S(f) err ___    │
+└────────────────────────────────────────────────────────────────────────┘</pre>
+
+<p>The transport bar is the slicer's layer slider, re-pointed at time: scrub
+the <code>.fcode</code> frame timeline, step, play, loop a range. The
+S(f)-error sparkline lives beside it because &sect;4 says the build's
+acceptance criterion belongs in the user's peripheral vision, not in a
+dialog.</p>
+
+<h3>16.2 The viewport &mdash; three epistemic layers</h3>
+
+<p>Machine geometry as described in &sect;10, drawn to be recognizable against
+the Blender renders: caps as amber-lit bullseyes with the spiral face and lit
+bore, the six back panels as hex-tiled sheets glowing with their live boundary
+state, the columns as dark bars with white light strips. Build volume as a
+translucent ticked cylinder. Front glass rotatable, with the interlock
+enforced.</p>
+
+<p>Everything else the viewport draws is sorted by <strong>epistemic
+status</strong> &mdash; not by object type, and not by aesthetics. The machine
+has no camera. It never sees the inside of its own chamber; it drives a
+boundary, listens to the echo, and reconstructs. A viewport that quietly draws
+the mesh we already have in memory is showing the user something the instrument
+will never possess. Three layers, rendered three ways:</p>
+
+<table>
+<tr><th>layer</th><th>contents</th><th>rendered as</th><th>because</th></tr>
+<tr><td><strong>KNOWN</strong></td>
+    <td>machine chrome, build-volume cylinder, dimension ticks, the imported
+        target mesh, the cartridge</td>
+    <td>crisp CAD &mdash; sharp, dimensioned, unambiguous</td>
+    <td>These are files and specifications; we know them exactly. Rendering
+        them holographically would destroy slicer legibility <em>and</em> be
+        dishonest in the opposite direction &mdash; pretending not to know
+        something we do</td></tr>
+<tr><td><strong>SIMULATED</strong></td>
+    <td>the field, the particles, the latched voxels</td>
+    <td>direct volumetric / instanced draw from the sim buffers</td>
+    <td>We are the simulator. This is ground truth <em>of the model</em>
+        &mdash; which is not the same as ground truth</td></tr>
+<tr><td><strong>RECONSTRUCTED</strong></td>
+    <td>whatever the boundary measurements actually support</td>
+    <td>holographic reconstruction from the port records (&sect;16.4)</td>
+    <td>This is all the real machine will ever have</td></tr>
+</table>
+
+<p><strong>Global toggle: Machine View / God View.</strong> The KNOWN layer is
+drawn in both; the other two swap. <strong>Machine View is the default in Scan
+and Inspect</strong> &mdash; the hardware spec's product staging is
+scanner-first, so in those modes the reconstruction <em>is</em> the product
+&mdash; and God View is the default in Compile and Build, where the user is
+authoring rather than measuring. The toggle is always one keystroke away, and
+the <strong>difference between the two views is a first-class metric</strong>
+with its own acceptance gate (G14), not a curiosity.</p>
+
+<p>Overlays are chips along the viewport's top edge, each independently
+toggleable:</p>
+
+<ol>
+<li><strong>Field</strong> &mdash; |p| on a draggable slice plane
+(XY / XZ / YZ), log-compressed, diverging colormap, with a scale bar in Pa.
+Fed by T0 at frame rate, or by T1's current step during a run.</li>
+<li><strong>Traps</strong> &mdash; Gor'kov minima as markers sized by trap
+stiffness, optionally an isosurface of U. This is the overlay that makes the
+inverse solver legible.</li>
+<li><strong>Matter</strong> &mdash; instanced particles coloured by thermal
+state (feedstock grey &rarr; molten orange &rarr; latched material colour),
+with the cartridge and bore feed visible below the deck.</li>
+<li><strong>Solid</strong> &mdash; marching-cubes surface of the occupancy
+grid, with the target mesh as a ghost. Toggling between "what I asked for" and
+"what the field actually made" is the app's most important single
+interaction.</li>
+<li><strong>Boundary</strong> &mdash; per-element drive as coloured quads on
+the caps and panels (brightness = amplitude, hue = phase), gates outlined and
+numbered. This is v0.2's screen renderer, mapped onto RH-1's eight faces
+instead of a Goldberg sphere. During power-up it animates the real sequence:
+<em>calibrating &rarr; locking &rarr; ringing-up &rarr; ready</em>.</li>
+<li><strong>Chords</strong> &mdash; the chord list as an overlay panel; hovering
+a chord highlights its port-vector on the boundary and its pole on the spectrum
+strip.</li>
+</ol>
+
+<p>Camera: orbit / dolly / pan; number keys for front / top / iso / home;
+perspective&ndash;orthographic toggle. Empty state is the machine alone,
+composed well enough to screenshot.</p>
+
+<h3>16.3 Machine View &mdash; the reconstruction renderer</h3>
+
+<div class="warn">
+<strong>The caveat that shapes this entire section, stated before the
+method.</strong> Kirchhoff&ndash;Helmholtz determines the <em>field</em>
+everywhere inside a <strong>source-free</strong> volume from boundary data.
+Put an object in the chamber and the volume is no longer source-free &mdash;
+the scatterer is a secondary source &mdash; and recovering the
+<em>object</em> from boundary data is <strong>inverse scattering</strong>:
+nonlinear, ill-posed, and the problem full-waveform inversion exists to
+attack. Consequently a naive boundary backprojection yields a
+<strong>reflectivity image</strong> &mdash; a 3D B-scan &mdash; and
+<em>not</em> a geometry. The UI must say so, the export must label it, and
+nobody may quietly threshold a reflectivity field into a mesh and call it a
+scan.
+</div>
+
+<p>The reconstruction ladder, cheapest first. Each rung is a separate,
+selectable operator over the same port records, so their outputs can be
+compared side by side in the same viewport:</p>
+
+<table>
+<tr><th>rung</th><th>method</th><th>cost</th><th>ship</th></tr>
+<tr><td><strong>L0</strong></td>
+    <td><strong>Kirchhoff&ndash;Helmholtz / delay-and-sum backprojection.</strong>
+        f(<strong>x</strong>) = &Sigma;<sub>g</sub> a<sub>g</sub>&middot;e<sup>ikr</sup>/(4&pi;r)
+        over gates g. One Metal kernel, O(N<sub>vox</sub>&times;N<sub>gates</sub>)</td>
+    <td>ms</td><td>M7, default</td></tr>
+<tr><td><strong>L1</strong></td>
+    <td><strong>DORT / time-reversal operator.</strong> Take the
+        <strong>SVD of S(f) directly</strong> &mdash;
+        <em>never form S<sup>H</sup>S, which squares the dynamic range</em>.
+        Rank by Gavish&ndash;Donoho (2.858&middot;median &sigma; when noise is
+        unknown); each significant right-singular vector backprojects to one
+        scatterer. Free reciprocity QC falls out:
+        &#8214;K&minus;K<sup>T</sup>&#8214;/&#8214;K&#8214; &gt; 0.1 means a
+        calibration fault, not a target. <strong>Read the warning below before
+        implementing the imaging half</strong></td>
+    <td>ms</td><td>M7</td></tr>
+<tr><td><strong>L2</strong></td>
+    <td><strong>Regularized linear inversion.</strong> min &#8214;Hm &minus; b&#8214;&sup2;
+        + &lambda;R(m), with H the T0 operator and R Tikhonov or L1. Reuses the
+        inverse solver's machinery and its free adjoint H<sup>H</sup> (&sect;14)</td>
+    <td>s</td><td>M8, optional</td></tr>
+<tr><td><strong>L3</strong></td>
+    <td><strong>FWI-style iterative inversion</strong> against T1 by the
+        adjoint-state method &mdash; the honest answer to the box above</td>
+    <td>min</td><td>M10+, scheduled not promised</td></tr>
+</table>
+
+<div class="warn">
+<strong>The Green's-function trap &mdash; the single biggest technical risk in
+this project.</strong> DORT is model-free only up to the SVD. The
+<em>imaging</em> step needs a Green's function g(<strong>x</strong>) for every
+voxel, and inside a closed high-Q cylinder that must be the <strong>cavity</strong>
+Green's function &mdash; chaotically sensitive to geometry and not computable
+from CAD. Running textbook DORT or MUSIC with a free-space g() will produce a
+confident, sharp, <strong>meaningless</strong> image, which is far worse than
+producing nothing. Two further traps in the same family: a single sphere yields
+up to <strong>four</strong> significant singular values (monopole + three
+dipoles), not one, so "eigenvalue count = target count" is wrong; and every
+chamber wall generates its own large, stable singular value that must be
+identified and rejected against the empty-chamber reference. Across DORT,
+MUSIC, LSM and FWI alike, the binding constraint on real data is never the
+algorithm and never the compute &mdash; <strong>it is having a correct Green's
+function for the medium</strong>. Ship L1's SVD and its reciprocity QC at M7
+because they are honest and cheap; gate the imaging half behind a measured
+cavity Green's function or an aberration-estimating method (Aubry-group
+distortion-matrix / ultrasound matrix imaging is the only family that estimates
+aberration <em>from data</em> instead of assuming it).
+</div>
+
+<h4>What can and cannot enlarge what the machine knows</h4>
+
+<p>Before the renderer, the information budget &mdash; because the most
+attractive wrong idea in this project is that a machine with this much field
+control can simply <em>compute</em> its way out of a measurement gap. It
+cannot, and the reason is worth stating precisely rather than as a slogan.
+Four kinds of diversity are available; only two of them add independent
+information:</p>
+
+<table>
+<tr><th>diversity</th><th>adds information?</th><th>why</th></tr>
+<tr><td><strong>Transmit-pattern</strong> &mdash; beamforming, coded
+        excitation, holographic drive, any clever <strong>u</strong></td>
+    <td><strong>No</strong></td>
+    <td>With N elements every transmit pattern is a linear combination of the
+        N individual element responses. Patterned transmission cannot
+        synthesize a measurement that was never made. It buys SNR and
+        conditioning &mdash; real and worth having, but not new k-space</td></tr>
+<tr><td><strong>Frequency</strong></td>
+    <td><strong>Yes</strong></td>
+    <td>Different &omega; probes different k-space. Genuinely new samples
+        &mdash; and this machine is broadband by construction (octave
+        addressing; the printed holograms <em>steer by frequency</em>, so
+        every frequency is a different illumination geometry from a static
+        aperture)</td></tr>
+<tr><td><strong>Position</strong> &mdash; real or <em>virtual</em></td>
+    <td><strong>Yes</strong></td>
+    <td>A new viewpoint is a new row in the measurement operator. Crucially,
+        a reflection off a known wall places a virtual source at the
+        mirror-image position &mdash; position diversity with nothing
+        moving (&sect;18)</td></tr>
+<tr><td><strong>Optically-placed virtual sources</strong> &mdash;
+        photoacoustic spot-scanning (&sect;17.6)</td>
+    <td><strong>Yes</strong></td>
+    <td>A pulsed laser absorbed at a surface launches ultrasound from that spot,
+        so the optical channel can place an acoustic source anywhere it can see
+        &mdash; <em>including on the workpiece</em>. This is position diversity
+        with no motion and no added transducers, and it is strictly better than
+        rotating the scene. Established art: laser ultrasonics</td></tr>
+<tr><td><strong>Adaptive / sequential selection</strong> &mdash;
+        "smart exploration", AI-guided scanning, next-best-measurement</td>
+    <td><strong>No</strong></td>
+    <td>It allocates a finite measurement budget over the information the
+        aperture already offers. That is a <em>policy</em>, not a source
+        &mdash; and it is the right place for intelligence in this system</td></tr>
+</table>
+
+<p>The fourth row deserves its own paragraph, because it is the one that pays
+off daily. Resolution in this format <strong>is</strong> chord count, and
+chord count should be <strong>spatially non-uniform</strong>: spend chords
+where the object rings complex, stop early where it is homogeneous, refine
+where the residual is high. A large single-material volume and an intricate
+lattice of the same bounding box do not deserve the same budget, and a scanner
+that gives them the same budget is either wasting minutes or missing detail.
+This is already latent in the design &mdash; progressive chord streaming
+ordered by weight (&sect;3), the adaptive scan-policy race at M6, and
+call-and-response's "until it rings true" stopping criterion (&sect;4) are all
+the same mechanism seen from three angles. <strong>Make it explicit:
+detail-adaptive chord budgeting is a first-class feature, not an
+optimization.</strong></p>
+
+<div class="warn">
+<strong>And the firewall, in the same breath:</strong> adaptive selection
+<em>chooses among available measurements; it cannot synthesize one.</em> A
+policy that decides where to look next is doing real work. A policy that
+reports a region it never successfully measured is doing damage. The two are
+easy to conflate in code and impossible to distinguish in a rendered image
+&mdash; hence &sect;16.3's provenance rule below.
+</div>
+
+<h4>Provenance &mdash; the model may propose, only the aperture asserts</h4>
+
+<p>The moment a learned prior or a regularizer fills null space, the output
+contains <strong>plausible</strong> data rather than <strong>measured</strong>
+data. Two failure modes converge here and produce the identical artifact: a
+wrong Green's function (&sect;16.3 above) and a confident prior both yield
+sharp, detailed, meaningless images. Neither announces itself.</p>
+
+<p>For this machine that is not a nitpick, because of a property no ordinary
+scanner has: <strong>the scan output is also the build acceptance
+criterion</strong> (&sect;4). A <code>.pattern</code> is not merely a picture
+&mdash; it is what the builder plays and what the loop listens for. An
+inferred interior therefore becomes a <em>fabricated-from-a-guess</em>
+interior, and the error is laundered through a fabrication step that looks
+like verification.</p>
+
+<div class="box">
+<strong>Ruling.</strong> Every chord carries a
+<code>provenance: measured | inferred</code> tag in <code>.pattern</code>, and
+so does every reconstruction derived from it. The viewer <strong>renders the
+difference</strong> &mdash; inferred content is visually distinct at a glance,
+never merely footnoted. Export, receipts and the gate report all carry the
+measured/inferred split. <strong>The model may propose; only the aperture
+asserts.</strong>
+</div>
+
+<p>Two consequences that follow immediately and should be built in, not
+retrofitted. Inferred chords are <strong>excluded by default</strong> from the
+build acceptance criterion &mdash; you may look at them, you may not fabricate
+to them, and promoting one to load-bearing is an explicit, logged user action.
+And the coverage channel below is the rendering half of the same commitment:
+provenance says <em>where a value came from</em>, coverage says <em>whether
+the aperture could have seen it at all</em>. Ship both.</p>
+
+<h4>The coverage channel &mdash; rendering what the machine does <em>not</em> know</h4>
+
+<p>This is the single most important rendering decision in the document. The
+specular gap is <strong>a null-space of the measurement operator, not an
+algorithm failure</strong>: a facet is measurable only if some (Tx, Rx, f)
+triple makes the bistatic bisector parallel to its normal. No regularizer
+recovers it, and no amount of compute changes that. So the renderer's job is
+not to hide it &mdash; it is to show it.</p>
+
+<p>Carry a <strong>tri-state</strong>, borrowed from OctoMap's occupancy
+model, and never collapse it to one scalar:</p>
+
+<ul>
+<li><strong>OBSERVED-OCCUPIED</strong> &rarr; solid, confident, full extinction</li>
+<li><strong>OBSERVED-EMPTY</strong> &rarr; transparent</li>
+<li><strong>NEVER OBSERVED</strong> &rarr; an explicit VOID state</li>
+</ul>
+
+<div class="box">
+<strong>The rule that makes this work:</strong> <em>confirmed-empty and
+never-observed must never interpolate into one another.</em> They are different
+facts. A trilinear filter that averages them produces a plausible surface out of
+pure ignorance &mdash; which is the most misleading thing this application
+could do, and precisely the failure the machine's lack of a camera makes easy.
+</div>
+
+<p>Compute the confidence field properly rather than by eye. Two methods, in
+increasing order of honesty: a <strong>visibility-cone mask</strong> (per voxel,
+which (Tx,Rx,f) triples could see a facet at each orientation &mdash; cheap,
+geometric, and already enough to answer "why did that face vanish"); and a
+<strong>random-walk confidence map</strong> in the Karamalis sense &mdash; the
+probability that a random walk from a voxel reaches a transducer, a derived
+coverage field obtained as a Laplacian solve rather than a rendering trick.
+Ship the cone mask at M7; the Laplacian version is a clean upgrade.</p>
+
+<p>The strongest version of the idea, and worth building because it is
+honest <em>by construction</em>: render <strong>level-crossing
+probability</strong> (Pöthkow) &mdash; P(the surface passes through this voxel)
+&mdash; instead of an isosurface. Roughly 30 lines of MSL, two fetches per
+sample, and with it <strong>you cannot accidentally draw a crisp lie</strong>.
+Related and equally cheap: display the local point-spread-function width, so a
+low-resolution region is <em>physically incapable</em> of rendering sharp
+detail.</p>
+
+<h4>Technique &mdash; and one thing that does not work</h4>
+
+<p>Volumetric ray-march of the complex reconstruction in a Metal pass:
+amplitude &rarr; intensity (log-compressed); confidence &rarr; extinction, via
+a 2D transfer function (value, confidence) &rarr; (rgb, extinction) so that low
+confidence drives extinction toward zero &mdash; regions read as visibly
+<em>hollow</em>, not merely tinted. Optionally animate uncertainty
+(Lundström's probabilistic animation): uncertain regions boil, certain regions
+are steady.</p>
+
+<div class="warn">
+<strong>Phase-as-hue does not survive alpha compositing.</strong> Front-to-back
+<code>over</code> blending of many hues averages to mush; domain coloring is
+inherently a 2D technique and does not lift to a volume. This was specified
+wrongly in an earlier draft. The correct idioms, in order of preference:
+<strong>animate Re{p&middot;e<sup>&minus;i&omega;t</sup>}</strong> so that phase
+becomes <em>motion</em> (the k-Wave idiom, and the most legible by a wide
+margin); render isophase surfaces; or display &nabla;arg(p), which is not
+cyclic and therefore composites correctly.
+</div>
+
+<p>Isosurface extraction remains available for export, always labelled with
+the threshold that produced it and always accompanied by its coverage
+statistics.</p>
+
+<h4>Metal specifics worth fixing now</h4>
+
+<ul>
+<li>Store the reconstruction as <strong><code>rg16Float</code> (Re, Im) plus
+<code>r16Float</code> confidence</strong>, not <code>r32Float</code>:
+32-bit float textures are <em>not</em> hardware-filterable below Apple9
+(M3/M4), and the 16-bit pair is filterable everywhere at half the bandwidth.
+512&sup3; then costs ~537&nbsp;MB &mdash; trivial in unified memory.</li>
+<li>Budget honestly: 256&sup3; &times; 512 steps at 60&nbsp;fps needs
+~181&nbsp;G filtered 3D samples/s, roughly 3&times; over an M4 Pro. Render at
+<strong>0.5&times; resolution with 128&ndash;192 steps and DDA empty-space
+skipping, then upscale with <code>MTLFXTemporalScaler</code></strong>. MetalFX
+is the single biggest performance lever available, and its temporal filter is
+also what makes probabilistic animation read as intentional rather than
+broken.</li>
+<li>Apple ships no volume-rendering sample. <strong>Inviwo</strong>
+(<code>modules/opengl/glsl/utils/*</code>, <strong>BSD-2</strong>, actively
+maintained) has compositing, classification with opacity correction, gradients
+and intersection; GLSL&rarr;MSL is mechanical. Lift it with attribution rather
+than writing a raycaster from scratch.</li>
+</ul>
+
+<h4>Two design rules imported from measured sim results</h4>
+
+<p>The research lane has run the only holographic-reconstruction experiment
+this project owns (S3-e, 2026-07-19), and it returned two results that
+constrain this renderer. Both are carried here as rules rather than as
+background:</p>
+
+<ol>
+<li><strong>Frames must be read young.</strong> A-vs-B render distinguishability
+decayed from 0.76 correlation at t=25 to 0.92 at t=100 &mdash; a holographic
+frame must be read within roughly one chamber mixing time. <em>Rule:</em>
+reconstruct from <strong>early</strong> ring-down, and treat Machine View as a
+refresh-cycle device, not a static image.</li>
+<li><strong>The sparse-screen assumption failed its own gates.</strong> S3-e's
+G1 (hexagon-pixel sufficiency, bar &ge;0.9) came in at 0.76&ndash;0.78 and G2
+(bulk addressability, bar &lt;0.5) at 0.77 &mdash; both <strong>FAIL as
+frozen</strong>. So "drive the twelve defects, read the hexagons" is
+<strong>not validated</strong> at C&#8328;&#8320; resolution. <em>Rule:</em> the
+app may not assume a sparse gate set suffices for reconstruction; RH-1's real
+listening aperture is the seven dense column RX strips plus the two caps, and
+that is what Machine View must model.</li>
+</ol>
+
+<h3>16.4 Theme</h3>
+
+<p>Dark instrument panel by default; light theme fully supported and
+<strong>equally screenshot-tested</strong> &mdash; a light theme that is not in
+the golden set will rot within a week. Colour tokens centralized in
+<code>Theme/tokens.swift</code>; no literal colours in views. Field colormaps
+are perceptually uniform and identical across themes, because a physics
+colormap that changes with chrome is a lie.</p>
+
+<h2>17 &middot; Learned components &mdash; what we adopt, reject, and defer</h2>
+
+<p>A survey of the mid-2026 open-source landscape was run before committing to
+this architecture (three parallel research passes, 2026-07-26). The
+conclusions are unusually clear-cut, so they are recorded as rulings rather
+than as options.</p>
+
+<h3>Rejected, with evidence</h3>
+
+<div class="warn">
+<strong>Generative video "world models" (Genie lineage and successors) are not
+a weaker solver &mdash; they are a different category of object, and the
+evidence against them is specifically about <em>our</em> equation.</strong>
+A tokenized world model on the heat equation reaches MSE 4.3&times;10&#8315;&#8309;;
+on the <strong>wave equation</strong> the same setup gives L1 0.4676 / MSE
+0.3420 &mdash; order-unity, because <strong>it cannot hold phase</strong>. The
+same work proves constant-coefficient (homogeneous) systems are formally
+<em>non-observable</em> from tokenized observations: a uniform medium is
+literally invisible to this model class. DeepMind's own Physics-IQ benchmark
+scores the best generative video model 24.1/100 with realism and physics
+<em>uncorrelated</em> (r = &minus;0.46). And a June-2026 result finds
+autoregressive rollouts on wavefields fail by <strong>polarity inversion that
+magnitude-based spectral losses cannot penalize</strong> &mdash; phase is the
+signal, and the loss cannot see it. We already possess the exact operator.
+<strong>Do not build this, and do not accept a proposal to.</strong>
+</div>
+
+<p><strong>End-to-end neural PDE surrogates: also rejected</strong>, and this
+one was settled by measurement on the target machine rather than by reading:</p>
+
+<ul>
+<li>Achieved memory bandwidth <strong>115&nbsp;GB/s</strong>. A 192&sup3;
+float32 field is 28&nbsp;MB; a network with 16 channels and 8 layers touches
+~256 such tensors, so <strong>~64&nbsp;ms is the memory-traffic floor</strong>
+and measured FNO3D cost is 450&nbsp;ms (128&sup3;) to 1,856&nbsp;ms
+(192&sup3;). "T1 quality at T0 speed" is not an architecture choice we got
+wrong &mdash; it is a hardware bound. T0 is fast <em>because it evaluates only
+at the points you ask for</em>; a surrogate must emit the whole grid.</li>
+<li>On the closest published benchmark to our physics (<em>The Well</em>,
+<code>acoustic_scattering_maze</code>), <strong>FNO scores VRMSE 0.5062
+against a plain ConvNeXt U-Net's 0.0153</strong> &mdash; 33&times; worse, and
+barely 2&times; better than predicting the mean. On high-frequency Helmholtz,
+U-Net and HNO reach H&sup1; error <strong>1.0 &mdash; the gradient field is
+pure noise</strong>, i.e. no phase survives at all.</li>
+<li>Cost to find that out the hard way: ~125&nbsp;h generating ground truth
+plus ~390&nbsp;h training &asymp; <strong>16 days</strong>, for an expected
+18&ndash;40% relative L2 that degrades 2&ndash;3&times; on any geometry not in
+the training set.</li>
+<li>Field-wide correction factor to apply to every speedup claim in this
+area: <strong>79% of papers claiming ML beats a numerical PDE method compared
+against a weak baseline</strong> (McGreivy &amp; Hakim, <em>Nature Machine
+Intelligence</em> 2024).</li>
+</ul>
+
+<h3>The one structural insight worth keeping</h3>
+
+<blockquote>
+Put the network <strong>inside</strong> the physics loop, never in place of
+it.
+</blockquote>
+
+<p>This recurred independently three times in the survey &mdash; the
+Born-series-structured operator that was the only thing to work on
+OpenBreastUS, the neural warm-start that preserves solver convergence
+guarantees (NOWS: an honest 25&ndash;90% runtime saving, not 1000&times;), and
+the learned Born-series preconditioner. If any learned component is ever added
+here, it must be of that shape: it accelerates a real solver and cannot change
+the answer. Everything else is deferred indefinitely.</p>
+
+<h3>Adopted now</h3>
+
+<table>
+<tr><th>what</th><th>license</th><th>for</th></tr>
+<tr><td><strong>AcousTools</strong> (UCL)</td><td>MIT</td>
+    <td>the validation twin &mdash; T0, T0.5 and T2 with analytic Gor'kov
+        gradients, already published and maintained</td></tr>
+<tr><td><strong>k-wave-python</strong></td><td>LGPL-3</td>
+    <td>independent second oracle; native arm64. Link, do not transcribe</td></tr>
+<tr><td><strong>Inviwo</strong> volume shaders</td><td>BSD-2</td>
+    <td>the raycaster (&sect;16.3)</td></tr>
+<tr><td><strong>Deepwave</strong></td><td>MIT</td>
+    <td>reference for PML + adjoint before writing MSL</td></tr>
+<tr><td><strong>trellis-mac</strong> (TRELLIS.2)</td><td>MIT</td>
+    <td>the <em>only</em> learned model adopted at start, and only to
+        <strong>generate the test-fixture corpus</strong> &mdash; verified
+        running on MPS, ~3.3&nbsp;min/mesh. Pin to
+        <code>--no-texture</code> to stay inside 32&nbsp;GB and to avoid its
+        CC-BY-NC background-remover step</td></tr>
+</table>
+
+<h3>Deferred, with a reason to revisit</h3>
+
+<ul>
+<li><strong>Shape completion for specular gaps &mdash; build, don't buy.</strong>
+Nothing ships pretrained weights that takes a partial, noisy, geometry-only
+input and emits a watertight mesh anywhere near our 0.6&ndash;0.9&nbsp;mm
+target; everything with weights is 32&sup3;&ndash;64&sup3;, CUDA-locked, or
+license-blocked. The defensible architecture, per a 3DV-2026 head-to-head, is
+continuous-latent diffusion over a sparse-voxel/SDF latent. Also note the
+RealPC finding: completion models lose <strong>2&ndash;4&times; Chamfer
+accuracy</strong> moving from synthetic benchmarks to real scans, so this must
+be validated against real chamber data early or it will fail quietly.
+<strong>And when it does land, everything it produces is
+<code>provenance: inferred</code> by construction</strong> (&sect;16.3) &mdash;
+a shape-completion prior is precisely the thing that fills null space with
+plausible geometry, which is useful for looking at and disqualifying for
+fabricating to. G17 is what keeps that boundary from eroding.</li>
+<li><strong>Spectral/modal conditioning (our chord format) has no prior art at
+all.</strong> One unlicensed 13-hour-per-object optimizer and one unreleased
+dataset (VibraVerse: 46k shapes with 64 modal eigenfrequencies each &mdash;
+recheck quarterly). If we do this, we are first.</li>
+<li><strong>SH-SAS and GeRaF are blueprints, not dependencies</strong> (one has
+no licence, the other is PolyForm-Noncommercial; both need CUDA). They are
+nonetheless the closest existing architectures to this machine &mdash; complex
+spherical-harmonic scattering fields, and RF-only SDF recovery that
+<em>explicitly models specular reflection and occlusion</em>. Read them.</li>
+<li><strong>Neural-field compression of a precomputed field</strong> is the one
+learned idea with a spectacular measured result (182&nbsp;GB &rarr; 14&nbsp;MB,
+~46&nbsp;&micro;s/query, with reciprocity baked into the decoder). Relevant
+only once we have fields worth compressing.</li>
+</ul>
+
+<div class="warn">
+<strong>Licensing landmine, likely disqualifying and worth checking before
+anyone experiments.</strong> The Tencent Hunyuan community licence defines
+Territory as "the worldwide territory, <strong>excluding the territory of the
+European Union, United Kingdom and South Korea</strong>," and forbids use of
+the works' <em>outputs</em> outside it. <strong>If this project is operated
+from the EU, Hunyuan3D-2.1, Hunyuan3D-Omni, every MLX port, and anything
+derived from them are off the table &mdash; including meshes they
+generate.</strong> That removes the single best-designed shape-completion
+candidate. Also flagged: <strong>Stride is AGPL</strong> (poison for a shipped
+app), and several otherwise-attractive repos
+(<code>SH-SAS</code>, <code>ESM-based-NAH</code>, the SAS reconstruction code)
+carry <strong>no licence file at all</strong>, which means all rights
+reserved, not "public."
+</div>
+
+<h2>17.5 &middot; Three precision levers a free-field model assumes away</h2>
+
+<div class="warn">
+<strong>Recorded because this program nearly shipped a wrong hardware
+finding.</strong> A first implementation pass measured RH-1's 24 acoustic
+channels at 10.8&times; focusing gain against a 512-channel dense array's
+18.0&times;, and was about to escalate "24 channels cannot focus" to the
+hardware lane. That number came from a <em>free-field, monochromatic,
+pressure-domain</em> model, which assumes away three of this machine's
+designed-in precision levers. Any channel-count verdict must be measured with
+all three present, or it misleads.
+</div>
+
+<table>
+<tr><th>lever</th><th>what the naive model assumes</th><th>what the machine does</th></tr>
+<tr><td><strong>1. The cavity is the aperture</strong></td>
+    <td>Rayleigh&ndash;Sommerfeld in open air; DOF &asymp; channel count</td>
+    <td>RH-1 is a closed high-Q cavity with calibrated walls. Time-reversal
+        focusing <em>through</em> the multipath makes the cavity the aperture, and
+        controllable DOF per channel scale with the <strong>time&ndash;bandwidth
+        product B&middot;&tau;<sub>reverb</sub></strong>, not with channel count
+        &mdash; published down to single-channel focusing in chaotic cavities
+        (Draeger &amp; Fink). This is the <em>same multi-bounce lever</em> ranked
+        first for imaging in &sect;18, applied to transmit by reciprocity, with
+        the same honest cost (it needs the calibrated Green's function) and the
+        same mitigation (the machine measures its own cavity; T1 has walls, T0
+        does not)</td></tr>
+<tr><td><strong>2. The spectrum is the address bus</strong></td>
+    <td>one frequency; a frequency-flat gate&rarr;element map</td>
+    <td>The panels' printed holograms <strong>steer by frequency</strong> &mdash;
+        the graded hex screen radiates a different computed pattern per tone. So a
+        chord is <strong>24 DOF per tone with per-tone aperture patterns</strong>,
+        not "the same 24 DOF, louder". A frequency-flat map models a plain array,
+        not RH-1. And at the force level the tones <em>compose</em>: for
+        well-separated frequencies the cross terms time-average out, so per-tone
+        Gor'kov force fields add &mdash; co-locate the main lobes and the sidelobes
+        land in different places and average down</td></tr>
+<tr><td><strong>3. Force, not spot size</strong></td>
+    <td>a pressure sidelobe level stands in for precision</td>
+    <td>The deliverable is <em>force on an object</em>, and precision has three
+        separate axes that "spot size" conflates:
+        <strong>(a) steering resolution</strong> of the potential minimum &mdash;
+        continuous, set by phase resolution and servo SNR, routinely far sub-&lambda;,
+        and closed-loop via the 0.5&lambda; toroidal-pulse servo;
+        <strong>(b) trap stiffness</strong> (N/m at SI drive &mdash; blocked on the
+        physical-amplitude fix);
+        <strong>(c) selectivity / parallelism</strong> &mdash; where spot size and
+        parasitic traps genuinely bite, because sidelobes grab stray powder</td></tr>
+</table>
+
+<p>Consequences now implemented. <strong>G9b</strong> stands as informational,
+but is explicitly scoped to <em>monochromatic free-field T0</em> and is
+<strong>not</strong> the machine's parasitic-trap floor. The real gate is
+defined at the force level: <strong>G9d &mdash; parasitic-to-main trap depth
+ratio under an N-tone chord</strong>, per-tone Gor'kov superposition, in the
+walled model. Frequency-dependent gate&rarr;element patterns (the rainbow map)
+are in the machine model as a stub table, to be replaced by the surface
+hologram Z(r) once the surface compiler exists (&sect;17). And the 24-vs-512
+comparison is rerun <strong>broadband, with walls, at equal
+time&ndash;bandwidth</strong> before any channel-count finding ships.</p>
+
+<p>The general rule this is an instance of, worth stating once:
+<strong>a null measured on a model that assumes away the mechanism under test
+indicts the model, not the hardware.</strong> The research lane already carries
+this as an anti-pessimism guardrail; it applies to this app's own outputs
+too.</p>
+
+<h2>17.6 &middot; Cross-carrier couplings in the volume</h2>
+
+<p><em>(Note 2026-08-01: the canonical home of the cross-carrier crossings
+is now <a href="the_two_carriers.html">The Two Carriers</a> &sect;6b; this
+section remains the software-facing copy until the next compiler
+revision.)</em></p>
+
+<p>The transduction note maps phonon&harr;photon crossings <em>at the element
+level</em> &mdash; piezo, PMUTs, sonoluminescence, the polaritonic roadmap row.
+What that leaves unexploited is the crossing <strong>in the build volume
+itself</strong>: the two carriers interacting in flight, in the air and in the
+melt. Three verbs, each with measured art behind it, and all three are just the
+holographic-synthesis equation (&sect;17) with one carrier as reference wave and
+the other as recording medium.</p>
+
+<div class="box">
+<strong>Arithmetic verified independently, 2026-07-27</strong>, because the
+whole section rests on one number. Air, Gladstone&ndash;Dale n&minus;1 =
+2.9&times;10&#8315;&#8308;, &delta;&rho;/&rho; = p/&rho;c&sup2;:
+<pre>155 dB -> p = 1,125 Pa   dn = 2.3e-6   1.38 optical waves over 300 mm   theta 1.6e-4 rad
+165 dB -> p = 3,557 Pa   dn = 7.3e-6   4.37 optical waves over 300 mm   theta 5.1e-4 rad
+175 dB -> p = 11,247 Pa  dn = 2.3e-5  13.8 optical waves over 300 mm   theta 1.6e-3 rad</pre>
+So &Delta;n ~ 10&#8315;&#8309; and "several optical wavelengths of accumulated
+phase" are both correct at the kPa class the muscle channel reaches.
+</div>
+
+<table>
+<tr><th>verb</th><th>mechanism</th><th>what it buys this program</th></tr>
+<tr><td><strong>1. Sound steers light</strong><br>(acousto-optic)</td>
+    <td>Sound is a density wave; density sets refractive index. The acoustic
+        hologram is therefore <em>also</em> a volumetric, reprogrammable optical
+        element at microsecond refresh. Commodity art: AOMs</td>
+    <td>In air, deflection stays ~10&#8315;&#8308; rad &mdash; a
+        <strong>fine-trim and modulation</strong> channel along the axial
+        sightline, not a steering channel. Genuine beam shaping belongs to the
+        melt (see the caveat below)</td></tr>
+<tr><td><strong>2. Light reads sound</strong><br>(schlieren / refracto-vibrometry)</td>
+    <td>The same &Delta;n lets the optical channel <em>see</em> the acoustic
+        field &mdash; full-field, tomographic, live. Measured art: schlieren
+        imaging of ultrasound, laser Doppler vibrometry through air</td>
+    <td><strong>Attacks the Green's-function problem head on.</strong> The drive
+        field stops being something inferred from RX ports and becomes something
+        <em>photographed</em> &mdash; a physically independent calibration path
+        that does not pass through the microphone chain at all</td></tr>
+<tr><td><strong>3. Light writes sound</strong><br>(photoacoustic)</td>
+    <td>A pulsed or modulated laser absorbed at a surface launches ultrasound
+        <em>from that spot</em>. Established NDT art: laser ultrasonics</td>
+    <td><strong>A programmable acoustic source <em>aperture</em> on any
+        optically visible surface, including the workpiece</strong> &mdash;
+        genuinely new rows in the measurement operator, with no motion and no
+        added transducers. <em>(Rev 2026-07-30, ruling R2: spot-scanning is
+        merely the delta basis of this operator, and the worst one &mdash;
+        patterned bases carry the multiplex SNR advantage.)</em></td></tr>
+</table>
+
+<h3>Verb 3 is a fifth row in the diversity table, and it is the one that changes the argument</h3>
+
+<p>&sect;16.3 established that only <strong>frequency</strong> and
+<strong>position</strong> diversity add independent information. Photoacoustic
+excitation supplies <em>position</em> diversity from a channel already in the
+architecture &mdash; and per rev 2026-07-30 (ruling R2) it does so
+<strong>holographically, not by scanning</strong>: project a structured light
+<em>pattern</em> onto the object and the photoacoustic conversion launches a
+<em>shaped</em> acoustic wavefront whose emitter geometry is the light pattern.
+The workpiece surface becomes a programmable phased array whose elements are
+optically defined. Spot-scanning ("walk a laser spot across the object") is the
+delta-function basis of this operator and the worst basis: patterned
+(Hadamard-class) bases put the full optical power budget into every measurement
+(MEASURED art: structured-illumination photoacoustics, single-pixel imaging).
+This is the no-moving-parts answer to the problem &sect;18's turntable
+discussion was circling &mdash; and it is strictly better than a turntable,
+because the source aperture is written <strong>on the workpiece itself</strong>, at
+optical precision, rather than rotating the whole scene.</p>
+
+<p>It also composes with the call-and-response frame exactly: <em>tap the object
+at a chosen point with light, listen with the whole screen.</em> That is the
+luthier's tap-tuning made literal, with the tap placeable to microns.</p>
+
+<h3>Software consequences &mdash; what changes in this program</h3>
+
+<ul>
+<li><strong>Diversity table (&sect;16.3) gains a fifth row:</strong>
+    optically-placed virtual sources &mdash; <em>adds information: yes</em>.</li>
+<li><strong>G18 gets a stronger sibling.</strong> Held-out prediction is a
+    <em>proxy</em> for validating the cavity Green's function. Optical readout
+    measures the field <em>directly</em>. When verb 2 exists, direct measurement
+    supersedes cross-validation as the primary check, and G18 becomes the
+    fallback for when the optical path is unavailable.</li>
+<li><strong>The coverage channel can be measured rather than inferred.</strong>
+    The current implementation derives coverage from gate geometry and is known
+    to be too generous. If the field can be photographed, coverage becomes an
+    observation.</li>
+<li><strong>Machine model:</strong> the element model needs an optional
+    <code>virtualSource</code> kind whose position is set per-frame by the
+    optical channel rather than fixed by the boundary.</li>
+</ul>
+
+<div class="warn">
+<strong>Two bounds, and one correction to the source note.</strong>
+<em>(i)</em> All three verbs are <strong>parametric</strong> couplings &mdash;
+one field modulates the medium the other propagates through. Energy exchange
+between carriers is negligible outside engineered cavities, and this project has
+already rejected radiation pressure as a drive for exactly that reason. The
+unlock is <strong>information and addressing</strong>, never power or force.
+Coherent phonon&harr;photon <em>amplification</em> (Brillouin gain in the melt)
+is real physics but belongs on the roadmap shelf beside the polaritonic element,
+not in RH-1's baseline.
+<em>(ii)</em> The claim that photoelastic coupling makes this "orders stronger"
+in the melt needs care: <strong>at equal pressure a liquid is
+worse</strong>, not better &mdash; water gives &Delta;n ~ 5&times;10&#8315;&#8311;
+against air's 7&times;10&#8315;&#8310; at the same 3.5 kPa, because &rho;c&sup2;
+is ~10&sup3;&times; larger so the same pressure buys far less density change. The
+real advantage in melt or coupling fluid is that it admits <em>far higher drive
+pressures</em> and a different acousto-optic figure of merit
+(M&#8322; = n&#8310;p&sup2;/&rho;v&sup3;, where the lower sound speed helps), not
+a larger response per pascal. State it that way or the number will propagate
+wrong.
+</div>
+
+<h2>17.7 &middot; The optical stem <em>(rev 2026-07-30; rulings R1, R2, R2-b, R13)</em></h2>
+
+<p><strong>The control/muscle principle (R1).</strong> Light addresses,
+measures, and calibrates; sound and induction exert force and heat; electrons
+only amplify at the boundary edge and carry DC power &mdash; never
+information. Not a preference: &sect;17.6 bound (i) makes every cross-carrier
+coupling parametric, so light <em>cannot</em> be muscle; it is the machine's
+independent information plane.</p>
+
+<p><strong>The stem is one bidirectional TX/RX holographic port (R2, R2-b).</strong>
+Baseline addressing element: commodity SLM at the bore; roadmap: the
+optically-addressed metasurface SLM (Fan et&nbsp;al., <i>Nat. Nanotechnol.</i>
+2026 &mdash; 756&nbsp;nm pitch, 2.3&times;10&sup1;&sup2;&nbsp;px&middot;s&#8315;&sup1;&middot;cm&#8315;&sup2;),
+making the chain photonic end-to-end. <em>Outbound</em>, the stem speaks the
+caps' own alphabet at optical frequency: toroidal (flying-doughnut) chords,
+MEASURED (Zdagkas et&nbsp;al., <i>Nat. Photon.</i> 2022; Vignjevic et&nbsp;al.,
+arXiv:2509.10924 &mdash; pulse shaper &times; polarization converter, no
+metasurface required), with two gifts: <strong>self-healing</strong> (imperfect
+synthesis corrects in flight) and <strong>isodiffraction</strong> (each
+frequency keeps its own radius &mdash; the frequency&rarr;radius map carried by
+the pulse; the on-axis null shares the bore with transport).
+<em>Inbound</em>, state tomography of returned pulses reconstructs the
+density matrix in space&otimes;polarization&otimes;spectrum (MEASURED:
+concurrences 0.80/0.91) &mdash; a <strong>generalized hologram</strong> whose
+purity deficit reads the object's roughness/depolarization as data.
+Single-aperture position self-encoding via space-time nonseparability:
+MEASURED at microwave (Wang et&nbsp;al. 2024, cm-class). OPEN: anapole
+spectroscopy; real-time (vs projection-scanned) tomography. The acousto-optic
+vernier stands: 5.1&times;10&#8315;&#8308;&nbsp;rad at 165&nbsp;dB &asymp;
+0.15&nbsp;mm trim over the axial sightline.</p>
+
+<p><strong>Topological registers (R13).</strong> Drive and readback states
+carry integer skyrmion-number labels on <em>both</em> carriers, robust through
+the chamber's reverberant chaos &mdash; robust-extraction toolkit MEASURED and
+published (Peters et&nbsp;al., <i>Adv. Photonics</i> 8:023001, 2026;
+explicitly valid for acoustic fields); programmable-metasurface topological TX
+MEASURED at microwave (Chen et&nbsp;al., <i>Nat. Electronics</i> 2026).</p>
+
+<p>Full rulings: <code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>
+(R1&ndash;R13).</p>
+
+<h2>18 &middot; Closing the specular gap &mdash; ranked, with no moving parts</h2>
+
+<p>The specular gap is a null-space of the measurement operator: a facet is
+measurable only if some (Tx, Rx, f) triple makes the bistatic bisector parallel
+to its normal. Per &sect;16.3, only <strong>frequency</strong> and
+<strong>position</strong> diversity enlarge that set. The good news is that this
+machine has an unusual amount of both, and its best move requires no moving
+parts at all.</p>
+
+<table>
+<tr><th>#</th><th>mitigation</th><th>needs motion?</th><th>status</th></tr>
+<tr><td><strong>1</strong></td>
+    <td><strong>Multi-bounce / half-skip / full-skip imaging.</strong> A
+        reflection off a known chamber wall places a <em>virtual source at the
+        mirror-image position</em> &mdash; genuine position diversity with a
+        static aperture and a static object. RH-1 is a closed cavity with known
+        walls, so every wall is a mirror and the machine's effective aperture is
+        far larger than its transducer count suggests</td>
+    <td>no</td>
+    <td>deployed industrial NDT practice (Zhang / Wilcox / Drinkwater 2010).
+        <strong>Build first.</strong> M8</td></tr>
+<tr><td><strong>2</strong></td>
+    <td><strong>Frequency diversity.</strong> Broadband by construction, and the
+        printed holograms steer by frequency &mdash; so each frequency is a
+        different illumination geometry for free. In a high-Q cavity,
+        reverberation multiplies this further</td>
+    <td>no</td>
+    <td>native to the design. DOF capped at &asymp; Q &times; bandwidth
+        &mdash; a real budget, and one the machine is built to maximize. M7</td></tr>
+<tr><td><strong>3</strong></td>
+    <td><strong>Segmented ITO on the front glass.</strong> The hardware spec
+        already carries this as a "latent upgrade to segmented addressable
+        electrodes" &mdash; it converts the passive front ~120&deg;, the one
+        uncommanded face, into an <em>active</em> surface. This closes the
+        aperture gap at its source rather than working around it</td>
+    <td>no</td>
+    <td>the most on-doctrine answer, and already in the spec. Model it as a
+        preset; report what it would buy</td></tr>
+<tr><td><strong>4</strong></td>
+    <td><strong>The rotating glass door.</strong> RH-1 <em>already</em> has a
+        moving element, and the spec already credits it with "an
+        aperture-diversity sweep"</td>
+    <td>yes, existing</td>
+    <td>free aperture diversity from hardware that exists. M8</td></tr>
+<tr><td><strong>5</strong></td>
+    <td><strong>Object rotation (turntable).</strong> <strong>Not in the
+        plan</strong> &mdash; see the no-moving-parts ruling below</td>
+    <td>yes, new</td>
+    <td>simulated as a control only; nothing may depend on it</td></tr>
+</table>
+
+<h3>Why multi-bounce ranks first despite needing the Green's function</h3>
+
+<p>The obvious objection to ranking wall multipath first is that it is
+<em>more</em> Green's-function-dependent than direct imaging, not less &mdash;
+you are placing virtual sources that exist only if the cavity's response is
+known precisely, and &sect;16.3 names a wrong Green's function as the project's
+biggest technical risk. The objection would be decisive for a machine that had
+to <em>assume</em> its forward model. This one does not.</p>
+
+<blockquote>
+<strong>The machine measures its own cavity.</strong> The empty-chamber
+reference run, the per-plate TX&rarr;RX identity matrix measured at assembly
+and at every power-up, and the double-precision twin gates are not incidental
+calibration chores &mdash; they are <em>exactly</em> the measurements that turn
+wall multipath from a liability into aperture.
+</blockquote>
+
+<p>That is the whole argument, and it is why the ordering inverts relative to a
+naive reading. A machine that self-calibrates its cavity gets to spend that
+calibration on virtual apertures. The prerequisite is real &mdash; multi-bounce
+imaging must be gated behind a <em>measured</em> cavity Green's function, never
+a modelled one &mdash; but the prerequisite is already on the roadmap for
+independent reasons (&sect;6 step 7, and the power-up sequence the UI animates).
+Rank multi-bounce first <em>because</em> the calibration exists, and gate it on
+that calibration passing.</p>
+
+<h3>No moving parts is Plan A</h3>
+
+<div class="box">
+<strong>Design ruling (operator, 2026-07-26).</strong> The machine aims at
+<strong>zero moving parts</strong>. Rows 1&ndash;3 are all static, and together
+they are the plan. Row 4 uses motion that already exists for another reason and
+is therefore free. Row 5 is a bench contingency, not a component, and no part of
+the architecture may come to depend on it.
+</div>
+
+<p>This ruling has one real consequence and it is worth working through rather
+than asserting: <strong>if there is no turntable, what validates the
+multi-bounce reconstruction?</strong> The argument for the turntable was that a
+wrong Green's function produces confident, sharp, meaningless images, and only
+an independent view distinguishes the two. That problem does not go away when
+the turntable does. It needs a different answer, and there is a better one.</p>
+
+<h3>Held-out validation &mdash; the no-moving-parts answer</h3>
+
+<p>The standard way to validate an inverse problem without ground truth is
+<strong>cross-validation against measurements the reconstruction never saw</strong>.
+Two forms, both free, both static, and both stronger than a turntable because
+they test the forward model directly rather than by proxy:</p>
+
+<ul>
+<li><strong>Held-out gates.</strong> Reconstruct using a subset of gates, then
+<em>predict</em> the response at the withheld gates and compare against what was
+actually measured there. A wrong cavity Green's function cannot predict a
+measurement it was not fitted to. This is a direct test of the thing that would
+otherwise fail silently.</li>
+<li><strong>Held-out frequencies.</strong> The same trick along the frequency
+axis, which the broadband design supplies for free. Because frequency diversity
+is genuine new information (&sect;16.3), a model that only interpolates within
+its fitted band will be caught here.</li>
+</ul>
+
+<p>Two further static checks that cost nothing: <strong>reciprocity</strong>
+(already G15) and <strong>inter-rung agreement</strong> &mdash; L0, L1 and L2
+disagreeing beyond their expected characters is a signal that at least one is
+wrong. And for absolute accuracy rather than self-consistency, the right
+instrument is not a second view but a <strong>known reference artifact</strong>:
+a machined phantom whose geometry is known to metrology tolerance, placed in the
+chamber. Phantoms are how ultrasound and NDT establish absolute accuracy, they
+require no motion, and their ground truth is <em>exact</em> rather than merely
+independent &mdash; which makes them strictly better than a turntable for the
+job the turntable was proposed to do.</p>
+
+<p>So the turntable is not retired to the bench; it is <strong>removed from the
+plan</strong>, and G18 is rewritten around held-out prediction. If a bench
+session later wants a rotating stage as an extra cross-check, nothing forbids
+it &mdash; but no gate, no milestone and no reconstruction path may require
+it.</p>
+
+<p>The emulator should still model all five rows, because the M6 policy race is
+how we find out what each is worth. The expectation to test: rows 1&ndash;3
+close the gap, row 4 adds a little for free, and row 5 &mdash; simulated but not
+built &mdash; tells us how much, if anything, we gave up by refusing to
+move.</p>
+
+<p>Two further design-time rulings, both free and both easier to apply now than
+later. <strong>Choose the array layout by sum-coarray design</strong>
+(d<sub>Tx</sub> = N<sub>Rx</sub>&middot;d<sub>Rx</sub>, with
+gcd(N<sub>Tx</sub>, N<sub>Rx</sub>) = 1): this puts real nulls in the two-way
+pattern at zero runtime cost, which no amount of weighting can buy back later.
+And <strong>discard coprime / nested / MRA processing</strong> &mdash; those are
+difference-coarray results for <em>incoherent</em> sources, and this machine is
+coherent reflection-mode, which needs the <em>sum</em> coarray. Getting that
+distinction wrong is a subtle and expensive error.</p>
+
+<p>Finally, a framing to keep in the code comments, because it prevents a whole
+class of overclaim: <strong>delay-and-sum is the adjoint, not the
+inverse.</strong> Coherence-factor, DMAS and similar tricks suppress how
+artifacts <em>look</em> without restoring unsampled k-space &mdash; ship them as
+display layers, and never feed their output into anything downstream.</p>
+
+<div class="box">
+<strong>Three back-ends, not two</strong> (added 2026-07-26 from
+<code>holographic_memory_and_compute_plan.html</code>). That plan rules that the
+build chamber must <em>not</em> double as the machine's computer &mdash; a mode
+count settles it: 18.5&nbsp;L holds ~10&#8310; acoustic modes but ~10&#185;&#8312;
+optical ones, so "the build chamber is a poor computer because it is a good
+replicator." Three cavities instead: the <strong>build chamber</strong>
+(actuator), an optical <strong>compute toroid</strong> (processor), and an
+optical phase-change <strong>store</strong> (memory).
+<br><br>
+The consequence for this program is small but load-bearing: <em>"the same
+synthesis step &mdash; record reference against object, modulate the surface
+&mdash; is what programs a holographic aperture, and what writes a page into the
+memory volume. One toolchain, three back-ends."</em> So the surface-synthesis
+primitive Z(r) = X&#8320; + M&middot;Re{&Psi;*<sub>ref</sub>&Psi;<sub>obj</sub>}
+(&sect;17) must live as a <strong>standalone, machine-agnostic function</strong>
+&mdash; not buried inside the RH-1 preset, and not specialized to acoustics. It
+is the shared primitive of all three back-ends. Nothing else in v1 changes; this
+is a note against designing the generality out before it is needed.
+</div>
+
+<h2>19 &middot; File formats and the backend swap</h2>
+
+<pre>.fcode   { version, machine, calibrationRef, band,
+           frames: [ { t, verb: ADD|REMOVE,
+                       drive: [ per-channel { band, re, im } ],
+                       rxGates: [...] } ] }
+
+.pattern {
+  version,
+  meta {
+    name, date, source: emulated|hardware, machine, calibrationRef,
+    reconstruction: { rung, greensFunction: measured|modelled },
+    counts: { measured, inferred }        // the split, visible at the top
+  },
+  material, band,
+  chords: [ {
+    p: [re, im], r: [ per-gate complex ], weight,
+    provenance: "measured" | "inferred",  // REQUIRED — no default
+    inferredBy?: "prior-id/version",      // required iff inferred
+    coverage?: float                      // 0..1, aperture support
+  } ],
+  sBandRef?, meshRef?
+}</pre>
+
+<p>Three schema rules, all load-bearing (&sect;16.3). <code>provenance</code>
+has <strong>no default</strong> &mdash; a reader that encounters a chord
+without it must reject the file rather than assume "measured", because the
+assumption is the failure. <code>inferredBy</code> is mandatory whenever
+<code>provenance</code> is <code>inferred</code>, so a fabricated interior can
+always be traced to the thing that fabricated it. And the measured/inferred
+counts are duplicated in <code>meta</code> so the split is visible without
+parsing the chord list &mdash; a reviewer, a log line, or a build gate should
+not have to scan an array to learn that a third of a pattern is a guess.</p>
+
+<pre>protocol MachineBackend {
+    func describe() -&gt; MachinePreset
+    func calibrate() async throws -&gt; CalibrationMatrix
+    func play(_ frames: FCodeStream) async throws -&gt; PortRecords
+    func listen(_ gates: [GateID], steps: Int) async throws -&gt; PortRecords
+}
+// EmulatedBackend : the four tiers.
+// SerialBackend   : frames over USB to an RP2350. M9.
+</pre>
+
+<p>The protocol is deliberately narrow, and every UI action routes through it.
+If a feature cannot be expressed as calibrate / play / listen, it is a
+simulator feature and does not belong above the backend line.</p>
+
+<p class="part">Part IV &mdash; Testability</p>
+
+<h2>20 &middot; Five laws</h2>
+
+<p>The request was for software you can easily test, especially by looking at
+screenshots. Testability of a GPU application with an animated 3D viewport is
+not achievable by adding tests afterwards; it is achievable only by
+constraining the architecture up front. These five constraints are what make
+the rest of Part IV possible, and none of them may be relaxed for
+convenience.</p>
+
+<table>
+<tr><th>law</th><th>statement</th><th>consequence</th></tr>
+<tr><td><strong>L1</strong></td>
+    <td><strong>No logic above FieldCore.</strong> Every SwiftUI view is a pure
+        function of a plain value struct. Views own no state and compute no
+        physics</td>
+    <td>Any screen can be rendered headlessly from a literal fixture &mdash;
+        which is exactly what the screenshot harness does</td></tr>
+<tr><td><strong>L2</strong></td>
+    <td><strong>One core, two front-ends.</strong> The app and
+        <code>fieldc</code> link the same <code>FieldCore</code>. Anything the
+        UI can do, the CLI can do, through the same call</td>
+    <td>Every behaviour is reachable from a shell, so every behaviour is
+        scriptable, diffable, and CI-able</td></tr>
+<tr><td><strong>L3</strong></td>
+    <td><strong>Determinism is a flag.</strong> <code>--deterministic</code>
+        pins the RNG seed, freezes the animation clock at a stated frame,
+        fixes window metrics, colour scheme, and device-selection order</td>
+    <td>Screenshots stop flapping. Without this, golden-image testing is a
+        source of noise rather than signal, and the team quietly abandons
+        it</td></tr>
+<tr><td><strong>L4</strong></td>
+    <td><strong>Every run writes a receipt.</strong> JSON to
+        <code>Receipts/</code>: config hash, git SHA, device name, timings,
+        every gate metric with its threshold and verdict</td>
+    <td>Claims quote receipts. This is the repo's existing discipline
+        ("every claimed number ships with its receipt &mdash; script path plus
+        output file") applied to an app</td></tr>
+<tr><td><strong>L5</strong></td>
+    <td><strong>No gate weakening.</strong> Thresholds change only in a commit
+        that changes nothing else and states the reason in its message</td>
+    <td>Carried verbatim from v0.2, where it read "the builder must not weaken
+        an acceptance gate to pass it." It was right then</td></tr>
+</table>
+
+<h2>21 &middot; The screenshot harness</h2>
+
+<p>Two capture paths, composited into one image, both verified to work on this
+machine with no Xcode, no window server, and no screen-recording
+permission:</p>
+
+<ul>
+<li><strong>UI chrome</strong> &rarr; SwiftUI <code>ImageRenderer</code> at
+fixed scale. Confirmed: renders a view tree to PNG from a plain command-line
+binary.</li>
+<li><strong>Viewport</strong> &rarr; the same Metal renderer drawing into an
+offscreen <code>MTLTexture</code> instead of a drawable, read back once to a
+<code>CGImage</code>. Same code path as on-screen, so a screenshot cannot
+diverge from what a user sees.</li>
+</ul>
+
+<pre>fieldc shot --scene build-midway --theme dark --size 1440x900 --out shots/
+fieldc shot --all --out shots/            # every scene &times; both themes
+fieldc shot --contact-sheet --out sheet.png
+fieldc shot --record                      # overwrite goldens; never automatic
+fieldc film --script demo/build.json --out frames/   # numbered PNGs of a sequence</pre>
+
+<p><strong>The scene registry is the contract.</strong>
+<code>FieldUI/Scenes/sceneRegistry.swift</code> holds an array of
+<code>(id, description, fixture)</code>. A UI state that is not in the registry
+does not ship &mdash; adding a panel means adding a scene, and the pull request
+that forgets is caught by a test asserting that every top-level view type
+appears in at least one scene. Minimum registry at v1: <code>empty</code>,
+<code>imported</code>, <code>compiled</code>, <code>field-slice</code>,
+<code>traps</code>, <code>build-start</code>, <code>build-midway</code>,
+<code>build-complete</code>, <code>scan-running</code>,
+<code>chords</code>, <code>gate-report</code>, <code>machine-lpoh</code>,
+<code>machine-sphere</code>, <code>error-unsupported-gpu</code>,
+<code>door-open-interlock</code>.</p>
+
+<p><strong>Golden comparison.</strong> <code>Tests/__snapshots__/&lt;scene&gt;.&lt;theme&gt;.png</code>,
+committed. Comparison is perceptual (per-pixel &Delta;E with a small tolerance,
+plus a cap on the fraction of changed pixels) rather than bit-exact, because
+GPU rasterization is not bit-stable across OS updates. On failure, write
+<code>&lt;scene&gt;.actual.png</code> and a red-highlighted
+<code>&lt;scene&gt;.diff.png</code> to
+<code>.build/snapshot-failures/</code> and name them in the assertion message.</p>
+
+<div class="box">
+<strong>The contact sheet is the deliverable.</strong>
+<code>fieldc shot --contact-sheet</code> produces one labelled PNG grid of
+every scene in both themes. It is how a reviewer &mdash; person or agent
+&mdash; inspects the entire application in a single look, and it is the
+artifact to attach to any "here is where the UI stands" report. Regenerate it
+in CI on every push and keep the current one at <code>docs/contact-sheet.png</code>.
+</div>
+
+<h2>22 &middot; Physics acceptance gates</h2>
+
+<p>Numeric, blocking, and each one external to the emulator &mdash; analytic
+formulas, conservation laws, or the independent twin. Agreement with itself
+proves nothing; that principle is inherited from the sim lane and is
+non-negotiable here.</p>
+
+<table>
+<tr><th>id</th><th>gate</th><th>threshold</th><th>from</th></tr>
+<tr><td>G1</td><td>voxelizer: &Oslash;60&nbsp;mm sphere STL</td>
+    <td>voxel volume within <strong>2%</strong> of 4&pi;r&sup3;/3</td><td>M1</td></tr>
+<tr><td>G2</td><td>energy conservation: empty chamber, sponge off, rigid walls</td>
+    <td>total energy drift <strong>&lt;1%</strong> over 10k steps</td><td>M3</td></tr>
+<tr><td>G3</td><td>time of flight: axial pulse round trip</td>
+    <td>within <strong>2%</strong> of 2&middot;300&nbsp;mm/c&#8320;</td><td>M3</td></tr>
+<tr><td>G4</td><td><strong>the Mie gate</strong> (on <code>sphere-v0</code>):
+        60&nbsp;mm rigid sphere at centre</td>
+    <td>5 lowest scattering resonances within <strong>3%</strong> of analytic
+        Mie</td><td>M3</td></tr>
+<tr><td>G5</td><td><strong>T0 vs T1</strong>: single 40&nbsp;kHz tone, empty
+        chamber, T0 field vs T1 steady state</td>
+    <td>relative L2 <strong>&lt;5%</strong> inside the build volume</td><td>M3</td></tr>
+<tr><td>G6</td><td>standing wave: opposed-cap drive</td>
+    <td>node spacing = &lambda;/2 <strong>&plusmn;1%</strong>; node count =
+        &lfloor;2L/&lambda;&rfloor;</td><td>M2</td></tr>
+<tr><td>G7</td><td><strong>Gor'kov analytic</strong>: 1D standing wave force on
+        a small sphere</td>
+    <td>within <strong>2%</strong> of
+        F_z = 4&pi;a&sup3;kE<sub>ac</sub>&Phi;sin(2kz)</td><td>M4</td></tr>
+<tr><td>G8</td><td>levitation: 200&nbsp;&micro;m PLA bead released near a trap</td>
+    <td>settles within <strong>&lambda;/20</strong> of the analytic node;
+        stiffness within <strong>5%</strong> of analytic</td><td>M4</td></tr>
+<tr><td>G9</td><td>inverse solver: single focus at 5 random points</td>
+    <td>peak within <strong>0.5&nbsp;mm</strong> of target; sidelobes
+        <strong>&lt;&minus;10&nbsp;dB</strong>; GS-PAT and Diff-PAT both beat
+        IBP on contrast</td><td>M5</td></tr>
+<tr><td>G10</td><td>chords: S(f) rebuilt from top-K</td>
+    <td>relative L2 <strong>&lt;10% at K=8</strong>, monotone decreasing in
+        K</td><td>M7</td></tr>
+<tr><td>G11</td><td>formats: <code>.pattern</code> / <code>.fcode</code>
+        export &rarr; import</td>
+    <td><strong>bit-exact</strong> round trip</td><td>M7</td></tr>
+<tr><td>G12</td><td><strong>the twin gate</strong>: raw port records vs the
+        MLX double-precision twin on identical configs</td>
+    <td>relative difference <strong>&lt;10&#8315;&sup3;</strong></td><td>M8</td></tr>
+<tr><td>G13</td><td>build closure: &Oslash;20&nbsp;mm sphere, full pipeline</td>
+    <td>latched occupancy <strong>&ge;95%</strong> of target;
+        overspill <strong>&le;2%</strong></td><td>M6</td></tr>
+<tr><td><strong>G14</strong><br><em>(v0.4)</em></td>
+    <td><strong>Machine View vs God View</strong> &mdash; scan a known
+        synthetic object, compare the thresholded reconstruction against sim
+        ground truth</td>
+    <td>report <strong>both</strong> raw IoU/Chamfer <em>and</em> the
+        coverage-weighted version restricted to observed regions. The
+        <strong>gap between them is the specular-gap cost</strong> and is the
+        number this gate exists to publish. No pass/fail threshold on raw IoU
+        &mdash; a threshold there would reward hallucination</td><td>M7</td></tr>
+<tr><td><strong>G15</strong><br><em>(v0.4)</em></td>
+    <td><strong>Reciprocity QC</strong> on every measured or simulated S(f)</td>
+    <td>&#8214;K &minus; K<sup>T</sup>&#8214;<sub>F</sub> /
+        &#8214;K&#8214;<sub>F</sub> <strong>&lt; 0.1</strong>. Free, runs on
+        every scan, and catches calibration faults that would otherwise be
+        read as targets</td><td>M7</td></tr>
+<tr><td><strong>G16</strong><br><em>(v0.4)</em></td>
+    <td><strong>T0.5 vs T1</strong> &mdash; BEM scattering off a rigid sphere
+        against the FDTD truth</td>
+    <td>relative L2 <strong>&lt;5%</strong> in the build volume, matching G5's
+        bar for the free-field tier</td><td>M3</td></tr>
+<tr><td><strong>G17</strong><br><em>(v0.5)</em></td>
+    <td><strong>Provenance integrity</strong> &mdash; no inferred content may
+        cross into fabrication unnoticed (&sect;16.3)</td>
+    <td>every chord carries <code>provenance</code>; a file missing it is
+        <strong>rejected, not defaulted</strong>; every
+        <code>inferred</code> chord carries <code>inferredBy</code>;
+        <code>meta.counts</code> matches the chord list exactly; and a
+        <code>.fcode</code> compiled from a pattern containing inferred chords
+        <strong>fails to build</strong> unless each was explicitly promoted by
+        a logged user action</td><td>M7</td></tr>
+<tr><td><strong>G18</strong><br><em>(v0.6)</em></td>
+    <td><strong>Held-out prediction</strong> &mdash; the no-moving-parts
+        validation of the cavity Green's function and of multi-bounce
+        (&sect;18)</td>
+    <td>reconstruct from a subset of gates and frequencies, then
+        <em>predict</em> the withheld ones: relative error on held-out
+        measurements <strong>&lt;15%</strong>, and <strong>no worse than
+        1.5&times;</strong> the in-fit residual. <strong>A wrong cavity
+        Green's function cannot predict a measurement it was not fitted
+        to</strong> &mdash; this is the gate that catches a confident, sharp,
+        meaningless image before it reaches a <code>.pattern</code>. Run it on
+        every reconstruction, not just at M8</td><td>M8</td></tr>
+<tr><td><strong>G19</strong><br><em>(v0.6)</em></td>
+    <td><strong>Phantom accuracy</strong> &mdash; absolute, not
+        self-consistent</td>
+    <td>a machined reference artifact of known geometry reconstructs within
+        the coverage-weighted G14 bound. Static, exact ground truth, no
+        motion &mdash; this is what replaces the turntable for absolute
+        accuracy</td><td>M8</td></tr>
+</table>
+
+<p>G14 deserves a note, because it is the gate that encodes this document's
+central honesty commitment. It is deliberately <strong>not</strong> a
+pass/fail bar on reconstruction accuracy. Setting one would create pressure to
+fill unmeasured regions with plausible geometry &mdash; which is exactly the
+failure mode &sect;16.3 exists to prevent, and exactly what a learned prior
+would do if pointed at this metric. The gate's product is a
+<em>pair</em> of numbers and the distance between them.</p>
+
+<p><strong>The validation twin</strong> lives at <code>Scripts/twin/</code>.
+<em>Revised in v0.4:</em> it is no longer hand-rolled. The primary oracle is
+<strong>AcousTools</strong> (MIT) &mdash; free-field propagator, BEM
+scattering, and analytic Gor'kov gradients from the group that builds these
+machines &mdash; with <strong>k-wave-python</strong> (LGPL-3, native arm64) as
+an independent second opinion where the two disagree.
+<code>fieldc twin-export</code> writes the config and raw port records as JSON;
+<code>make twin</code> runs both comparisons and writes a receipt. Hand-rolled
+MLX remains available for the pieces neither covers, and one measured fact
+makes that easier than expected: <strong>MPS complex64 and FFT do work</strong>
+on current PyTorch, and MLX's FFT primitive declares gradients &mdash; the
+widely-repeated claim that Apple GPUs cannot do complex FFT is stale. What is
+still missing is complex <em>linear algebra</em> on MPS; do those on CPU via
+Accelerate.</p>
+
+<div class="box">
+<strong>Why this is a strict improvement.</strong> The point of a twin is to be
+an <em>independent</em> check. A twin written by the same author, from the same
+misunderstanding, in the same week, is not independent &mdash; it is the same
+bug twice. A published, maintained, separately-validated implementation is a
+real oracle, and it also collapses the risk on gates G7 and G8, which were the
+two most likely to be quietly wrong.
+</div>
+
+<h2>23 &middot; Everything else that must be testable</h2>
+
+<ul>
+<li><strong>Reference CPU solvers.</strong> <code>Solvers/referenceCPU/</code>
+holds a small, slow, obviously-correct implementation of every GPU kernel.
+Every kernel is tested against its reference on a tiny grid. When a Metal
+kernel is wrong, this is how you find out which one, in seconds.</li>
+<li><strong>Shader hot-reload as a test tool.</strong> Because shaders compile
+at runtime, <code>fieldc gate --shader-dir ./Shaders</code> can gate an edited
+kernel without rebuilding the app.</li>
+<li><strong>Golden numeric fixtures.</strong> Small JSON files of known-good
+propagator fields, chord lists, and Gor'kov potentials, committed. Fast
+regression coverage between the unit tests and the physics gates.</li>
+<li><strong>Traces.</strong> <code>--trace out.jsonl</code> logs solver state
+per step: energies, residuals, particle counts, timings. Post-hoc analysis
+without a debugger, and the raw material for a performance regression check.</li>
+<li><strong>Performance gates.</strong> Record frame time and per-tier step
+time in the receipt; fail CI on a &gt;20% regression against the committed
+baseline for that device class.</li>
+<li><strong>Make targets.</strong>
+<code>make build</code> &middot; <code>make test</code> (unit + gates +
+snapshots) &middot; <code>make gates</code> (physics only, writes a receipt)
+&middot; <code>make shots</code> (regenerate the contact sheet) &middot;
+<code>make twin</code>. If a contributor has to remember a longer command than
+that, the harness has failed.</li>
+</ul>
+
+<p class="part">Part V &mdash; Milestones</p>
+
+<h2>24 &middot; Ten milestones, each with a blocking gate</h2>
+
+<table>
+<tr><th>#</th><th>build</th><th>blocking gate</th></tr>
+<tr><td><strong>M0</strong></td>
+    <td>SwiftPM package; app launches to an empty dark window;
+        <code>fieldc</code> exists; snapshot harness and contact sheet wired;
+        CI green</td>
+    <td>Harness first, deliberately. <code>fieldc shot --contact-sheet</code>
+        produces a PNG; one golden committed and compared</td></tr>
+<tr><td><strong>M1</strong></td>
+    <td>RH-1 scene graph, viewport, camera, overlay chrome, STL import, GPU
+        voxelizer, object list</td>
+    <td><strong>G1</strong>; &ge;6 scenes in the sheet; silhouette matches the
+        canonical render dimensions</td></tr>
+<tr><td><strong>M2</strong></td>
+    <td>T0 propagator + H cache; Field overlay live at &ge;30&nbsp;fps while
+        dragging the slice plane</td>
+    <td><strong>G6</strong></td></tr>
+<tr><td><strong>M3</strong></td>
+    <td>T1 FDTD in Metal; sponge; energy readout; runtime estimator;
+        <code>sphere-v0</code> preset</td>
+    <td><strong>G2, G3, G4, G5, G16</strong> &mdash; the hardest cluster in
+        the project; do not proceed past a soft pass</td></tr>
+<tr><td><strong>M4</strong></td>
+    <td>T2 matter layer: Gor'kov, particle integration, Traps and Matter
+        overlays, cartridge and bore feed</td>
+    <td><strong>G7, G8</strong></td></tr>
+<tr><td><strong>M5</strong></td>
+    <td>Inverse solver (IBP / GS-PAT / Diff-PAT); target-from-STL; hardware
+        constraint projections; Compile emits <code>.fcode</code></td>
+    <td><strong>G9</strong></td></tr>
+<tr><td><strong>M6</strong></td>
+    <td>T3 consolidation: thermal, latch, occupancy, marching cubes, ghost
+        target, transport scrubber, build/overspill metrics</td>
+    <td><strong>G13</strong>; <code>fieldc film</code> renders the full build
+        sequence</td></tr>
+<tr><td><strong>M7</strong></td>
+    <td>Scan mode: power-up sequence, calibration, coded runs, S(f), matrix
+        pencil, chord list, <code>.pattern</code> I/O, progressive streaming;
+        <strong>Machine View L0+L1</strong>, coverage channel,
+        <strong>provenance tagging</strong>, frequency diversity,
+        detail-adaptive chord budgeting</td>
+    <td><strong>G10, G11, G14, G15, G17</strong></td></tr>
+<tr><td><strong>M8</strong></td>
+    <td>Twin cross-check; receipts; light theme; gate report screen; full scene
+        registry; performance baselines; <strong>multi-bounce virtual
+        apertures</strong>, door-sweep diversity, and the turntable
+        validation view (&sect;18)</td>
+    <td><strong>G12, G18, G19</strong>; every scene green in both themes; contact
+        sheet published</td></tr>
+<tr><td><strong>M9</strong></td>
+    <td><code>MachineBackend</code> split; <code>SerialBackend</code> to
+        RP2350; <code>lpoh-icosa12</code> preset driving real bench hardware</td>
+    <td>A recorded <code>.fcode</code> replays identically through
+        <code>Emulated</code>, and produces the frame log
+        <code>Serial</code> would consume, byte-for-byte</td></tr>
+<tr><td><strong>M10+</strong></td>
+    <td>On request from the supervising session: the full five-way
+        specular-gap race (&sect;18), segmented-ITO preset, scan-policy races
+        (identity vs Welch&ndash;Costas vs adaptive), EM carrier preset,
+        toroidal-pulse position dictionary, melt-sculpting mode, reclaim loop</td>
+    <td>specified when scheduled</td></tr>
+</table>
+
+<p class="part">Part VI &mdash; Register</p>
+
+<h2>25 &middot; What this software claims, and what it does not</h2>
+
+<p>The emulator implements <strong>validated physics only</strong>: linear
+acoustics on a voxel grid, classical loss, Gor'kov radiation forces over that
+linear field, lumped-capacity thermal transport, and rigid-body particle
+motion. It contains no transmutation, no open-sector mechanism, and no
+free-energy accounting. The bore winding's potential-port role is OPEN in the
+science paper and is <strong>inert geometry</strong> here.</p>
+
+<p>Its agreement with itself proves nothing &mdash; which is why every
+milestone carries an external gate: analytic Mie, energy conservation, the
+closed-form Gor'kov standing-wave force, and the independent double-precision
+twin. The claims ladder is unchanged from v0.2: kernel matches twin &rarr;
+emulator matches closed-form physics &rarr; only then a design tool.</p>
+
+<p>One addition to the register, and it is the reason this app is worth
+building rather than reading about. The corpus repeatedly defers its hardest
+numbers &mdash; trap stiffness versus payload, the nonlinear-onset drive level,
+the focused weld-power budget at a node, loop bandwidth versus trap stiffness
+&mdash; to "a number the digital twin pins," and mandates a twin of "acoustic
+FEM + thermal + particle dynamics" so that the machine is "sized, not guessed."
+<strong>This application is that twin, with a viewport.</strong> Every force and
+pressure it emits is therefore a <em>model</em> number carrying the model's
+assumptions, not a measurement, until a bench matches it. Label them that way
+in the UI, in exports, and in receipts. A number that looks measured because it
+appeared in a nicely-rendered panel is the specific failure this register
+exists to prevent.</p>
+
+<p>Finally, the compiler and the formats are real from day one. The
+<code>.pattern</code> emitted by the emulated scanner is the format the
+hardware scanner will fill; the <code>.fcode</code> compiled here is the
+frame stream the electronics will consume; and the boundary-first architecture
+is the control stack the machine will run.</p>
+
+</body>
+</html>

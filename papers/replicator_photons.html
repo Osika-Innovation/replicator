@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Photons — light as address, measurement, energy, and the fingertips</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-derived{color:#fff;background:var(--amber);border-color:var(--amber)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px; font-size:.85em; padding:.05em .3em}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">Read first: <a href="replicator_principles.html">Principles</a> ·
+DOF inventory: <a href="the_two_carriers.html">The Two Carriers</a> ·
+sibling carrier: <a href="replicator_phonons.html">The Phonons</a> ·
+machine topology: <a href="replicator_architecture.html">Architecture</a> ·
+science: <a href="transmutation.html">Transmutation</a> ·
+software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
+instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a> /
+<a href="replicator_mechanical_construction.html">Mechanical Construction</a></div>
+
+<h1>The Photons — light as address, measurement, energy, and the fingertips</h1>
+<p class="sub">The machine's information carrier, microwave through optical,
+described at the level of its elements and verbs: the radiating face, the
+optical stem, the fingertips (optical placement at the finest scale),
+the sensing ladder, the topological alphabet, and the energy
+loop. Size-free — the physics privileges ratios, not dimensions.</p>
+<p class="meta">draft v1.0 · 2026-08-01 · extracted from
+replicator_mechanical_construction.html / desktop_replicator_hardware_spec.html
+/ replicator_field_compiler.html / REPLICATOR_CAP_STACK_RULINGS_2026-07-30.
+<b>Single-home rule</b>: this paper is now the canonical home for the photon
+carrier's element-level content; the hardware papers keep only instance
+recipes (specific diameters, part numbers, the build sheet). Millimetre
+numbers appear here only as clearly-marked instance examples pointing at
+those papers. The complete degrees-of-freedom inventory lives in
+<a href="the_two_carriers.html">The Two Carriers</a> and is linked, not
+duplicated.</p>
+
+<h2 id="s1">1 · Light as address and measure — the division of labor</h2>
+<p>Ruling R1: <b>light addresses, measures, and calibrates; sound and
+induction exert force and heat</b>; electrons only amplify at the boundary
+edge and carry DC power — never information. Not a preference: every
+cross-carrier coupling in the volume is parametric, with negligible energy
+exchange
+(<a href="replicator_field_compiler.html">Field Compiler §17.6</a> bound i),
+so light <em>cannot</em> be muscle. Its whole value is being the machine's
+independent information plane. <span class="chip c-derived">DERIVED</span>
+One refinement (R1-b, adopted 2026-08-01): <b>sound is the hands; light is
+the fingertips</b> — light's <em>direct</em> radiation force is the
+precision-placement channel at the smallest payloads (§3b). A second
+refinement (R1-c, adopted 2026-08-03): <b>light and induction are one
+connection, two regimes, not two different couplings that happen to both
+be electromagnetic.</b> Both are realizations of the same forced u(1) gauge
+connection (<a href="../../papers/magnetism.html">Magnetism</a> §§2–6); what differs is
+whether the connection's curvature stays bound near the source or detaches
+and propagates. Kept close to a conductor (within roughly a wavelength) it
+never fully radiates — it drives free-charge motion directly, a
+transformer-like power-transfer mechanism, which is why induction is
+strong and short-range. Let go, it propagates at any range but only ever
+carries momentum p&nbsp;=&nbsp;E/c — always weak, which is why light is
+fast and universal but can only ever address. R1's muscle/address split is
+therefore not an engineering convention laid over "it's all EM" — it is
+the physical content of the radiative/non-radiative distinction. The
+hardware already found this before the theory did: R5's contrawound
+winding pair's sum mode (confined, non-radiating) and difference mode
+(fast ring dipole, radiating) are the near- and far-field regimes of the
+<em>same</em> connection on the <em>same</em> coil, not two different
+antennas. <span class="chip c-derived">DERIVED</span></p>
+<p>What the photon brings that the phonon cannot: speed (ns propagation
+across the volume, so verification runs ~10⁴× faster than the acoustic
+chords it verifies — "acoustic builds, EM verifies"), bandwidth (six decades
+of frequency, microwave through optical, on one carrier family),
+penetration without a medium, a genuine polarisation pair in free space,
+and sensing precision that is SNR-limited rather than λ-limited. What it
+gives up: momentum — E/c is 10⁵–10⁶× less force per watt than sound's E/v,
+the sibling paper's whole reason to exist. The full asymmetry
+table is <a href="the_two_carriers.html">The Two Carriers §4–§5</a>; the
+carriers' in-flight interactions (sound steers light, light reads sound,
+light writes sound) are owned by
+<a href="the_two_carriers.html">The Two Carriers §6b</a> (software-facing
+copy: Field Compiler §17.6).</p>
+
+<h2 id="s2">2 · The EM radiating face</h2>
+<p>The photon's boundary element is a flat printed disc that behaves like a
+horn — a <b>flattened coaxial horn</b>: a radial ring feed at the bore rim
+launches into an <b>equiangular-spiral slot grating</b> (12 single-handed
+arms, r(φ)&nbsp;=&nbsp;r₀·e<sup>cot α·φ</sup>; the slots are voids in the
+conductor, not traces). Bandwidth comes from angle-defined geometry
+(Rumsey), not resonance — the Bode–Fano/Chu discipline in printed form.
+Element table (instance dimensions:
+<a href="replicator_mechanical_construction.html">Mechanical Construction
+§3</a>):</p>
+<div class="overflow"><table>
+<tr><th>element / role</th><th>optimum</th><th>basis</th></tr>
+<tr><td><b>launcher face</b></td><td>equiangular-spiral slot grating +
+radial ring feed — launches single-cycle, space-time-nonseparable
+<b>toroidal and toroidal-helical pulses</b>; the TE/TM mix α, relative
+phase β, and handedness are <em>runtime drive parameters</em></td>
+<td><span class="chip c-measured">MEASURED</span> art: Wang et al.,
+<i>Commun. Phys.</i> 7:356 (2024); Shi et al., <i>Commun. Phys.</i>
+(2026)</td></tr>
+<tr><td><b>reflector</b></td><td>EBG (high-impedance surface) behind the
+spiral</td><td>multi-octave forward radiation off a thin one-sided disc, no
+λ/4 depth (Luadang 2025)
+<span class="chip c-measured">MEASURED</span></td></tr>
+<tr><td><b>sensing</b></td><td>the same aperture reads back for
+super-resolution positioning — ~0.5λ single-aperture, SNR-limited, via the
+toroidal pulses' space-time structure</td>
+<td><span class="chip c-measured">MEASURED</span>: 97% of cases &lt;0.5λ,
+single antenna (Wang et al. 2024); the servo signal for every levitation
+mode</td></tr>
+<tr><td><b>harvest</b></td><td>rectenna patches on the rim ring</td>
+<td>microwave harvest → the drive rail (§6)</td></tr>
+<tr><td><b>upgrade path</b></td><td><b>q-BIC leaky-wave metasurface</b>: a
+perfectly symmetric cell supports a bound state in the continuum — trapped,
+non-radiating, infinite Q; breaking the symmetry by a controlled amount
+makes it leak at a chosen rate. The leakage rate becomes a
+<em>geometric</em> variable, so the Bode–Fano budget is spent
+<b>spatially</b>: aperture taper, sidelobe control, customized radiation
+from a flat printed surface, no per-element electronics</td>
+<td><span class="chip c-measured">MEASURED</span> at micro/mm-wave: Xu,
+Overvig, Kasahara, Martini, Maci &amp; Alù, <i>Nat. Commun.</i> 14
+(2023)</td></tr>
+</table></div>
+<p>The disc shares its face with the acoustic micro-horn mesh — at the EM
+launch band the sub-λ mesh reads as solid conductor, so <b>the physics is
+the diplexer</b>; the acoustic side of the plate belongs to
+<a href="replicator_phonons.html">The Phonons §2</a>. Mirror-imaged facing
+plates have opposite intrinsic handedness: counter-drive covers twist,
+cancellation, and the two-plate coherent-perfect-absorption verb.</p>
+
+<div class="box"><b>Holographic synthesis — the method behind the face.</b>
+The spiral grating and the q-BIC leakage map are outputs of one design
+procedure (<a href="replicator_principles.html">Principles §4</a> owns the
+equation and its status); three refinements the published art already
+supplies, all <span class="chip c-measured">MEASURED</span>:
+<ul>
+<li><b>Tensor impedance — chirality by pattern.</b> A tensor
+(<em>anisotropic</em>) surface impedance makes circular polarisation fall
+out of the pattern itself, no parasitic elements — the cleanest source of
+the handedness knob: chirality by <em>impedance</em>, not only by mirrored
+geometry.</li>
+<li><b>The SSPP feed.</b> The method assumes a clean reference wave, which
+makes the launcher a first-class part. A spoof surface-plasmon-polariton
+feed gives a slow, tightly-bound surface wave whose wavenumber is set by
+corrugation depth — a shorter reference wavelength means finer fringes,
+i.e. more independent holographic pixels per aperture; measured at 142%
+impedance bandwidth without corrupting the radiation pattern
+(<i>Sci. Rep.</i> 15, 1149, 2025).</li>
+<li><b>The time axis — <code>Z(r,t)</code>, with honest bounds.</b>
+Space-time holographic metasurface antennas are demonstrated
+(<i>Sci. Adv.</i> 2026, adx7090): heterodyne, multifrequency, frequency
+conversion at the aperture, holographic beamforming, near-field 3D imaging.
+Two consequences: it encodes the chord alphabet natively (frequency content
+plus amplitude and phase — exactly what a space-time hologram stores), and
+time modulation breaks reciprocity, genuinely separating the ADD and REMOVE
+paths. <b>Bounds:</b> the result is EM-only — frequency conversion
+<em>within</em> a band, not acoustic↔EM transduction; and the time axis is
+not free — every cell needs an active switching element at the modulation
+frequency, spending exactly the virtue (no per-element electronics) that
+made the passive hologram attractive. The honest reading is a <em>tier</em>:
+passive <code>Z(r)</code> where a fixed transform suffices, active
+<code>Z(r,t)</code> where frequency agility or nonreciprocity is worth the
+wiring.</li>
+</ul></div>
+
+<h3>Spectrum as the address bus</h3>
+<p>A printed hologram is fixed, so it steers by <b>frequency</b> — each
+tone reconstructs a different computed pattern from the same static
+aperture: a chord is <em>N boundary DOF per tone with per-tone aperture
+patterns</em>, not "the same DOF, louder." Every frequency is a different
+illumination geometry — why frequency is one of only two diversity axes
+that add independent information (§4), and why bulk energy delivery is by
+<b>spectral addressing</b>: frequency is the address, the target's
+absorption spectrum the mask. The quantitative treatment — including the
+three precision levers a free-field model assumes away — is
+<a href="replicator_field_compiler.html">Field Compiler §17.5</a>.</p>
+
+<h2 id="s3">3 · The optical stem — one bidirectional holographic port</h2>
+<p>The bore sightline is not a camera hole. Ruling R2-b: the optical
+channel is a <b>full TX/RX holographic port</b> speaking the same
+toroidal-pulse alphabet as the microwave face, at optical frequency —
+one alphabet, six decades of frequency, both directions.</p>
+<ul>
+<li><b>TX — flying doughnuts, holographically.</b>
+<span class="chip c-measured">MEASURED</span>: optical toroidal pulses by
+metasurface converter (Zdagkas et al., <i>Nat. Photonics</i> 16:512, 2022)
+and by pulse shaper × segmented waveplate with <em>no metasurface needed</em>
+(Vignjevic et al., arXiv:2509.10924 — few-cycle FDs). Holographic synthesis
+= pulse shaper (spectral DOF) × wavefront/polarization converter (spatial
+DOF), both commodity. Two physics gifts: <b>self-healing</b> (imperfect
+pulses correct on propagation — a synthesis tolerance budget) and
+<b>isodiffraction</b> (each frequency keeps its own radius — the
+frequency→radius map carried by the pulse itself). The pulse's on-axis null
+accommodates the transport column: light around, matter through.</li>
+<li><b>The addressing chain.</b> Baseline: commodity SLM at the bore.
+Roadmap rung: the optically-addressed metasurface SLM
+(<span class="chip c-measured">MEASURED</span>: Fan et al.,
+<i>Nat. Nanotechnol.</i> 2026 — 756 nm pitch,
+2.3×10¹² px·s⁻¹·cm⁻²), making the addressing chain photonic
+end-to-end.</li>
+<li><b>RX — state tomography as a generalized hologram.</b>
+<span class="chip c-measured">MEASURED</span>: quantum-inspired tomography
+reconstructs the returned pulse's density matrix in
+space⊗polarization⊗spectrum (concurrences 0.80 space-polarization, 0.91
+space-time). A density matrix is <em>richer</em> than a field hologram: the
+purity deficit measures the object's depolarization and roughness —
+decoherence as data. Same-aperture reciprocity: one stem, both
+directions.</li>
+<li><b>Position self-encoding.</b>
+<span class="chip c-measured">MEASURED</span> at microwave (Wang et al.
+2024): single-aperture cm-class 3D positioning from toroidal-pulse
+structure — space-time nonseparability acts as a self-referencing ruler.</li>
+<li><b>The photoacoustic writer and the schlieren reader (R2).</b> The stem
+is also the cross-carrier port. Light <em>writes</em> sound: a structured
+pattern absorbed on any optically visible surface, including the workpiece,
+launches a shaped acoustic wavefront — the workpiece as a programmable
+phased array with optically defined elements. Ruling R2: the verb is
+<b>holographic, not spot-scanned</b> — spot-scanning is the operator's
+delta basis and the worst one; patterned (Hadamard-class) bases carry the
+multiplex SNR advantage
+(<span class="chip c-measured">MEASURED</span> art: structured-light
+photoacoustics, single-pixel imaging). And light <em>reads</em> sound
+(schlieren / vibrometry): the drive field stops being inferred from RX
+ports and becomes photographed — an independent calibration path. Both
+verbs owned in detail by
+<a href="replicator_field_compiler.html">Field Compiler §17.6</a>.</li>
+<li><span class="chip c-open">OPEN</span>: <b>anapole spectroscopy</b>
+(toroidal pulses engage non-radiating charge-current configurations
+ordinary light cannot — a candidate composition channel); and
+<b>real-time tomography</b> — projection-scanned tomography is
+calibration-speed, not control-loop-speed; real time needs multiplexed
+polarization/spectral detection.</li>
+</ul>
+
+<h2 id="s3b">3b · The fingertips — optical placement</h2>
+<p><b>Sound is the hands; light is the fingertips</b> (R1-b, adopted
+2026-08-01; canonical text in
+<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>). R1 stands for
+bulk force: per watt, sound pushes 10⁵–10⁶× harder, and the parametric
+bound still forbids treating cross-carrier coupling as power. But R1's
+derivation was about <em>cross-carrier</em> couplings — it never excluded
+light's <em>direct</em> radiation force on matter, and at the smallest
+payload scale that direct force is the machine's precision channel.</p>
+<ul>
+<li><b>Optical tweezers</b> — single-beam gradient traps hold 10 nm–10 µm
+dielectrics with piconewton stiffness at a trap scale of ~λ/2 ≈ 250 nm,
+positioning to nanometres. <span class="chip c-measured">MEASURED</span>
+(Ashkin; Nobel Prize 2018).</li>
+<li><b>Holographic tweezer arrays</b> — one computed hologram on an SLM,
+hundreds of independently steered traps (Grier 2003 lineage). This rides
+the §3 stem as-is: the same computed-hologram TX port that addresses is
+the port that places. <span class="chip c-measured">MEASURED</span> art;
+in-machine use is design.</li>
+<li><b>The placement ladder</b> — induction + acoustic holograms are the
+hands (bulk down to ~µm payloads, the range where E/v wins); optical
+gradient traps are the fingertips (µm down to tens of nm, where trap
+wavelength wins). Below ~tens of nm a bare optical trap loses to kT —
+gradient force scales with polarisability ∝ a³ — so the nano rung goes
+through near-field / plasmonic tweezers.
+<span class="chip c-measured">MEASURED</span> as published art,
+<span class="chip c-open">OPEN</span> in-machine.</li>
+<li><b>Hand-off doctrine</b> — sound delivers the payload into the
+optical working zone; light does the final registration. The hands bring
+the part to the fingertips. <span class="chip c-open">OPEN</span>
+(design; no composed demonstration yet).</li>
+</ul>
+<p>Register note: nothing here upgrades the machine's claims — the
+external art is MEASURED, every in-machine use is design, and "build at
+the nano level" is <span class="chip c-open">OPEN</span> and stays off
+the deck.</p>
+
+<h2 id="s4">4 · Sensing — the conjugacy ladder</h2>
+<p>Ruling R12 fixes what the machine may honestly claim to see, rung by
+rung. Each rung is tagged where it stands today:</p>
+<div class="overflow"><table>
+<tr><th>rung</th><th>claim</th><th>register</th></tr>
+<tr><td>compound broadband full-waveform tomography, in-air</td>
+<td>surface features at <b>λ_min/2</b> of the working band — the impedance
+cliff makes solids-in-air opaque, so this is scattering tomography of
+surfaces: silhouettes, shadows, multi-bounce, fully invertible
+<em>(instance: ≈0.85 mm at the plan-A air band — hardware spec)</em>.
+Interior κ/ρ/α phase maps require the fluid-coupled roadmap rung</td>
+<td><span class="chip c-derived">DERIVED</span> on
+<span class="chip c-measured">MEASURED</span> art (USCT)</td></tr>
+<tr><td>band extrapolation</td><td>~2× more, log-SNR-bounded</td>
+<td><span class="chip c-derived">DERIVED</span></td></tr>
+<tr><td>harmonic imaging</td><td>a few × more</td>
+<td><span class="chip c-measured">MEASURED</span> art</td></tr>
+<tr><td>resonant near-field structure + broadband decoding</td>
+<td><b>λ/25–λ/30 class</b></td>
+<td><span class="chip c-measured">MEASURED</span> elsewhere (Lerosey &amp;
+Fink, <i>Science</i> 2007); in-chamber
+<span class="chip c-open">OPEN</span></td></tr>
+<tr><td>discrete-scatterer localization + photoacoustic beacons</td>
+<td><b>λ/100-class positions</b> — the payload is discrete and carries its
+own beacons, so localization, not classical resolution, is the machine's
+working question</td>
+<td><span class="chip c-measured">MEASURED</span> art (ULM: Errico et al.,
+<i>Nature</i> 2015)</td></tr>
+</table></div>
+<blockquote><b>TX/RX conjugacy — the identity that closes the loop.</b> A
+phase-kept scan <em>is</em> hologram acquisition; the same recording,
+replayed conjugate, is a trap around the thing imaged (time reversal). And
+the terms match at the physics level: the same Δκ/Δρ contrast vector
+appears in Born scattering (what the machine <em>senses</em>) and in the
+Gor'kov force (what the machine <em>grips</em>). <b>The machine sees matter
+in the terms by which it holds it.</b></blockquote>
+<p><b>Reconstruction, in one paragraph.</b> The software ladder runs
+L0 delay-and-sum backprojection → L1 DORT/time-reversal-operator SVD →
+L2 regularized linear inversion → L3 full-waveform inversion; a naive
+boundary backprojection yields a <em>reflectivity image</em>, not a
+geometry, and the program's single biggest technical risk is the
+<b>Green's-function trap</b>: inside a closed high-Q cavity, textbook
+imaging with a free-space Green's function produces a confident, sharp,
+<em>meaningless</em> image. The information budget is equally hard: only
+<b>frequency</b> and <b>position</b> (real or virtual — including the
+optically-placed photoacoustic sources of §3) add independent information;
+transmit-pattern cleverness and adaptive policies buy SNR and allocation,
+never new k-space. The full treatment — the ladder, the trap, the
+provenance rule ("the model may propose, only the aperture asserts"), the
+coverage tri-state — is software-owned:
+<a href="replicator_field_compiler.html">Field Compiler §16.3</a>.</p>
+
+<h2 id="s5">5 · The topological alphabet</h2>
+<p>Ruling R13: topology is the machine's robust register — integer-valued
+field labels (skyrmion numbers, polarity × vorticity) that survive the
+chamber's own reverberant chaos, on both carriers. Four rungs,
+register-tagged:</p>
+<ul>
+<li><b>Decoder — the RX toolkit.</b>
+<span class="chip c-measured">MEASURED</span>, toolkit published: robust
+extraction of skyrmion numbers from noisy measured textures (Peters,
+Mata-Cervera, Ornelas, Warmbier, Shen &amp; Forbes, <i>Advanced
+Photonics</i> 8(2):023001, 2026 — surface integral / Skyrme density,
+pitfall catalog, code included; <b>explicitly applicable to acoustic,
+elastic, and water waves</b>). This is also the measurement discipline that
+keeps the skyrmion honesty note in
+<a href="replicator_principles.html">Principles §8b</a> honest:
+topological "immutability" is only as real as the extraction method.</li>
+<li><b>Programmable topological TX.</b>
+<span class="chip c-measured">MEASURED</span>: digital coding metasurface
+generating programmable skyrmions (Néel, merons, temporal harmonics) with
+demonstrated robust multichannel communication through turbulent channels
+(Chen, Li, Shen, … Cui, <i>Nat. Electronics</i> 2026; arXiv:2507.05944).
+The chamber interior is a turbulent channel — topological encoding is how
+in-chamber addressing stays legible. Passive sibling: geometric-phase
+apertures radiating free-space skyrmions (Feng, Bai, Shen, Qiu, Sun,
+<i>ACS Nano</i> 20:16769, 2026) — printed face, topological output,
+drive-side selection; slots beside q-BIC on the §2 roadmap.</li>
+<li><b>Anisotropy barcodes.</b> <span class="chip c-open">OPEN</span>,
+gated: skyrmions encoded in the optical anisotropy of structured matter —
+permanent, optically readable, with a quantified robustness criterion (the
+"60° rule"; Zhang, Wang, He et al., <i>Light Sci. Appl.</i> 15:254, 2026).
+Candidate fabrication verb: print birefringent microtexture into parts as
+machine-readable topological provenance/QC labels, read back through the
+stem. Gate: demonstrate write+read of one label at print fidelity under the
+60° criterion.</li>
+<li><b>Scale anchor.</b> <span class="chip c-measured">MEASURED</span>,
+regime-caveated: one passive holographic metasurface trapping 1,000+ single
+atoms (360,000-trap array demonstrated; <i>Nature</i> 649:859, 2026).
+<b>Caveat</b>: conservative optical gradient traps on cold atoms in vacuum
+— not this machine's regime. The legitimate use is the principle: one
+printed aperture, ~10⁵ discrete matter units held in arbitrary commanded
+geometry by a field, is measured; this machine is that principle at
+macroscale, bidirectional, two carriers.</li>
+</ul>
+<p>Utility note: q-plate spin-orbit wavefront sensing (APL 2026) — a
+passive vectorial aberration monitor for the stem optics'
+self-calibration chain.</p>
+
+<h2 id="s6">6 · Light as energy — the harvest loop</h2>
+<p>The boundary that shapes the field also recovers energy from it. The
+photon-side elements of the loop, element-level (instance wiring:
+<a href="replicator_mechanical_construction.html">Mechanical Construction
+§6</a>):</p>
+<div class="overflow"><table>
+<tr><th>source</th><th>element</th><th>tier</th></tr>
+<tr><td>microwave field</td><td>rim <b>rectenna</b> (MIM/tunnel rectifier
+patches on the face's rim ring) → the drive rail</td>
+<td><span class="chip c-measured">MEASURED</span> (&gt;80% at
+microwave)</td></tr>
+<tr><td>melt glow (cooling)</td><td><b>TPV ring</b> — thermophotovoltaic
+conversion of the workpiece's own radiated heat</td>
+<td><span class="chip c-measured">MEASURED</span> (~40%, MIT 2022)</td></tr>
+<tr><td>coherent extraction</td><td>the REMOVE verb — time-reversed drive
+pulls amplitude out of chosen modes as work, not heat; EM energy returned
+to the plates is rectified back into the rail</td><td>open-system recovery
+term; ordinary engineering, no thermodynamic heterodoxy</td></tr>
+</table></div>
+<p>Energy delivery runs on the same elements in the other direction:
+spectral addressing (§2) for bulk heat, and the stem for addressed optical
+heating at the weld — heat spent only where the build needs it.</p>
+<div class="warn"><b>Register — the ZPE thread stays OPEN and off the
+deck.</b> The rim rectenna and the ZPE lane's device are the same rectifier
+lineage — a MIM tunnel diode behind a cavity — separated only by band. The
+plates powering the rail is <span class="chip c-measured">MEASURED</span>
+engineering (ordinary harvest, open-system). The plates powering the rail
+<em>with more than you put in</em> is a different lane's
+<span class="chip c-open">OPEN</span> bet — bracketed across orders of
+magnitude, unproven, and firewalled out of this paper. Design toward the
+elegance; do not smuggle in the energy.</div>
+
+<h2 id="s7">7 · Register</h2>
+<p>Claims are tagged <span class="chip c-measured">MEASURED</span>
+(published or bench-verified art),
+<span class="chip c-derived">DERIVED</span> (arithmetic on measured
+quantities), or <span class="chip c-open">OPEN</span> (registered bet with
+named falsification). Nothing was upgraded in the move to this paper.</p>
+<ul>
+<li>The §2 face elements (spiral gratings, toroidal-pulse launch, EBG,
+SSPP, q-BIC, space-time metasurfaces) and the §3 stem primitives (FD
+synthesis, tomography RX, position self-encoding, structured-light
+photoacoustics) are <span class="chip c-measured">MEASURED</span> published
+art. Their composition at machine scale is design until a bench signs
+it.</li>
+<li>The R1 division of labor and the sensing-ladder arithmetic are
+<span class="chip c-derived">DERIVED</span>.</li>
+<li><span class="chip c-open">OPEN</span> items, by name: anapole
+spectroscopy, control-loop-rate tomography, in-chamber λ/25 near-field
+resolution, the anisotropy-barcode fabrication verb (gated), and the ZPE
+net-harvest (firewalled, §6).</li>
+<li>The toroidal pulses' skyrmion texture is a <em>descriptor</em>, not a
+stability claim — the honesty note lives in
+<a href="replicator_principles.html">Principles §8b</a> and the extraction
+discipline in §5 is what keeps it honest.</li>
+</ul>
+<p>Instance recipes — dimensions, layer stacks, feeds, the build sheet —
+live in <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a>
+and <a href="replicator_mechanical_construction.html">Mechanical
+Construction</a>. The machine topology that places these elements is
+<a href="replicator_architecture.html">Architecture</a>. The sibling
+carrier — sound as muscle — is
+<a href="replicator_phonons.html">The Phonons</a>.</p>
+
+</body>
+</html>

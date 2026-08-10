@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dissolve — how the machine unbuilds</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-derived{color:#fff;background:var(--amber);border-color:var(--amber)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px; font-size:.85em; padding:.05em .3em}
+  pre{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:3px; font-size:.8em; padding:.7em .9em; overflow-x:auto}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">Read first: <a href="replicator_principles.html">Principles</a> ·
+sibling modes: <a href="replicator_scan.html">Scan</a> /
+<a href="replicator_assemble.html">Assemble</a> ·
+carriers: <a href="the_two_carriers.html">The Two Carriers</a> /
+<a href="replicator_phonons.html">The Phonons</a> /
+<a href="replicator_photons.html">The Photons</a> ·
+topology: <a href="replicator_architecture.html">Architecture</a> ·
+science: <a href="transmutation.html">Transmutation</a> ·
+software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
+instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a></div>
+
+<h1>Dissolve — how the machine unbuilds</h1>
+<p class="sub">The third mode: playing the object's own echo back at it,
+time-reversed, so that instead of holding the object the field unbinds it —
+and everything goes back to the stores. This is the least demonstrated of the
+three modes, and this paper says so plainly. Size-free — the physics
+privileges ratios, not dimensions.</p>
+<p class="meta">draft v1.0 · 2026-08-01 · mode paper — owns the dissolve-mode
+narrative; element detail lives in the carrier papers.
+<b>Single-home rule</b>: the two-verb drive pair is summarized here and owned
+by <a href="transmutation.html">Transmutation §6.1</a>; the mold-and-drain
+boundary logic is owned by <a href="replicator_architecture.html">Architecture
+§1.1</a>; the matter loop's machinery is owned by
+<a href="replicator_architecture.html">Architecture §5</a> and the stores
+themselves by <a href="replicator_stores.html">The Stores</a>;
+reconstruction and
+time-reversal machinery is owned by the
+<a href="replicator_field_compiler.html">Field Compiler</a>. This paper
+composes them into the mode and adds no new claims.</p>
+
+<h2 id="s0">0 · The picture</h2>
+<p>Noise-cancelling headphones work by listening. A microphone hears the drone
+of the airplane, the electronics flip the sound over, and the speaker plays the
+flipped copy into your ear. Where the drone says <em>push</em>, the headphone
+says <em>pull</em>, at exactly the same moment — and the two cancel. The drone
+is not blocked or muffled; it is met, point for point, by its own opposite, and
+what reaches your ear is silence.</p>
+<p>Dissolve is that trick, but for matter.</p>
+<p>Every object in the machine's chamber has an echo — the pattern of waves it
+sends back when the walls sing to it. That echo is how the machine scans, and
+it is what the machine drives against when it builds: in assemble mode, the
+walls play a field that <em>agrees</em> with the object, reinforcing the
+pattern that holds every grain in place. To dissolve, the machine plays the
+same recording the other way: it takes the object's own echo, turns it around
+in time, and sends it back from every side at once. Instead of the field
+holding the object together, the object now finds every wave arriving as its
+perfect opposite number. Nothing reflects. Nothing escapes. All the energy the
+walls send lands <em>inside</em> the object — and lands, by design, on the
+joints: the same welds the build mode fused, softening in the same spots,
+until the object comes back apart into the grains it was made from.</p>
+<p>Another way to say it: dissolve is the build film run backwards. Assemble
+was powder rising into a mold of sound, each grain welded where it settled;
+dissolve is each weld released in reverse order, each grain picked back up by
+the same invisible pockets, and carried back to the hopper it came from.
+Nothing is destroyed. Nothing vanishes. The cup does not cease to exist — it
+returns to being next week's cup. The machine is a rearranger, and dissolve is
+the half of the rearrangement that refills the stores.</p>
+<p>That is the picture. The rest of this paper is the machinery under it —
+what part of the trick is measured physics you can read in journals today,
+what part is honest engineering design, and what part is the open research
+frontier. Reader, be warned in advance of §6: of the machine's three modes,
+this one has the largest gap between the picture and the bench.</p>
+
+<h2 id="s1">1 · The two verbs — one drive, one sign apart</h2>
+<p>At the drive level the machine has exactly two verbs, and dissolve is the
+second one. One boundary array, opposite phase relations:</p>
+<div class="overflow"><table>
+<tr><th>verb</th><th>phase relation</th><th>physical action</th><th>mode it powers</th></tr>
+<tr><td><b>ADD</b></td><td>in phase with the target mode</td><td>parametric
+pumping — energy into the mold's antinodes; the field reinforces the
+pattern</td><td>assemble</td></tr>
+<tr><td><b>REMOVE</b></td><td>phase-conjugate of the received field</td>
+<td>time-reversed re-emission — impedance-matched absorption; the field
+drains the pattern</td><td>dissolve</td></tr>
+</table></div>
+<p>The unity is worth restating from the
+<a href="replicator_principles.html">flagship</a>: assemble and dissolve are
+the same drive separated by one sign flip, and scan is the same physics at a
+millionth of the power. There is no separate dissolve hardware. Every element
+that pumps can drain; the boundary that is the mold is also the sink. The verb
+pair, its OPH reading, and its place in the control loop are owned by
+<a href="transmutation.html">Transmutation §6.1</a> — that paper's own claims
+about the nuclear sector stay entirely within it and are <em>not</em> imported
+here; this paper uses only the drive-level pair.</p>
+<p>What the sign flip buys, concretely: in ADD, the walls emit a field
+correlated with what the object would emit, so interference deposits energy at
+the pattern's antinodes and the trap deepens. In REMOVE, the walls emit the
+<em>conjugate</em> — the time-reverse — so interference runs the radiation
+process backwards: outgoing becomes incoming, and the object becomes the place
+where the field terminates. Section §2 is the wave physics of that reversal;
+§3 is the boundary condition it requires.</p>
+
+<h2 id="s2">2 · Time reversal and phase conjugation — the physics of the
+backwards film</h2>
+<p>The lossless wave equation is symmetric under time reversal: if a field
+evolving forward in time is a solution, the same field run backwards is also a
+solution. This is not a metaphor — it is a property of the operator — and it
+has a thirty-year experimental literature. The Fink lineage (time-reversal
+mirrors, from the 1990s onward) records a wavefront on an array, flips it in
+time, re-emits it, and watches the field retrace its path and refocus on the
+original source — through multipath, through scattering, through chaotic
+cavities. Focusing quality <em>improves</em> with multipath, because every
+echo is another copy of the information; single-channel time-reversal focusing
+in a chaotic cavity is published art (Draeger &amp; Fink), and it is the same
+multi-bounce lever the
+<a href="replicator_field_compiler.html">Field Compiler</a> ranks first for
+this machine's closed high-Q chamber.
+<span class="chip c-measured">MEASURED</span></p>
+<p>For narrowband fields, time reversal and <b>phase conjugation</b> are the
+same operation — reversing time conjugates the phase of every spectral
+component. And phase conjugation is not a new import for this paper family:
+it is already in the toolkit as the compiler's <b>DORT / time-reversal
+operator rung (L1)</b> — the SVD of the measured scattering matrix S(f),
+whose significant singular vectors are precisely the drives that focus onto
+individual scatterers (<a href="replicator_field_compiler.html">Field Compiler
+§18</a>, which also owns the honest caveats: never form
+S<sup>H</sup>S; the imaging half is gated behind a measured cavity Green's
+function). Dissolve's drive synthesis is that same machinery pointed at the
+transmit side: the record of what the object radiates <em>is</em> the recipe
+for what to play back.</p>
+<div class="warn"><b>The honest limit, carried prominently (Winter audit,
+2026-07-30) <span class="chip c-open">OPEN</span>:</b> time-reversal symmetry
+is a property of the <em>linear</em> wave equation. <b>Time reversal is exact
+only in linear media, and degrades at consolidation-level drive</b> — the
+regime where dissolve actually works is by definition the regime where the
+medium responds nonlinearly (softening joints, phase changes, cavitation), and
+there the backwards film is an approximation whose error grows with drive
+amplitude. How much fidelity survives at unbinding power is an open,
+unmeasured question for this machine. The mitigation is the control loop, not
+the symmetry: re-listen and re-conjugate every cycle
+(<a href="transmutation.html">Transmutation §6.2</a>), so the drive tracks the
+changing object instead of trusting a one-shot reversal. But no measurement
+yet says how well that chase converges at full power. This caveat is
+load-bearing for the whole mode and reappears in §6.</div>
+
+<h2 id="s3">3 · Coherent perfect absorption — running the laser backwards</h2>
+<p>A laser is a cavity with gain: pump it, and above threshold it emits a
+coherent outgoing wave. Run the device in reverse — replace gain with matched
+loss, and illuminate it with the time-reverse of the wave it would have
+emitted — and the cavity absorbs that illumination <em>perfectly</em>.
+Nothing reflects; the interference of the incoming channels traps all the
+energy in the absorber. This is <b>coherent perfect absorption</b> (CPA), the
+"anti-laser," demonstrated in optics (Wan et al. 2011 onward) and since in
+acoustics. <span class="chip c-measured">MEASURED</span></p>
+<p>CPA is dissolve's boundary condition, and it forces the machine's geometry.
+An object in the chamber radiates into <em>both</em> half-spaces, so absorbing
+its field perfectly requires conjugate control of <em>both</em>
+counter-propagating channels — one plate cannot absorb what escapes toward the
+other side. That is why the minimal machine is two opposed plates, and why the
+REMOVE verb is the second of the two jobs (the mold and the drain) that force
+the transporter-chamber look. The mold-and-drain logic is owned by
+<a href="replicator_architecture.html">Architecture §1.1</a>; the one-plate
+table variant is full ADD, <em>partial</em> REMOVE, exactly because it
+controls only one escape channel.</p>
+<p>The composition worth naming: §2 says a recorded field can be run
+backwards; §3 says a boundary that commands every escape channel can make the
+backwards field terminate <em>in the object</em> rather than pass through it.
+Together they are the flagship's dissolve step 1 — "play its echo backwards" —
+as physics: drive from all sides with the time-reversed copy of what the
+object itself would radiate, and the scattering runs in reverse; nothing
+reflects, and all the incoming energy lands in the object. Both halves are
+measured art separately. Driving them together against a macroscopic bound
+object at unbinding power is not — see §6.</p>
+
+<h2 id="s4">4 · The unbind ladder — where the absorbed energy goes</h2>
+<p>Landing energy in the object is not yet unbuilding it. Dissolve's second
+move is <em>steering</em> the absorbed energy to the bonds — and the honest
+frame for that is a ladder of progressively deeper unbinding, each rung
+costing more energy per unit mass and returning less structured feedstock:</p>
+<div class="overflow"><table>
+<tr><th>rung</th><th>action</th><th>what comes back</th><th>art status</th></tr>
+<tr><td><b>debond</b></td><td>release only the welds — the joints assemble
+fused, softened in the same addressed spots</td><td>the original grains,
+intact; the cheapest and cleanest reversal</td><td>design — the selective
+inverse of ultrasonic welding
+(<a href="replicator_phonons.html">Phonons §4.3</a>) has no published
+demonstration</td></tr>
+<tr><td><b>soften</b></td><td>bulk thermal unbinding of a joint region or
+layer — or, cheaper, <b>athermal softening</b> (R15, adopted 2026-08-01):
+acoustoplastic/electroplastic flow-stress collapse and acoustic
+fluidization unbind the joint's <em>rigidity</em> without paying the
+thermal bath (<a href="replicator_phonons.html">Phonons §4b</a>)</td><td>grain clusters, reworkable material</td><td>components measured
+(addressed heating: <a href="replicator_photons.html">Photons §6</a>;
+athermal anchors <span class="chip c-measured">MEASURED</span> per R15);
+selective in-machine use is design</td></tr>
+<tr><td><b>melt</b></td><td>full phase change of the part or region; the
+transport-phase ladder run downward</td><td>melt/droplets — directly
+re-usable feedstock</td><td>industrial art (induction, levitation melting)
+<span class="chip c-measured">MEASURED</span></td></tr>
+<tr><td><b>ash</b></td><td>plasma gasification to atomic/molecular vapor —
+the mold field holds the object while it is taken apart at molecular
+grain</td><td>vapor for the sorting stages; maximum energy, minimum retained
+structure</td><td>industrial waste-processing art
+<span class="chip c-measured">MEASURED</span></td></tr>
+</table></div>
+<p><b>Selectivity is the mode's defining demand.</b> A furnace can melt and a
+plasma torch can ash — that is not the claim. The claim that makes dissolve a
+<em>mode</em> rather than an appliance is that the field unbinds <b>the weld
+and not the part</b>: the same spectral and spatial addressing that let
+assemble spend heat only at the weld
+(<a href="replicator_principles.html">Principles §5</a>) runs in reverse, so
+the ladder is entered at the lowest rung that frees the piece, and only where
+addressed. Chemistry helps here — bonds, welds, and interfaces are
+spectroscopically distinct from bulk, and acoustic cavitation parameters are
+established chemical process knobs (sonochemistry,
+<span class="chip c-measured">MEASURED</span> field) — but the composed
+capability, selective in-machine unbinding under field control, is design with
+no bench demonstration. §6 does not let this sentence soften.</p>
+<p><b>Energy recovery on removal.</b> Dissolve is the mode where the harvest
+loop earns its place, because unbinding <em>releases</em> energy the boundary
+can catch instead of shedding as waste heat. The elements are owned by the
+carrier papers and listed here only as the mode composes them: the
+<b>REMOVE-verb coherent extraction</b> itself — time-reversed drive pulls
+amplitude out of chosen modes as work, not heat, and EM energy returned to
+the plates is rectified back into the drive rail
+(<a href="replicator_photons.html">Photons §6</a>; an open-system recovery
+term, ordinary engineering); <b>piezo-regeneration</b> — the plate throat
+elements are bidirectional, generating charge under the acoustic energy that
+returns to them (<span class="chip c-measured">MEASURED</span> piezo
+harvesting; <a href="replicator_phonons.html">Phonons §2</a>, instance wiring
+in <a href="replicator_mechanical_construction.html">Mechanical Construction
+§6</a>); and the <b>TPV ring</b> — thermophotovoltaic capture of the cooling
+workpiece's own glow (<span class="chip c-measured">MEASURED</span>, ~40%
+class; <a href="replicator_photons.html">Photons §6</a>). The books still
+close net-negative: recombination on re-forming simple molecules is captured
+by the harvest layer, but derez is <b>modest-net-cost, not free</b>
+(<a href="replicator_architecture.html">Architecture §5</a>). No claim here
+exceeds ordinary open-system engineering.</p>
+
+<h2 id="s5">5 · Reclaim — back into the matter loop</h2>
+<p>Freed grains, melt, or vapor are not the end state; <em>sorted stores</em>
+are. The full matter loop — stores, tiers, sorting rules, mass bookkeeping —
+is owned by <a href="replicator_architecture.html">Architecture §5</a>;
+dissolve is its intake side, summarized:</p>
+<ul>
+<li><b>Carry-back.</b> The same trap pockets that placed grains in assemble
+carry freed grains back to the stores — the build film's transport, reversed.
+For the deeper rungs, the transport-phase ladder runs downward: droplets and
+vapor ride the bore and the fluid loop instead.</li>
+<li><b>Sorting, lowest rung first.</b> Chemistry sorts the bulk
+(combustion, condensation, distillation); electromagnetic m/q separation is
+reserved for the trace residue only, never the bulk path
+(<a href="replicator_architecture.html">Architecture §5</a>, the energy
+ladder applied to separation).</li>
+<li><b>The salt/ash split, and its rule.</b> Reclaimed mineral matter divides
+by solubility: the soluble fraction rides the fluid loop as brine, the
+refractory residue rides the solids loop as ash — because atomized metal
+cannot be stored in water. The storage form of everything reactive is
+<b>"store oxidized, never atomized"</b> — pre-oxidized, dissolved, stable,
+pumpable, and already past the sort. Dissolve output obeys the same rule as
+resupply: the mode's job is to deliver matter <em>in storable form</em>, not
+merely in small pieces.</li>
+<li><b>The storage chamber is an instrument.</b> In the three-plate stack the
+lower chamber is not a bin: it runs <b>acoustophoretic sorting</b> — the same
+Δκ/Δρ contrast the machine senses and grips, as separation
+(<span class="chip c-measured">MEASURED</span> art) — plus incoming QC by the
+identical tomography stack
+(<a href="replicator_architecture.html">Architecture §3.2</a>). Reclaimed
+stock re-enters the loop already characterized.</li>
+<li><b>Bookkeeping.</b> Stores grow by exactly one object-mass per derez;
+cyclic element imbalances are buffered by the cartridge and balanced by
+resupply. Baryon conservation is the whole mode in one sentence:
+dematerialization is not disappearance but return to stores.</li>
+</ul>
+
+<h2 id="s6">6 · How far dissolve actually is — the honest status</h2>
+<p>This section exists so no reader leaves with the picture of §0 filed as a
+capability. The <a href="replicator_principles.html">flagship</a> already
+carries the verdict, and this paper repeats it with its chip intact: each
+individual step is measured physics or ordinary engineering at powder scale;
+running the full chain — <b>an arbitrary finished object back to sorted
+stock — is the research frontier</b>
+<span class="chip c-open">OPEN</span>.</p>
+<p>There is a sentence in <a href="replicator_architecture.html">Architecture
+§5</a> that must be read carefully rather than comfortably: <em>"the
+vanishing verb is the easy half."</em> It is true in its own context — every
+stage of industrial-scale disassembly-and-return (plasma gasification,
+melting, chemical sorting) is measured industrial art, whereas assembly
+carries the placement-rate research program. But it is a claim about the
+<em>bottom rungs of the ladder run as bulk industry</em>, not about the mode
+this paper describes. What makes dissolve a replicator mode — selective,
+addressed, in-machine, energy-recovering, closed-loop — is precisely the part
+with no demonstration. Both statements are true at once: the crude version of
+dissolve is the easy half, and the real version is the least demonstrated of
+the three modes. The ledger:</p>
+<div class="overflow"><table>
+<tr><th>claim</th><th>status</th></tr>
+<tr><td>coherent perfect absorption — beams and cavities, optics and
+acoustics</td><td><span class="chip c-measured">MEASURED</span></td></tr>
+<tr><td>time-reversal focusing through multipath and chaotic cavities;
+single-channel focusing (Fink lineage)</td>
+<td><span class="chip c-measured">MEASURED</span></td></tr>
+<tr><td>phase-conjugate drive synthesis from measured S(f) — DORT/L1
+machinery</td><td><span class="chip c-measured">MEASURED</span> method (its
+Green's-function caveats owned by the
+<a href="replicator_field_compiler.html">Field Compiler</a>)</td></tr>
+<tr><td>sonochemistry — cavitation parameters as chemical process
+knobs</td><td><span class="chip c-measured">MEASURED</span> field</td></tr>
+<tr><td>plasma gasification; melting and levitation melting; chemical and
+m/q sorting; acoustophoresis; piezo/TPV/rectenna harvest</td>
+<td><span class="chip c-measured">MEASURED</span> components,
+industrially</td></tr>
+<tr><td>time-reversal fidelity at consolidation-level (nonlinear)
+drive</td><td><span class="chip c-open">OPEN</span> — exact only in linear
+media; degradation at working power unmeasured (§2)</td></tr>
+<tr><td>selective in-machine unbinding — release the weld, keep the part,
+under field addressing</td><td>design; no bench demonstration</td></tr>
+<tr><td>CPA against a macroscopic bound object at unbinding power (vs the
+demonstrated beams-and-cavities regime)</td><td>design; no bench
+demonstration</td></tr>
+<tr><td>the closed reclaim loop — dissolve output to sorted, QC'd,
+re-buildable stores, in one machine</td><td>design;
+composition <span class="chip c-open">OPEN</span></td></tr>
+<tr><td>the full chain: arbitrary finished object → sorted stock</td>
+<td><span class="chip c-open">OPEN</span> — the research frontier, per the
+flagship</td></tr>
+</table></div>
+<p>Ranking the three modes by distance from the bench: scan composes measured
+scattering and tomography art; assemble composes measured levitation,
+holographic-trap and welding art, with composition-at-machine-scale as its
+open item; dissolve composes measured absorption and reversal art <em>and</em>
+adds two gaps of its own — nonlinear-regime fidelity and selective unbinding —
+before its composition question even starts. That is what "least demonstrated"
+means here, stated without softening. The counterweight is also real: nothing
+in the mode requires new physics. Every rung is either measured art or an
+engineering composition of measured art, and the machine's own architecture
+(the two-verb drive, the both-channels boundary, the always-on scan
+underneath) is exactly the instrument the open questions need in order to be
+asked on a bench.</p>
+
+<h2 id="s7">7 · Register</h2>
+<p>Claims are tagged <span class="chip c-measured">MEASURED</span>
+(published or bench-verified art),
+<span class="chip c-derived">DERIVED</span> (arithmetic on measured
+quantities), or <span class="chip c-open">OPEN</span> (registered bet with
+named falsification). Nothing was upgraded in the move to this paper; where a
+source document carried a chip, it is carried here unchanged.</p>
+<ul>
+<li>§2–§3's physics — time-reversal mirrors, DORT, chaotic-cavity focusing,
+CPA in optics and acoustics — is
+<span class="chip c-measured">MEASURED</span> published art. Its application
+to a macroscopic bound object at unbinding power is design.</li>
+<li>The Winter-audit limitation in §2 — time reversal exact only in linear
+media, degrading at consolidation drive — is carried as
+<span class="chip c-open">OPEN</span> and is load-bearing: no dissolve
+fidelity claim in this paper survives it unqualified.</li>
+<li>§4's ladder: melt and ash rungs are
+<span class="chip c-measured">MEASURED</span> industrial art; debond and
+selective soften are design. The energy-recovery elements are
+<span class="chip c-measured">MEASURED</span> individually (piezo harvesting,
+TPV, rectenna); the coherent-extraction term is ordinary open-system
+engineering, and derez remains net-cost.</li>
+<li>§5 summarizes <a href="replicator_architecture.html">Architecture §5 and
+§3.2</a>, which own the matter loop; the chips there (measured components,
+design rules) are theirs and were not restated stronger here.</li>
+<li>§6 is this paper's own verdict table and its most important content: the
+full arbitrary-object → sorted-stock chain is
+<span class="chip c-open">OPEN</span>, and dissolve is the least demonstrated
+of the three modes.</li>
+<li>The OPH reading of the two verbs, and everything nuclear, stays in
+<a href="transmutation.html">Transmutation</a> under its own register —
+linked, never imported.</li>
+</ul>
+<p>Element detail lives in the carrier papers
+(<a href="replicator_phonons.html">Phonons</a>,
+<a href="replicator_photons.html">Photons</a>); machine topology in
+<a href="replicator_architecture.html">Architecture</a>; drive synthesis and
+its caveats in the <a href="replicator_field_compiler.html">Field
+Compiler</a>; the sibling mode narratives in
+<a href="replicator_scan.html">Scan</a> and
+<a href="replicator_assemble.html">Assemble</a>.</p>
+
+</body>
+</html>

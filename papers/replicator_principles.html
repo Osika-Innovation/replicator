@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Replicator</title>
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px; font-size:.85em; padding:.05em .3em}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">Entry point to the Replicator paper network · read this
+first, then the member paper your question belongs to (<a href="#s9">§9 map</a>)
+· carriers: <a href="the_two_carriers.html">The Two Carriers</a> ·
+sound: <a href="replicator_phonons.html">The Phonons</a> ·
+light: <a href="replicator_photons.html">The Photons</a> ·
+modes: <a href="replicator_scan.html">Scan</a> /
+<a href="replicator_assemble.html">Assemble</a> /
+<a href="replicator_dissolve.html">Dissolve</a> ·
+machine: <a href="replicator_architecture.html">Architecture</a> /
+<a href="replicator_stores.html">The Stores</a> ·
+science: <a href="transmutation.html">Transmutation</a> ·
+software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
+compute &amp; storage: <a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a> ·
+bounds: <a href="replicator_at_the_limit.html">At the Limit</a></div>
+
+<h1>The Replicator</h1>
+<p class="sub">Principles — what the machine is, the small set of
+principles it runs on, and where each principle is worked out in full.
+Written to be read first, and to be explainable onward to a non-technical
+reader.</p>
+<p class="meta">v1.1 · 2026-08-01 (v1.0 2026-07-28) · Changelog: instance
+content moved out to the hardware papers; the 2026-07-30 rulings (former
+§8c) integrated into the body sections they belong to; network map
+restructured to the four-layer set. · Role in the set: this paper carries no
+new results and no research-note detail. Every section states one principle,
+gives its status honestly, and links the member paper that owns it. If this
+paper and a member paper disagree, the member paper wins — then fix this one.</p>
+
+<h2 id="s0">0 · The machine in one paragraph</h2>
+<p>The Replicator scans, builds, and un-builds objects using shaped fields
+instead of tools: a commanded boundary enclosing a build volume, nothing
+moving inside, every surface of the boundary a computed hologram. Sound is
+the muscle — the hands: standing acoustic holograms trap particles, carry
+them, and fuse them. Light — EM from microwave to optical — is the address,
+the measure, and the energy channel, and at the finest scale the fingertips,
+placing what the hands are too coarse to hold (optical gradient traps;
+R1-b). Objects are stored as <b>holographic patterns</b> — boundary
+recordings that reconstruct the object when replayed, the way a photo stores
+an image, not a list of pixel values — natively encoded, as a JPEG is, in
+frequency coefficients: the <b>chord list</b>, the resonances the object
+rings at with the boundary drive that addresses each one; like a progressive
+photo, the object sharpens as chords arrive. Scanning is call; building is
+call-and-response repeated until the workpiece answers with the target
+chord.</p>
+<p>One realized instance (RH-1, a free-standing three-plate column) is
+specified in the <a href="desktop_replicator_hardware_spec.html">hardware
+papers</a>; a table-top single-plate device and an orbital shell are the
+same <a href="replicator_architecture.html">architecture</a> at other
+points on the family.</p>
+
+<blockquote><b>The campfire version.</b> Tap a wine glass and it sings — and
+the note tells you about the glass: its shape, its material, whether it is
+cracked. Every object has a voice like that. This machine is a room whose
+walls are speakers and antennas. To <b>scan</b>, it sings to the object and
+listens to how it sings back; the echo — the object's chord — is saved as a
+small file, the way sheet music is the song. To <b>build</b>, it runs the
+trick backwards: as sand on a vibrating plate jumps into patterns, the
+machine plays a chord whose sound forms an invisible mold in mid-air, powder
+falls into the mold's pockets, and light welds each grain where it sits. It
+keeps listening the whole time, and it is done when the object sings the
+same chord as the file — when it <em>rings true</em>. In four phrases:
+<b>sound is the hands, light is the eyes, the pattern is the memory, and
+heat is the price — paid only at the weld.</b></blockquote>
+
+<h2 id="s1">1 · Three parts: storage, compute, chamber</h2>
+<p>The machine decomposes into exactly three subsystems, and — a ruling that
+decides the architecture — they are <b>three separate cavities</b>, not one:</p>
+<div class="overflow"><table>
+<tr><th>part</th><th>what it is</th><th>why it is its own cavity</th><th>owner paper</th></tr>
+<tr><td><b>storage</b></td><td><code>.pattern</code> files: an object as its
+holographic pattern, encoded as a chord list (complex resonance + 12-port
+address vector, ~100 bytes per chord); holographic phase-change store as the
+long-term medium</td>
+<td>storage density scales as bits per λ³ — optical wavelengths, not
+acoustic, are where memory is cheap</td>
+<td><a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a></td></tr>
+<tr><td><b>compute</b></td><td>the optical core (recurrent EML toroid,
+settles in nanoseconds) plus the AI-side compiler stack</td>
+<td>a cavity's mode count is V/λ³: optical exceeds acoustic by the
+wavelength ratio cubed — roughly twelve orders of magnitude. The build
+chamber is a poor computer <em>because</em> it is a good replicator</td>
+<td><a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a>,
+<a href="../../papers/desktop_optical_supercomputer.html">Optical Supercomputer</a></td></tr>
+<tr><td><b>chamber</b></td><td>the commanded boundary and the empty volume
+it commands: creates, controls, and measures photonic and phononic fields;
+the fields do all touching</td>
+<td>moving matter needs long wavelengths and real forces — exactly what
+makes a cavity information-poor and force-rich</td>
+<td><a href="replicator_architecture.html">Architecture</a>; instance
+detail in <a href="replicator_mechanical_construction.html">Mechanical
+Construction</a>,
+<a href="desktop_replicator_hardware_spec.html">Hardware Spec</a></td></tr>
+</table></div>
+<p>One mathematics unifies the three: interfere a reference wave with an
+object wave, store the interference, re-illuminate to reconstruct. Memory,
+processor, and actuator are that one holographic operation wearing three
+hats, sized to three wavelengths. The compiler is what makes them one
+machine.</p>
+
+<h2 id="s2">2 · Principle: everything happens from the walls</h2>
+<p>There is no tool inside the build volume — no nozzle, no gantry, nothing
+that moves. All the machinery is in the walls: dense arrays of small
+emitters and receivers. Walls are <em>enough</em> because waves superpose:
+choose each emitter's amplitude, phase, and frequency and you have chosen
+the summed field at every point of the volume at once — exactly so, by the
+Kirchhoff–Helmholtz theorem: the field on a closed surface fully determines
+the field everywhere inside it. Control the surface and you control the
+interior; there is nothing left inside to control.</p>
+<p>Read backwards, the same statement is measurement: every wave scattering
+off the workpiece crosses the walls on its way out, so recording at the
+walls captures everything that can be known about the interior from
+outside. Command in, read out — one surface does both. And the walls buy
+parallelism no tool head can have: a mug is ~10²⁴ atoms; building it in
+minutes means ~10²² placements per second — a nozzle placing a billion
+atoms per second would need millions of years. Only a surface that patterns
+the entire volume in parallel reaches replicator rates
+(<a href="transmutation.html">Transmutation §6.9</a>).</p>
+
+<h2 id="s3">3 · Principle: two carriers, one language</h2>
+<p>The chamber speaks two field types — <b>phononic</b> (sound: force-rich,
+10⁵× shorter wavelength at a given frequency, needs a medium) and
+<b>photonic</b> (EM from microwave to optical: fast, penetrating,
+information-rich) — described by one knob list, treated by the compiler as
+one language:</p>
+<div class="overflow"><table>
+<tr><th>knob</th><th>photons</th><th>phonons</th><th>machine use</th></tr>
+<tr><td>amplitude</td><td>field strength</td><td>pressure</td><td>energy / force budget</td></tr>
+<tr><td>phase</td><td>✓</td><td>✓</td><td>where the pattern lands — holography lives here</td></tr>
+<tr><td>frequency</td><td>microwave→optical octaves</td><td>20–300 kHz air, MHz in melt</td><td><b>the address</b> (spectral addressing, rainbow trapping)</td></tr>
+<tr><td>direction (k)</td><td>✓</td><td>✓</td><td>aperture geometry, focus</td></tr>
+<tr><td>polarization</td><td>full Stokes state; vector beams</td><td><b>none in air</b> (longitudinal only); reappears in solids/melt</td><td>photon-only address axis in the volume</td></tr>
+<tr><td>spin (SAM)</td><td>±ħ, circular</td><td>near-field only</td><td>chirality addressing</td></tr>
+<tr><td>orbital AM</td><td>helical wavefronts</td><td><b>yes — acoustic vortex beams</b></td><td>torque, rotation, extra address axis — shared by both carriers</td></tr>
+<tr><td>wavefront shape</td><td>computed hologram</td><td>acoustic hologram</td><td><b>the mold — the master knob</b></td></tr>
+<tr><td>time structure</td><td>single-cycle toroidal &amp; toroidal-helical pulses</td><td>bursts, chords, ramps</td><td>positioning signatures; time-domain focusing</td></tr>
+<tr><td>topology</td><td>toroidal / helical / skyrmion textures</td><td>toroidal analogs</td><td>structured addressing (the EM boundary)</td></tr>
+<tr><td>coherence</td><td colspan="2">temporal &amp; spatial, both carriers</td><td>holography's precondition; incoherent = heat</td></tr>
+</table></div>
+<p>Forces are <em>derived</em> quantities — quadratic, time-averaged
+combinations of the knobs: intensity, radiation pressure, the Gor'kov trap
+potential, acoustic streaming, angular-momentum torque, beat-frequency
+envelope forces, and heat. The honest asymmetries matter: air-borne sound
+gives up polarization to buy
+its short wavelength, and the EM channel earns its place by speed, bandwidth
+and sensing precision, not by mode count. Full treatment:
+<a href="the_two_carriers.html">The Two Carriers</a>.</p>
+
+<p><b>Control and muscle (R1, adopted 2026-07-30).</b> Light addresses,
+measures, and calibrates; sound and induction exert force and heat;
+electrons only amplify at the boundary edge and carry DC power — never
+information. Not a preference: cross-carrier couplings in the volume are
+parametric (field compiler §17.6 bound i), so light <em>cannot</em> be
+muscle; its whole value is being the machine's independent information
+plane. Refined 2026-08-01 (R1-b): light's <em>direct</em> radiation force
+is negligible as bulk muscle but is the precision-placement channel at the
+smallest payloads — sound is the hands, light is the fingertips
+(<a href="replicator_photons.html">The Photons §3b</a>). (Full text and
+derivations for all rulings:
+<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>, R1–R14 +
+amendments.)</p>
+
+<p><b>The optical stem, and the topological alphabet (R2-b, R13, adopted
+2026-07-30).</b> The bore
+optical channel is one bidirectional holographic port: it speaks the caps'
+toroidal-pulse alphabet at optical frequency and reads back by state
+tomography — a density-matrix hologram in which even the loss of purity is
+information about the object. And on both carriers, field states can carry
+integer topological labels (skyrmion numbers) that survive the chamber's
+own reverberant chaos — the robust register of the machine's language.
+Full treatment: <a href="replicator_photons.html">The Photons</a>.</p>
+
+<h2 id="s4">4 · Principle: every surface is a computed hologram</h2>
+<p>An instance's EM-plate spiral gratings, its graded phononic hex
+screens, and its q-BIC leakage maps are not three tricks — they are three
+outputs of one design procedure. Record the interference of the reference
+wave the feed actually launches, Ψ<sub>ref</sub>, against the object wave
+wanted in the volume, Ψ<sub>obj</sub>, and write it as surface impedance:
+<code>Z(r) = X₀ + M·Re{Ψ*<sub>ref</sub>·Ψ<sub>obj</sub>}</code>. Running the
+reference wave across the modulated surface reconstructs the object wave.
+The plate pattern thus stops being a shape we choose and becomes a pattern
+we compute — the passive, printed half of the boundary joins the drive as
+compiler output; a printed hologram is fixed, so it steers by frequency, the
+driven half changes every microsecond, and together they are the boundary
+condition. <span class="chip c-measured">MEASURED</span> art on
+both carriers (leaky-wave holographic antennas; printed acoustic holograms).
+Full treatment: <a href="replicator_mechanical_construction.html">Mechanical
+Construction §2–§3</a>.</p>
+
+<p><b>Chirality (R4, adopted 2026-07-30).</b> Driven structures are chiral
+and separately addressable; passive structures are achiral and neutral.
+Handedness mixed inseparably at fine scale cancels (the double gyroid is
+achiral); handedness in independently fed enantiomeric substructures —
+mirrored caps, contrawound winding pairs — is a knob. Diversity is only
+useful if addressable; unaddressable diversity averages to zero.</p>
+
+<p><b>Worked example: one driver plate, dimensioned (added 2026-08-03,
+revised same day).</b> The principle above — hologram, not shape choice
+— is not just a claim about the abstract surface impedance equation; it
+is buildable, and working the actual numbers surfaces real corrections,
+including one that questioned a whole capability. Each of the three plate
+assemblies is a dual-carrier coaxial horn: three PZT elements drive a
+common throat, a contrawound torus doubles as the horn's ring-radial
+flare, a graded ceramic gyroid carries the flare from throat to mouth
+while doubling as the EM dielectric, and one perforated plate — a
+Fibonacci-mesh micro-horn field (21×34 crossed spirals, the Vogel/sunflower
+lattice) plus 12 equiangular EM slots — is the shared radiating face. The
+bore recorded in the build spec (Ø130) turns out to be sized for a
+capability the machine doesn't need at that shared axis: neither the
+optical stem nor fine-feedstock transport needs more than a few mm: the
+real driver was bulk ingot-scale induction melting, which wants its own
+coil, not a shared one. Dropping that capability shrinks the bore to
+Ø12; the throat, no longer bore-constrained, is set instead by three PZT
+elements not overlapping at 120° (Ø36). Refitting the horn profile to the
+Webster area law with the new numbers gives a radius compression of
+11.2:1 — this time <em>over</em>shooting the 6.7:1 a golden-ratio
+elongation would predict, having <em>under</em>shot it (1.84:1) before the
+bore fix. Landing on opposite sides of that number across two independent
+revisions is the point: the fit follows the physics each time, not an
+aesthetic prior (R3). Full derivation, the bore-sizing argument, and the
+ripple into the hardware spec:
+<a href="replicator_mechanical_construction.html">Mechanical
+Construction §3c</a>.</p>
+
+<div class="figure" id="fig-plate-section">
+<svg viewBox="0 0 780 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dual-carrier plate assembly, redesigned around a small feed/optics bore: radial section and perforated face">
+  <defs>
+    <marker id="pha" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5a6470"/></marker>
+    <pattern id="phatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#c8c2b2" stroke-width="1.6"/>
+    </pattern>
+    <linearGradient id="gyroidgrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e2ead6"/><stop offset="1" stop-color="#c9d9b8"/>
+    </linearGradient>
+  </defs>
+  <text x="20" y="24" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">The dual-carrier plate assembly — radial section (left) &amp; perforated face (right)</text>
+  <text x="20" y="41" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#5a6470">One of three identical assemblies (R3–R5). Bore sized by feed + optics, not ingot induction (2026-08-03 revision). Axial depth exaggerated for legibility.</text>
+
+  <!-- ================= SECTION ================= -->
+  <text x="40" y="66" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">RADIAL HALF-SECTION</text>
+
+  <!-- axis -->
+  <line x1="70" y1="82" x2="70" y2="308" stroke="#7a1f1f" stroke-width="1" stroke-dasharray="6 4"/>
+  <text x="70" y="78" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">axis</text>
+
+  <!-- bore: now tiny (Ø12) -->
+  <rect x="70" y="116" width="9" height="194" fill="url(#phatch)" opacity=".85"/>
+  <line x1="74" y1="300" x2="48" y2="300" stroke="#7a1f1f" stroke-width=".8"/>
+  <text x="15" y="296" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#7a1f1f">Ø12 bore</text>
+  <text x="15" y="307" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8" fill="#5a6470">feed + optical stem</text>
+
+  <!-- plate slab, r 6->205, z -12->0 (front cap) -->
+  <rect x="79" y="116" width="298.5" height="24" fill="#f2f5ee" stroke="#5a7d3a" stroke-width="1.3"/>
+  <g fill="none" stroke="#5a7d3a" stroke-width=".7" opacity=".85">
+    <path d="M150,116 L146,122 L150,128 L154,122 Z"/><path d="M150,128 L146,134 L150,140 L154,134 Z"/>
+    <path d="M190,116 L185,122 L190,128 L195,122 Z"/><path d="M190,128 L185,134 L190,140 L195,134 Z"/>
+    <path d="M250,116 L243,122 L250,128 L257,122 Z"/><path d="M250,128 L243,134 L250,140 L257,134 Z"/>
+    <path d="M310,116 L302,122 L310,128 L318,122 Z"/><path d="M310,128 L302,134 L310,140 L318,134 Z"/>
+    <path d="M355,116 L346,122 L355,128 L364,122 Z"/><path d="M355,128 L346,134 L355,140 L364,134 Z"/>
+  </g>
+  <rect x="200" y="112" width="7" height="32" fill="#fbfaf6" stroke="#1c1c1c" stroke-width="1"/>
+  <rect x="330" y="112" width="7" height="32" fill="#fbfaf6" stroke="#1c1c1c" stroke-width="1"/>
+
+  <!-- copper inner cone, r 6->18, z 0->20 (now a thin sliver) -->
+  <polygon points="79,140 97,140 97,180 79,172" fill="#f2ecf5" stroke="#6a4a8a" stroke-width="1.3"/>
+
+  <!-- gyroid horn wedge: throat(thick,20mm) -> mouth(thin) -->
+  <path d="M97,140 L97,180 L117.6,179.9 L138.1,179.6 L158.4,179.0 L178.4,178.2 L197.8,177.2 L216.8,176.0 L235.0,174.6 L252.5,173.0 L269.1,171.3 L284.7,169.3 L299.3,167.2 L312.8,164.9 L325.0,162.5 L336.0,160.0 L345.7,157.4 L353.9,154.6 L360.7,151.8 L366.1,148.9 L369.9,146.0 L372.2,143.0 L373.0,140.0 Z"
+    fill="url(#gyroidgrad)" stroke="#5a7d3a" stroke-width="1.3"/>
+  <g stroke="#5a7d3a" stroke-width=".5" opacity=".55" fill="none">
+    <path d="M102,144 h6 M102,150 h6 M102,156 h6 M102,162 h6 M102,168 h6 M102,174 h6"/>
+    <path d="M120,145 h6 M120,152 h6 M120,159 h6 M120,166 h6 M120,173 h6"/>
+    <path d="M160,148 h8 M160,156 h8 M160,164 h8 M160,172 h8"/>
+    <path d="M220,150 h10 M220,159 h10 M220,168 h10"/>
+    <path d="M290,148 h13 M290,158 h13"/>
+    <path d="M350,144 h9"/>
+  </g>
+  <line x1="97" y1="138" x2="97" y2="182" stroke="#b88a2a" stroke-width="1.4"/>
+
+  <!-- PZT throat drive -->
+  <rect x="74" y="180" width="46" height="28" rx="3" fill="#efece2" stroke="#5a6470" stroke-width="1.2"/>
+  <g fill="#b9b3a2" stroke="#5a6470" stroke-width=".8">
+    <rect x="80" y="187" width="14" height="14" rx="1.5"/>
+    <rect x="100" y="187" width="14" height="14" rx="1.5"/>
+  </g>
+
+  <!-- torus cross-section (unchanged: Ø290 major is independent of bore/throat) -->
+  <circle cx="287.5" cy="260" r="50" fill="#fdf6ec" stroke="#7a1f1f" stroke-width="1.4"/>
+  <g stroke="#7a1f1f" stroke-width="1.1" fill="none">
+    <path d="M251,244 a50,50 0 0 1 73,0"/>
+    <path d="M251,260 a50,50 0 0 1 73,0"/>
+    <path d="M251,276 a50,50 0 0 1 73,0"/>
+  </g>
+  <line x1="200" y1="230" x2="245" y2="245" stroke="#8a8676" stroke-width=".8" marker-end="url(#pha)"/>
+  <text x="196" y="228" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#5a6470">torus sits behind the throat —</text>
+  <text x="196" y="238" text-anchor="end" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="8.5" fill="#5a6470">its own Ø290 is bore-independent</text>
+
+  <!-- numbered callout markers -->
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" font-weight="700">
+    <circle cx="260" cy="128" r="8" fill="#3f5a28"/><text x="260" y="131" text-anchor="middle" fill="#fff">1</text>
+    <circle cx="88" cy="150" r="8" fill="#6a4a8a"/><text x="88" y="153" text-anchor="middle" fill="#fff">2</text>
+    <circle cx="230" cy="170" r="8" fill="#3f5a28"/><text x="230" y="173" text-anchor="middle" fill="#fff">3</text>
+    <circle cx="106" cy="176" r="8" fill="#7a5d12"/><text x="106" y="179" text-anchor="middle" fill="#fff">4</text>
+    <circle cx="287.5" cy="260" r="8" fill="#7a1f1f"/><text x="287.5" y="263" text-anchor="middle" fill="#fff">5</text>
+  </g>
+
+  <!-- radius dimension -->
+  <line x1="79" y1="326" x2="373" y2="326" stroke="#8a8676" stroke-width="1" marker-start="url(#pha)" marker-end="url(#pha)"/>
+  <text x="226" y="340" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#8a8676">r = 6 (bore) → 18 (throat) → 202 mm (mouth)</text>
+
+  <!-- z dimension -->
+  <line x1="392" y1="140" x2="392" y2="180" stroke="#8a8676" stroke-width="1" marker-start="url(#pha)" marker-end="url(#pha)"/>
+  <text x="398" y="164" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#8a8676">20 mm</text>
+
+  <!-- legend -->
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#333">
+    <circle cx="46" cy="366" r="7" fill="#3f5a28"/><text x="46" y="369" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">1</text>
+    <text x="60" y="369"><tspan font-weight="700">perforated plate</tspan> — Ø410, 12 mm; mesh (21×34) + 12 EM slots</text>
+
+    <circle cx="46" cy="386" r="7" fill="#6a4a8a"/><text x="46" y="389" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">2</text>
+    <text x="60" y="389"><tspan font-weight="700">copper inner cone</tspan> — coax center conductor, Ø12 rim→throat</text>
+
+    <circle cx="46" cy="406" r="7" fill="#3f5a28"/><text x="46" y="409" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">3</text>
+    <text x="60" y="409"><tspan font-weight="700">graded ceramic gyroid</tspan> — 20 mm at throat,</text>
+    <text x="60" y="421">tapers to ~0 at mouth; cells 2–5 mm, graded</text>
+
+    <circle cx="46" cy="441" r="7" fill="#7a5d12"/><text x="46" y="444" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">4</text>
+    <text x="60" y="444"><tspan font-weight="700">throat, Ø36</tspan> — sized so 3× PZT at 120°</text>
+    <text x="60" y="456">don't overlap (common throat, 1 shown); see text</text>
+
+    <circle cx="46" cy="476" r="7" fill="#7a1f1f"/><text x="46" y="479" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">5</text>
+    <text x="60" y="479"><tspan font-weight="700">contrawound torus</tspan> — Ø290/Ø60 tube, 2 feeds (R5)</text>
+  </g>
+  <text x="20" y="503" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#8a8676">radius compression (mouth:throat) = 11.2:1 — overshoots the 6.7:1 φ-class point in R3 from the other side; still not tuned to it.</text>
+
+  <!-- ================= FACE ================= -->
+  <text x="440" y="66" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" font-weight="700" fill="#5a6470">FACE — Ø410</text>
+  <circle cx="560" cy="250" r="127" fill="#f6ecd2" stroke="#1c1c1c" stroke-width="1.3"/>
+  <circle cx="560" cy="250" r="90" fill="none" stroke="#7a1f1f" stroke-width="1" stroke-dasharray="3 4" opacity=".55"/>
+
+  <defs>
+    <path id="slotarm" fill="none" stroke="#2b2926" stroke-width="2.2" stroke-linecap="round"
+      d="M573.6,250.0 L574.4,253.9 L574.0,258.2 L572.5,262.6 L569.6,266.9 L565.3,270.5 L559.7,273.1 L553.1,274.3 L545.8,273.6 L538.3,270.9 L531.2,265.8 L525.2,258.5 L520.9,249.0 L519.0,237.8 L520.3,225.5 L525.1,212.8 L533.8,200.9 L546.4,190.8 L562.5,183.7 L581.5,180.8 L602.4,183.2 L623.7,191.7 L643.8,206.7 L660.6,228.2 L672.3,255.6 L676.8,287.9"/>
+  </defs>
+  <g opacity=".92">
+    <use href="#slotarm"/><use href="#slotarm" transform="rotate(30 560 250)"/>
+    <use href="#slotarm" transform="rotate(60 560 250)"/><use href="#slotarm" transform="rotate(90 560 250)"/>
+    <use href="#slotarm" transform="rotate(120 560 250)"/><use href="#slotarm" transform="rotate(150 560 250)"/>
+    <use href="#slotarm" transform="rotate(180 560 250)"/><use href="#slotarm" transform="rotate(210 560 250)"/>
+    <use href="#slotarm" transform="rotate(240 560 250)"/><use href="#slotarm" transform="rotate(270 560 250)"/>
+    <use href="#slotarm" transform="rotate(300 560 250)"/><use href="#slotarm" transform="rotate(330 560 250)"/>
+  </g>
+
+  <g fill="#5a7d3a" opacity=".8">
+    <circle cx="549.1" cy="260.0" r="1.6"/><circle cx="561.8" cy="229.2" r="1.6"/><circle cx="575.5" cy="270.3" r="1.6"/><circle cx="531.0" cy="244.9" r="1.6"/><circle cx="587.8" cy="232.3" r="1.6"/><circle cx="550.6" cy="284.9" r="1.6"/><circle cx="542.0" cy="215.4" r="1.6"/><circle cx="599.1" cy="264.3" r="1.6"/><circle cx="519.1" cy="266.9" r="1.6"/><circle cx="579.8" cy="207.8" r="1.6"/><circle cx="574.6" cy="296.6" r="1.6"/><circle cx="515.8" cy="224.4" r="1.6"/><circle cx="611.9" cy="238.6" r="1.6"/><circle cx="528.3" cy="295.1" r="1.6"/><circle cx="552.7" cy="193.4" r="1.6"/><circle cx="605.1" cy="288.0" r="1.6"/><circle cx="499.3" cy="252.5" r="1.6"/><circle cx="604.3" cy="205.9" r="1.6"/><circle cx="557.0" cy="314.2" r="1.6"/><circle cx="517.8" cy="199.4" r="1.6"/><circle cx="626.9" cy="259.0" r="1.6"/><circle cx="503.3" cy="289.5" r="1.6"/><circle cx="575.5" cy="181.1" r="1.6"/><circle cx="595.9" cy="312.6" r="1.6"/><circle cx="489.8" cy="227.6" r="1.6"/><circle cx="628.2" cy="218.5" r="1.6"/><circle cx="530.4" cy="320.6" r="1.6"/><circle cx="533.6" cy="176.6" r="1.6"/><circle cx="630.2" cy="286.9" r="1.6"/><circle cx="482.0" cy="270.6" r="1.6"/><circle cx="604.4" cy="181.0" r="1.6"/><circle cx="574.1" cy="332.2" r="1.6"/><circle cx="493.1" cy="198.2" r="1.6"/><circle cx="645.6" cy="242.9" r="1.6"/><circle cx="500.8" cy="314.0" r="1.6"/><circle cx="560.4" cy="161.6" r="1.6"/><circle cx="620.2" cy="316.4" r="1.6"/><circle cx="469.6" cy="241.6" r="1.6"/><circle cx="633.3" cy="194.4" r="1.6"/><circle cx="543.3" cy="341.7" r="1.6"/><circle cx="509.7" cy="170.1" r="1.6"/><circle cx="652.1" cy="275.2" r="1.6"/><circle cx="474.0" cy="294.1" r="1.6"/><circle cx="594.0" cy="158.4" r="1.6"/><circle cx="597.3" cy="341.6" r="1.6"/><circle cx="469.7" cy="207.2" r="1.6"/><circle cx="656.5" cy="220.2" r="1.6"/><circle cx="508.4" cy="338.1" r="1.6"/><circle cx="538.3" cy="149.1" r="1.6"/><circle cx="644.9" cy="310.3" r="1.6"/><circle cx="455.6" cy="263.0" r="1.6"/><circle cx="628.9" cy="169.1" r="1.6"/><circle cx="563.9" cy="357.2" r="1.6"/><circle cx="484.0" cy="172.9" r="1.6"/><circle cx="669.1" cy="255.6" r="1.6"/><circle cx="475.0" cy="320.2" r="1.6"/><circle cx="575.4" cy="139.8" r="1.6"/><circle cx="623.6" cy="342.4" r="1.6"/><circle cx="449.7" cy="224.6" r="1.6"/><circle cx="659.3" cy="193.7" r="1.6"/><circle cx="524.5" cy="359.5" r="1.6"/><circle cx="511.8" cy="144.4" r="1.6"/><circle cx="667.7" cy="295.7" r="1.6"/><circle cx="448.9" cy="289.4" r="1.6"/><circle cx="615.8" cy="145.1" r="1.6"/><circle cx="589.9" cy="365.9" r="1.6"/><circle cx="458.9" cy="184.3" r="1.6"/><circle cx="679.9" cy="230.0" r="1.6"/><circle cx="484.6" cy="346.4" r="1.6"/><circle cx="550.4" cy="127.1" r="1.6"/>
+  </g>
+
+  <!-- bore: now a small dot, not a large ring -->
+  <circle cx="560" cy="250" r="9" fill="#f6ecd2"/>
+  <circle cx="560" cy="250" r="4" fill="#7a1f1f"/>
+  <line x1="560" y1="254" x2="560" y2="278" stroke="#7a1f1f" stroke-width=".8"/>
+  <text x="560" y="291" text-anchor="middle" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#7a1f1f">bore Ø12 — feed + optical stem</text>
+
+  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">
+    <text x="683" y="400" text-anchor="end">golden-angle sunflower field, N=380 (61 shown)</text>
+    <text x="683" y="413" text-anchor="end">parastichies read as 21 CW × 34 CCW —</text>
+    <text x="683" y="426" text-anchor="end">consecutive Fibonacci numbers, not a choice</text>
+    <text x="683" y="145" fill="#7a1f1f" font-weight="700" text-anchor="end">torus, Ø290</text>
+    <text x="683" y="157" fill="#7a1f1f" text-anchor="end">(hidden behind)</text>
+  </g>
+  <text x="460" y="459" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">Dark arms are slot voids (EM), not traces; dots are the through-plate</text>
+  <text x="460" y="472" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">acoustic micro-horn perforations. Both patterns span the full mouth —</text>
+  <text x="460" y="485" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9.5" fill="#5a6470">one plate, one aperture, scale separation is the diplexer (R4).</text>
+</svg>
+<div class="caption"><b>Fig. 3b — The dual-carrier plate assembly, dimensioned (revised 2026-08-03).</b>
+Bore shrunk from Ø130 to Ø12 — ingot-scale induction melting is dropped as a
+baseline capability (see text); the bore is now sized by feed clog-avoidance
+margin and the optical stem, both of which need only a few mm. The throat
+(Ø36) is set by 3× PZT elements not overlapping at 120°, not by bore
+clearance. Radial throw more than doubled (184&nbsp;mm), pushing radius
+compression to 11.2:1 — overshooting the 6.7:1 φ-class point in R3 from the
+other side, which is the same honest result as before: the fit follows the
+physics, not the aesthetic prior. Face view at reduced dot density (61 of
+the full 380) for legibility.</div>
+</div>
+
+<h2 id="s5">5 · Principle: three modes, one field</h2>
+<p>The machine has three operational modes, all of them the same field used
+three ways. (Each mode has its own member paper, written
+easy-first-then-technical: <a href="replicator_scan.html">Scan</a>,
+<a href="replicator_assemble.html">Assemble</a>,
+<a href="replicator_dissolve.html">Dissolve</a> — added 2026-08-01. The
+step lists below are the summaries; the mode papers own the detail.)</p>
+
+<h3>Assemble</h3>
+<ol>
+<li><b>Slice.</b> The compiler turns the object file into a schedule of
+field states: for each build step, the points that should hold a grain and
+the boundary drive — per panel, per frequency, an amplitude and a phase —
+whose interference puts a low-pressure pocket at each of them.</li>
+<li><b>Feed.</b> Powder (grains tens of µm across), droplets, or a melt
+stream enters through the axis bore.</li>
+<li><b>Trap.</b> The boundary plays the drive; the crossing waves add into
+a three-dimensional pressure landscape. A grain in it feels a steady
+cycle-averaged force toward the nearest quiet pocket — the Gor'kov
+potential — and settles there, held from all sides like a marble in a bowl
+made of sound.</li>
+<li><b>Move.</b> The compiler ramps the phases smoothly; the pockets glide
+and the grains ride along, hundreds at once — this is where working from
+the walls pays.</li>
+<li><b>Weld.</b> When a grain reaches its final coordinate, energy —
+acoustic focus plus electromagnetic or optical heating — is concentrated
+on that one spot and the grain fuses to its neighbours. Heat is spent only
+here.</li>
+<li><b>Check.</b> Scan mode runs underneath the whole time: after each
+step the growing object's ring is compared to the target's, and the next
+step corrects before errors compound.</li>
+</ol>
+<p>Every step composes <span class="chip c-measured">MEASURED</span>
+primitives — acoustic levitation, holographic traps, ultrasonic welding
+(composition status: §8b).</p>
+
+<h3>Scan</h3>
+<ol>
+<li><b>Ask.</b> One gate sends a brief chord — many frequencies at once, at
+milliwatt level. Nothing in the volume moves.</li>
+<li><b>Ring.</b> The waves wash over the object; some frequencies land on
+its natural resonances and set it ringing — the wine-glass effect, at many
+pitches at once.</li>
+<li><b>Record.</b> The walls record what arrives back at every port: how
+loud, how delayed, in what phase. One gate's question, twelve ports'
+answers.</li>
+<li><b>Repeat</b> from each gate in turn, or in coded combinations. The
+collected answers are the object's full response book — the scattering
+matrix S(f).</li>
+<li><b>Compress.</b> The compiler keeps the few resonances carrying most
+of the signature, each with the port pattern that excites it — the chord
+list — and writes <code>.pattern</code>; roughly a megabyte describes a
+mug.</li>
+<li><b>Identify materials.</b> The electromagnetic sweep adds what sound
+cannot: dielectric response for material class, and optical spectroscopy
+down the bore for composition.</li>
+</ol>
+
+<h3>Dissolve</h3>
+<ol>
+<li><b>Play its echo backwards.</b> Ordinarily an object scatters most of
+what hits it. Drive from all sides with the time-reversed copy of what it
+would itself radiate and the scattering runs in reverse: nothing reflects;
+all the incoming energy lands in the object (coherent perfect absorption —
+measured physics for beams and cavities).</li>
+<li><b>Unbind.</b> The absorbed energy is steered to the welds and bonds:
+joints soften where assemble fused them, and the object comes back apart
+into grains.</li>
+<li><b>Reclaim.</b> The pockets carry the freed grains back to the
+cartridge circle; electromagnetic energy returned to the boundary is
+rectified back into the drive rail rather than lost as heat.</li>
+<li><b>Status, honestly.</b> Each individual step is measured physics or
+ordinary engineering at powder scale; running the full chain — an
+arbitrary finished object back to sorted stock — is the research frontier
+<span class="chip c-open">OPEN</span>. The deeper matter-loop sectors
+(transmutation) live entirely in the
+<a href="transmutation.html">science paper</a> under its own register.</li>
+</ol>
+
+<p>The unity: assemble and dissolve are the same drive separated by one
+sign flip, and scan is the same physics at a millionth of the power. (The
+member papers call the pair <b>ADD</b> and <b>REMOVE</b> — "the two verbs"
+— a drive-level naming kept here only as a cross-reference.)</p>
+
+<h2 id="s6">6 · Principle: call-and-response</h2>
+<p>Scan and build are one operation run in opposite directions. Scanning
+sends chords and records the ring; the collected book is the object's
+scattering matrix S(f) — its holographic pattern as seen from the gates —
+and <code>.pattern</code> its compressed, chord-encoded form. Building
+drives the field <em>and keeps listening</em>: the growing object shifts
+S(f), and the build is finished when it rings true — the chord list is at
+once the drive recipe and the acceptance criterion. Listening is milliwatt-class and always on, so every instant of
+fabrication is also a scan. Throughput is bandwidth: a resonance of quality
+Q at frequency f takes ~Q/f to ring up, so the machine parallelizes across
+the band — acoustic chords move matter slowly while the EM octaves listen
+~10⁴× faster, verification effectively continuous. Hence:
+<b>acoustic builds, EM verifies</b>. Full treatment:
+<a href="replicator_field_compiler.html">Field Compiler §2–§4.5</a>.</p>
+
+<p><b>The Q budget (R6, adopted 2026-07-30).</b> Calibration is a
+photograph of system state; its lifetime is measured in linewidths of
+drift. Damping buys calibration lifetime; continuous self-calibration buys
+back Q. Damp exactly down to the Q the calibration loop can chase, and not
+one linewidth further. Perfect manufacturing never removes calibration —
+the environment is state, not error.</p>
+
+<h2 id="s7">7 · Principle: the carriers talk to each other</h2>
+<p>Sound is a density wave and density sets the refractive index, so the
+two carriers interact <em>in flight</em> — parametrically, with negligible
+energy exchange but large information value. Three interactions:
+<b>sound steers light</b> (the acoustic hologram as a reprogrammable
+volumetric optic — modulation-class in air, genuine beam shaping in the
+melt); <b>light reads sound</b> (schlieren/vibrometry — the machine
+photographs its own acoustic field, an independent witness for the forward
+model); <b>light writes sound</b> (photoacoustics — a virtual acoustic
+source at any optically visible point, including on the workpiece: position
+diversity with nothing moving). All three
+<span class="chip c-measured">MEASURED</span> art; machine-level use is
+design. Full treatment:
+<a href="the_two_carriers.html">The Two Carriers §6b</a> — the canonical
+home of the crossings.</p>
+
+<h2 id="s8">8 · Principle: scale-free by construction</h2>
+<p>The physics fixes ratios — aperture to volume, element pitch to
+wavelength, bore to aperture — but privileges no size. A phased boundary is
+a tiling: add area and channels and the volume grows with them, same
+compiler, same file format, same three modes. Desktop, workshop cell,
+industrial volume, orbital boundary — instances of one architecture. The
+far end of the ladder is bounded, not open: what the machine can never do
+(make matter from energy, beat Landauer, outrun Q/f) is computed against
+physical bounds in <a href="replicator_at_the_limit.html">At the
+Limit</a>.</p>
+
+<p><b>Fields, not materials (R7, adopted 2026-07-30).</b> The design
+variables are ρ(x), stiffness, loss, σ(x), ε(x), and piezo coupling e(x);
+conductors are skin-depth shells. What survives atom-placement
+manufacturing: diffraction, medium absorption, the Q budget, addressability
+rank (channels are information, not fabrication), Bode–Fano/Chu, racemic
+cancellation. Spec the invariants — angles, λ-ratios, winding numbers,
+count ratios, grading laws — and render per generation: gen-0 on mills and
+printers, gen-N as continuous fields. The milled plate is the optimum as
+pronounced by a Bridgeport; its job is to build the machine that pronounces
+it better.</p>
+
+<h2 id="s8b">8b · Register — what is claimed and what is not</h2>
+<p>The member papers tag every load-bearing claim
+<span class="chip c-measured">MEASURED</span> (published or bench-verified),
+DERIVED (arithmetic on measured quantities), or
+<span class="chip c-open">OPEN</span> (registered bet with named
+falsification). This overview inherits those tags and adds none. Two
+standing hygiene notes. (i) The machine's primitives are measured art;
+their <em>composition at machine scale</em> is design until the bench says
+otherwise — build-rate, resolution, and trap-count numbers ship with their
+measurements, not their spec-table values. (ii) The toroidal-helical pulses'
+embedded skyrmion texture is a <em>descriptor</em> of the polarization map,
+not a stability claim: optical skyrmions carry no energy barrier and their
+invariants are construction-dependent (Chen, Forbes &amp; Qiu, <i>Light
+Sci. Appl.</i> 2025). The pulses' measured robustness is space-time
+nonseparability, and pattern persistence in this machine comes from the
+commanded boundary, not from topology — which is the design's point, not a
+concession.</p>
+
+<h2 id="s9">9 · The paper network</h2>
+<div class="overflow"><table>
+<tr><th>layer</th><th>paper</th><th>role</th><th>read it for</th></tr>
+<tr><td><b>0</b></td><td><b><a href="replicator_principles.html">The
+Replicator — Principles</a></b> (this paper)</td><td>flagship entry
+point</td><td>the machine in one sitting; where everything else
+lives</td></tr>
+<tr><td><b>1</b></td><td><a href="the_two_carriers.html">The Two
+Carriers</a></td><td>carrier member</td><td>the full degrees-of-freedom
+inventory (the knob table in full) and the cross-carrier couplings</td></tr>
+<tr><td><b>1</b></td><td><a href="replicator_phonons.html">The
+Phonons</a></td><td>carrier member</td><td>sound as muscle: trapping,
+moving, welding — the force side worked out</td></tr>
+<tr><td><b>1</b></td><td><a href="replicator_photons.html">The
+Photons</a></td><td>carrier member</td><td>light as address, measurement,
+and energy: the optical stem, state tomography, the topological
+alphabet</td></tr>
+<tr><td><b>1</b></td><td><a href="replicator_scan.html">Scan — how the
+machine sees</a></td><td>mode member</td><td>the scan-mode narrative:
+ultrasonic + EM holographic tomography, the probes (flying doughnuts),
+reconstruction ladder, what a scan produces</td></tr>
+<tr><td><b>1</b></td><td><a href="replicator_assemble.html">Assemble — how
+the machine builds</a></td><td>mode member</td><td>the assemble-mode
+narrative: slice/feed/trap/move/weld/check, hands-and-fingertips placement
+ladder, why it must be parallel</td></tr>
+<tr><td><b>1</b></td><td><a href="replicator_dissolve.html">Dissolve — how
+the machine unbuilds</a></td><td>mode member</td><td>the dissolve-mode
+narrative: time reversal, CPA drain, the unbind ladder, reclaim — and the
+honest status (least demonstrated mode)</td></tr>
+<tr><td><b>2</b></td><td><a href="replicator_architecture.html">The
+Replicator — Architecture</a></td><td>machine member</td><td>the machine
+topology, size-free: commanded boundary, three cavities, the instance
+family</td></tr>
+<tr><td><b>2</b></td><td><a href="replicator_stores.html">The
+Stores</a></td><td>machine member</td><td>what the machine keeps and in
+what form: bulk stores, the salt/ash rule, trace rack, the storage
+chamber as instrument, mass bookkeeping</td></tr>
+<tr><td><b>3</b></td><td><a href="transmutation.html">Transmutation as
+Consensus Repair</a></td><td>science member (research note)</td><td>the OPH
+frame, the transmutation sector and its sim ladder, pre-registered
+experiments, honest ledger</td></tr>
+<tr><td><b>3</b></td><td><a href="creating_gold.html">Creating
+Gold</a></td><td>applied companion of
+<a href="transmutation.html">Transmutation</a></td><td>the applied
+transmutation case worked end-to-end</td></tr>
+<tr><td><b>3</b></td><td><a href="replicator_field_compiler.html">Field
+Compiler RSW-1</a></td><td>software &amp; control member</td><td>the
+12-gate machine model, chords and <code>.pattern</code>, the
+emulator-is-the-API law, build milestones and acceptance gates</td></tr>
+<tr><td><b>3</b></td><td><a href="holographic_memory_and_compute_plan.html">Memory
+&amp; Compute in the Holographic Machine</a></td><td>compute &amp; storage
+member</td><td>the three-cavities ruling, the optical EML core, the
+holographic store, mode-count arithmetic</td></tr>
+<tr><td><b>3</b></td><td><a href="replicator_at_the_limit.html">The
+Replicator at the Limit</a></td><td>bounds member</td><td>designing from
+physical bounds; information content of objects; what is forbidden vs
+merely hard</td></tr>
+<tr><td><b>3</b></td><td><a href="replicator_as_alchemy.html">The
+Replicator as Alchemy</a></td><td>mapping member (dictionary, firewalled
+off the deck)</td><td>tria prima = source/propagator/boundary = R1; four
+elements = the coupling ladder; the 12-cell verb matrix; two candidate
+sign-mappings with pre-registered gates — a lens until the gates say
+otherwise</td></tr>
+<tr><td><b>4</b></td><td><a href="desktop_replicator_hardware_spec.html">Hardware
+Specification RH-1</a></td><td>instance member (one realized instance, not
+the subject)</td><td>frozen instance decisions, the datasheet, channel
+architecture, product staging</td></tr>
+<tr><td><b>4</b></td><td><a href="replicator_mechanical_construction.html">Mechanical
+Construction &amp; Wiring</a></td><td>instance member (RH-1
+build)</td><td>panels, plates, holographic surface synthesis, arcade,
+enclosure, assembly and wiring</td></tr>
+<tr><td>—</td><td><code>lpoh/kosmos.html</code> ·
+<code>lpoh/docs/</code></td><td>doctrine &amp; working notes</td><td>KOSMOS
+doctrine; phonon/photon transduction note; testbed sourcing; sim specs and
+receipts</td></tr>
+</table></div>
+
+<p class="meta">Maintenance rule: a new replicator paper joins this table
+and links back here in its banner, or it does not exist. Members own their
+detail; this paper owns only the principles and the map.</p>
+
+</body>
+</html>
