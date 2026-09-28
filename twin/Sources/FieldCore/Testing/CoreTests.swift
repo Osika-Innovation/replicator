@@ -9,6 +9,7 @@ public enum CoreTests {
         pencil(h); trapKinds(h); chordAndVerbs(h); callResponse(h)
         surfaceHologram(h)
         provenance(h); gates(h)
+        cad(h); wallsAndPlates(h)
         return h
     }
 

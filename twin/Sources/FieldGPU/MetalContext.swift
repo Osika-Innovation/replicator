@@ -35,7 +35,7 @@ public final class MetalContext {
     }
 
     public static func shaderSource(overrideDirectory: URL? = nil) throws -> (String, URL?) {
-        let names = ["propagator", "render"]
+        let names = ["propagator", "render", "solid"]
         // Prefer an override directory so `fieldc gate --shader-dir ./Shaders`
         // can gate an edited kernel without rebuilding (§23).
         var dir = overrideDirectory

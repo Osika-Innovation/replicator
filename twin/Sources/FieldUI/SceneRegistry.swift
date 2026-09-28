@@ -13,9 +13,14 @@ public enum SceneRegistry {
         public let description: String
         public let camera: String        // which machine view the viewport shows
         public let make: @Sendable (Theme) -> AppState
+        /// A `SolidView.machine` preset: when set, the viewport is the RH-1
+        /// solid model (Machine tab) instead of the build-volume view.
+        public var solid: String? = nil
     }
 
-    public static let all: [Scene] = [
+    public static var all: [Scene] { simulation + machine }
+
+    public static let simulation: [Scene] = [
         Scene(id: "empty", description: "Empty state — the machine alone",
               camera: "iso", make: { theme in
             var s = AppState(); s.theme = theme
@@ -129,6 +134,41 @@ public enum SceneRegistry {
                 ])]
             return s
         }),
+    ]
+
+    /// Machine-tab scenes: the CAD model, closed, cut, and the plate face.
+    public static let machine: [Scene] = [
+        Scene(id: "machine-cad", description: "Machine tab — RH-1 solid model, closed",
+              camera: "iso", make: { theme in
+            var s = AppState(); s.theme = theme
+            s.mode = .machine
+            MachineCAD.applyRail(&s)
+            s.overlays = ["cad.glass"]
+            s.statusLine = "RH-1 free-standing · \(MachineCAD.model.parts.count) parts · drag orbit · S section"
+            s.inspector = MachineCAD.inspector()
+            return s
+        }, solid: "iso"),
+        Scene(id: "machine-section", description: "Machine tab — quarter section",
+              camera: "iso", make: { theme in
+            var s = AppState(); s.theme = theme
+            s.mode = .machine
+            MachineCAD.applyRail(&s)
+            s.overlays = ["cad.section", "cad.glass", "cad.envelopes"]
+            s.statusLine = "quarter section · caps hatched · base contents are envelopes only"
+            s.inspector = MachineCAD.inspector()
+            return s
+        }, solid: "section-iso"),
+        Scene(id: "machine-plate", description: "Machine tab — mid-up plate face",
+              camera: "top", make: { theme in
+            var s = AppState(); s.theme = theme
+            s.mode = .machine
+            MachineCAD.applyRail(&s)
+            s.overlays = ["cad.section"]
+            let p = MachineCAD.model.pattern
+            s.statusLine = "plate face · \(p.drilled.count) micro-horns drilled · \(p.subsumedCount) of 380 sites fall in slot voids"
+            s.inspector = MachineCAD.inspector()
+            return s
+        }, solid: "plate"),
     ]
 
     static func machineSections() -> [AppState.InspectorSection] {

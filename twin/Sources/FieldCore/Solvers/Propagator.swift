@@ -102,16 +102,55 @@ public struct Propagator: Sendable {
             self.reflectionCoefficient = reflectionCoefficient
         }
         public static let none = Walls(capSeparation: 0, order: 0)
+
+        /// Image sources (z, weight) of a source at `z0` between rigid walls at
+        /// z = 0 and z = L, up to `order` reflections. Reflections alternate
+        /// between the walls, so an m-bounce path has exactly two images:
+        ///   m even:  z0 ± m·L            (m/2 round trips)
+        ///   m odd:  −z0 + (1 ± m)·L      (m = 1 gives −z0 and 2L − z0)
+        /// each weighted R^m. (The first version of this appended the two
+        /// first-order images again at every order and put fourth-order images
+        /// where third-order ones belong; the unit test pins the series now.)
+        public func images(of z0: Double) -> [(z: Double, weight: Double)] {
+            var out: [(z: Double, weight: Double)] = [(z0, 1)]
+            guard capSeparation > 0 && order > 0 else { return out }
+            let L = capSeparation
+            for m in 1...order {
+                let w = pow(reflectionCoefficient, Double(m))
+                if m % 2 == 0 {
+                    out.append((z0 + Double(m) * L, w))
+                    out.append((z0 - Double(m) * L, w))
+                } else {
+                    out.append((-z0 + Double(1 + m) * L, w))
+                    out.append((-z0 + Double(1 - m) * L, w))
+                }
+            }
+            return out
+        }
     }
+
+    public let walls: Walls
+    public let elementWeights: [Double]?
+    /// Complex per-element coupling (e.g. a horn transfer from a throat
+    /// element to an aperture). Multiplies the element's contribution.
+    public let elementCoupling: [Complex]?
+    /// Per-element image table, computed once.
+    let imageTable: [[(z: Double, weight: Double)]]
 
     public init(elements: [Element], lattice: FieldLattice,
                 frequency: Double, medium: Medium, gateCount: Int? = nil,
                 elementWeights: [Double]? = nil,
+                elementCoupling: [Complex]? = nil,
                 walls: Walls = .none) {
         self.elements = elements
         self.lattice = lattice
         self.frequency = frequency
         self.medium = medium
+        self.walls = walls
+        self.elementWeights = elementWeights
+        self.elementCoupling = elementCoupling
+        let table = elements.map { walls.images(of: $0.position.z) }
+        self.imageTable = table
         let nG = gateCount ?? ((elements.map(\.gateIndex).max() ?? -1) + 1)
         self.gateCount = nG
 
@@ -131,23 +170,10 @@ public struct Propagator: Sendable {
                     guard g >= 0 && g < nG else { continue }
                     let w = elementWeights?[ei] ?? 1.0
                     if w == 0 { continue }
+                    let c = elementCoupling?[ei] ?? Complex.one
                     // Direct path plus axial image sources from the two caps.
-                    var images: [(Double, Double)] = [(el.position.z, 1.0)]
-                    if walls.capSeparation > 0 && walls.order > 0 {
-                        let L = walls.capSeparation
-                        for m in 1...walls.order {
-                            let refl = pow(walls.reflectionCoefficient, Double(m))
-                            let zm = Double(m)
-                            // mirror about z=0 and about z=L, alternating
-                            images.append((-el.position.z + 2 * (zm - 1) * L * 0, refl))
-                            images.append((2 * L - el.position.z, refl))
-                            if m > 1 {
-                                images.append((el.position.z + 2 * (zm - 1) * L, refl))
-                                images.append((el.position.z - 2 * (zm - 1) * L, refl))
-                            }
-                        }
-                    }
-                    for (zi, refl) in images {
+                    var acc = Complex.zero
+                    for (zi, refl) in table[ei] {
                         let src = Vec3(el.position.x, el.position.y, zi)
                         let d = x - src
                         let r = max(d.length, 1e-9)
@@ -157,8 +183,9 @@ public struct Propagator: Sendable {
                                 k: k, a: el.equivalentRadius, cosTheta: cosTheta)
                         let amp = prefactorMag * el.area * dir * w * refl / r
                         let phase = Complex.expi(k * r)
-                        buf[base + g] += Complex(-phase.im, phase.re) * amp
+                        acc += Complex(-phase.im, phase.re) * amp
                     }
+                    buf[base + g] += acc * c
                 }
             }
         }
@@ -209,22 +236,56 @@ public struct Propagator: Sendable {
         return out
     }
 
+    /// The gate-granular row at one point: p(x) = Σ_g row[g]·u_g, with the
+    /// same weights, couplings and wall images as the cached operator. The
+    /// inverse solver's control matrix is built from this, so the solver
+    /// optimizes the machine the field is then evaluated on.
+    public func gateRow(at x: Vec3) -> [Complex] {
+        let k = medium.wavenumber(at: frequency)
+        let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
+        var row = [Complex](repeating: .zero, count: gateCount)
+        for (ei, el) in elements.enumerated() {
+            guard el.gateIndex >= 0 && el.gateIndex < gateCount else { continue }
+            let w = elementWeights?[ei] ?? 1.0
+            if w == 0 { continue }
+            let c = elementCoupling?[ei] ?? Complex.one
+            var acc = Complex.zero
+            for (zi, refl) in imageTable[ei] {
+                let d = x - Vec3(el.position.x, el.position.y, zi)
+                let r = max(d.length, 1e-9)
+                let cosTheta = abs(d.dot(el.normal)) / r
+                let dir = el.directivity == .monopole ? 1.0
+                    : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
+                                                   cosTheta: cosTheta)
+                let ph = Complex.expi(k * r)
+                acc += Complex(-ph.im, ph.re) * (prefactorMag * el.area * dir * w * refl / r)
+            }
+            row[el.gateIndex] += acc * c
+        }
+        return row
+    }
+
     /// Pressure at one arbitrary point, without touching the cached lattice.
     public func pressure(at x: Vec3, drive: [Complex]) -> Complex {
         let k = medium.wavenumber(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
         var acc = Complex.zero
-        for el in elements {
+        for (ei, el) in elements.enumerated() {
             guard el.gateIndex >= 0 && el.gateIndex < drive.count else { continue }
-            let d = x - el.position
-            let r = max(d.length, 1e-9)
-            let cosTheta = abs(d.dot(el.normal)) / r
-            let dir = el.directivity == .monopole ? 1.0
-                : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
-                                               cosTheta: cosTheta)
-            let amp = prefactorMag * el.area * dir / r
-            let ph = Complex.expi(k * r)
-            acc += Complex(-ph.im, ph.re) * amp * drive[el.gateIndex]
+            let w = elementWeights?[ei] ?? 1.0
+            if w == 0 { continue }
+            let c = elementCoupling?[ei] ?? Complex.one
+            for (zi, refl) in imageTable[ei] {
+                let d = x - Vec3(el.position.x, el.position.y, zi)
+                let r = max(d.length, 1e-9)
+                let cosTheta = abs(d.dot(el.normal)) / r
+                let dir = el.directivity == .monopole ? 1.0
+                    : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
+                                                   cosTheta: cosTheta)
+                let amp = prefactorMag * el.area * dir * w * refl / r
+                let ph = Complex.expi(k * r)
+                acc += Complex(-ph.im, ph.re) * c * amp * drive[el.gateIndex]
+            }
         }
         return acc
     }
@@ -238,20 +299,29 @@ public struct Propagator: Sendable {
         let omega = 2 * .pi * frequency
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
         var gx = Complex.zero, gy = Complex.zero, gz = Complex.zero
-        for el in elements {
+        for (ei, el) in elements.enumerated() {
             guard el.gateIndex >= 0 && el.gateIndex < drive.count else { continue }
-            let d = x - el.position
-            let r = max(d.length, 1e-9)
-            let cosTheta = abs(d.dot(el.normal)) / r
-            let dir = Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
+            let w = elementWeights?[ei] ?? 1.0
+            if w == 0 { continue }
+            let c = elementCoupling?[ei] ?? Complex.one
+            for (zi, refl) in imageTable[ei] {
+                let d = x - Vec3(el.position.x, el.position.y, zi)
+                let r = max(d.length, 1e-9)
+                let cosTheta = abs(d.dot(el.normal)) / r
+                // Directivity treated as locally constant in the gradient (the
+                // far-field term dominates at kr >> 1) — the same approximation
+                // the first version made, now applied to every image as well.
+                let dir = el.directivity == .monopole ? 1.0
+                    : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
                                                    cosTheta: cosTheta)
-            let amp = prefactorMag * el.area * dir
-            let ph = Complex.expi(k * r)
-            let iph = Complex(-ph.im, ph.re)
-            // d/dr [ e^{ikr}/r ] = e^{ikr} (ik r - 1)/r^2
-            let dfdr = iph * ((Complex(0, k * r) - Complex.one) / (r * r))
-            let g = dfdr * amp * drive[el.gateIndex]
-            gx += g * (d.x / r); gy += g * (d.y / r); gz += g * (d.z / r)
+                let amp = prefactorMag * el.area * dir * w * refl
+                let ph = Complex.expi(k * r)
+                let iph = Complex(-ph.im, ph.re)
+                // d/dr [ e^{ikr}/r ] = e^{ikr} (ik r - 1)/r^2
+                let dfdr = iph * ((Complex(0, k * r) - Complex.one) / (r * r))
+                let g = dfdr * c * amp * drive[el.gateIndex]
+                gx += g * (d.x / r); gy += g * (d.y / r); gz += g * (d.z / r)
+            }
         }
         // v = -(1/(i*omega*rho0)) grad p  ==  (i/(omega*rho0)) grad p
         let s = 1.0 / (omega * medium.density)

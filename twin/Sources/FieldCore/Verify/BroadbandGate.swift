@@ -49,42 +49,48 @@ public enum BroadbandGate {
                 propagator: prop,
                 points: [.init(position: target, targetAmplitude: 1)],
                 method: .gspat, iterations: 60)
-            let g = Gorkov(medium: preset.medium, particle: particle)
-            // Use the CACHED operator for pressure, then get velocity by
-            // differencing p ON THE LATTICE: v = (i/(omega rho)) grad p.
-            // Calling the point evaluators per lattice point re-walks every
-            // element and image source and made this study minutes-per-condition.
-            let field = prop.forward(drive)
-            let peak = field.map(\.magnitude).max() ?? 1
-            let scale = peak > 0 ? 1 / peak : 1
-            let omega = 2 * Double.pi * f
-            let coef = 1.0 / (omega * preset.medium.density * lattice.spacing * 2)
-            for k in 0..<lattice.nz {
-                for j in 0..<lattice.ny {
-                    for i in 0..<lattice.nx {
-                        let n = lattice.index(i, j, k)
-                        let p = field[n] * scale
-                        func d(_ a: Int, _ b: Int, _ c: Int,
-                               _ a2: Int, _ b2: Int, _ c2: Int) -> Complex {
-                            let lo = lattice.index(max(0, a), max(0, b), max(0, c))
-                            let hi = lattice.index(min(lattice.nx - 1, a2),
-                                                   min(lattice.ny - 1, b2),
-                                                   min(lattice.nz - 1, c2))
-                            return (field[hi] - field[lo]) * scale
-                        }
-                        let gx = d(i-1, j, k, i+1, j, k)
-                        let gy = d(i, j-1, k, i, j+1, k)
-                        let gz = d(i, j, k-1, i, j, k+1)
-                        // multiply by i and by coef
-                        let vx = Complex(-gx.im, gx.re) * coef
-                        let vy = Complex(-gy.im, gy.re) * coef
-                        let vz = Complex(-gz.im, gz.re) * coef
-                        U[n] += g.potential(p: p, v: (vx, vy, vz))
+            addTone(to: &U, field: prop.forward(drive), frequency: f,
+                    medium: preset.medium, lattice: lattice, particle: particle)
+        }
+        return U
+    }
+
+    /// Add one tone's time-averaged Gor'kov potential to `U`. The field is
+    /// normalized to unit peak (equal drive per tone); velocity comes from
+    /// central differences of p ON THE LATTICE, v = (i/(ωρ)) ∇p — the point
+    /// evaluators re-walk every element and image per point and made these
+    /// studies minutes-per-condition.
+    public static func addTone(to U: inout [Double], field: [Complex], frequency f: Double,
+                               medium: Medium, lattice: FieldLattice,
+                               particle: ParticleMaterial) {
+        let g = Gorkov(medium: medium, particle: particle)
+        let peak = field.map(\.magnitude).max() ?? 1
+        let scale = peak > 0 ? 1 / peak : 1
+        let omega = 2 * Double.pi * f
+        let coef = 1.0 / (omega * medium.density * lattice.spacing * 2)
+        for k in 0..<lattice.nz {
+            for j in 0..<lattice.ny {
+                for i in 0..<lattice.nx {
+                    let n = lattice.index(i, j, k)
+                    let p = field[n] * scale
+                    func d(_ a: Int, _ b: Int, _ c: Int,
+                           _ a2: Int, _ b2: Int, _ c2: Int) -> Complex {
+                        let lo = lattice.index(max(0, a), max(0, b), max(0, c))
+                        let hi = lattice.index(min(lattice.nx - 1, a2),
+                                               min(lattice.ny - 1, b2),
+                                               min(lattice.nz - 1, c2))
+                        return (field[hi] - field[lo]) * scale
                     }
+                    let gx = d(i-1, j, k, i+1, j, k)
+                    let gy = d(i, j-1, k, i, j+1, k)
+                    let gz = d(i, j, k-1, i, j, k+1)
+                    let vx = Complex(-gx.im, gx.re) * coef
+                    let vy = Complex(-gy.im, gy.re) * coef
+                    let vz = Complex(-gz.im, gz.re) * coef
+                    U[n] += g.potential(p: p, v: (vx, vy, vz))
                 }
             }
         }
-        return U
     }
 
     /// Parasitic-to-main trap depth ratio: the real figure of merit.

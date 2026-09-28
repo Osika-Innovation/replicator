@@ -66,24 +66,15 @@ public enum InverseSolver {
         }
     }
 
-    /// Reduced forward matrix at the control points only: Hc[c][e].
+    /// Reduced forward matrix at the control points only: Hc[c][g].
+    ///
+    /// Built from `Propagator.gateRow`, i.e. with the propagator's own wall
+    /// images, element weights and couplings. (It used to re-walk the elements
+    /// in free field with none of them, so every "walls" and "rainbow"
+    /// condition solved its drive for a different machine than the one the
+    /// field was then evaluated on.)
     static func controlMatrix(_ prop: Propagator, _ points: [ControlPoint]) -> [[Complex]] {
-        let k = prop.medium.wavenumber(at: prop.frequency)
-        let pre = prop.medium.density * prop.medium.soundSpeed * k / (2 * .pi)
-        return points.map { cp in
-            var row = [Complex](repeating: .zero, count: prop.gateCount)
-            for el in prop.elements {
-                guard el.gateIndex >= 0 && el.gateIndex < prop.gateCount else { continue }
-                let d = cp.position - el.position
-                let r = max(d.length, 1e-9)
-                let cosT = abs(d.dot(el.normal)) / r
-                let dir = Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
-                                                       cosTheta: cosT)
-                let ph = Complex.expi(k * r)
-                row[el.gateIndex] += Complex(-ph.im, ph.re) * (pre * el.area * dir / r)
-            }
-            return row
-        }
+        points.map { prop.gateRow(at: $0.position) }
     }
 
     public static func solve(propagator: Propagator,

@@ -13,10 +13,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var document: Document!
 
     func applicationDidFinishLaunching(_ note: Notification) {
+        // Launched from Finder / `open`, the working directory is "/". Work
+        // from the package root instead (found by walking up from the binary),
+        // so Samples/, cad-out/ and Receipts/ land where the CLI puts them.
+        if let exe = Bundle.main.executableURL?.resolvingSymlinksInPath() {
+            var dir = exe.deletingLastPathComponent()
+            for _ in 0..<8 {
+                if FileManager.default.fileExists(atPath: dir.appendingPathComponent("Package.swift").path) {
+                    FileManager.default.changeCurrentDirectoryPath(dir.path)
+                    break
+                }
+                dir = dir.deletingLastPathComponent()
+            }
+        }
         var state = AppState()
         state.theme = ProcessInfo.processInfo.arguments.contains("--light")
             ? .light : .dark
-        state.mode = .compile
+        // `--machine` opens straight into the Machine tab (the RH-1 solid model).
+        state.mode = ProcessInfo.processInfo.arguments.contains("--machine") ? .machine : .compile
         let preset = RH1.preset()
         state.gateCount = preset.gateCount
         state.elementCount = preset.elements.count

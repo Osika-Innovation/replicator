@@ -34,7 +34,21 @@ public enum ShotCommand {
             for scene in SceneRegistry.all {
                 if let w = wanted, !all, scene.id != w { continue }
                 var st = scene.make(theme)
-                if let ctx {
+                if let ctx, let preset = scene.solid {
+                    do {
+                        let r = try SolidRenderer(ctx: ctx)
+                        let m = st.overlays.contains("cad.door")
+                            ? RH1Model(design: MachineCAD.design(doorOpen: true)) : MachineCAD.model
+                        let b = MachineCAD.batches(m, overlays: st.overlays)
+                        r.load(opaque: b.opaque, transparent: b.transparent,
+                               floor: SolidScene.floor(color: MachineCAD.floorColor(theme)))
+                        st.viewport = try r.render(
+                            MachineCAD.view(preset: preset, overlays: st.overlays, theme: theme),
+                            width: 1480, height: 1000)
+                    } catch {
+                        print("  solid viewport failed for \(scene.id): \(error)")
+                    }
+                } else if let ctx {
                     do {
                         let r = try Renderer(ctx: ctx)
                         r.load(SceneBuilder.rh1(palette: theme.isDark

@@ -2,6 +2,7 @@
 
 Native macOS implementation of the Field Compiler.
 Spec: [`papers/replicator_field_compiler.html`](../papers/replicator_field_compiler.html) (v0.8).
+CAD: [`CAD.md`](CAD.md) — the free-standing RH-1 as a parametric solid model inside the twin.
 
 ## Build and run
 
@@ -17,9 +18,29 @@ swift build -c release
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
+./.build/release/fieldc cad check --rules  # the RH-1 solid model: CAD gates + design rules
+./.build/release/fieldc cad render --all   # iso, front, section, detail, plate, storage, top
+./.build/release/fieldc cad export         # STL per part, OBJ+MTL, params, BOM, GA drawing
+./.build/release/fieldc cad step           # B-rep STEP assembly via CadQuery, volume-gated
+./.build/release/fieldc machine --freestanding   # the plate-primary preset, read from the CAD
+./.build/release/fieldc plates             # can 6 throat gates hold a trap? (model study)
 ```
 
 ## Status — honest
+
+**2026-09-28 — the machine exists as CAD, and the physics reads it.** The
+twin now carries the free-standing RH-1 (Ø460 × 1650, three plate assemblies,
+four radiating faces, two chambers, rotating glass, arcade, six photonic bays)
+as a parametric solid model built from the newest sources — etherworks.io
+(2026-08-10), mech §3c (2026-08-03), spec v0.4 — with every number's
+provenance and nine documented conflicts resolved in code (see
+[`CAD.md`](CAD.md)). 92 closed solids, 9 CAD gates + 25 design rules, a shaded
+section-cut Machine tab, STL/OBJ/STEP exports with a cross-kernel volume gate.
+A new preset, `RH1Freestanding`, takes its acoustic apertures from the CAD's
+plate faces and its gates from the throat piezos; the desktop preset (`RH1`,
+24 panel gates) remains as the v0.3 variant and still backs the historical
+gates below. The slicer modes still compile against the desktop preset —
+moving them onto the plate machine is the next step, not done.
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -69,6 +90,79 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 5 — what building the machine found (2026-09-28)
+
+Building the geometry surfaced design facts no paper had written down, and
+two physics bugs that had been shaping documented results.
+
+**Design findings** (details and reconciliation table in [`CAD.md`](CAD.md)):
+only **128 of the 380** sunflower sites can be drilled — 252 fall inside a
+spiral slot or its web; per face the slots are **34,600 mm² open against
+~2,700 mm²** of micro-horn faces (12.8×), so if the slots are open voids they
+*are* the acoustic aperture — **operator ruling needed: open or
+dielectric-filled?**; the "21 × 34" parastichies are the mid-field reading
+(13 × 21 inside, 34 × 55 at the rim); three Ø25 throat piezos on r = 18 reach
+0.5 mm into the Ø12 bore (model uses Ø20); the spec's storage chamber and its
+own middle stack overlap (the site's layout is the one that closes); the
+model weighs ≈69 kg against the spec's "≈50 kg class".
+
+**Bugs, continuing the numbering:**
+
+15. **Wall image series wrong beyond first order.** Every extra order re-added
+    the two first-order images (so they carried R + R² + R³ = 2.44 instead of
+    0.9) and put fourth-order images where third-order ones belong. The series
+    is now derived per bounce count and pinned by a test against an explicit
+    alternating-reflection recursion.
+16. **The inverse solver optimized a different machine.** Its control matrix
+    re-walked the elements in free field with no wall images, no element
+    weights and no couplings — so every "walls" and "rainbow" condition solved
+    its drive for a machine it was not then evaluated on. With the image
+    series corrected, the walls + rainbow condition turned **NaN**, which is
+    how it was found. The control matrix now comes from `Propagator.gateRow`,
+    the same path as the cached operator.
+17. **Point evaluators ignored walls, weights and couplings** — `pressure(at:)`
+    and `velocity(at:)` could silently disagree with `forward`. One code path
+    now; a test checks agreement with walls and complex couplings on.
+18. **The drilled-hole set depended on display tessellation** (200 vs 400
+    slot samples changed which sites a slot swallowed). Design facts are now
+    decided at a fixed fine resolution; the unit suite caught it.
+19. **An 8-sided winding carried 90 % of the round wire's copper**, which the
+    STEP cross-check would have reported as a kernel disagreement. Wire
+    polygons now use an area-equivalent circumradius.
+
+**G9d / I1 re-run on the corrected model** — the retraction below stands,
+now for the right reasons:
+
+| condition | RH-1 | dense | RH-1 relative |
+|---|---|---|---|
+| 1 tone, free field | 1.088 | 1.097 | 0.99× |
+| 1 tone, walls | 1.136 | 1.094 | 1.04× |
+| 5 tones, walls | 1.052 | 1.231 | 0.85× |
+| 5 tones, walls + rainbow | 1.093 | 1.305 | 0.84× |
+
+**First study of the plate-primary machine** (`fieldc plates`, receipt
+`plates_*.json`). Six throat gates, phase-conjugate drive at the chamber
+centre, the two plates as walls. MODEL numbers — the throat → aperture
+transfer is the `HornModel` stub:
+
+| condition | apertures | focus contrast | parasitic/main |
+|---|---|---|---|
+| 1 tone, free field, slots open | 3,688 | 9.3 | 1.05 |
+| 1 tone, walls, slots open | 3,688 | 9.5 | 1.02 |
+| 5 tones, walls, slots open | 3,688 | 7.0 | 1.00 |
+| 1 tone, walls, slots closed | 256 | 14.8 | 1.00 |
+| 5 tones, walls, slots closed | 256 | 7.3 | 1.00 |
+
+Read it plainly: the plates do focus (focus contrast = peak intensity over
+the mean of a ±3λ neighbourhood; not comparable to the desktop's whole-volume
+amplitude gain), and open slots cost a third of the single-tone contrast. But
+parasitic/main sits at 1.0 in every condition: a point-conjugate drive
+between two facing apertures makes an axial standing wave whose λ/2 nodes
+are equally deep, and neither more tones nor the rainbow selects one of
+them. Holding *one* grain needs a trap signature (twin, vortex, bottle) or
+face-to-face amplitude asymmetry — that is the next study, not a verdict on
+the machine.
 
 ## Four bugs the gates caught
 

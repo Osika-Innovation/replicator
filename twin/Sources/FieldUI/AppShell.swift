@@ -85,7 +85,7 @@ struct Toolbar: View {
             Clickable(enabled: a.primaryAction != nil && s.busy == nil) {
                 a.primaryAction?()
             } label: {
-                Text(s.busy ?? (s.mode == .scan ? "Scan" : "Compile"))
+                Text(s.busy ?? (s.mode == .scan ? "Scan" : (s.mode == .machine ? "Export CAD" : "Compile")))
                     .font(.system(size: 12, weight: .semibold))
                     .padding(.horizontal, 18).padding(.vertical, 6)
                     .background(s.busy == nil ? s.theme.accent
@@ -171,9 +171,16 @@ struct ViewportPane: View {
                 }
                 .clipped()
             HStack(spacing: 6) {
-                ForEach(["field", "traps", "matter", "solid", "boundary", "chords"], id: \.self) { c in
-                    OverlayChip(name: c, on: s.overlays.contains(c), theme: s.theme,
-                                action: a.toggleOverlay)
+                if s.mode == .machine {
+                    ForEach(MachineCAD.chips, id: \.self) { c in
+                        OverlayChip(name: c, on: s.overlays.contains("cad." + c), theme: s.theme,
+                                    action: a.toggleOverlay.map { f in { @Sendable (c: String) in f("cad." + c) } })
+                    }
+                } else {
+                    ForEach(["field", "traps", "matter", "solid", "boundary", "chords"], id: \.self) { c in
+                        OverlayChip(name: c, on: s.overlays.contains(c), theme: s.theme,
+                                    action: a.toggleOverlay)
+                    }
                 }
             }
             .padding(10)

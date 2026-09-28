@@ -1,0 +1,561 @@
+{
+ "parts": [
+  {
+   "part": "body/bottom closure",
+   "brep_mm3": 664761.0054996001,
+   "mesh_mm3": 664531.3531809181,
+   "rel": 0.0003454659897045927
+  },
+  {
+   "part": "body/lower body tube",
+   "brep_mm3": 6051159.840156019,
+   "mesh_mm3": 6049069.370234792,
+   "rel": 0.0003454659894048864
+  },
+  {
+   "part": "body/top band",
+   "brep_mm3": 401118.550010344,
+   "mesh_mm3": 400979.97719348053,
+   "rel": 0.0003454659896928425
+  },
+  {
+   "part": "body/crown",
+   "brep_mm3": 320894.84000827465,
+   "mesh_mm3": 320783.9817548135,
+   "rel": 0.00034546598960044216
+  },
+  {
+   "part": "body/crown cap",
+   "brep_mm3": 664761.0054996001,
+   "mesh_mm3": 664531.3531788782,
+   "rel": 0.000345465992773283
+  },
+  {
+   "part": "storage/storage chamber liner",
+   "brep_mm3": 2619635.8837517574,
+   "mesh_mm3": 2618616.0908450433,
+   "rel": 0.00038928803542484053
+  },
+  {
+   "part": "plate.top/face plate top",
+   "brep_mm3": 1148215.008396097,
+   "mesh_mm3": 1148327.0710305308,
+   "rel": 9.759725627553766e-05
+  },
+  {
+   "part": "plate.top/carrier ring top",
+   "brep_mm3": 341214.6612916952,
+   "mesh_mm3": 341095.0562845419,
+   "rel": 0.00035052716287313447
+  },
+  {
+   "part": "plate.top/gyroid horn top",
+   "brep_mm3": 321435.6147100012,
+   "mesh_mm3": 321308.5363692359,
+   "rel": 0.00039534617494073126
+  },
+  {
+   "part": "plate.top/inner cone top",
+   "brep_mm3": 2873.193562264776,
+   "mesh_mm3": 2861.9605645297256,
+   "rel": 0.003909586142256342
+  },
+  {
+   "part": "plate.top/throat piezo top.1",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.2387924368036,
+   "rel": 0.0016056069643608914
+  },
+  {
+   "part": "plate.top/throat piezo top.2",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.23879243661,
+   "rel": 0.001605606964437971
+  },
+  {
+   "part": "plate.top/throat piezo top.3",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.2387924370487,
+   "rel": 0.0016056069642633656
+  },
+  {
+   "part": "plate.top/rim electronics top",
+   "brep_mm3": 236448.82947978214,
+   "mesh_mm3": 236356.78277950804,
+   "rel": 0.00038928803528704586
+  },
+  {
+   "part": "plate.mid-up/face plate mid-up",
+   "brep_mm3": 1148215.008396097,
+   "mesh_mm3": 1148327.0710305502,
+   "rel": 9.759725629236809e-05
+  },
+  {
+   "part": "plate.mid-up/carrier ring mid-up",
+   "brep_mm3": 341214.6612916952,
+   "mesh_mm3": 341095.0562845783,
+   "rel": 0.000350527162766516
+  },
+  {
+   "part": "plate.mid-up/gyroid horn mid-up",
+   "brep_mm3": 321435.6147100016,
+   "mesh_mm3": 321308.53636478516,
+   "rel": 0.0003953461887884179
+  },
+  {
+   "part": "plate.mid-up/inner cone mid-up",
+   "brep_mm3": 2873.193562264776,
+   "mesh_mm3": 2861.960564530222,
+   "rel": 0.003909586142083509
+  },
+  {
+   "part": "plate.mid-up/throat piezo mid-up.1",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.23879243685,
+   "rel": 0.0016056069643424356
+  },
+  {
+   "part": "plate.mid-up/throat piezo mid-up.2",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.2387924366703,
+   "rel": 0.0016056069644139062
+  },
+  {
+   "part": "plate.mid-up/throat piezo mid-up.3",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.23879243687,
+   "rel": 0.0016056069643344743
+  },
+  {
+   "part": "plate.mid-up/rim electronics mid-up",
+   "brep_mm3": 236448.82947978214,
+   "mesh_mm3": 236356.78277946482,
+   "rel": 0.00038928803546983036
+  },
+  {
+   "part": "plate.mid-down/face plate mid-down",
+   "brep_mm3": 1148215.008396097,
+   "mesh_mm3": 1148327.071030568,
+   "rel": 9.759725630798184e-05
+  },
+  {
+   "part": "plate.mid-down/carrier ring mid-down",
+   "brep_mm3": 341214.6612916952,
+   "mesh_mm3": 341095.05628457264,
+   "rel": 0.0003505271627830632
+  },
+  {
+   "part": "plate.mid-down/gyroid horn mid-down",
+   "brep_mm3": 321435.61471000826,
+   "mesh_mm3": 321308.53636697464,
+   "rel": 0.0003953461819974837
+  },
+  {
+   "part": "plate.mid-down/inner cone mid-down",
+   "brep_mm3": 2873.193562264777,
+   "mesh_mm3": 2861.9605645307292,
+   "rel": 0.00390958614190735
+  },
+  {
+   "part": "plate.mid-down/throat piezo mid-down.1",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.2387924368327,
+   "rel": 0.0016056069643493112
+  },
+  {
+   "part": "plate.mid-down/throat piezo mid-down.2",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.238792436799,
+   "rel": 0.0016056069643627007
+  },
+  {
+   "part": "plate.mid-down/throat piezo mid-down.3",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.238792436761,
+   "rel": 0.0016056069643778995
+  },
+  {
+   "part": "plate.mid-down/rim electronics mid-down",
+   "brep_mm3": 236448.82947978214,
+   "mesh_mm3": 236356.78277948452,
+   "rel": 0.0003892880353865003
+  },
+  {
+   "part": "plate.deck/face plate deck",
+   "brep_mm3": 1148215.008396097,
+   "mesh_mm3": 1148327.0710305546,
+   "rel": 9.759725629622084e-05
+  },
+  {
+   "part": "plate.deck/carrier ring deck",
+   "brep_mm3": 341214.6612916952,
+   "mesh_mm3": 341095.0562845858,
+   "rel": 0.0003505271627445099
+  },
+  {
+   "part": "plate.deck/gyroid horn deck",
+   "brep_mm3": 321435.6147100078,
+   "mesh_mm3": 321308.5363666889,
+   "rel": 0.00039534618288498936
+  },
+  {
+   "part": "plate.deck/inner cone deck",
+   "brep_mm3": 2873.193562264775,
+   "mesh_mm3": 2861.960564529631,
+   "rel": 0.003909586142288948
+  },
+  {
+   "part": "plate.deck/throat piezo deck.1",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.2387924367413,
+   "rel": 0.00160560696438568
+  },
+  {
+   "part": "plate.deck/throat piezo deck.2",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.2387924367526,
+   "rel": 0.0016056069643811564
+  },
+  {
+   "part": "plate.deck/throat piezo deck.3",
+   "brep_mm3": 2513.2741228718346,
+   "mesh_mm3": 2509.23879243677,
+   "rel": 0.0016056069643742808
+  },
+  {
+   "part": "plate.deck/rim electronics deck",
+   "brep_mm3": 236448.82947978214,
+   "mesh_mm3": 236356.782779512,
+   "rel": 0.000389288035270306
+  },
+  {
+   "part": "torus.top/torus former top",
+   "brep_mm3": 489433.68225002196,
+   "mesh_mm3": 487814.1938862205,
+   "rel": 0.0033089025592933042
+  },
+  {
+   "part": "torus.top/winding top CW (feed A)",
+   "brep_mm3": 115305.21962409977,
+   "mesh_mm3": 113967.89864963572,
+   "rel": 0.011598095722151824
+  },
+  {
+   "part": "torus.top/winding top CCW (feed B)",
+   "brep_mm3": 134330.97734986266,
+   "mesh_mm3": 132763.35510676933,
+   "rel": 0.011669849159293186
+  },
+  {
+   "part": "torus.middle/torus former middle",
+   "brep_mm3": 489433.68225002196,
+   "mesh_mm3": 487814.1938833349,
+   "rel": 0.0033089025651890703
+  },
+  {
+   "part": "torus.middle/winding middle CW (feed A)",
+   "brep_mm3": 115305.21962409977,
+   "mesh_mm3": 113967.89864965536,
+   "rel": 0.011598095721981574
+  },
+  {
+   "part": "torus.middle/winding middle CCW (feed B)",
+   "brep_mm3": 134330.97734986266,
+   "mesh_mm3": 132763.35510673284,
+   "rel": 0.011669849159564875
+  },
+  {
+   "part": "torus.deck/torus former deck",
+   "brep_mm3": 489433.68225002196,
+   "mesh_mm3": 487814.1938855213,
+   "rel": 0.0033089025607218746
+  },
+  {
+   "part": "torus.deck/winding deck CW (feed A)",
+   "brep_mm3": 115305.21962409977,
+   "mesh_mm3": 113967.89864964057,
+   "rel": 0.011598095722109798
+  },
+  {
+   "part": "torus.deck/winding deck CCW (feed B)",
+   "brep_mm3": 134330.97734986266,
+   "mesh_mm3": 132763.35510673016,
+   "rel": 0.011669849159584807
+  },
+  {
+   "part": "bore/bore collar top",
+   "brep_mm3": 3512.300586713389,
+   "mesh_mm3": 3506.661212430385,
+   "rel": 0.0016056069643745087
+  },
+  {
+   "part": "bore/bore collar middle",
+   "brep_mm3": 5064.247357586748,
+   "mesh_mm3": 5056.116166760091,
+   "rel": 0.0016056069643746252
+  },
+  {
+   "part": "bore/bore feed tube deck",
+   "brep_mm3": 4941.725244096742,
+   "mesh_mm3": 4933.790775628716,
+   "rel": 0.0016056069643905567
+  },
+  {
+   "part": "enclosure/rear glass (fixed)",
+   "brep_mm3": 1271716.7061731517,
+   "mesh_mm3": 1271264.3560661066,
+   "rel": 0.0003557003732429977
+  },
+  {
+   "part": "enclosure/front glass (rotating)",
+   "brep_mm3": 1306399.8890687786,
+   "mesh_mm3": 1305961.3737072344,
+   "rel": 0.0003356670229486859
+  },
+  {
+   "part": "enclosure/front glass lower end-band",
+   "brep_mm3": 14074.72778716404,
+   "mesh_mm3": 14070.003365186589,
+   "rel": 0.00033566702311356515
+  },
+  {
+   "part": "enclosure/front glass upper end-band",
+   "brep_mm3": 14074.72778716404,
+   "mesh_mm3": 14070.003365175437,
+   "rel": 0.0003356670239059232
+  },
+  {
+   "part": "enclosure/V-groove track lower",
+   "brep_mm3": 9863.030135945271,
+   "mesh_mm3": 9859.572875976126,
+   "rel": 0.000350527162696759
+  },
+  {
+   "part": "enclosure/V-groove track upper",
+   "brep_mm3": 9863.030135945271,
+   "mesh_mm3": 9859.57287596528,
+   "rel": 0.0003505271637964853
+  },
+  {
+   "part": "enclosure/V-roller lower 1",
+   "brep_mm3": 84.82300164692447,
+   "mesh_mm3": 84.58097255321263,
+   "rel": 0.002853342713799268
+  },
+  {
+   "part": "enclosure/V-roller lower 2",
+   "brep_mm3": 84.82300164692454,
+   "mesh_mm3": 84.58097255861769,
+   "rel": 0.00285334265007852
+  },
+  {
+   "part": "enclosure/V-roller lower 3",
+   "brep_mm3": 84.82300164692448,
+   "mesh_mm3": 84.5809725567533,
+   "rel": 0.0028533426720576574
+  },
+  {
+   "part": "enclosure/V-roller upper 1",
+   "brep_mm3": 84.82300164692447,
+   "mesh_mm3": 84.58097253990672,
+   "rel": 0.002853342870666005
+  },
+  {
+   "part": "enclosure/V-roller upper 2",
+   "brep_mm3": 84.82300164692454,
+   "mesh_mm3": 84.58097255866467,
+   "rel": 0.002853342649524648
+  },
+  {
+   "part": "enclosure/V-roller upper 3",
+   "brep_mm3": 84.82300164692448,
+   "mesh_mm3": 84.5809725533342,
+   "rel": 0.0028533427123661696
+  },
+  {
+   "part": "arcade/arcade column 1",
+   "brep_mm3": 82800.0,
+   "mesh_mm3": 82800,
+   "rel": 0.0
+  },
+  {
+   "part": "arcade/RX / status strip 1",
+   "brep_mm3": 2351.9999999999745,
+   "mesh_mm3": 2351.9999999999804,
+   "rel": 2.5134845074507218e-15
+  },
+  {
+   "part": "arcade/arcade column 2",
+   "brep_mm3": 82799.99999999991,
+   "mesh_mm3": 82800.0000000007,
+   "rel": 9.490379496761e-15
+  },
+  {
+   "part": "arcade/RX / status strip 2",
+   "brep_mm3": 2351.9999999999623,
+   "mesh_mm3": 2352.0000000032983,
+   "rel": 1.418378642050661e-12
+  },
+  {
+   "part": "arcade/arcade column 3",
+   "brep_mm3": 82799.99999999993,
+   "mesh_mm3": 82800.00000000093,
+   "rel": 1.2126596023639053e-14
+  },
+  {
+   "part": "arcade/RX / status strip 3",
+   "brep_mm3": 2351.9999999999627,
+   "mesh_mm3": 2351.99999999934,
+   "rel": 2.646892531307735e-13
+  },
+  {
+   "part": "arcade/arcade column 4",
+   "brep_mm3": 82800.0,
+   "mesh_mm3": 82800.00000000023,
+   "rel": 2.8119642953365897e-15
+  },
+  {
+   "part": "arcade/RX / status strip 4",
+   "brep_mm3": 2351.9999999999745,
+   "mesh_mm3": 2352,
+   "rel": 1.0827317878249263e-14
+  },
+  {
+   "part": "arcade/arcade column 5",
+   "brep_mm3": 82799.9999999999,
+   "mesh_mm3": 82799.99999999891,
+   "rel": 1.1950848255180521e-14
+  },
+  {
+   "part": "arcade/RX / status strip 5",
+   "brep_mm3": 2351.999999999961,
+   "mesh_mm3": 2352.0000000010864,
+   "rel": 4.785287812261978e-13
+  },
+  {
+   "part": "arcade/arcade column 6",
+   "brep_mm3": 82799.99999999991,
+   "mesh_mm3": 82800.00000000007,
+   "rel": 1.9332254530439075e-15
+  },
+  {
+   "part": "arcade/RX / status strip 6",
+   "brep_mm3": 2351.999999999945,
+   "mesh_mm3": 2351.9999999999613,
+   "rel": 6.960418636017471e-15
+  },
+  {
+   "part": "arcade/arcade column 7",
+   "brep_mm3": 82800.0,
+   "mesh_mm3": 82800.00000000007,
+   "rel": 8.787388422926843e-16
+  },
+  {
+   "part": "arcade/RX / status strip 7",
+   "brep_mm3": 2351.9999999999745,
+   "mesh_mm3": 2351.9999999999804,
+   "rel": 2.5134845074507218e-15
+  },
+  {
+   "part": "photonic/photonic bay tile 1",
+   "brep_mm3": 225984.0000000003,
+   "mesh_mm3": 225984.0000000006,
+   "rel": 1.416658413976522e-15
+  },
+  {
+   "part": "photonic/photonic bay tile 2",
+   "brep_mm3": 225983.9999999997,
+   "mesh_mm3": 225983.99999999814,
+   "rel": 6.954504941339307e-15
+  },
+  {
+   "part": "photonic/photonic bay tile 3",
+   "brep_mm3": 225983.9999999996,
+   "mesh_mm3": 225984.00000000154,
+   "rel": 8.628737612402478e-15
+  },
+  {
+   "part": "photonic/photonic bay tile 4",
+   "brep_mm3": 225984.00000000035,
+   "mesh_mm3": 225984,
+   "rel": 1.5454455425198417e-15
+  },
+  {
+   "part": "photonic/photonic bay tile 5",
+   "brep_mm3": 225984.00000000032,
+   "mesh_mm3": 225984.00000000186,
+   "rel": 6.825717812795968e-15
+  },
+  {
+   "part": "photonic/photonic bay tile 6",
+   "brep_mm3": 225984.00000000023,
+   "mesh_mm3": 225984,
+   "rel": 1.0302970283465617e-15
+  },
+  {
+   "part": "body/LED status ring",
+   "brep_mm3": 25321.23678793374,
+   "mesh_mm3": 25311.379533413765,
+   "rel": 0.00038928803527765314
+  },
+  {
+   "part": "base/air intake filter",
+   "brep_mm3": 1278753.8737171893,
+   "mesh_mm3": 1278299.0204870393,
+   "rel": 0.00035570037322956073
+  },
+  {
+   "part": "base/water reservoir",
+   "brep_mm3": 2376000.0,
+   "mesh_mm3": 2376000,
+   "rel": 0.0
+  },
+  {
+   "part": "base/graphite block bay",
+   "brep_mm3": 1200000.0,
+   "mesh_mm3": 1200000,
+   "rel": 0.0
+  },
+  {
+   "part": "base/power supply",
+   "brep_mm3": 945000.0,
+   "mesh_mm3": 945000,
+   "rel": 0.0
+  },
+  {
+   "part": "base/compute + router",
+   "brep_mm3": 560000.0,
+   "mesh_mm3": 560000,
+   "rel": 0.0
+  },
+  {
+   "part": "base/feed pump",
+   "brep_mm3": 137444.6785945535,
+   "mesh_mm3": 136563.22541128975,
+   "rel": 0.006413148855794794
+  },
+  {
+   "part": "base/cartridge circle",
+   "brep_mm3": 1969778.5938008004,
+   "mesh_mm3": 1968745.5433923192,
+   "rel": 0.0005244500126726551
+  },
+  {
+   "part": "crown/optical stem head",
+   "brep_mm3": 84823.00164692443,
+   "mesh_mm3": 84580.97255859908,
+   "rel": 0.0028533426502965905
+  },
+  {
+   "part": "crown/touch UI 7in",
+   "brep_mm3": 27087.260869565318,
+   "mesh_mm3": 27083.701427248423,
+   "rel": 0.00013140650632911786
+  }
+ ],
+ "worstRatio": 0.4275432570529863,
+ "worstPart": "base/feed pump",
+ "missing": [],
+ "seconds": 7.992049932479858,
+ "passed": true
+}

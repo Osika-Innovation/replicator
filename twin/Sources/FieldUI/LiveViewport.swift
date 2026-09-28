@@ -10,6 +10,10 @@ import FieldGPU
 /// sees (§21).
 public final class ViewportMTKView: MTKView {
     private var renderer: Renderer?
+    /// Machine tab: the RH-1 solid model, drawn instead of the build volume.
+    private var solid: SolidRenderer?
+    public var solidView = SolidView.machine("iso")
+    public var showMachine = false
     private var lastDrag: NSPoint = .zero
     private var palette = FieldGPU.SceneBuilder.Palette()
     /// Set by the document model when an object is loaded or cleared.
@@ -83,6 +87,23 @@ public final class ViewportMTKView: MTKView {
         }
     }
 
+    /// Upload the solid model (Machine tab). Keeps the current camera.
+    public func loadMachine(_ model: RH1Model, overlays: Set<String>, theme: Theme) {
+        guard let dev = device else { return }
+        if solid == nil, let ctx = renderer?.ctx ?? (try? MetalContext()) {
+            _ = dev
+            solid = try? SolidRenderer(ctx: ctx, sampleCount: sampleCount)
+        }
+        guard let s = solid else { return }
+        let b = MachineCAD.batches(model, overlays: overlays)
+        s.load(opaque: b.opaque, transparent: b.transparent,
+               floor: SolidScene.floor(color: MachineCAD.floorColor(theme)))
+        let cam = solidView.camera
+        let keepCamera = showMachine
+        solidView = MachineCAD.view(preset: "iso", overlays: overlays, theme: theme)
+        if keepCamera { solidView.camera = cam }
+    }
+
     public override var acceptsFirstResponder: Bool { true }
 
     public override func mouseDown(with event: NSEvent) {
@@ -93,18 +114,46 @@ public final class ViewportMTKView: MTKView {
         let p = event.locationInWindow
         let dx = Float(p.x - lastDrag.x), dy = Float(p.y - lastDrag.y)
         lastDrag = p
+        if showMachine {
+            solidView.camera.azimuth -= dx * 0.008
+            solidView.camera.elevation = max(-1.45, min(1.45, solidView.camera.elevation + dy * 0.008))
+            return
+        }
         renderer?.camera.azimuth -= dx * 0.008
         renderer?.camera.elevation = max(-1.45, min(1.45,
             (renderer?.camera.elevation ?? 0) + dy * 0.008))
     }
 
     public override func scrollWheel(with event: NSEvent) {
+        if showMachine {
+            solidView.camera.distance = max(0.35, min(6.0,
+                solidView.camera.distance * Float(1 - event.scrollingDeltaY * 0.01)))
+            return
+        }
         guard let r = renderer else { return }
         r.camera.distance = max(0.25, min(2.0,
             r.camera.distance * Float(1 - event.scrollingDeltaY * 0.01)))
     }
 
     public override func keyDown(with event: NSEvent) {
+        if showMachine {
+            let keep = solidView
+            switch event.charactersIgnoringModifiers {
+            case "1": solidView = SolidView.machine("front")
+            case "2": solidView = SolidView.machine("top")
+            case "3", "0": solidView = SolidView.machine("iso")
+            case "4": solidView = SolidView.machine("detail")
+            case "5": solidView = SolidView.machine("plate")
+            case "s":
+                solidView.cut.toggle(); solidView.cutFromDeg = -90; solidView.cutToDeg = 0
+                solidView.cutZMin = 0; solidView.cutZMax = 0
+            default: super.keyDown(with: event); return
+            }
+            solidView.background = keep.background
+            solidView.ambTop = keep.ambTop; solidView.ambBottom = keep.ambBottom
+            solidView.capTint = keep.capTint
+            return
+        }
         guard let r = renderer else { return }
         switch event.charactersIgnoringModifiers {
         case "1": r.camera = .front
@@ -141,7 +190,11 @@ public final class ViewportMTKView: MTKView {
               let cb = r.ctx.queue.makeCommandBuffer(),
               let enc = cb.makeRenderCommandEncoder(descriptor: rp) else { return }
         let aspect = Float(max(1, drawableSize.width) / max(1, drawableSize.height))
-        r.encode(into: enc, aspect: aspect)
+        if showMachine, let s = solid {
+            s.encode(into: enc, view: solidView, aspect: aspect)
+        } else {
+            r.encode(into: enc, aspect: aspect)
+        }
         enc.endEncoding()
         cb.present(drawable)
         cb.commit()
@@ -168,6 +221,7 @@ struct LiveViewportRepresentable: NSViewRepresentable {
         }
         doc.viewport = v
         if doc.mesh != nil { Task { @MainActor in doc.applyOverlays() } }
+        if doc.state.mode == .machine { Task { @MainActor in doc.enterMachine() } }
         return v
     }
     func updateNSView(_ nsView: NSView, context: Context) {}
@@ -297,14 +351,18 @@ public final class Document: ObservableObject {
     public func actions() -> AppActions {
         var a = AppActions()
         a.setMode = { [weak self] m in Task { @MainActor in
-            self?.state.mode = m
-            self?.state.statusLine = "\(m.name) mode"
+            guard let self else { return }
+            let wasMachine = self.state.mode == .machine
+            self.state.mode = m
+            self.state.statusLine = "\(m.name) mode"
+            if m == .machine { self.enterMachine() }
+            else if wasMachine { self.leaveMachine() }
         } }
         a.toggleOverlay = { [weak self] name in Task { @MainActor in
             guard let self else { return }
             if self.state.overlays.contains(name) { self.state.overlays.remove(name) }
             else { self.state.overlays.insert(name) }
-            self.applyOverlays()
+            if name.hasPrefix("cad.") { self.refreshMachine() } else { self.applyOverlays() }
         } }
         a.toggleMachineView = { [weak self] in Task { @MainActor in
             guard let self else { return }
@@ -332,9 +390,68 @@ public final class Document: ObservableObject {
             self?.togglePlay()
         } }
         a.primaryAction = { [weak self] in Task { @MainActor in
-            self?.runPrimary()
+            guard let self else { return }
+            if self.state.mode == .machine { self.exportMachine() } else { self.runPrimary() }
         } }
         return a
+    }
+
+    // ---- Machine tab ------------------------------------------------------
+
+    private var savedInspector: [AppState.InspectorSection]?
+    private var savedRail: (String, Int, Int, String)?
+    private var machineModel: RH1Model?
+
+    func enterMachine() {
+        savedInspector = state.inspector
+        savedRail = (state.machineName, state.gateCount, state.elementCount, state.buildVolumeText)
+        MachineCAD.applyRail(&state)
+        if !state.overlays.contains("cad.glass") { state.overlays.insert("cad.glass") }
+        refreshMachine()
+        viewport?.showMachine = true
+        state.inspector = MachineCAD.inspector(machineModel ?? MachineCAD.model)
+        state.statusLine = "RH-1 solid model · drag orbit · scroll zoom · S section · 1 front · 2 top · 3 iso · 4 detail · 5 plate"
+    }
+
+    func leaveMachine() {
+        viewport?.showMachine = false
+        if let s = savedInspector { state.inspector = s }
+        if let r = savedRail {
+            state.machineName = r.0; state.gateCount = r.1
+            state.elementCount = r.2; state.buildVolumeText = r.3
+        }
+    }
+
+    func refreshMachine() {
+        let door = state.overlays.contains("cad.door")
+        if machineModel == nil || (machineModel!.design.doorAngleDeg > 0) != door {
+            machineModel = door ? RH1Model(design: MachineCAD.design(doorOpen: true)) : MachineCAD.model
+        }
+        viewport?.loadMachine(machineModel!, overlays: state.overlays, theme: state.theme)
+        if state.overlays.contains("cad.section") {
+            viewport?.solidView.cut = true
+            viewport?.solidView.cutFromDeg = -90; viewport?.solidView.cutToDeg = 0
+        } else {
+            viewport?.solidView.cut = false
+        }
+    }
+
+    func exportMachine() {
+        let m = machineModel ?? MachineCAD.model
+        let dir = URL(fileURLWithPath: "cad-out")
+        state.busy = "Exporting…"
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            _ = try CADExport.writeSTL(m, to: dir.appendingPathComponent("stl"))
+            try CADExport.writeOBJ(m, to: dir.appendingPathComponent("rh1.obj"))
+            try CADExport.writeParams(m, to: dir.appendingPathComponent("rh1_params.json"))
+            try CADExport.drawingSVG(m).write(to: dir.appendingPathComponent("rh1_general_arrangement.svg"),
+                                              atomically: true, encoding: .utf8)
+            state.statusLine = "exported \(m.parts.count) parts → \(dir.path) (STL, OBJ, params, drawing)"
+        } catch {
+            state.statusLine = "export failed: \(error)"
+        }
+        state.busy = nil
     }
 
     private var timer: Timer?
@@ -569,14 +686,25 @@ public struct LiveAppShell: View {
                 ZStack(alignment: .topLeading) {
                     LiveViewportRepresentable(theme: s.theme, doc: doc)
                     HStack(spacing: 6) {
-                        ForEach(["field", "traps", "matter", "solid",
-                                 "boundary", "chords"], id: \.self) { c in
-                            OverlayChip(name: c, on: s.overlays.contains(c),
-                                        theme: s.theme,
-                                        action: doc.actions().toggleOverlay)
+                        if s.mode == .machine {
+                            ForEach(MachineCAD.chips, id: \.self) { c in
+                                OverlayChip(name: c, on: s.overlays.contains("cad." + c),
+                                            theme: s.theme,
+                                            action: doc.actions().toggleOverlay.map { f in
+                                                { @Sendable (n: String) in f("cad." + n) } })
+                            }
+                        } else {
+                            ForEach(["field", "traps", "matter", "solid",
+                                     "boundary", "chords"], id: \.self) { c in
+                                OverlayChip(name: c, on: s.overlays.contains(c),
+                                            theme: s.theme,
+                                            action: doc.actions().toggleOverlay)
+                            }
                         }
                         Spacer()
-                        Text("drop an STL here · drag orbit · scroll zoom · 1 front · 2 top · 3 home")
+                        Text(s.mode == .machine
+                             ? "drag orbit · scroll zoom · S section · 1 front · 2 top · 3 iso · 4 detail · 5 plate"
+                             : "drop an STL here · drag orbit · scroll zoom · 1 front · 2 top · 3 home")
                             .font(.system(size: 9.5))
                             .foregroundStyle(Color.white.opacity(0.45))
                     }

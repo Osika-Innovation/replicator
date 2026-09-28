@@ -54,7 +54,9 @@ public struct AppMode: Sendable, Hashable {
     public static let compile = AppMode(name: "Compile")
     public static let build = AppMode(name: "Build")
     public static let inspect = AppMode(name: "Inspect")
-    public static let all: [AppMode] = [.scan, .compile, .build, .inspect]
+    /// The RH-1 solid model — geometry the simulation modes are defined on.
+    public static let machine = AppMode(name: "Machine")
+    public static let all: [AppMode] = [.scan, .compile, .build, .inspect, .machine]
 }
 
 /// Interaction handlers. All optional and all defaulting to nil.

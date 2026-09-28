@@ -10,15 +10,22 @@ import CoreGraphics
 // fieldc — the CLI half of the "one core, two front-ends" law (§20 L2).
 // Everything the UI can do is reachable here, through the same FieldCore calls.
 
-func gitSHA() -> String {
+func git(_ args: [String]) -> String? {
     let p = Process()
     p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-    p.arguments = ["rev-parse", "--short", "HEAD"]
+    p.arguments = args
     let pipe = Pipe(); p.standardOutput = pipe; p.standardError = Pipe()
-    do { try p.run(); p.waitUntilExit() } catch { return "unknown" }
+    do { try p.run(); p.waitUntilExit() } catch { return nil }
     let d = pipe.fileHandleForReading.readDataToEndOfFile()
     return String(data: d, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        ?? "unknown"
+}
+
+/// HEAD, marked `+dirty` when the working tree differs from it — a receipt
+/// that names a commit the numbers were not produced from is a false receipt.
+func gitSHA() -> String {
+    guard let sha = git(["rev-parse", "--short", "HEAD"]), !sha.isEmpty else { return "unknown" }
+    let dirty = !(git(["status", "--porcelain", "--untracked-files=no", "--", "."]) ?? "").isEmpty
+    return dirty ? sha + "+dirty" : sha
 }
 
 func deviceName() -> String {
@@ -72,6 +79,42 @@ case "test":
     print(h.summary)
     print(String(format: "(%.2fs)", Date().timeIntervalSince(t0)))
     exit(h.allPassed ? 0 : 1)
+
+case "machine" where args.contains("--freestanding"):
+    var o = RH1Freestanding.Options()
+    o.slotsOpen = !args.contains("--slots-closed")
+    let (preset, coupling) = RH1Freestanding.preset(o)
+    let d = RH1Design()
+    print("preset      : \(preset.displayName) [\(preset.id)] — geometry read from RH1Model")
+    print("gates       : \(preset.gateCount) acoustic (3 throat piezos × 2 build-chamber faces)")
+    print("elements    : \(preset.elements.count) virtual (apertures × gates), slots \(o.slotsOpen ? "OPEN" : "closed")")
+    print("build volume: r = \(preset.buildVolume.radius * 1000) mm, h = \(preset.buildVolume.height * 1000) mm (face to face)")
+    let mags = coupling.map(\.magnitude)
+    print(String(format: "horn coupling: |c| %.3f … %.3f (HornModel STUB, c_h = %.0f m/s)",
+                 mags.min() ?? 0, mags.max() ?? 0, o.horn.soundSpeed))
+    print("walls       : the facing plates, L = \(d.buildChamberHeight) mm, image order 3")
+
+case "plates":
+    // The plate-primary aperture study (PlateApertureStudy): can 6 throat
+    // gates hold a trap, at one tone vs a chord, slots open vs closed?
+    let t0 = Date()
+    var gates: [GateResult] = []
+    print("condition                                  apertures  contrast   par/main   main depth")
+    for (label, tones, slots, walls) in PlateApertureStudy.conditions {
+        let r = PlateApertureStudy.run(label: label, tones: tones, slotsOpen: slots, walls: walls)
+        print(String(format: "%-42@ %9d %9.2f %10.3f   %.3e", label as NSString, r.apertures,
+                     r.focusContrast, r.parasiticToMain, r.mainDepth))
+        gates.append(GateResult(id: "P-\(tones)t-\(slots ? "open" : "closed")-\(walls ? "walls" : "free")",
+                                name: "plate aperture: \(label)", measured: r.parasiticToMain,
+                                threshold: 0, comparison: .informational,
+                                detail: String(format: "focus contrast %.2f, main depth %.3e J, %d apertures; MODEL numbers (HornModel stub)",
+                                               r.focusContrast, r.mainDepth, r.apertures)))
+    }
+    print(String(format: "(%.1fs) lower par/main is better; ∞ = no trap at the target", Date().timeIntervalSince(t0)))
+    if args.contains("--receipt") {
+        writeReceipt(Receipt(name: "plates", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                             device: deviceName(), gitSHA: gitSHA()))
+    }
 
 case "machine":
     let preset = RH1.preset(includeEMCaps: args.contains("--em"))
@@ -370,16 +413,22 @@ case "broadband":
 case "shot":
     exit(await MainActor.run { ShotCommand.run(args: args) })
 
+case "cad":
+    exit(CADCommand.run(args))
+
 default:
     print("""
     fieldc — Field Compiler CLI
 
       fieldc gate [--receipt]   run the physics acceptance gates (§22)
       fieldc test               run the unit suite
-      fieldc machine [--em]     describe the RH-1 preset
+      fieldc machine [--em]     describe the RH-1 desktop preset (v0.3, panels)
+      fieldc machine --freestanding [--slots-closed]   the plate-primary preset, from the CAD
+      fieldc plates [--receipt] plate-aperture study: 6 throat gates, tones, slots, walls
       fieldc focus              compile a centre trap, compare solver methods
       fieldc gpu                validate the Metal propagator against the CPU
       fieldc render [iso|front|top] [--light] [out.png]\n      fieldc scan [--receipt]   end-to-end scan -> chords -> .pattern -> Machine View\n      fieldc broadband          channel-count study: free field vs cavity + chord\n      fieldc shot [scene] [--all] [--light] [--contact-sheet] [--out DIR]
+      fieldc cad [info|check|render|export|drawing|bom|params|step]   the RH-1 solid model
 
     Built for CommandLineTools only — no Xcode, no external dependencies.
     """)
