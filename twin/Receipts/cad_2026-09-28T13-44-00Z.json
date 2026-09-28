@@ -1,0 +1,91 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-28T13:44:00Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0.21302199363708496,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "92 parts, 484828 triangles",
+      "id" : "G-CAD1",
+      "measured" : 0,
+      "name" : "every part a closed, outward-oriented solid",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "worst: inner cone deck",
+      "id" : "G-CAD2",
+      "measured" : 0.003909586142288001,
+      "name" : "mesh volume vs closed form (77 parts)",
+      "passed" : true,
+      "threshold" : 0.01
+    },
+    {
+      "comparison" : "<",
+      "detail" : "min margin 0.0428 mm",
+      "id" : "G-CAD3",
+      "measured" : 0,
+      "name" : "design-rule clearances (25 rules)",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "no part penetrates another",
+      "id" : "G-CAD3b",
+      "measured" : 0,
+      "name" : "sampled solid interference, neighbouring parts",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "worst: plate diameter 409.97 vs 410.0",
+      "id" : "G-CAD4",
+      "measured" : 0.03459546516882028,
+      "name" : "dimension audit vs spec\/site (14 checks)",
+      "passed" : true,
+      "threshold" : 0.1
+    },
+    {
+      "comparison" : "<",
+      "detail" : "dominant pair by band, inner → outer: 13×21, 21×34, 34×55 — the rim reads the next Fibonacci pair",
+      "id" : "G-CAD5",
+      "measured" : 0,
+      "name" : "21 × 34 parastichies present (mech §3c claim)",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "arc 187.39 mm, mouth:throat 11.2:1, fold 9.4:1",
+      "id" : "G-CAD6",
+      "measured" : 0.3877724229797366,
+      "name" : "horn meridian arc length (mech §3c: ≈187 mm)",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shells 28.9 kg (spec ~20), plates+carriers 16.1 (spec ~15, 3 plates), glass 6.4 (spec ~6.5); placeholders not counted",
+      "id" : "G-CAD7",
+      "measured" : 68.7803442122926,
+      "name" : "mass budget (spec §3: ≈50 kg class)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "128 micro-horns drilled, 252 left to slot voids; slots 34613 mm², micro-horn faces 2696 mm², throats 674 mm²",
+      "id" : "G-CAD8",
+      "measured" : 12.839049411740763,
+      "name" : "acoustic open area per face, slots vs micro-horns",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "f61c82d",
+  "name" : "cad"
+}

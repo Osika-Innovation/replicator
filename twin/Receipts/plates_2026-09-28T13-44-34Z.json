@@ -1,0 +1,55 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-28T13:44:34Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 33.23804295063019,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "focus contrast 9.27, main depth 1.168e-17 J, 3688 apertures; MODEL numbers (HornModel stub)",
+      "id" : "P-1t-open-free",
+      "measured" : 1.0537180453825614,
+      "name" : "plate aperture: 1 tone, free field, slots open",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "focus contrast 9.51, main depth 1.182e-17 J, 3688 apertures; MODEL numbers (HornModel stub)",
+      "id" : "P-1t-open-walls",
+      "measured" : 1.0230980694560605,
+      "name" : "plate aperture: 1 tone, plates as walls, slots open",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "focus contrast 6.98, main depth 3.880e-17 J, 3688 apertures; MODEL numbers (HornModel stub)",
+      "id" : "P-5t-open-walls",
+      "measured" : 0.999999999999979,
+      "name" : "plate aperture: 5 tones, plates as walls, slots open",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "focus contrast 14.77, main depth 1.269e-17 J, 256 apertures; MODEL numbers (HornModel stub)",
+      "id" : "P-1t-closed-walls",
+      "measured" : 0.9999999999999807,
+      "name" : "plate aperture: 1 tone, plates as walls, slots closed",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "focus contrast 7.30, main depth 3.711e-17 J, 256 apertures; MODEL numbers (HornModel stub)",
+      "id" : "P-5t-closed-walls",
+      "measured" : 0.9999999999999781,
+      "name" : "plate aperture: 5 tones, plates as walls, slots closed",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "f61c82d",
+  "name" : "plates"
+}
