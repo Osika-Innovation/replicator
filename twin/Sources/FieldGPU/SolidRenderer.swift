@@ -13,11 +13,22 @@ public struct SolidGeometry {
     public init() {}
     public var count: Int { positions.count }
 
+    /// Make room for `corners` more triangle corners in every stream.
+    /// Reserve a batch's total once, up front. The previous exact
+    /// `reserveCapacity(count + n)` before every append reallocated the whole
+    /// array for each of the 92 parts, and the allocator kept the pages of
+    /// every discarded copy: ~800 MB resident in an idle app.
+    public mutating func reserve(corners n: Int) {
+        positions.reserveCapacity(count + n)
+        normals.reserveCapacity(count + n)
+        colors.reserveCapacity(count + n)
+        materials.reserveCapacity(count + n)
+    }
+
     /// Append a millimetre mesh, converting to metres (the GPU frame).
     public mutating func append(_ mesh: IndexedMesh, color: SIMD4<Float>,
                                 material: SIMD4<Float>, crease: Double = 38) {
         let (p, n) = mesh.shadingCorners(creaseDeg: crease)
-        positions.reserveCapacity(positions.count + p.count)
         for i in p.indices {
             positions.append(SIMD3<Float>(Float(p[i].x * 0.001), Float(p[i].y * 0.001),
                                           Float(p[i].z * 0.001)))
@@ -48,12 +59,17 @@ public enum SolidScene {
                              include: (CADPart) -> Bool = { _ in true },
                              tint: (CADPart) -> SIMD4<Float>? = { _ in nil })
         -> (opaque: SolidGeometry, transparent: SolidGeometry) {
-        var o = SolidGeometry(), t = SolidGeometry()
-        for p in model.parts where include(p) {
+        let kept = model.parts.filter(include).map { p -> (CADPart, SIMD4<Float>, Bool) in
             let c = tint(p) ?? color(p.material)
+            return (p, c, p.material.isTransparent && c.w < 0.99)
+        }
+        var o = SolidGeometry(), t = SolidGeometry()
+        o.reserve(corners: kept.reduce(0) { $0 + ($1.2 ? 0 : 3 * $1.0.mesh.triangleCount) })
+        t.reserve(corners: kept.reduce(0) { $0 + ($1.2 ? 3 * $1.0.mesh.triangleCount : 0) })
+        for (p, c, isGlass) in kept {
             // Plates and machined parts keep crisp edges; curved shells smooth.
             let crease = p.material == .plateMetal ? 30.0 : 40.0
-            if p.material.isTransparent && c.w < 0.99 {
+            if isGlass {
                 t.append(p.mesh, color: c, material: material(p.material), crease: crease)
             } else {
                 var m = material(p.material)

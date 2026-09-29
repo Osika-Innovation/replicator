@@ -12,8 +12,8 @@ public final class ViewportMTKView: MTKView {
     private var renderer: Renderer?
     /// Machine tab: the RH-1 solid model, drawn instead of the build volume.
     private var solid: SolidRenderer?
-    public var solidView = SolidView.machine("iso")
-    public var showMachine = false
+    public var solidView = SolidView.machine("iso") { didSet { redraw() } }
+    public var showMachine = false { didSet { redraw() } }
     private var lastDrag: NSPoint = .zero
     private var palette = FieldGPU.SceneBuilder.Palette()
     /// Set by the document model when an object is loaded or cleared.
@@ -59,6 +59,29 @@ public final class ViewportMTKView: MTKView {
             merge(FieldGPU.SceneBuilder.object(mesh, palette: palette, fits: fits))
         }
         r.load(FieldGPU.SceneBuilder.rh1(palette: palette), object: extra)
+        redraw()
+    }
+
+    /// Ask for one new frame. The view draws on demand, not on a clock:
+    /// nothing on screen animates by itself, so every visible change comes
+    /// from an event (camera, scene, mode, resize) that calls this. The
+    /// continuous 60 Hz loop this replaces kept ~60% of the GPU busy
+    /// redrawing an unchanged picture while the app sat idle.
+    public func redraw() { needsDisplay = true }
+
+    public override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        redraw()
+    }
+
+    public override func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        redraw()
+    }
+
+    public override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        redraw()
     }
 
     public static func make(ctx: MetalContext,
@@ -75,9 +98,9 @@ public final class ViewportMTKView: MTKView {
         self.depthStencilPixelFormat = .depth32Float
         self.clearColor = MTLClearColor(red: background.x, green: background.y,
                                         blue: background.z, alpha: background.w)
-        self.enableSetNeedsDisplay = false
-        self.isPaused = false
-        self.preferredFramesPerSecond = 60
+        // Event-driven drawing (see `redraw()`).
+        self.enableSetNeedsDisplay = true
+        self.isPaused = true
         self.palette = palette
         self.registerForDraggedTypes([.fileURL])
         if let r = try? Renderer(ctx: ctx, pixelFormat: .bgra8Unorm) {
@@ -122,6 +145,7 @@ public final class ViewportMTKView: MTKView {
         renderer?.camera.azimuth -= dx * 0.008
         renderer?.camera.elevation = max(-1.45, min(1.45,
             (renderer?.camera.elevation ?? 0) + dy * 0.008))
+        redraw()
     }
 
     public override func scrollWheel(with event: NSEvent) {
@@ -133,6 +157,7 @@ public final class ViewportMTKView: MTKView {
         guard let r = renderer else { return }
         r.camera.distance = max(0.25, min(2.0,
             r.camera.distance * Float(1 - event.scrollingDeltaY * 0.01)))
+        redraw()
     }
 
     public override func keyDown(with event: NSEvent) {
@@ -160,8 +185,9 @@ public final class ViewportMTKView: MTKView {
         case "2": r.camera = .top
         case "3", "0": r.camera = .home
         case "o": r.camera.orthographic.toggle()
-        default: super.keyDown(with: event)
+        default: super.keyDown(with: event); return
         }
+        redraw()
     }
 
     // Drag-and-drop, registered on the Metal view itself. SwiftUI's .onDrop
