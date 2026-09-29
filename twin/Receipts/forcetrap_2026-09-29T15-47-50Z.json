@@ -1,0 +1,55 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T15:47:50Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 62.921992897987366,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "force 0.91 (6 siblings), GS-PAT 0.94 (8); depth 1.0×",
+      "id" : "F-1t",
+      "measured" : 0.9132316298468042,
+      "name" : "1 tone, 40 kHz, mid-plane: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.90 (40 siblings), GS-PAT 0.95 (32); depth 0.7×",
+      "id" : "F-1t",
+      "measured" : 0.8990142120631073,
+      "name" : "1 tone, 40 kHz, 100 mm above the lower face: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "<",
+      "detail" : "sibling ratio 0.25, 0 siblings ≥ 0.5, offset 1.9 mm; GS-PAT no well at the target",
+      "id" : "G-F1",
+      "measured" : 0.2549046147552602,
+      "name" : "force compiler + 5-tone chord: unique trap at the mid-plane",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.25 (0 siblings), GS-PAT inf (118); depth inf×",
+      "id" : "F-5t",
+      "measured" : 0.2549046147552602,
+      "name" : "5-tone chord, 30–70 kHz, mid-plane: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.31 (0 siblings), GS-PAT 0.80 (28); depth 0.3×",
+      "id" : "F-5t",
+      "measured" : 0.3142972057920345,
+      "name" : "5-tone chord, 30–70 kHz, 100 mm above the lower face: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "00bcc24",
+  "name" : "forcetrap"
+}

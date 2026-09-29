@@ -1,0 +1,37 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T15:53:58Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 96.14715993404388,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "force 0.49 (0 siblings), GS-PAT inf (540); depth 1.14e-13",
+      "id" : "N-5",
+      "measured" : 0.49228057696987476,
+      "name" : "5 tones, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.22 (0 siblings), GS-PAT 1.31 (106); depth 1.24e-13",
+      "id" : "N-10",
+      "measured" : 0.22250082919775815,
+      "name" : "10 tones, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.18 (0 siblings), GS-PAT inf (417); depth 1.05e-13",
+      "id" : "N-20",
+      "measured" : 0.17723107285087067,
+      "name" : "20 tones, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "00bcc24",
+  "name" : "tonesweep"
+}

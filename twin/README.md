@@ -10,13 +10,15 @@ No Xcode required — Command Line Tools only.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test              # unit suite (50 tests)
+./.build/release/fieldc test              # unit suite (58 tests; FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gate --receipt    # physics acceptance gates, writes Receipts/
 ./.build/release/fieldc machine           # the simulated machine: RH-1 free-standing, room air (--desktop: frozen v0.3)
 ./.build/release/fieldc focus             # compile a centre trap on the full chamber (GPU port fields)
 ./.build/release/fieldc gpu               # Metal propagator + port-field kernel vs CPU reference
 ./.build/release/fieldc drift --receipt   # how fast a compiled trap goes stale as the air warms
-./.build/release/fieldc forcetrap --receipt   # compile for force vs GS-PAT: unique trap? thermal hold?
+./.build/release/fieldc forcetrap --receipt   # compile for force vs GS-PAT: unique trap? thermal hold? (--glass)
+./.build/release/fieldc tonesweep --receipt   # glass chamber: sibling ratio vs number of tones (--target, --liner)
+./.build/release/fieldc wallsweep --receipt   # glass liner / plate reflection grid (--plates)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -46,6 +48,11 @@ replays old receipts, nothing else.
 air.** Compile/Build/Inspect, the viewport chrome, `focus` and `render` run on
 `RH1Freestanding.standard()`: 6 throat gates, 17 184 virtual apertures, both
 plates as walls, humid air at 20 °C / 50 % RH. See "Round 6" below.
+
+**2026-09-29, later — the glass chamber, exactly, and unique traps inside it.**
+The build chamber is modelled as the glass cylinder it is (bare or lined), and
+a force compiler that works in its speckle holds one trap with 3–10 tones, on
+axis and off. A liner is not the lever; temperature tracking is. See "Round 7".
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -95,6 +102,95 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 7 — the glass chamber (2026-09-29)
+
+**The build chamber is a glass cylinder, and the twin now has it.**
+`CylinderCavity` solves the chamber as an exact modal sum: the rear glass
+(Ø444 OD, 4 mm wall → a = 218 mm) between the two plates, 460 mm apart.
+
+    p = Σ_mn J_m(γr) e^{imφ} [W0 Z0(z) + WL ZL(z)]
+
+Along z the plate images are summed in closed form; across the chamber every
+glass reflection is exact (4 mm glass is a mirror: 69–83 dB transmission loss
+at 40–200 kHz). At 40 kHz ~9 000 mode coefficients per gate stand in for
+17 184 apertures × 7 image paths — the chamber's screen, made literal. One
+Miller table serves every Bessel order; `CavityFieldsGPU` runs the sum on Metal.
+
+**A lined glass wall, exactly.** A liner of specific admittance β sets
+∂p/∂r = ikβp on the wall. Each mode's zero is continued from its rigid j′ₘₙ to
+the root of x J′ₘ(x) = i(kaβ) Jₘ(x), and Jₘ at the complex argument is read off
+the same real table by the multiplication theorem (DLMF 10.23.1), on the CPU
+and in the kernel. Low modes graze the wall and turn pressure-release-like
+with little loss; modes that meet it head-on are the ones a liner kills. (The
+first-order perturbation this replaced fails once kaβ ≳ j′ — β ≈ 0.05 at
+40 kHz already.)
+
+| gate | checks | result |
+|---|---|---|
+| G-CYL1 | far wall absorbing → the half-space Rayleigh field | < 5e-3 |
+| G-CYL2 | closed rigid cylinder rings at its analytic (0,0,1), (1,1,0) frequencies | pass |
+| G-CYL3 | plate-mounted sources: 16-order image series = the cavity's plate series | 1.1e-5 |
+| G-CYL4 | lined-wall zeros vs 30-digit mpmath continuations | 2e-9 |
+| G-CYL5 | lossless air, lined wall: power in = power into the liner | 1.1e-6 |
+| G-CYL6 | lined field: Helmholtz / wall condition / gradient vs finite differences | 1.1e-4 / 2e-10 / 1e-5 |
+| G-GPU-CYL, -lined | Metal vs CPU, p and ∇p, bare and lined | 8.3e-6 / 8.5e-6 |
+
+**A bug the cavity caught.** The image model placed a plate-mounted aperture
+between the walls and then added that plate's own image at the source point —
+but the Rayleigh prefactor already baffles it, so every image came twice and
+the field was (1 + R) = 1.9× too strong. Up to the last truncated image that is
+a uniform scale, so ratios barely moved, but absolute pressure was 1.9× high,
+which matters the moment drives are in SI units. Fixed on the CPU (2fbccfb);
+`fieldc gpu` then caught the Metal kernels still doing it (G-GPU-FS read 0.90),
+fixed in 50eb595.
+
+**A force compiler that works in speckle.** In the glass chamber the heuristic
+refinement (penalise the 24 deepest siblings) returned its GS-PAT start
+unchanged: hundreds of speckle wells, and with five tones it scored worse than
+one tone can — which no optimum can. `ForceCompiler.smooth` minimises the
+softmax of every rival well's depth over the target well's with Adam on the
+unit sphere of drives, from an exact adjoint (checked against finite
+differences, 1.5e-9); a chord starts from each tone compiled alone (equal,
+quality-weighted, and the best tone alone). Everything below uses it.
+
+**What the glass does to a trap, and what brings it back** (`fieldc forcetrap
+[--glass]`, `fieldc tonesweep`, `fieldc wallsweep`; receipts at 00bcc24).
+Sibling ratio, force compiler (< 0.5 = one trap; siblings above half depth in
+brackets):
+
+| chamber, target | 1 tone | 3 tones | 5 tones | 10 tones | 20 tones |
+|---|---|---|---|---|---|
+| plates only, mid-plane | 0.91 | | **0.25** (0), G-F1 | | |
+| plates only, 100 mm above the lower face | 0.90 | | **0.31** (0) | | |
+| bare glass, mid-plane (30–70 kHz grid) | 0.88 | | **0.42** (0) | | |
+| bare glass, mid-plane (tonesweep spacing) | 1.06 | **0.44** (0) | 0.70 | **0.24** (0) | **0.16** (0) |
+| bare glass, 60 mm off-axis | | | **0.49** (0) | **0.22** (0) | **0.18** (0) |
+| bare glass, 100 mm above the lower face | | | **0.36** (0) | | |
+| GS-PAT chords only, mid-plane | 6.91 | 1.22 | 4.20 | 0.69 | 0.92 → 0.50 at 80 tones |
+
+* **Glass turns the field into speckle**, and a pressure-objective chord needs
+  ~80 tones to find its way back to one trap. **Force-compiled, 3–10 tones
+  suffice**, on axis and off it — the time–bandwidth argument (I1 below) holds
+  in the exact chamber. Tones are drives.
+* **A liner is not the lever.** With the force compiler the 5-tone chord reads
+  0.42 with bare glass, 0.42 / 0.48 / 0.53 / 0.64 behind liners of normal-
+  incidence R = 0.9 / 0.7 / 0.5 / 0.3, and 0.36 behind a ρc-matched one. A
+  locally reacting wall reflects grazing waves whatever its β —
+  R(θ) = (cos θ − β)/(cos θ + β) → −1 — and a partial liner's reflection phase
+  turns with angle, which scrambles the field further. (An absorber that
+  works at grazing incidence — thick, bulk-reacting — is not modelled.)
+* **Temperature decides how often to re-compile.** In the glass chamber a held
+  5-tone drive stops being unique by +0.1 K (0.60) and loses the trap by +0.3 K
+  (1.13); re-compiled at the true temperature it is unique again — 0.44, 0.48,
+  0.29 at +0.1 / 0.3 / 1 K — and through +0.3 K it has not moved. So the twin
+  must track the air to ~0.1 K and recompile, which is what the fast compiler is
+  for. (`fieldc drift`, GS-PAT traps: the glass decorrelates a held trap within
+  +0.1 K; a ρc liner makes the drift smooth — 137 / 368 / 496 / 705 µm at
+  +0.1 / 0.3 / 1 / 3 K — but does not stop it.)
+* **Placement is loose.** A force-compiled well may sit up to λ/4 from the
+  requested point (1.9 mm on the plate-only chord); building needs it on the
+  point. Next: pin the target in the objective.
 
 ## Round 6 — temperature, port fields, and the free-standing machine (2026-09-29)
 
@@ -154,8 +250,8 @@ several starts (eigenvector, GS-PAT), warm-starting when the room changes.
   plate's own standing wave keeps 22 siblings there.
 
 **Still missing** for these numbers to be the machine's: the glass cylinder
-(the walls are the two plates only), the horn (a labelled stub), and SI drive
-units.
+(the walls are the two plates only — added in Round 7), the horn (a labelled
+stub), and SI drive units.
 
 ## Round 5 — what building the machine found (2026-09-28)
 

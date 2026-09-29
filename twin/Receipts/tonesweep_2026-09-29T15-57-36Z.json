@@ -1,0 +1,55 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T15:57:36Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 217.72197496891022,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "GS-PAT 4.20 (856 siblings), offset 0.6 mm",
+      "id" : "N-5",
+      "measured" : 4.204831574951402,
+      "name" : "5 tones, GS-PAT chord, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "GS-PAT 0.69 (14 siblings), offset 0.6 mm",
+      "id" : "N-10",
+      "measured" : 0.6877519909914391,
+      "name" : "10 tones, GS-PAT chord, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "GS-PAT 0.92 (38 siblings), offset 0.6 mm",
+      "id" : "N-20",
+      "measured" : 0.9216813587700303,
+      "name" : "20 tones, GS-PAT chord, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "GS-PAT 0.55 (4 siblings), offset 0.6 mm",
+      "id" : "N-40",
+      "measured" : 0.5477627927170108,
+      "name" : "40 tones, GS-PAT chord, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "GS-PAT 0.50 (0 siblings), offset 0.6 mm",
+      "id" : "N-80",
+      "measured" : 0.49747253324772583,
+      "name" : "80 tones, GS-PAT chord, glass liner R 1.00",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "00bcc24",
+  "name" : "tonesweep"
+}
