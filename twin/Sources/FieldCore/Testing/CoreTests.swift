@@ -654,6 +654,40 @@ public enum CoreTests {
                 .potential(p: prop.pressure(at: x, drive: g), v: prop.velocity(at: x, drive: g))
             t.near(U / ref, 1, 1e-9, "gHKg vs Gorkov.potential")
         }
+        h.test("force compiler's adjoint = the derivative of Σ c(x) U(x), two tones") { t in
+            // Random rows on 40 points, two tones, random weights c: the
+            // Wirtinger gradient must match central differences of the real
+            // functional in every drive's real and imaginary part.
+            let particle = ParticleMaterial.pla()
+            var rng = SplitMix64(seed: 7)
+            func rnd() -> Complex { Complex(rng.nextUnit() - 0.5, rng.nextUnit() - 0.5) }
+            let G = 3, N = 40
+            let tones = [40_000.0, 55_000.0].map { f in
+                ForceCompiler.Tone(frequency: f, medium: wet, rows: (0..<(N * G * 4)).map { _ in rnd() * 1e3 })
+            }
+            let c = (0..<N).map { _ in rng.nextUnit() - 0.3 }
+            let g = tones.map { _ in (0..<G).map { _ in rnd() } }
+            func F(_ g: [[Complex]]) -> Double {
+                let U = ForceCompiler.potential(tones, drives: g, gates: G, particle: particle, count: N)
+                return zip(c, U).reduce(0) { $0 + $1.0 * $1.1 }
+            }
+            let grad = ForceCompiler.adjoint(tones, drives: g, weights: c, gates: G, particle: particle)
+            var worst = 0.0
+            let h = 1e-6
+            for f in 0..<2 {
+                for i in 0..<G {
+                    for (part, e) in [(0, Complex(h, 0)), (1, Complex(0, h))] {
+                        var gp = g, gm = g
+                        gp[f][i] += e; gm[f][i] -= e
+                        let fd = (F(gp) - F(gm)) / (2 * h)
+                        let an = 2 * (part == 0 ? grad[f][i].re : grad[f][i].im)
+                        let err = abs(fd - an) / max(abs(fd), 1e-300)
+                        if !(err <= worst) { worst = err }
+                    }
+                }
+            }
+            t.check(worst < 1e-6, "worst relative error \(worst)")
+        }
     }
 
     // ---------------------------------------------------------------- cavity

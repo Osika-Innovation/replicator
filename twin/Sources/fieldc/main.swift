@@ -422,6 +422,151 @@ case "drift":
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
+case "tonesweep":
+    // Does the spectrum buy back what the glass takes? Sibling ratio against
+    // the number of tones N, spread evenly over 30–70 kHz, in the glass
+    // chamber (bare unless --liner R), target at the mid-plane. Tones ≥ 1 kHz
+    // apart time-average their cross terms, so per-tone potentials add: the
+    // target, a well in every tone, deepens ∝ N, while each tone's speckle
+    // siblings sit in different places and pile up only ∝ √N. If the tones
+    // decorrelate, the ratio falls like 1/√N — the time–bandwidth argument
+    // (README, I1) put to the glass chamber.
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let particle = ParticleMaterial.pla()
+        let lam40 = air.wavelength(at: 40_000)
+        var liner = 1.0
+        if let i = args.firstIndex(of: "--liner"), i + 1 < args.count, let r = Double(args[i + 1]) { liner = r }
+        let beta = (1 - liner) / (1 + liner)
+        let fLo = 30_000.0, fHi = 70_000.0
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: fHi), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        var x0 = Vec3(0, 0, L / 2)
+        if let i = args.firstIndex(of: "--target"), i + 1 < args.count {
+            let v = args[i + 1].split(separator: ",").compactMap { Double($0) }
+            if v.count == 3 { x0 = Vec3(v[0], v[1], v[2]) * 0.001 }
+        }
+        let gspatOnly = args.contains("--gspat-only")
+        var counts = args.contains("--quick") ? [1, 5, 20] : [1, 3, 5, 10, 20, 30]
+        if let i = args.firstIndex(of: "--counts"), i + 1 < args.count {
+            counts = args[i + 1].split(separator: ",").compactMap { Int($0) }
+        }
+        // One lattice for every N: ±2 λ(40 kHz) at λ(70 kHz)/8, as wallsweep.
+        let h = air.wavelength(at: fHi) / 8
+        let n = Int((2 * 2 * lam40 / h).rounded()) | 1
+        let half = Double(n - 1) / 2 * h
+        let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+        let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
+        var o = ForceCompiler.Options()
+        o.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
+        print(String(format: "glass cylinder (a = %.0f mm), liner R = %.2f (β %.2f), plates R = 0.9; target (%.0f, %.0f, %.0f) mm; 200 µm PLA",
+                     cav.radius * 1000, liner, beta, x0.x * 1000, x0.y * 1000, x0.z * 1000))
+        print(String(format: "probe ±%.1f mm at %.2f mm (%d³); tones evenly over 30–70 kHz", half * 1000, h * 1000, n))
+        print("sibling ratio = deepest competing well ÷ target well (< 0.5 = one trap); depth per unit total drive power")
+        print("  tones   GS-PAT chord           force compiler         depth vs 1 tone   1/√N")
+        var gates: [GateResult] = []
+        var depth1 = 0.0
+        if gspatOnly { print("GS-PAT chords only, streamed tone by tone (no force compile)") }
+        for N in counts where gspatOnly {
+            let freqs = (0..<N).map { fLo + (fHi - fLo) * (Double($0) + 0.5) / Double(N) }
+            var U = [Double](repeating: 0, count: lat.count)
+            for f in freqs {
+                var op = RH1Freestanding.Options()
+                op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+                let (p, c) = RH1Freestanding.preset(op)
+                let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                     frequency: f, medium: air, zMin: zMin, wallAdmittance: beta)
+                let rows = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                     points: lat.positions, withGradient: true)
+                let prop = Propagator(elements: p.elements,
+                                      lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                      frequency: f, medium: air, gateCount: p.gateCount,
+                                      elementCoupling: c, cavity: cav, cavitySource: src)
+                let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                            method: .gspat, iterations: 80, trap: .twinTrap)
+                let d = u.map { $0 * (1 / (u.l2 * Double(N).squareRoot())) }
+                let Uf = ForceCompiler.potential([ForceCompiler.Tone(frequency: f, medium: air, rows: rows)],
+                                                 drives: [d], gates: 6, particle: particle, count: lat.count)
+                for i in U.indices { U[i] += Uf[i] }
+            }
+            let r = ForceCompiler.evaluate(potential: U, drives: [], lattice: lat, target: x0, options: o,
+                                           wavelength: lam40)
+            let cell = r.siblingRatio.isFinite ? String(format: "%5.2f (%3d ≥ 0.5)", r.siblingRatio, r.siblings)
+                                               : "no well at target  "
+            print(String(format: "  %5d   %@", N, cell))
+            gates.append(GateResult(id: "N-\(N)", name: String(format: "%d tones, GS-PAT chord, glass liner R %.2f", N, liner),
+                                    measured: r.siblingRatio, threshold: 0.5, comparison: .informational,
+                                    detail: String(format: "GS-PAT %.2f (%d siblings), offset %.1f mm",
+                                                   r.siblingRatio, r.siblings, r.targetOffset * 1000)))
+        }
+        for N in counts where !gspatOnly {
+            let freqs = (0..<N).map { fLo + (fHi - fLo) * (Double($0) + 0.5) / Double(N) }
+            var tones: [ForceCompiler.Tone] = []
+            var base: [[Complex]] = []
+            for f in freqs {
+                var op = RH1Freestanding.Options()
+                op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+                let (p, c) = RH1Freestanding.preset(op)
+                let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                     frequency: f, medium: air, zMin: zMin, wallAdmittance: beta)
+                let rows = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                     points: lat.positions, withGradient: true)
+                tones.append(ForceCompiler.Tone(frequency: f, medium: air, rows: rows))
+                let prop = Propagator(elements: p.elements,
+                                      lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                      frequency: f, medium: air, gateCount: p.gateCount,
+                                      elementCoupling: c, cavity: cav, cavitySource: src)
+                let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                            method: .gspat, iterations: 80, trap: .twinTrap)
+                base.append(u.map { $0 * (1 / (u.l2 * Double(N).squareRoot())) })
+            }
+            let rB = ForceCompiler.evaluate(tones, drives: base, lattice: lat, target: x0, gates: 6,
+                                            particle: particle, options: o, wavelength: lam40)
+            if args.contains("--each") && N > 1 {
+                // Diagnostic: every tone alone, then their equal-power sum.
+                var each: [[Complex]] = []
+                for (fi, t) in tones.enumerated() {
+                    let r1 = ForceCompiler.compile([t], lattice: lat, gates: 6, particle: particle,
+                                                   wavelength: lam40, options: o, starts: [[base[fi]]])
+                    each.append(r1.drives[0])
+                    print(String(format: "      alone %.1f kHz: ratio %.2f (%d), depth %.3g, offset %.1f mm",
+                                 t.frequency / 1000, r1.siblingRatio, r1.siblings, r1.targetDepth,
+                                 r1.targetOffset * 1000))
+                }
+                let sum = ForceCompiler.evaluate(tones, drives: each.map { v in v.map { $0 * (1 / Double(N).squareRoot()) } },
+                                                 lattice: lat, target: x0, gates: 6, particle: particle,
+                                                 options: o, wavelength: lam40)
+                print(String(format: "      equal-power sum: ratio %.2f (%d), depth %.3g, offset %.1f mm",
+                             sum.siblingRatio, sum.siblings, sum.targetDepth, sum.targetOffset * 1000))
+            }
+            let rF = ForceCompiler.compile(tones, lattice: lat, gates: 6, particle: particle,
+                                           wavelength: lam40, options: o, starts: [base])
+            if N == counts[0] { depth1 = rF.targetDepth }
+            func cell(_ r: ForceCompiler.Result) -> String {
+                r.siblingRatio.isFinite ? String(format: "%5.2f (%3d ≥ 0.5)", r.siblingRatio, r.siblings)
+                                        : "no well at target  "
+            }
+            let ref = N == counts[0] ? "" : String(format: "%.2f", 1 / Double(N).squareRoot())
+            print(String(format: "  %5d   %@      %@      %8.2f          %@", N, cell(rB), cell(rF),
+                         depth1 > 0 ? rF.targetDepth / depth1 : 0, ref))
+            gates.append(GateResult(id: "N-\(N)", name: String(format: "%d tones, glass liner R %.2f", N, liner),
+                                    measured: rF.siblingRatio, threshold: 0.5, comparison: .informational,
+                                    detail: String(format: "force %.2f (%d siblings), GS-PAT %.2f (%d); depth %.3g",
+                                                   rF.siblingRatio, rF.siblings, rB.siblingRatio, rB.siblings,
+                                                   rF.targetDepth)))
+        }
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "tonesweep", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
 case "wallsweep":
     // How absorptive must the glass side wall be for 6 drives to hold ONE
     // trap? Sweep the wall's normal-incidence reflection R_glass (a liner or

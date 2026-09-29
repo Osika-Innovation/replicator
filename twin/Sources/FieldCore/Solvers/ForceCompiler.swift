@@ -43,6 +43,8 @@ public enum ForceCompiler {
         public var step = 0.15
         /// How many of the deepest competing wells enter the penalty.
         public var siblingsPenalised = 24
+        /// Adam iterations of the all-points refinement (`smooth`); 0 = off.
+        public var smoothIterations = 240
         public init() {}
     }
 
@@ -196,6 +198,15 @@ public enum ForceCompiler {
                                 target: Vec3, gates G: Int, particle: ParticleMaterial,
                                 options o: Options = Options(), wavelength: Double) -> Result {
         let U = potential(tones, drives: drives, gates: G, particle: particle, count: lat.count)
+        return evaluate(potential: U, drives: drives, lattice: lat, target: target, options: o,
+                        wavelength: wavelength)
+    }
+
+    /// The same score from a potential already summed (tones streamed one at
+    /// a time, so a 100-tone chord never holds 100 row sets at once).
+    public static func evaluate(potential U: [Double], drives: [[Complex]], lattice lat: FieldLattice,
+                                target: Vec3, options o: Options = Options(),
+                                wavelength: Double) -> Result {
         let ws = wells(U, lattice: lat, steps: o.shellSteps)
         let near = ws.filter { ($0.position - target).length <= wavelength / 4 }
             .min { ($0.position - target).length < ($1.position - target).length }
@@ -236,6 +247,41 @@ public enum ForceCompiler {
                            options: o, target: target, A0: A0, start: start)
             if best == nil || score(r) > score(best!) { best = r }
         }
+        // Then every probe point at once, from the best so far and from the
+        // eigenvector start.
+        if o.smoothIterations > 0 {
+            var starts2 = [best!.drives, eigStart]
+            // A chord: first compile every tone alone, then sum them at equal
+            // power. Each tone's siblings sit in its own places, so they add
+            // like noise while the target adds in step — the start a joint
+            // refinement needs (from an equal-power GS-PAT chord it cannot
+            // even find the best single tone, which is always available).
+            if tones.count > 1 {
+                let each = tones.map { t in
+                    compile([t], lattice: lat, gates: G, particle: particle, wavelength: wavelength, options: o)
+                }
+                starts2.append(normalize(each.map { $0.drives[0] }))
+                // Weighted by how well each tone traps alone (a tone with no
+                // well at the target gets nothing), and the best tone alone —
+                // so a chord never scores worse than its best member.
+                let q = each.map { $0.siblingRatio.isFinite && $0.targetDepth > 0 ? 1 / ($0.siblingRatio * $0.siblingRatio) : 0 }
+                let qs = q.reduce(0, +)
+                if qs > 0 {
+                    starts2.append(normalize(zip(each, q).map { r, w in r.drives[0].map { $0 * (w / qs).squareRoot() } }))
+                    let bi = q.indices.max { q[$0] < q[$1] }!
+                    let solo = each.indices.map { $0 == bi ? each[$0].drives[0] : [Complex](repeating: .zero, count: G) }
+                    let rs = evaluate(tones, drives: normalize(solo), lattice: lat, target: target, gates: G,
+                                      particle: particle, options: o, wavelength: wavelength)
+                    if score(rs) > score(best!) { best = rs }
+                }
+            }
+            for start in starts2 {
+                let r = smooth(tones, lattice: lat, gates: G, particle: particle, wavelength: wavelength,
+                               options: o, target: target, center: c, start: start,
+                               iterations: o.smoothIterations)
+                if score(r) > score(best!) { best = r }
+            }
+        }
         return best!
     }
 
@@ -274,6 +320,139 @@ public enum ForceCompiler {
             let r = evaluate(tones, drives: g, lattice: lat, target: target, gates: G,
                              particle: particle, options: o, wavelength: wavelength)
             if score(r) > score(best) { best = r }
+        }
+        return best
+    }
+
+    // MARK: - Smooth refinement over every probe point
+
+    /// Wirtinger gradient ∂/∂g_f* of Σ_x c(x) U(x) for every tone: one pass
+    /// over the points where c ≠ 0 (U is Σ_f g_fᴴ K_f(x) g_f, so the gradient
+    /// is Σ_x c(x) K_f(x) g_f, assembled from the rows without forming K).
+    static func adjoint(_ tones: [Tone], drives g: [[Complex]], weights c: [Double], gates G: Int,
+                        particle: ParticleMaterial) -> [[Complex]] {
+        let active = c.indices.filter { c[$0] != 0 }
+        let chunks = max(1, min(64, active.count / 256))
+        return tones.enumerated().map { fi, t in
+            let (k1, k2) = coefficients(particle: particle, medium: t.medium, frequency: t.frequency)
+            let gf = g[fi]
+            var partial = [[Complex]](repeating: [Complex](repeating: .zero, count: G), count: chunks)
+            t.rows.withUnsafeBufferPointer { r in
+                partial.withUnsafeMutableBufferPointer { pb in
+                    DispatchQueue.concurrentPerform(iterations: chunks) { ch in
+                        var acc = [Complex](repeating: .zero, count: G)
+                        let lo = ch * active.count / chunks, hi = (ch + 1) * active.count / chunks
+                        for idx in lo..<hi {
+                            let n = active[idx], w = c[n], base = n * G * 4
+                            var s = (Complex.zero, Complex.zero, Complex.zero, Complex.zero)
+                            for gi in 0..<G {
+                                let d = gf[gi], b = base + gi * 4
+                                s.0 += r[b] * d; s.1 += r[b + 1] * d; s.2 += r[b + 2] * d; s.3 += r[b + 3] * d
+                            }
+                            let a0 = s.0 * (w * k1), a1 = s.1 * (w * k2), a2 = s.2 * (w * k2), a3 = s.3 * (w * k2)
+                            for gi in 0..<G {
+                                let b = base + gi * 4
+                                acc[gi] += r[b].conjugate * a0 - r[b + 1].conjugate * a1
+                                    - r[b + 2].conjugate * a2 - r[b + 3].conjugate * a3
+                            }
+                        }
+                        pb[ch] = acc
+                    }
+                }
+            }
+            return (0..<G).map { gi in partial.reduce(Complex.zero) { $0 + $1[gi] } }
+        }
+    }
+
+    /// Minimise (soft maximum of every competing point's shell depth) ÷ (the
+    /// target's shell depth) on the unit sphere of drives, with Adam.
+    ///
+    /// Every well in the probe volume outside λ/4 of the target is a rival,
+    /// re-found each step, so nothing is left for a whack-a-mole list to miss
+    /// (the heuristic `refine` penalises the 24 deepest, which with hundreds of
+    /// speckle wells in a glass chamber returned its start unchanged — with
+    /// five tones it scored worse than one tone can, which no optimum can).
+    /// The soft maximum is a softmax-weighted mean at a temperature annealed
+    /// from 10 % to 1 % of the target depth. (A first version took every
+    /// probe POINT as a rival; curvature on slopes then drowned the wells.)
+    static func smooth(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
+                       particle: ParticleMaterial, wavelength: Double, options o: Options,
+                       target: Vec3, center c: (Int, Int, Int), start: [[Complex]],
+                       iterations: Int) -> Result {
+        let s = o.shellSteps
+        let nx = lat.nx, ny = lat.ny
+        let ci = lat.index(c.0, c.1, c.2)
+        let strides = [1, nx, nx * ny]
+        func depth(_ U: [Double], _ n: Int) -> Double {
+            var m = 0.0
+            for st in strides { m += U[n - s * st] + U[n + s * st] }
+            return m / 6 - U[n]
+        }
+        func spread(_ c: inout [Double], _ n: Int, _ w: Double) {
+            c[n] -= w
+            for st in strides { c[n - s * st] += w / 6; c[n + s * st] += w / 6 }
+        }
+        var g = normalize(start)
+        var best = evaluate(tones, drives: g, lattice: lat, target: target, gates: G,
+                            particle: particle, options: o, wavelength: wavelength)
+        // Adam on the real and imaginary parts.
+        var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
+        let b1 = 0.9, b2 = 0.999
+        // Adam moves every real coordinate by ~lr, so the step's length grows
+        // like √(dimension): scale it to the unit sphere's size.
+        let lr0 = 0.05 / Double(2 * G * tones.count).squareRoot()
+        for it in 1...iterations {
+            let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
+            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            // Score what `evaluate` scores: the target is the well nearest the
+            // requested point (within λ/4), its rivals are the other WELLS —
+            // points of positive curvature on a slope are not rivals.
+            let ws = wells(U, lattice: lat, steps: s)
+            let tw = ws.filter { ($0.position - target).length <= wavelength / 4 }
+                .min { ($0.position - target).length < ($1.position - target).length }
+            let ti = tw.map { lat.index($0.ijk.0, $0.ijk.1, $0.ijk.2) } ?? ci
+            let rivals = ws.filter { ($0.position - (tw?.position ?? target)).length > wavelength / 4 }
+                .map { lat.index($0.ijk.0, $0.ijk.1, $0.ijk.2) }
+            let d0 = depth(U, ti)
+            var cw = [Double](repeating: 0, count: lat.count)
+            if d0 <= 0 || rivals.isEmpty {
+                spread(&cw, ti, -1)                         // make (or deepen) the target well
+            } else {
+                let comp = rivals
+                var mx = -Double.infinity
+                var D = [Double](repeating: 0, count: comp.count)
+                for (q, n) in comp.enumerated() { D[q] = depth(U, n); mx = max(mx, D[q]) }
+                let T = d0 * (0.1 * pow(0.1, Double(it) / Double(iterations)))
+                var Z = 0.0, sm = 0.0
+                var w = [Double](repeating: 0, count: comp.count)
+                for q in comp.indices where D[q] > mx - 30 * T {
+                    w[q] = exp((D[q] - mx) / T); Z += w[q]
+                }
+                for q in comp.indices where w[q] > 0 { w[q] /= Z; sm += w[q] * D[q] }
+                // ∂(sm/d0) = (∂sm·d0 − sm·∂d0)/d0²; ∂sm/∂D_q = w_q (1 + (D_q − sm)/T)
+                for (q, n) in comp.enumerated() where w[q] > 1e-12 {
+                    spread(&cw, n, w[q] * (1 + (D[q] - sm) / T) / d0)
+                }
+                spread(&cw, ti, -sm / (d0 * d0))
+            }
+            let grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            // Adam step, descent; back onto the unit sphere.
+            for f in g.indices {
+                for i in 0..<G {
+                    let gr = grad[f][i]
+                    m1[f][i] = m1[f][i] * b1 + gr * (1 - b1)
+                    v2[f][i] = v2[f][i] * b2 + gr.magnitudeSquared * (1 - b2)
+                    let mh = m1[f][i] * (1 / (1 - pow(b1, Double(it))))
+                    let vh = v2[f][i] / (1 - pow(b2, Double(it)))
+                    g[f][i] -= mh * (lr / (vh.squareRoot() + 1e-12))
+                }
+            }
+            g = normalize(g)
+            if it % 20 == 0 || it == iterations {
+                let r = evaluate(tones, drives: g, lattice: lat, target: target, gates: G,
+                                 particle: particle, options: o, wavelength: wavelength)
+                if score(r) > score(best) { best = r }
+            }
         }
         return best
     }
