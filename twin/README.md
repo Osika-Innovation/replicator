@@ -21,6 +21,7 @@ swift build -c release
 ./.build/release/fieldc wallsweep --receipt   # glass liner / plate reflection grid (--plates)
 ./.build/release/fieldc levitate --receipt    # the drive to hold PLA / aluminium / steel against gravity, in SI
 ./.build/release/fieldc carry --receipt       # pick up, carry 5 mm up and 5 mm across, place (G-P1)
+./.build/release/fieldc fly --receipt         # integrate a PLA bead through the carry: drive level × step time (G-P2)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -58,8 +59,9 @@ axis and off. A liner is not the lever; temperature tracking is. See "Round 7".
 
 **2026-09-29, evening — how hard to drive, and a carried bead.** In SI units a
 PLA bead needs ~160 dB and steel ~168 dB in the glass chamber (MODEL: the horn
-is a stub), and the twin carries a trap 5 mm up and 5 mm across on its point,
-downhill every step (G-P1). See "Round 8".
+is a stub). The twin carries a trap 5 mm up and 5 mm across on its point,
+downhill every step (G-P1). A PLA bead integrated through the fields rides it
+at 4× the holding drive, 10 mm in 0.4 s (G-P2). See "Round 8".
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -157,9 +159,34 @@ throughout, never below 0.71 of its starting depth. 36 of 40 steps were also
 globally unique (worst 0.72, the first). Global uniqueness is the loading
 criterion; a bead already in its well needs its own well and a clear path.
 
-**Not modelled yet:** the transient between steps (drives switch instantly;
-the chamber rings for ~10 ms, so a step takes at least that); the bead's own
-dynamics (inertia, drag, streaming); sag under the scaled drive; the horn.
+**`fieldc fly` — a bead that moves (G-P2).** A 200 µm PLA bead is integrated
+through the carried trap: time-averaged Gor'kov force from a 0.1 mm box of
+exact modal rows around the path, gravity, Stokes drag (streaming ignored).
+Each drive change is ramped linearly, then settles with the chamber's τ
+(air absorption + plate loss, 3.5 ms at 50 kHz).
+
+* **Dropped in and stepped hard, the bead is lost.** Air damps a 200 µm bead
+  in ~150 ms and the trap is ~8 Hz sideways, so it never settles. Whether a
+  step keeps it depends on the swing's phase: lost at 10 and 40 ms per step,
+  carried at 20 and 80. The static carry (G-P1) is not enough for a real bead.
+* **Loaded gently, with ramped steps, it rides.**
+  * At 2× the holding drive: carried at 20–80 ms per 0.25 mm step (escapes at
+    10 ms).
+  * At 4×: carried at every step time down to 10 ms. The whole 10 mm path
+    takes 0.4 s, and the bead ends 0.21 mm off the drop-off, which is its sag.
+  * At 8×: carried, ending 0.10–0.13 mm off.
+
+![A PLA bead carried 5 mm up and 5 mm across](shots/fly_4x_40ms.svg)
+
+`python3 Tools/plot_fly.py` redraws it from `Receipts/fly_trajectory_4x_40ms.csv`.
+The bead trails the stepped target by 0.2–0.5 mm going up (sag plus lag) and
+wobbles ~0.2 mm sideways at the trap's 8 Hz. **Fine powder is a different
+regime:** drag goes as a/a³, so a 30 µm grain is overdamped (1/e in ~3 ms)
+and would follow the trap without swinging, but there streaming and
+cohesion take over.
+
+**Not modelled yet:** cross terms during a ramp (the potential is blended,
+not the drive); acoustic streaming; several beads at once; the horn.
 
 ## Round 7 — the glass chamber (2026-09-29)
 
