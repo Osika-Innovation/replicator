@@ -115,6 +115,23 @@ public struct Propagator: Sendable {
             var out: [(z: Double, weight: Double)] = [(z0, 1)]
             guard capSeparation > 0 && order > 0 else { return out }
             let L = capSeparation
+            // A source ON a wall (the free-standing machine's apertures sit on
+            // the plates) is already baffled by it — the Rayleigh prefactor is
+            // the half-space Green's function. The between-walls series below
+            // would add that wall's own image at the source point (weight R)
+            // and duplicate every later image, inflating the field by (1 + R);
+            // the cavity model caught it (ratio 1/1.9 at R = 0.9). On a wall,
+            // bounce alternately off the far wall and the near one instead.
+            let onLower = abs(z0) < 1e-9 * max(L, 1), onUpper = abs(z0 - L) < 1e-9 * max(L, 1)
+            if onLower || onUpper {
+                var z = z0, towardUpper = onLower
+                for m in 1...order {
+                    z = towardUpper ? 2 * L - z : -z
+                    out.append((z, pow(reflectionCoefficient, Double(m))))
+                    towardUpper.toggle()
+                }
+                return out
+            }
             for m in 1...order {
                 let w = pow(reflectionCoefficient, Double(m))
                 if m % 2 == 0 {

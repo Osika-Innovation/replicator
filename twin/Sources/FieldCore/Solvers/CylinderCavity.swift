@@ -195,9 +195,19 @@ public final class CylinderCavity: @unchecked Sendable {
     /// Elements on the lower face (z ≈ 0) and the upper face (z ≈ L) radiate
     /// along their normals; anything else is ignored (the plates are the only
     /// sources of the free-standing machine).
+    ///
+    /// - Parameter wallAdmittance: specific admittance β of the side wall
+    ///   (0 = rigid glass; β = (1 − R)/(1 + R) for a normal-incidence
+    ///   reflection R). First-order perturbation: each mode's axial wavenumber
+    ///   picks up κ² += 2ikβ/(a(1 − m²/j'²)) — the modes that graze the wall
+    ///   most (whispering gallery, j' ≈ m) are damped hardest; mode shapes are
+    ///   unchanged, so the table stays valid. Accurate for β ≪ 1.
     public func source(elements: [Element], coupling: [Complex]?, weights: [Double]? = nil,
                        gateCount G: Int, frequency f: Double, medium: Medium,
-                       zMin: Double) -> Source {
+                       zMin: Double, wallAdmittance beta: Double = 0,
+                       plateReflection: Double? = nil) -> Source {
+        // A per-call plate reflection reuses this cavity's modes and table.
+        let rLo = plateReflection ?? reflectionLower, rUp = plateReflection ?? reflectionUpper
         let Q = modeCount(maxGamma: gammaMax(frequency: f, medium: medium, zMin: zMin))
         precondition(Q > 0 && Q <= modes.count, "cavity built with too few modes for \(f) Hz")
         let kc = Complex(medium.wavenumber(at: f), medium.absorption(at: f))
@@ -206,7 +216,13 @@ public final class CylinderCavity: @unchecked Sendable {
         var kappa = [Complex](repeating: .zero, count: Q), eKL = kappa, pre = kappa, invDen = kappa
         for q in 0..<Q {
             let g = modes[q].zero / radius
-            var kz = (kc * kc - Complex(g * g, 0)).squareRoot
+            var k2 = kc * kc - Complex(g * g, 0)
+            if beta > 0 {
+                let md = modes[q]
+                let shape = md.zero == 0 ? 1.0 : max(1e-3, 1 - Double(md.m * md.m) / (md.zero * md.zero))
+                k2 = k2 + Complex(0, 2 * kc.re * beta / (radius * shape))
+            }
+            var kz = k2.squareRoot
             if kz.im < 0 { kz = kz * -1.0 }
             kappa[q] = kz
             let e = (Complex(0, 1) * kz * length).exp
@@ -215,7 +231,7 @@ public final class CylinderCavity: @unchecked Sendable {
             // (a uniform piston gives p = −ρ0 c u), so the modal field carries
             // the same global sign. Forces see |p|² and |∇p|² only.
             pre[q] = Complex(-wr, 0) / kz
-            invDen[q] = Complex.one / (Complex.one - e * e * (reflectionLower * reflectionUpper))
+            invDen[q] = Complex.one / (Complex.one - e * e * (rLo * rUp))
         }
         // Project the apertures: W += c · A · 2J1(γb)/(γb) · J_m(γ r_a) e^{−imφ_a} / N.
         var lower = [Complex](repeating: .zero, count: Q * G), upper = lower
@@ -233,7 +249,9 @@ public final class CylinderCavity: @unchecked Sendable {
                         let c = (coupling?[ei] ?? .one) * w
                         let r = (el.position.x * el.position.x + el.position.y * el.position.y).squareRoot()
                         let phi = atan2(el.position.y, el.position.x)
-                        let gb = g * el.equivalentRadius
+                        // A monopole element is a point velocity source (the
+                        // Propagator's `.monopole`: D = 1, same baffled prefactor).
+                        let gb = el.directivity == .monopole ? 0 : g * el.equivalentRadius
                         let form = gb < 1e-6 ? 1.0 : 2 * besselJ1(gb) / gb
                         let v = c * (el.area * form * table.j(md.m, g * r) / md.norm)
                             * Complex.expi(-Double(md.m) * phi)
@@ -244,7 +262,7 @@ public final class CylinderCavity: @unchecked Sendable {
         }
         return Source(frequency: f, modeCount: Q, gateCount: G, kappa: kappa, eKL: eKL, pre: pre,
                       invDen: invDen, lower: lower, upper: upper, omegaRho: wr,
-                      reflectionLower: reflectionLower, reflectionUpper: reflectionUpper, length: length)
+                      reflectionLower: rLo, reflectionUpper: rUp, length: length)
     }
 
     /// Gate rows of p and ∇p at x (the same contract as

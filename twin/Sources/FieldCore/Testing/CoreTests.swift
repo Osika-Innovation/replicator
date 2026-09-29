@@ -700,6 +700,40 @@ public enum CoreTests {
             t.check(worst.isFinite && worst < 5e-3, "worst relative error \(worst)")
             t.check(src.modeCount > 1000, "modes used \(src.modeCount)")
         }
+        h.test("G-CYL3: plate-mounted sources — image series = cavity (wide, lossy side wall)") { t in
+            // Apertures on both plates, plates R = 0.9: the image model (16
+            // orders, sources baffled by their own plate) must equal the cavity's
+            // closed-form plate series once the side wall is silenced by loss.
+            var m = Medium.air(temperatureC: 20, humidity: 50)
+            m.extraAbsorption = 20
+            let f = 10_000.0, L = 0.2
+            // Point velocity sources (`.monopole` in both models): the image
+            // model's far-field piston directivity is an approximation the
+            // cavity's exact aperture projection does not make, and would blur
+            // the one thing this test checks — the plate series itself.
+            let A = 3e-6
+            func el(_ p: Vec3, _ n: Vec3, _ s: SurfaceID, _ g: Int) -> Element {
+                Element(position: p, normal: n, area: A, surface: s, gateIndex: g, directivity: .monopole)
+            }
+            let els = [el(Vec3(0.02, 0.01, 0), Vec3(0, 0, 1), .lowerCap, 0),
+                       el(Vec3(-0.03, 0.02, 0), Vec3(0, 0, 1), .lowerCap, 1),
+                       el(Vec3(0.01, -0.04, L), Vec3(0, 0, -1), .upperCap, 1)]
+            let k = m.wavenumber(at: f), e = log(1e4) / 0.03
+            let cav = CylinderCavity(radius: 0.4, length: L, reflectionLower: 0.9, reflectionUpper: 0.9,
+                                     maxGamma: (k * k + e * e).squareRoot())
+            let src = cav.source(elements: els, coupling: nil, gateCount: 2, frequency: f, medium: m, zMin: 0.03)
+            let img = Propagator(elements: els, lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                 frequency: f, medium: m, gateCount: 2,
+                                 walls: Propagator.Walls(capSeparation: L, order: 16, reflectionCoefficient: 0.9))
+            var worst = 0.0
+            for x in [Vec3(0, 0, 0.1), Vec3(0.05, -0.02, 0.06), Vec3(-0.04, 0.06, 0.14)] {
+                let err = cav.rows(at: x, source: src).p.relativeL2(to: img.gateRow(at: x))
+                if !(err <= worst) { worst = err }
+            }
+            // Agreement is ~1e-5; the (1 + R) double count this test exists for
+            // is a 90 % error.
+            t.check(worst.isFinite && worst < 1e-4, "worst relative difference \(worst)")
+        }
         h.test("G-CYL2: a closed rigid cylinder rings at its analytic mode frequencies") { t in
             var m = Medium.air(temperatureC: 20, humidity: 50)
             m.extraAbsorption = 0.02

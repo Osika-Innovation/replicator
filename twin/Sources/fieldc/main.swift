@@ -389,6 +389,97 @@ case "drift":
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
+case "wallsweep":
+    // How absorptive must the glass side wall be for 6 drives to hold ONE
+    // trap? Sweep the wall's normal-incidence reflection R_glass (a liner or
+    // treatment on the glass; 1 = bare glass), plates R = 0.9, at each value
+    // GS-PAT vs the force compiler at the mid-plane, one tone and the chord.
+    // (A first version swept a distributed-loss Q instead: that also damps
+    // the direct plate-to-trap paths, ~16× over half the chamber at Q = 30,
+    // and confounds the answer.)
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let particle = ParticleMaterial.pla()
+        let lam40 = air.wavelength(at: 40_000)
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: 100_000), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        let x0 = Vec3(0, 0, L / 2)
+        // (plate R, glass R): the glass alone first, then the plates' axial
+        // reverberation — the image model's 3-order truncation understated it.
+        let grid: [(Double, Double)] = args.contains("--plates")
+            ? [(0.9, 1.0), (0.7, 1.0), (0.5, 1.0), (0.3, 1.0), (0.0, 1.0), (0.5, 0.5), (0.0, 0.5), (0.0, 0.0)]
+            : [(0.9, 1.0), (0.9, 0.9), (0.9, 0.7), (0.9, 0.5), (0.9, 0.3), (0.9, 0.0)]
+        let sets: [(String, [Double])] = [("1 tone, 40 kHz", [40_000]),
+                                          ("5-tone chord, 30–70 kHz", [30_000, 40_000, 50_000, 60_000, 70_000])]
+        func machine(_ f: Double, _ m: Medium) -> (MachinePreset, [Complex]) {
+            var o = RH1Freestanding.Options()
+            o.frequency = f; o.medium = m; o.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+            return RH1Freestanding.preset(o)
+        }
+        var gates: [GateResult] = []
+        print(String(format: "glass cylinder (a = %.0f mm) between the plates; target: mid-plane; 200 µm PLA bead", cav.radius * 1000))
+        print("side wall: FIRST-ORDER admittance — reliable for β ≪ 1 only (β → 1 is outside it)")
+        print("sibling ratio = deepest competing well within ±17 mm ÷ target well (< 0.5 = one trap)")
+        for (label, freqs) in sets {
+            let fMax = freqs.max()!, fMid = (freqs.min()! + fMax) / 2
+            let h = air.wavelength(at: fMax) / (freqs.count > 1 ? 8 : 10)
+            let n = Int((2 * 2 * lam40 / h).rounded()) | 1
+            let half = Double(n - 1) / 2 * h
+            let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+            let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
+            var o = ForceCompiler.Options()
+            o.shellSteps = max(2, Int((air.wavelength(at: fMid) / 4 / h).rounded()))
+            print("\n\(label)")
+            print("  plates R · glass R        GS-PAT twin trap          force compiler")
+            for (Rp, R) in grid {
+                let beta = (1 - R) / (1 + R)
+                var tones: [ForceCompiler.Tone] = []
+                var base: [[Complex]] = []
+                for f in freqs {
+                    let m = air
+                    let (p, c) = machine(f, m)
+                    let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                         frequency: f, medium: m, zMin: zMin, wallAdmittance: beta,
+                                         plateReflection: Rp)
+                    let rows = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                         points: lat.positions, withGradient: true)
+                    tones.append(ForceCompiler.Tone(frequency: f, medium: m, rows: rows))
+                    let prop = Propagator(elements: p.elements,
+                                          lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                          frequency: f, medium: m, gateCount: p.gateCount,
+                                          elementCoupling: c, cavity: cav, cavitySource: src)
+                    let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                                method: .gspat, iterations: 80, trap: .twinTrap)
+                    base.append(u.map { $0 * (1 / (u.l2 * Double(freqs.count).squareRoot())) })
+                }
+                let rB = ForceCompiler.evaluate(tones, drives: base, lattice: lat, target: x0, gates: 6,
+                                                particle: particle, options: o, wavelength: lam40)
+                let rF = ForceCompiler.compile(tones, lattice: lat, gates: 6, particle: particle,
+                                               wavelength: lam40, options: o, starts: [base])
+                func cell(_ r: ForceCompiler.Result) -> String {
+                    r.siblingRatio.isFinite ? String(format: "%5.2f (%3d ≥ 0.5)", r.siblingRatio, r.siblings)
+                                            : "no well at target  "
+                }
+                let rs = String(format: "%4.2f · %4.2f (β %.2f)", Rp, R, beta)
+                print("  \(rs.padding(toLength: 25, withPad: " ", startingAt: 0)) \(cell(rB))        \(cell(rF))")
+                gates.append(GateResult(id: "W-\(freqs.count)t", name: String(format: "%@, plates R %.2f, glass R %.2f", label, Rp, R),
+                                        measured: rF.siblingRatio, threshold: 0, comparison: .informational,
+                                        detail: String(format: "force %.2f (%d siblings), GS-PAT %.2f (%d)",
+                                                       rF.siblingRatio, rF.siblings, rB.siblingRatio, rB.siblings)))
+            }
+        }
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "wallsweep", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
 case "forcetrap":
     // Compile for FORCE (ForceCompiler) vs the GS-PAT twin trap, on the
     // free-standing machine: is the trap unique, and does it survive a warmer
