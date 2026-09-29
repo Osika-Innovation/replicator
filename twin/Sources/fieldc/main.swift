@@ -407,6 +407,19 @@ case "forcetrap":
         let targets: [(String, Vec3)] = [("mid-plane", Vec3(0, 0, L / 2)),
                                          ("100 mm above the lower face", Vec3(0, 0, 0.10))]
         let walls = RH1Freestanding.walls(design)
+        // --glass: the chamber as the glass cylinder + plates (cavity model)
+        // instead of the plates alone.
+        let glass = args.contains("--glass")
+        let cav = glass ? RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: 100_000), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }()) : nil
+        func zMin(_ lat: FieldLattice) -> Double {
+            let zlo = lat.origin.z, zhi = lat.origin.z + Double(lat.nz - 1) * lat.spacing
+            return max(0.05, min(zlo, L - zhi))
+        }
+        print(glass ? String(format: "field model: glass cylinder (a = %.0f mm) + both plates, R = 0.9 (cavity modes)",
+                             cav!.radius * 1000)
+                    : "field model: both plates as mirrors (3 image orders, R = 0.9)")
         func machine(_ f: Double, _ m: Medium) -> (MachinePreset, [Complex]) {
             var o = RH1Freestanding.Options()
             o.frequency = f; o.medium = m; o.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
@@ -415,9 +428,17 @@ case "forcetrap":
         func tones(_ freqs: [Double], _ m: Medium, _ lat: FieldLattice) throws -> [ForceCompiler.Tone] {
             try freqs.map { f in
                 let (p, c) = machine(f, m)
-                let rows = try PortFieldsGPU.buildWithGradient(ctx: ctx, elements: p.elements, coupling: c,
+                let rows: [Complex]
+                if let cav {
+                    let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                         frequency: f, medium: m, zMin: zMin(lat))
+                    rows = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                     points: lat.positions, withGradient: true)
+                } else {
+                    rows = try PortFieldsGPU.buildWithGradient(ctx: ctx, elements: p.elements, coupling: c,
                                                                walls: walls, points: lat.positions,
                                                                frequency: f, medium: m, gateCount: p.gateCount)
+                }
                 return ForceCompiler.Tone(frequency: f, medium: m, rows: rows)
             }
         }
@@ -432,7 +453,7 @@ case "forcetrap":
             let n = Int((2 * 2 * lam40 / h).rounded()) | 1                // ±2 λ(40 kHz), odd
             var o = ForceCompiler.Options()
             o.shellSteps = max(2, Int((air.wavelength(at: fMid) / 4 / h).rounded()))
-            print("\n\(label): probe ±\(String(format: "%.1f", 2 * lam40 * 1000)) mm at \(String(format: "%.2f", h * 1000)) mm (\(n)³ points), walls: both plates")
+            print("\n\(label): probe ±\(String(format: "%.1f", 2 * lam40 * 1000)) mm at \(String(format: "%.2f", h * 1000)) mm (\(n)³ points)")
             for (tName, x0) in targets {
                 let half = Double(n - 1) / 2 * h
                 let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
@@ -443,7 +464,8 @@ case "forcetrap":
                     let prop = Propagator(elements: p.elements,
                                           lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
                                           frequency: f, medium: air, gateCount: p.gateCount,
-                                          elementCoupling: c, walls: walls)
+                                          elementCoupling: c, walls: walls, cavity: cav,
+                                          cavityZMin: zMin(lat))
                     let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
                                                 method: .gspat, iterations: 80, trap: .twinTrap)
                     let s = 1 / (u.l2 * Double(freqs.count).squareRoot())
@@ -457,7 +479,7 @@ case "forcetrap":
                 print("  \(tName)")
                 print("    GS-PAT twin trap : " + fmt(rB))
                 print("    force compiler   : " + fmt(rF) + String(format: " · depth %.1f× GS-PAT", deeper))
-                if freqs.count > 1 && tName == "mid-plane" {
+                if freqs.count > 1 && tName == "mid-plane" && !glass {
                     // G-F1: the chord, compiled for force, holds ONE trap at the
                     // mid-plane — every competing well within ±2λ under half its
                     // depth (the plate study's own 0.5 bar, which GS-PAT misses).
@@ -469,7 +491,7 @@ case "forcetrap":
                     print(g1.line)
                     gates.append(g1)
                 }
-                gates.append(GateResult(id: "F-\(freqs.count)t", name: "\(label), \(tName): force vs GS-PAT sibling ratio",
+                gates.append(GateResult(id: "F-\(freqs.count)t\(glass ? "-glass" : "")", name: "\(label), \(tName)\(glass ? ", glass" : ""): force vs GS-PAT sibling ratio",
                                         measured: rF.siblingRatio, threshold: 0, comparison: .informational,
                                         detail: String(format: "force %.2f (%d siblings), GS-PAT %.2f (%d); depth %.1f×",
                                                        rF.siblingRatio, rF.siblings, rB.siblingRatio, rB.siblings, deeper)))
@@ -497,7 +519,7 @@ case "forcetrap":
         }
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
-            writeReceipt(Receipt(name: "forcetrap", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+            writeReceipt(Receipt(name: glass ? "forcetrap-glass" : "forcetrap", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
                                  device: deviceName(), gitSHA: gitSHA()))
         }
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
