@@ -6,8 +6,9 @@ import CoreGraphics
 import FieldCore
 
 public struct OrbitCamera: Sendable {
-    public var target = SIMD3<Float>(0, 0, 0.15)
-    public var distance: Float = 0.85
+    // Defaults frame the free-standing build chamber (Ø410 faces, 460 mm apart).
+    public var target = SIMD3<Float>(0, 0, 0.21)
+    public var distance: Float = 1.25
     public var azimuth: Float = -0.9        // radians
     public var elevation: Float = 0.32
     public var fov: Float = 0.62
@@ -16,8 +17,8 @@ public struct OrbitCamera: Sendable {
     public init() {}
 
     public static let home = OrbitCamera()
-    public static var front: OrbitCamera { var c = OrbitCamera(); c.azimuth = -.pi / 2; c.elevation = 0.05; c.distance = 0.80; return c }
-    public static var top: OrbitCamera { var c = OrbitCamera(); c.elevation = 1.45; c.distance = 0.95; return c }
+    public static var front: OrbitCamera { var c = OrbitCamera(); c.azimuth = -.pi / 2; c.elevation = 0.05; c.distance = 1.15; return c }
+    public static var top: OrbitCamera { var c = OrbitCamera(); c.elevation = 1.45; c.distance = 1.35; return c }
     public static var iso: OrbitCamera { OrbitCamera() }
 
     public var eye: SIMD3<Float> {

@@ -31,22 +31,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ? .light : .dark
         // `--machine` opens straight into the Machine tab (the RH-1 solid model).
         state.mode = ProcessInfo.processInfo.arguments.contains("--machine") ? .machine : .compile
-        let preset = RH1.preset()
-        state.gateCount = preset.gateCount
-        state.elementCount = preset.elements.count
+        // The free-standing RH-1 in room air — the machine every mode simulates.
+        let (preset, _, walls) = RH1Freestanding.standard()
+        let bv = preset.buildVolume
+        let air = preset.medium
+        MachineCAD.applyRail(&state)
+        let lam = air.wavelength(at: 40_000) * 1000
+        state.wavelengthText = String(format: "λ %.3f mm · node %.3f mm", lam, lam / 2)
         state.statusLine = "ready — no object loaded"
         state.inspector = [
             .init(title: "Machine", rows: [
-                ("preset", "RH-1"),
-                ("gates", "\(preset.gateCount) acoustic"),
-                ("elements", "\(preset.elements.count)"),
-                ("build volume", "Ø280 × 300"),
-                ("λ @ 40 kHz", "8.575 mm"),
+                ("preset", preset.displayName),
+                ("gates", "\(preset.gateCount) acoustic (3 throat piezos × 2 faces)"),
+                ("apertures", "\(preset.elements.count / RH1Freestanding.gatesPerFace) physical · \(preset.elements.count) virtual"),
+                ("build volume", String(format: "Ø%.0f × %.0f", bv.radius * 2000, bv.height * 1000)),
+                ("λ @ 40 kHz", String(format: "%.3f mm", air.wavelength(at: 40_000) * 1000)),
             ]),
             .init(title: "Carrier", rows: [
-                ("band", "20–80 kHz"),
-                ("medium", "air 343 m/s"),
-                ("solver", "T0 propagator"),
+                ("band", String(format: "%.0f–%.0f kHz", preset.defaultBand.lowerBound / 1000,
+                                preset.defaultBand.upperBound / 1000)),
+                ("medium", String(format: "air %.0f °C %.0f %% RH, %.2f m/s",
+                                  air.air?.temperatureC ?? 20, air.air?.humidity ?? 50, air.soundSpeed)),
+                ("absorption", String(format: "%.2f dB/m @ 40 kHz", air.absorption(at: 40_000) * 8.686)),
+                ("walls", String(format: "plates, %d image orders, R %.2f", walls.order, walls.reflectionCoefficient)),
+                ("solver", "T0 port fields (GPU)"),
             ]),
             .init(title: "Gates", rows: [
                 ("G1 voxelizer", "0.40% ✓"),

@@ -25,8 +25,16 @@ public enum RH1Freestanding {
 
     /// Throat → aperture transfer through the ring-radial gyroid horn (STUB).
     public struct HornModel: Sendable, Codable {
-        /// Sound speed in the gyroid's air channels (tortuosity ~1.3 ⇒ c/√1.3).
+        /// Sound speed in the gyroid's air channels for a FIXED medium (the
+        /// legacy §12 presets): tortuosity ~1.3 ⇒ c/√1.3.
         public var soundSpeed = 300.0
+        /// Channel tortuosity. When the medium carries an air state the channels
+        /// hold the same air, so their speed follows it: c/√τ — the horn drifts
+        /// with temperature exactly as the chamber does.
+        public var tortuosity = 1.3
+        public func channelSpeed(_ m: Medium) -> Double {
+            m.air == nil ? soundSpeed : m.soundSpeed / tortuosity.squareRoot()
+        }
         /// Graded cell size at the throat and at the mouth (m) — cells shrink
         /// toward the mouth, the trend site FIG. 1 of the plate draws.
         public var cellThroat = 5.0e-3
@@ -40,8 +48,9 @@ public enum RH1Freestanding {
         public init() {}
 
         /// Radius (m) where a tone exits: the depth whose cell is λ_h/2.
-        public func exitRadius(frequency f: Double, throat: Double, mouth: Double) -> Double {
-            let a = soundSpeed / (2 * f)
+        public func exitRadius(frequency f: Double, throat: Double, mouth: Double,
+                               medium: Medium = .air) -> Double {
+            let a = channelSpeed(medium) / (2 * f)
             let t = (cellThroat - a) / (cellThroat - cellMouth)
             return throat + min(1, max(0, t)) * (mouth - throat)
         }
@@ -98,8 +107,9 @@ public enum RH1Freestanding {
         var elements: [Element] = []
         var coupling: [Complex] = []
         let rT = d.throatRadius * mm, rM = d.mouthRadius * mm
-        let rExit = o.horn.exitRadius(frequency: o.frequency, throat: rT, mouth: rM)
-        let kH = 2 * Double.pi * o.frequency / o.horn.soundSpeed
+        let rExit = o.horn.exitRadius(frequency: o.frequency, throat: rT, mouth: rM,
+                                      medium: o.medium)
+        let kH = 2 * Double.pi * o.frequency / o.horn.channelSpeed(o.medium)
         for (fi, f) in faces.enumerated() {
             for g in 0..<gatesPerFace {
                 let psi = (d.pztFirstAzimuthDeg + 360 * Double(g) / Double(gatesPerFace)) * .pi / 180
@@ -131,6 +141,24 @@ public enum RH1Freestanding {
                               buildVolume: bv, medium: o.medium,
                               defaultBand: 30_000...75_000)
         return (p, coupling)
+    }
+
+    /// Room air the app and CLI simulate unless told otherwise.
+    public static let roomAir = Medium.air(temperatureC: 20, humidity: 50)
+
+    /// The machine the app and CLI simulate: the free-standing RH-1 in room
+    /// air, its two facing plates as the cavity walls. (The desktop `RH1`
+    /// preset is frozen: it stays only for the solver-validation gates and for
+    /// replaying old receipts.)
+    public static func standard(frequency: Double = 40_000, medium: Medium = roomAir,
+                                slotsOpen: Bool = true)
+        -> (preset: MachinePreset, coupling: [Complex], walls: Propagator.Walls) {
+        var o = Options()
+        o.frequency = frequency
+        o.medium = medium
+        o.slotsOpen = slotsOpen
+        let (p, c) = preset(o)
+        return (p, c, walls(o.design))
     }
 
     /// The two facing plates are the cavity walls: image sources at 0 and L.

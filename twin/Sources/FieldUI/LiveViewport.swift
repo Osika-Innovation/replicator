@@ -227,6 +227,16 @@ public final class ViewportMTKView: MTKView {
     }
 }
 
+/// The machine the live app simulates: the free-standing RH-1 in room air,
+/// built once. (The desktop `RH1` preset is frozen for receipt replay.)
+enum LiveMachine {
+    static let frequency = 40_000.0
+    static let standard = RH1Freestanding.standard(frequency: frequency)
+    static var buildVolume: BuildVolume { standard.preset.buildVolume }
+    /// Compute context for the port-field build; nil falls back to the CPU.
+    nonisolated(unsafe) static let gpu: MetalContext? = try? MetalContext()
+}
+
 struct LiveViewportRepresentable: NSViewRepresentable {
     let theme: Theme
     let doc: Document
@@ -294,7 +304,7 @@ public final class Document: ObservableObject {
     }
 
     public func adopt(_ raw: Mesh, name: String) {
-        let volume = RH1.preset().buildVolume
+        let volume = LiveMachine.buildVolume
         let placed = raw.placed(in: volume)
         mesh = placed.mesh
         fits = placed.fits
@@ -328,8 +338,8 @@ public final class Document: ObservableObject {
             }
             // Gate ring reconstructed from the port count.
             let n = chordList.first?.portVector.count ?? 0
-            let R = RH1.preset().buildVolume.radius * 0.92
-            let H = RH1.preset().buildVolume.height
+            let R = LiveMachine.buildVolume.radius * 0.92
+            let H = LiveMachine.buildVolume.height
             chordGates = (0..<n).map { i in
                 let a = 2 * Double.pi * Double(i) / Double(max(1, n))
                 return Scan.Gate(position: Vec3(R * cos(a), R * sin(a),
@@ -564,8 +574,8 @@ public final class Document: ObservableObject {
         let material = state.material
         Task.detached(priority: .userInitiated) {
             let t0 = Date()
-            let preset = RH1.preset()
-            let f = 40_000.0
+            let f = LiveMachine.frequency
+            let (preset, coupling, walls) = LiveMachine.standard
             let lambda = preset.medium.wavelength(at: f)
             let inset = 2 * lambda, sp = lambda / 2
             let R = preset.buildVolume.radius
@@ -574,9 +584,24 @@ public final class Document: ObservableObject {
                 nx: Int((2 * R / sp).rounded(.down)) + 1,
                 ny: Int((2 * R / sp).rounded(.down)) + 1,
                 nz: Int(((preset.buildVolume.height - 2 * inset) / sp).rounded(.down)) + 1)
-            let prop = Propagator(elements: preset.elements, lattice: lat,
-                                  frequency: f, medium: preset.medium,
-                                  gateCount: preset.gateCount)
+            // Port fields: each gate's field over the lattice, built once on
+            // the GPU (horn couplings, both plates as walls, air absorption);
+            // every drive after that is a weighted sum of six columns.
+            let tOp = Date()
+            var onGPU = false
+            let prop: Propagator
+            if let ctx = LiveMachine.gpu,
+               let p = try? PortFieldsGPU.propagator(ctx: ctx, elements: preset.elements,
+                                                     coupling: coupling, walls: walls, lattice: lat,
+                                                     frequency: f, medium: preset.medium,
+                                                     gateCount: preset.gateCount) {
+                prop = p; onGPU = true
+            } else {
+                prop = Propagator(elements: preset.elements, lattice: lat, frequency: f,
+                                  medium: preset.medium, gateCount: preset.gateCount,
+                                  elementCoupling: coupling, walls: walls)
+            }
+            let opSecs = Date().timeIntervalSince(tOp)
             // Control points on the object surface, chosen by FARTHEST-POINT
             // sampling so they actually span the shape. Striding over triangle
             // storage order (the previous version) samples mesh topology, not
@@ -653,6 +678,9 @@ public final class Document: ObservableObject {
                     medianMiss / lambdaHere, secs)
                 self.state.inspector = [
                     .init(title: "Compile", rows: [
+                        ("machine", "\(preset.displayName) · \(preset.gateCount) gates"),
+                        ("operator", String(format: "%@ %.1fs · %d elements",
+                                            onGPU ? "GPU" : "CPU", opSecs, preset.elements.count)),
                         ("material", material),
                         ("method", "GS-PAT"),
                         ("control points", "\(targets.count)"),

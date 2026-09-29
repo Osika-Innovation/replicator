@@ -10,11 +10,12 @@ No Xcode required — Command Line Tools only.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test              # unit suite (19 tests)
+./.build/release/fieldc test              # unit suite (47 tests)
 ./.build/release/fieldc gate --receipt    # physics acceptance gates, writes Receipts/
-./.build/release/fieldc machine           # describe the RH-1 preset
-./.build/release/fieldc focus             # compile a centre trap, compare solvers
-./.build/release/fieldc gpu               # Metal propagator vs CPU reference
+./.build/release/fieldc machine           # the simulated machine: RH-1 free-standing, room air (--desktop: frozen v0.3)
+./.build/release/fieldc focus             # compile a centre trap on the full chamber (GPU port fields)
+./.build/release/fieldc gpu               # Metal propagator + port-field kernel vs CPU reference
+./.build/release/fieldc drift --receipt   # how fast a compiled trap goes stale as the air warms
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -22,7 +23,6 @@ swift build -c release
 ./.build/release/fieldc cad render --all   # iso, front, section, detail, plate, storage, top
 ./.build/release/fieldc cad export         # STL per part, OBJ+MTL, params, BOM, GA drawing
 ./.build/release/fieldc cad step           # B-rep STEP assembly via CadQuery, volume-gated
-./.build/release/fieldc machine --freestanding   # the plate-primary preset, read from the CAD
 ./.build/release/fieldc plates             # can 6 throat gates hold a trap? (model study)
 ```
 
@@ -38,9 +38,13 @@ provenance and nine documented conflicts resolved in code (see
 section-cut Machine tab, STL/OBJ/STEP exports with a cross-kernel volume gate.
 A new preset, `RH1Freestanding`, takes its acoustic apertures from the CAD's
 plate faces and its gates from the throat piezos; the desktop preset (`RH1`,
-24 panel gates) remains as the v0.3 variant and still backs the historical
-gates below. The slicer modes still compile against the desktop preset —
-moving them onto the plate machine is the next step, not done.
+24 panel gates) is FROZEN: it backs the historical solver gates below and
+replays old receipts, nothing else.
+
+**2026-09-29 — every mode now simulates the free-standing machine, in real
+air.** Compile/Build/Inspect, the viewport chrome, `focus` and `render` run on
+`RH1Freestanding.standard()`: 6 throat gates, 17 184 virtual apertures, both
+plates as walls, humid air at 20 °C / 50 % RH. See "Round 6" below.
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -90,6 +94,47 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 6 — temperature, port fields, and the free-standing machine (2026-09-29)
+
+Prompted by two external reviews of the chamber-engine plan (Kin note "The
+twin's chamber engine: two reviews checked…").
+
+**Air is a model input now.** `Medium.air(temperatureC:humidity:pressure:)` gives
+sound speed and density from an ideal-gas mixture of dry air and water vapour,
+and absorption from ISO 9613-1: 343.87 m/s at 20 °C / 50 % RH, **+0.182 %/K**;
+4.66 dB/km at 1 kHz (the ISO table value), 1.32 / 3.28 / 8.23 dB/m at 40 / 100
+/ 200 kHz. Absorption acts on every path, images included; the horn channels
+hold the same air (c/√τ), so they drift too. The fixed §12 media are unchanged,
+so every earlier receipt still replays.
+
+**Port fields on the GPU.** `PortFieldsGPU` builds the gate-granular operator for
+any preset — horn couplings, wall images, absorption — and hands the CPU
+pipeline a `Propagator(precomputedH:)`. The whole chamber at λ/2 (792 100 points
+× 6 gates, 17 184 apertures × 7 wall paths ≈ 10¹¹ terms) builds in **3.3 s**;
+after that every drive is a six-column sum. **G-GPU-FS** holds it to the CPU
+reference: 1.3e-5 at 40 kHz, 5.3e-5 at 100 kHz (bar 1e-4).
+
+**How fast a compiled trap goes stale** (`fieldc drift`, receipt): compile a twin
+trap at 20 °C, hold the drive, warm the air.
+* Direct paths only, the node moves by d·Δc/c (d = distance from the mid-plane):
+  **G-T1** passes, +340 µm vs +329 µm closed form and −775 vs −712 µm at +3 K.
+* With both plates as mirrors (3 image orders, R = 0.9), multipath turns the
+  drift into decorrelation: at 40 kHz the trap moves 40–900 µm within +0.3 K,
+  and at 100–200 kHz 0.1 K is enough for a sibling well to take over.
+* Re-solving the drive at the TRUE temperature pulls on-axis traps back 2–4×
+  with direct paths, but in the reverberant case it lands in a different well:
+  the pressure-objective twin trap is not unique with 6 drives. So modelling
+  temperature is necessary, not sufficient — the force compiler (Gor'kov
+  potential as a quadratic form in the gate vector, sibling wells penalised)
+  comes before thermal correction can work.
+
+The live Compile shows the same thing honestly: all 4 000 wells lie within 45 %
+of the deepest, median miss 10 mm.
+
+**Still missing** for these numbers to be the machine's: the glass cylinder
+(the walls are the two plates only), the horn (a labelled stub), and SI drive
+units.
 
 ## Round 5 — what building the machine found (2026-09-28)
 

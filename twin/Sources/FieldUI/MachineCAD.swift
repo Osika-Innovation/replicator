@@ -17,8 +17,9 @@ public enum MachineCAD {
     public static let model = RH1Model()
     public static let gates: [GateResult] = CADGates.runAll(model, interference: false)
 
-    /// The plate-primary preset the Machine tab describes (slots open).
-    public static let platePreset: MachinePreset = RH1Freestanding.preset().preset
+    /// The plate-primary preset the Machine tab describes: the same standard
+    /// machine (room air, slots open) the Compile path simulates.
+    public static let platePreset: MachinePreset = RH1Freestanding.standard().preset
 
     /// Point the left rail at the free-standing machine: 6 throat gates,
     /// physical apertures (not the preset's per-gate virtual elements).

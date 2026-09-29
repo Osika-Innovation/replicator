@@ -101,22 +101,26 @@ public enum SceneBuilder {
         return g
     }
 
-    /// The RH-1 machine, drawn to the canonical build-sheet dimensions so the
-    /// silhouette matches the Blender renders.
+    /// The RH-1 free-standing build chamber, drawn from `RH1Design` — the same
+    /// numbers the CAD and the physics read (build frame: z = 0 at the mid-up
+    /// face, z = L at the top face). The slot pattern is the physics
+    /// preset's own `FacePattern`, not a decorative spiral.
     public static func rh1(palette: Palette = Palette(),
                            showPanels: Bool = true,
                            showColumns: Bool = true,
-                           doorAngleDeg: Double = 180) -> SceneGeometry {
+                           doorAngleDeg: Double = 180,
+                           design d: RH1Design = RH1Design()) -> SceneGeometry {
         var g = SceneGeometry()
         let mm = 0.001
-        let bvR = RH1.Dim.buildVolumeDiameter / 2 * mm
-        let bvH = RH1.Dim.buildVolumeHeight * mm
-        let plateR = RH1.Dim.plateDiameter / 2 * mm
-        let boreR = RH1.Dim.boreDiameter / 2 * mm
+        let bvR = (d.plateRadius - 15) * mm          // = RH1Freestanding build volume
+        let bvH = d.buildChamberHeight * mm
+        let plateR = d.plateRadius * mm
+        let boreR = d.boreRadius * mm
+        let pattern = FacePattern(d, slotSamples: 48)
 
-        // ---- caps: annulus fill + spiral grating hint + bore ----
+        // ---- the two faces: annulus fill, slots, drilled horns, bore ----
         for (z, isLower) in [(0.0, true), (bvH, false)] {
-            // Only the lower cap is filled. The upper one stays wireframe so the
+            // Only the lower face is filled. The upper one stays wireframe so the
             // build volume is visible from above — a slicer whose build plate you
             // cannot see into is not a slicer.
             if isLower {
@@ -132,60 +136,50 @@ public enum SceneBuilder {
                 }
             }
             g.circle(radius: plateR, z: z, color: palette.cap)
-            g.circle(radius: boreR, z: z, color: palette.cap)
-            // 12-arm equiangular spiral slot grating, r(phi) = r0 e^{cot(a) phi}
-            let r0 = RH1.Dim.spiralInnerRadius * mm
-            let r1 = RH1.Dim.spiralOuterRadius * mm
-            let turns = RH1.Dim.spiralTurns
-            let cotA = log(r1 / r0) / (turns * 2 * Double.pi)
-            for arm in 0..<RH1.Dim.spiralArms {
-                let phase = 2 * Double.pi * Double(arm) / Double(RH1.Dim.spiralArms)
-                var prev: Vec3? = nil
-                for s in 0...28 {
-                    let phi = turns * 2 * Double.pi * Double(s) / 28.0
-                    let r = r0 * exp(cotA * phi)
-                    let p = Vec3(r * cos(phi + phase), r * sin(phi + phase), z)
-                    if let q = prev { g.line(q, p, palette.cap) }
-                    prev = p
+            g.circle(radius: boreR, z: z, segments: 24, color: palette.cap)
+            for line in pattern.slotCenterlines {
+                for i in 1..<line.count {
+                    g.line(Vec3(line[i - 1].x * mm, line[i - 1].y * mm, z),
+                           Vec3(line[i].x * mm, line[i].y * mm, z), palette.cap)
+                }
+            }
+            if isLower {
+                for s in pattern.drilled {
+                    let c = s.center, r = s.faceRadius * mm
+                    for i in 0..<8 {
+                        let a0 = 2 * Double.pi * Double(i) / 8, a1 = 2 * Double.pi * Double(i + 1) / 8
+                        g.line(Vec3(c.x * mm + r * cos(a0), c.y * mm + r * sin(a0), z),
+                               Vec3(c.x * mm + r * cos(a1), c.y * mm + r * sin(a1), z), palette.cap)
+                    }
                 }
             }
         }
 
-        // ---- the six phononic panels at r = 155 ----
+        // ---- the glass: rear Ø444 fixed half, front Ø464 rotating half ----
         if showPanels {
-            let rP = RH1.Dim.panelRadius * mm
-            let w = RH1.Dim.panelWidth * mm
-            let span = Double.pi                      // rear 180 deg arcade
-            for p in 0..<RH1.Dim.panelCount {
-                let frac = (Double(p) + 0.5) / Double(RH1.Dim.panelCount)
-                let az = Double.pi - span / 2 + frac * span
-                let tangent = Vec3(-sin(az), cos(az), 0)
-                let c = Vec3(rP * cos(az), rP * sin(az), 0)
-                let a = c - tangent * (w / 2), b = c + tangent * (w / 2)
-                g.quad(a, b, b + Vec3(0, 0, bvH), a + Vec3(0, 0, bvH), palette.panelFill)
-                g.line(a, b, palette.panel)
-                g.line(a + Vec3(0, 0, bvH), b + Vec3(0, 0, bvH), palette.panel)
-                g.line(a, a + Vec3(0, 0, bvH), palette.panel)
-                g.line(b, b + Vec3(0, 0, bvH), palette.panel)
-                // hex-screen banding: cells grade large (low f) at the bottom to
-                // small (high f) at the top — the rainbow-trapping axis.
-                for band in 1..<8 {
-                    let t = Double(band) / 8.0
-                    let z = bvH * t
-                    g.line(a + Vec3(0, 0, z), b + Vec3(0, 0, z),
-                           SIMD4<Float>(palette.panel.x, palette.panel.y,
-                                        palette.panel.z, 0.25 + 0.35 * Float(1 - t)))
+            for (r, fromDeg) in [(d.rearGlassOD / 2 * mm, 90.0), (d.frontGlassOD / 2 * mm, -90.0)] {
+                for z in [0.0, bvH] {
+                    for i in 0..<48 {
+                        let a0 = (fromDeg + 180 * Double(i) / 48) * .pi / 180
+                        let a1 = (fromDeg + 180 * Double(i + 1) / 48) * .pi / 180
+                        g.line(Vec3(r * cos(a0), r * sin(a0), z), Vec3(r * cos(a1), r * sin(a1), z),
+                               palette.panel)
+                    }
+                }
+                for i in 0...6 {
+                    let a = (fromDeg + 30 * Double(i)) * .pi / 180
+                    g.line(Vec3(r * cos(a), r * sin(a), 0), Vec3(r * cos(a), r * sin(a), bvH),
+                           SIMD4<Float>(palette.panel.x, palette.panel.y, palette.panel.z, 0.30))
                 }
             }
         }
 
-        // ---- seven arcade columns, 40 x 20 mm at r = 160 ----
+        // ---- the arcade: seven columns over the rear half ----
         if showColumns {
-            let rC = RH1.Dim.columnRadius * mm
-            let wT = RH1.Dim.columnTangential * mm
-            for c in 0..<RH1.Dim.columnCount {
-                let az = Double.pi - Double.pi / 2
-                    + Double.pi * Double(c) / Double(RH1.Dim.columnCount - 1)
+            let rC = (d.columnInnerRadius + d.columnRadial / 2) * mm
+            let wT = d.columnTangential * mm
+            for c in 0..<d.columnCount {
+                let az = (90 + d.columnPitchDeg * Double(c)) * .pi / 180
                 let tangent = Vec3(-sin(az), cos(az), 0)
                 let base = Vec3(rC * cos(az), rC * sin(az), 0)
                 for s in [-wT / 2, wT / 2] {

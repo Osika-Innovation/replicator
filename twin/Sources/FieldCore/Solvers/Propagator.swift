@@ -137,11 +137,16 @@ public struct Propagator: Sendable {
     /// Per-element image table, computed once.
     let imageTable: [[(z: Double, weight: Double)]]
 
+    /// - Parameter precomputedH: an operator already built for exactly these
+    ///   arguments (the GPU port-field build, `FieldGPU.PortFieldsGPU`). The
+    ///   point evaluators below still walk the elements, so a gate can check
+    ///   that the two agree.
     public init(elements: [Element], lattice: FieldLattice,
                 frequency: Double, medium: Medium, gateCount: Int? = nil,
                 elementWeights: [Double]? = nil,
                 elementCoupling: [Complex]? = nil,
-                walls: Walls = .none) {
+                walls: Walls = .none,
+                precomputedH: [Complex]? = nil) {
         self.elements = elements
         self.lattice = lattice
         self.frequency = frequency
@@ -154,8 +159,14 @@ public struct Propagator: Sendable {
         let nG = gateCount ?? ((elements.map(\.gateIndex).max() ?? -1) + 1)
         self.gateCount = nG
 
-        let k = medium.wavenumber(at: frequency)
         let nP = lattice.count
+        if let pre = precomputedH {
+            precondition(pre.count == nP * nG, "precomputed H has the wrong shape")
+            self.H = pre
+            return
+        }
+        let k = medium.wavenumber(at: frequency)
+        let alpha = medium.absorption(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
 
         var h = [Complex](repeating: .zero, count: nP * nG)
@@ -181,7 +192,8 @@ public struct Propagator: Sendable {
                         let dir = el.directivity == .monopole ? 1.0
                             : Propagator.pistonDirectivity(
                                 k: k, a: el.equivalentRadius, cosTheta: cosTheta)
-                        let amp = prefactorMag * el.area * dir * w * refl / r
+                        // Air absorption along the whole path, images included.
+                        let amp = prefactorMag * el.area * dir * w * refl * exp(-alpha * r) / r
                         let phase = Complex.expi(k * r)
                         acc += Complex(-phase.im, phase.re) * amp
                     }
@@ -242,6 +254,7 @@ public struct Propagator: Sendable {
     /// optimizes the machine the field is then evaluated on.
     public func gateRow(at x: Vec3) -> [Complex] {
         let k = medium.wavenumber(at: frequency)
+        let alpha = medium.absorption(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
         var row = [Complex](repeating: .zero, count: gateCount)
         for (ei, el) in elements.enumerated() {
@@ -258,7 +271,8 @@ public struct Propagator: Sendable {
                     : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
                                                    cosTheta: cosTheta)
                 let ph = Complex.expi(k * r)
-                acc += Complex(-ph.im, ph.re) * (prefactorMag * el.area * dir * w * refl / r)
+                acc += Complex(-ph.im, ph.re)
+                    * (prefactorMag * el.area * dir * w * refl * exp(-alpha * r) / r)
             }
             row[el.gateIndex] += acc * c
         }
@@ -268,6 +282,7 @@ public struct Propagator: Sendable {
     /// Pressure at one arbitrary point, without touching the cached lattice.
     public func pressure(at x: Vec3, drive: [Complex]) -> Complex {
         let k = medium.wavenumber(at: frequency)
+        let alpha = medium.absorption(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
         var acc = Complex.zero
         for (ei, el) in elements.enumerated() {
@@ -282,7 +297,7 @@ public struct Propagator: Sendable {
                 let dir = el.directivity == .monopole ? 1.0
                     : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
                                                    cosTheta: cosTheta)
-                let amp = prefactorMag * el.area * dir * w * refl / r
+                let amp = prefactorMag * el.area * dir * w * refl * exp(-alpha * r) / r
                 let ph = Complex.expi(k * r)
                 acc += Complex(-ph.im, ph.re) * c * amp * drive[el.gateIndex]
             }
@@ -296,6 +311,7 @@ public struct Propagator: Sendable {
     /// as visible trap jitter.
     public func velocity(at x: Vec3, drive: [Complex]) -> (Complex, Complex, Complex) {
         let k = medium.wavenumber(at: frequency)
+        let alpha = medium.absorption(at: frequency)
         let omega = 2 * .pi * frequency
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
         var gx = Complex.zero, gy = Complex.zero, gz = Complex.zero
@@ -314,11 +330,11 @@ public struct Propagator: Sendable {
                 let dir = el.directivity == .monopole ? 1.0
                     : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
                                                    cosTheta: cosTheta)
-                let amp = prefactorMag * el.area * dir * w * refl
+                let amp = prefactorMag * el.area * dir * w * refl * exp(-alpha * r)
                 let ph = Complex.expi(k * r)
                 let iph = Complex(-ph.im, ph.re)
-                // d/dr [ e^{ikr}/r ] = e^{ikr} (ik r - 1)/r^2
-                let dfdr = iph * ((Complex(0, k * r) - Complex.one) / (r * r))
+                // d/dr [ e^{(ik-α)r}/r ] = e^{(ik-α)r} ((ik - α) r - 1)/r^2
+                let dfdr = iph * ((Complex(-alpha * r, k * r) - Complex.one) / (r * r))
                 let g = dfdr * c * amp * drive[el.gateIndex]
                 gx += g * (d.x / r); gy += g * (d.y / r); gz += g * (d.z / r)
             }

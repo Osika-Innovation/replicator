@@ -37,6 +37,22 @@ func deviceName() -> String {
     return String(cString: buf)
 }
 
+/// The free-standing RH-1's operator over a lattice: GPU port fields when a
+/// Metal device exists, the CPU reference otherwise.
+func standardPropagator(frequency f: Double, lattice: FieldLattice) -> (Propagator, MachinePreset, String) {
+    let (preset, coupling, walls) = RH1Freestanding.standard(frequency: f)
+    let t0 = Date()
+    if let ctx = try? MetalContext(),
+       let p = try? PortFieldsGPU.propagator(ctx: ctx, elements: preset.elements, coupling: coupling,
+                                             walls: walls, lattice: lattice, frequency: f,
+                                             medium: preset.medium, gateCount: preset.gateCount) {
+        return (p, preset, String(format: "GPU %.2fs", Date().timeIntervalSince(t0)))
+    }
+    let p = Propagator(elements: preset.elements, lattice: lattice, frequency: f, medium: preset.medium,
+                       gateCount: preset.gateCount, elementCoupling: coupling, walls: walls)
+    return (p, preset, String(format: "CPU %.2fs", Date().timeIntervalSince(t0)))
+}
+
 func writeReceipt(_ r: Receipt) {
     let dir = URL(fileURLWithPath: "Receipts")
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -80,8 +96,11 @@ case "test":
     print(String(format: "(%.2fs)", Date().timeIntervalSince(t0)))
     exit(h.allPassed ? 0 : 1)
 
-case "machine" where args.contains("--freestanding"):
+case "machine" where !args.contains("--desktop"):
+    // The free-standing RH-1 (the machine the app simulates). `--desktop`
+    // shows the frozen v0.3 desktop preset kept for receipt replay.
     var o = RH1Freestanding.Options()
+    o.medium = RH1Freestanding.roomAir
     o.slotsOpen = !args.contains("--slots-closed")
     let (preset, coupling) = RH1Freestanding.preset(o)
     let d = RH1Design()
@@ -90,8 +109,10 @@ case "machine" where args.contains("--freestanding"):
     print("elements    : \(preset.elements.count) virtual (apertures × gates), slots \(o.slotsOpen ? "OPEN" : "closed")")
     print("build volume: r = \(preset.buildVolume.radius * 1000) mm, h = \(preset.buildVolume.height * 1000) mm (face to face)")
     let mags = coupling.map(\.magnitude)
-    print(String(format: "horn coupling: |c| %.3f … %.3f (HornModel STUB, c_h = %.0f m/s)",
-                 mags.min() ?? 0, mags.max() ?? 0, o.horn.soundSpeed))
+    print(String(format: "horn coupling: |c| %.3f … %.3f (HornModel STUB, c_h = %.1f m/s)",
+                 mags.min() ?? 0, mags.max() ?? 0, o.horn.channelSpeed(o.medium)))
+    print(String(format: "medium      : air 20 °C 50 %% RH, c = %.2f m/s, %.2f dB/m at 40 kHz",
+                 o.medium.soundSpeed, o.medium.absorption(at: 40_000) * 8.686))
     print("walls       : the facing plates, L = \(d.buildChamberHeight) mm, image order 3")
 
 case "plates":
@@ -117,6 +138,7 @@ case "plates":
     }
 
 case "machine":
+    // --desktop: the frozen v0.3 desktop preset (receipt replay only).
     let preset = RH1.preset(includeEMCaps: args.contains("--em"))
     print("preset      : \(preset.displayName) [\(preset.id)]")
     print("gates       : \(preset.gateCount)")
@@ -136,20 +158,17 @@ case "machine":
 case "focus":
     // Compile a single trap and report what the field actually does.
     let f = 40_000.0
-    let preset = RH1.preset(frequency: f)
-    let lambda = preset.medium.wavelength(at: f)
+    let bv = RH1Freestanding.standard(frequency: f).preset.buildVolume
+    let lambda = RH1Freestanding.roomAir.wavelength(at: f)
     let inset = 2 * lambda, sp = lambda / 2
-    let R = preset.buildVolume.radius
+    let R = bv.radius
     let lat = FieldLattice(origin: Vec3(-R, -R, inset), spacing: sp,
                            nx: Int((2 * R / sp).rounded(.down)) + 1,
                            ny: Int((2 * R / sp).rounded(.down)) + 1,
-                           nz: Int(((preset.buildVolume.height - 2 * inset) / sp).rounded(.down)) + 1)
-    print("building operator: \(lat.count) points x \(preset.gateCount) gates ...")
-    let t0 = Date()
-    let prop = Propagator(elements: preset.elements, lattice: lat,
-                          frequency: f, medium: preset.medium,
-                          gateCount: preset.gateCount)
-    print(String(format: "  built in %.2fs", Date().timeIntervalSince(t0)))
+                           nz: Int(((bv.height - 2 * inset) / sp).rounded(.down)) + 1)
+    print("building operator: \(lat.count) points, RH-1 free-standing ...")
+    let (prop, preset, how) = standardPropagator(frequency: f, lattice: lat)
+    print("  \(preset.gateCount) gates, \(preset.elements.count) elements — built (\(how))")
     let target = Vec3(0, 0, preset.buildVolume.height / 2)
     let g = Gorkov(medium: preset.medium, particle: .pla())
     print("  contrast Phi = \(String(format: "%.3f", g.contrast)) "
@@ -194,7 +213,108 @@ case "gpu":
                                  + "float32 GPU vs float64 CPU; "
                                  + String(format: "build %.3fs", gpu.buildSeconds))
         print(g.line)
-        exit(g.passed ? 0 : 1)
+
+        // G-GPU-FS: the port-field kernel on the machine the app simulates —
+        // horn couplings, both plates as walls (3 image orders), air
+        // absorption — against the CPU gate rows at random chamber points.
+        var gates = [g]
+        for f in [40_000.0, 100_000.0] {
+            let (fs, coupling, walls) = RH1Freestanding.standard(frequency: f)
+            var rng = SplitMix64(seed: 7)
+            let bv = fs.buildVolume
+            let pts: [Vec3] = (0..<192).map { _ in
+                let r = bv.radius * rng.nextUnit().squareRoot(), a = 2 * Double.pi * rng.nextUnit()
+                return Vec3(r * cos(a), r * sin(a), bv.height * (0.05 + 0.9 * rng.nextUnit()))
+            }
+            let t0 = Date()
+            let hG = try PortFieldsGPU.build(ctx: ctx, elements: fs.elements, coupling: coupling,
+                                             walls: walls, points: pts, frequency: f,
+                                             medium: fs.medium, gateCount: fs.gateCount)
+            let tG = Date().timeIntervalSince(t0)
+            let ref = Propagator(elements: fs.elements,
+                                 lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                 frequency: f, medium: fs.medium, gateCount: fs.gateCount,
+                                 elementCoupling: coupling, walls: walls)
+            let hC = pts.flatMap { ref.gateRow(at: $0) }
+            let err = hG.relativeL2(to: hC)
+            let terms = Double(pts.count * fs.elements.count * (1 + 2 * walls.order))
+            let gf = GateResult(id: "G-GPU-FS", name: String(format: "port fields, RH-1 FS at %.0f kHz, vs CPU", f / 1000),
+                                measured: err, threshold: 1e-4,
+                                detail: "\(pts.count) points x \(fs.gateCount) gates, \(fs.elements.count) elements, "
+                                      + "walls order \(walls.order), air \(String(format: "%.2f", fs.medium.absorption(at: f) * 8.686)) dB/m; "
+                                      + String(format: "%.0f M terms/s", terms / tG / 1e6))
+            print(gf.line)
+            gates.append(gf)
+        }
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "gpu", gates: gates, durationSeconds: 0,
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+        exit(gates.allSatisfy(\.passed) ? 0 : 1)
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
+case "drift":
+    // How fast a compiled trap goes stale as the air warms (ThermalDrift):
+    // compile at 20 °C, keep the drive, re-solve at +ΔT, track the trap.
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let freqs = args.contains("--quick") ? [40_000.0] : [40_000.0, 100_000.0, 200_000.0]
+        let dTs = [0, 0.1, 0.3, 1, 3]
+        let rows = try ThermalDrift.run(frequencies: freqs, dTs: dTs) { p, c, w, pts, f, m in
+            try PortFieldsGPU.build(ctx: ctx, elements: p.elements, coupling: c, walls: w,
+                                    points: pts, frequency: f, medium: m, gateCount: p.gateCount)
+        }
+        let air = RH1Freestanding.roomAir
+        let dcdT = ThermalDrift.relativeSpeedDrift(air)
+        print(String(format: "room air 20 °C, 50 %% RH: c = %.2f m/s, dc/c = %.3f %%/K; "
+                     + "drive compiled at 20 °C and held; 200 µm PLA bead", air.soundSpeed, dcdT * 100))
+        print("shift = tracked trap's move (µm) · depth = its depth vs 20 °C · * = a sibling is now the deepest well")
+        func pad(_ x: String, _ n: Int, left: Bool = false) -> String {
+            let fill = String(repeating: " ", count: max(0, n - x.count)); return left ? fill + x : x + fill }
+        let head = dTs.dropFirst().map { pad(String(format: "+%.1f K", $0), 12, left: true) }.joined()
+        for f in freqs {
+            for walls in [false, true] {
+                print(String(format: "\n%.0f kHz, %@", f / 1000,
+                             walls ? "both plates as walls (3 image orders, R = 0.9)" : "direct paths only"))
+                print(pad("target", 30) + head)
+                let targets = Array(Set(rows.filter { $0.frequency == f && $0.walls == walls }.map(\.target))).sorted()
+                for t in ThermalDrift.defaultTargets().map(\.label) where targets.contains(t) {
+                    let r = rows.filter { $0.frequency == f && $0.walls == walls && $0.target == t && $0.dT > 0 }
+                    let cells = r.map { String(format: "%6.0f/%.2f%@", $0.shift * 1e6, $0.depthRatio, $0.hopped ? "*" : " ") }
+                    print(pad(t, 30) + cells.map { pad($0, 12, left: true) }.joined())
+                    let fixed = r.map { String(format: "%6.0f/%.2f ", $0.resolvedShift * 1e6, $0.resolvedDepthRatio) }
+                    print(pad("  ↳ re-solved at true T", 30) + fixed.map { pad($0, 12, left: true) }.joined())
+                }
+            }
+        }
+        // G-T1: with direct paths only, a node a distance d off the mid-plane
+        // moves by d·Δc/c. Checked at 40 kHz, +3 K, on both axial targets.
+        var gates: [GateResult] = []
+        for r in rows where r.frequency == 40_000 && !r.walls && r.dT == 3 && abs(r.offMidPlane) > 0.01
+                            && r.target != "60 mm off-axis, mid-plane" {
+            let expect = r.offMidPlane * ((air.shifted(byKelvin: 3).soundSpeed - air.soundSpeed) / air.soundSpeed)
+            let err = abs(r.shiftZ - expect) / abs(expect)
+            let g = GateResult(id: "G-T1", name: "thermal node drift vs d·Δc/c (\(r.target), direct paths, +3 K)",
+                               measured: err, threshold: 0.25,
+                               detail: String(format: "twin %+.1f µm, closed form %+.1f µm", r.shiftZ * 1e6, expect * 1e6))
+            print(g.line)
+            gates.append(g)
+        }
+        for f in freqs {
+            for r in rows where r.frequency == f && r.walls && r.dT == 1 {
+                gates.append(GateResult(id: "T-drift", name: String(format: "%.0f kHz, walls, %@, +1 K", f / 1000, r.target),
+                                        measured: r.depthRatio, threshold: 0, comparison: .informational,
+                                        detail: String(format: "shift %.0f µm, depth %.2f of 20 °C%@",
+                                                       r.shift * 1e6, r.depthRatio, r.hopped ? ", sibling now deepest" : "")))
+            }
+        }
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "drift", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+        exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "render":
@@ -207,25 +327,24 @@ case "render":
         let pal = light ? SceneBuilder.Palette.light : SceneBuilder.Palette()
         var obj: SceneGeometry? = nil
         if !args.contains("--empty") {
-            let placed = STL.sampleCup().placed(in: RH1.preset().buildVolume)
+            let placed = STL.sampleCup().placed(in: RH1Freestanding.standard().preset.buildVolume)
             obj = SceneBuilder.object(placed.mesh, palette: pal, fits: placed.fits)
             print("  object: \(placed.mesh.triangles.count) triangles, fits \(placed.fits)")
         }
         // --overlays: compile a field and render it with traps, so the overlay
         // path is verifiable outside the window.
         if args.contains("--overlays") {
-            let preset = RH1.preset()
             let f = 40_000.0
-            let lam = preset.medium.wavelength(at: f)
-            let inset = 2 * lam, sp = lam / 2, R = preset.buildVolume.radius
+            let bv = RH1Freestanding.standard(frequency: f).preset.buildVolume
+            let lam = RH1Freestanding.roomAir.wavelength(at: f)
+            let inset = 2 * lam, sp = lam / 2, R = bv.radius
             let lat = FieldLattice(
                 origin: Vec3(-R, -R, inset), spacing: sp,
                 nx: Int((2 * R / sp).rounded(.down)) + 1,
                 ny: Int((2 * R / sp).rounded(.down)) + 1,
-                nz: Int(((preset.buildVolume.height - 2 * inset) / sp).rounded(.down)) + 1)
-            let prop = Propagator(elements: preset.elements, lattice: lat,
-                                  frequency: f, medium: preset.medium,
-                                  gateCount: preset.gateCount)
+                nz: Int(((bv.height - 2 * inset) / sp).rounded(.down)) + 1)
+            let (prop, preset, how) = standardPropagator(frequency: f, lattice: lat)
+            print("  operator: \(lat.count) points (\(how))")
             let target = Vec3(0, 0, preset.buildVolume.height / 2)
             let drive = InverseSolver.solve(
                 propagator: prop, points: [.init(position: target, targetAmplitude: 1)],

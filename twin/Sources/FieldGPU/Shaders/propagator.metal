@@ -118,3 +118,79 @@ kernel void magnitude(device const float2* field [[buffer(0)]],
     if (gid >= count) return;
     mag[gid] = length(field[gid]);
 }
+
+// ---------------------------------------------------------------------------
+// Port fields for any preset: the gate-granular operator with per-element
+// complex coupling (horn transfer x weight), axial wall images and air
+// absorption. Mirrors FieldCore.Propagator.init term for term; gate G-GPU-FS
+// holds the two together. One thread per field point; points are explicit so
+// the same kernel serves whole lattices and local probe lattices.
+
+struct ElementPF {
+    float4 position;      // xyz, w unused
+    float4 normal;        // xyz, w unused
+    float  area;
+    float  equivalentRadius;
+    float2 coupling;      // complex coupling, weight folded in
+    int    gateIndex;
+    int    monopole;      // 1 = omnidirectional
+    int    _pad0, _pad1;
+};
+
+struct PFParams {
+    uint   pointCount;
+    uint   elementCount;
+    uint   gateCount;
+    int    order;          // image orders per direction (0 = free field)
+    float  k;              // wavenumber
+    float  prefactorMag;   // rho0 * c0 * k / (2 pi)
+    float  alpha;          // amplitude absorption, Np/m
+    float  capSeparation;  // metres; 0 disables the walls
+    float  reflection;     // per-bounce pressure reflection
+    float  _pad0, _pad1, _pad2;
+};
+
+kernel void buildPortFields(device float2*            H        [[buffer(0)]],
+                            device const ElementPF*   elements [[buffer(1)]],
+                            device const float4*      points   [[buffer(2)]],
+                            constant PFParams&        P        [[buffer(3)]],
+                            uint                      gid      [[thread_position_in_grid]])
+{
+    if (gid >= P.pointCount) return;
+    float3 x = points[gid].xyz;
+    float2 acc[64];
+    uint nG = min(P.gateCount, 64u);
+    for (uint g = 0; g < nG; ++g) acc[g] = float2(0.0f);
+    bool walls = P.capSeparation > 0.0f && P.order > 0;
+    float L = P.capSeparation;
+
+    for (uint e = 0; e < P.elementCount; ++e) {
+        ElementPF el = elements[e];
+        if (el.gateIndex < 0 || uint(el.gateIndex) >= nG) continue;
+        float z0 = el.position.z;
+        float2 sum = float2(0.0f);
+        int nImg = walls ? 1 + 2 * P.order : 1;
+        for (int im = 0; im < nImg; ++im) {
+            // image 0 = direct; then for m = 1..order two images of weight R^m
+            float zi = z0, w = 1.0f;
+            if (im > 0) {
+                int m = (im + 1) / 2;
+                bool first = (im % 2) == 1;
+                w = pow(P.reflection, float(m));
+                if (m % 2 == 0) zi = first ? z0 + float(m) * L : z0 - float(m) * L;
+                else            zi = first ? -z0 + float(1 + m) * L : -z0 + float(1 - m) * L;
+            }
+            float3 d = x - float3(el.position.x, el.position.y, zi);
+            float r = max(length(d), 1e-9f);
+            float cosTheta = fabs(dot(d, el.normal.xyz)) / r;
+            float dir = el.monopole == 1 ? 1.0f : directivity(P.k, el.equivalentRadius, cosTheta);
+            float amp = P.prefactorMag * el.area * dir * w * exp(-P.alpha * r) / r;
+            float c; float s = sincos(P.k * r, c);
+            sum += float2(-s, c) * amp;               // i * e^{ikr} * amp
+        }
+        float2 cp = el.coupling;
+        acc[el.gateIndex] += float2(sum.x * cp.x - sum.y * cp.y, sum.x * cp.y + sum.y * cp.x);
+    }
+    uint base = gid * P.gateCount;
+    for (uint g = 0; g < nG; ++g) H[base + g] = acc[g];
+}

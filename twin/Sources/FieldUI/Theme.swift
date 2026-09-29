@@ -85,12 +85,14 @@ public struct AppActions: Sendable {
 public struct AppState: Sendable {
     public var theme: Theme = .dark
     public var mode: AppMode = .compile
-    public var machineName = "RH-1"
+    // Defaults describe the machine every mode simulates: the free-standing
+    // RH-1 in room air (20 °C, 50 % RH). The app overwrites them from the preset.
+    public var machineName = "RH-1 FS"
     public var material = "PLA"
-    public var gateCount = 24
-    public var elementCount = 4200
-    public var buildVolumeText = "Ø280 × 300 mm"
-    public var wavelengthText = "λ 8.575 mm · node 4.287 mm"
+    public var gateCount = 6
+    public var elementCount = 5728
+    public var buildVolumeText = "Ø380 × 460 mm"
+    public var wavelengthText = "λ 8.597 mm · node 4.299 mm"
     public var objects: [ObjectRow] = []
     public var machineView = false        // Machine View vs God View (§16.2)
     public var overlays: Set<String> = ["field"]

@@ -9,7 +9,7 @@ public enum CoreTests {
         pencil(h); trapKinds(h); chordAndVerbs(h); callResponse(h)
         surfaceHologram(h)
         provenance(h); gates(h)
-        cad(h); wallsAndPlates(h)
+        cad(h); wallsAndPlates(h); air(h)
         return h
     }
 
@@ -46,9 +46,28 @@ public enum CoreTests {
             let s = 0.05
             t.near(Mesh.cube(side: s).signedVolume, s * s * s, 1e-12)
         }
-        h.test("RH-1 canonical dimensions unchanged") { t in
-            // Load-bearing: these must stay in sync with the Blender renders
-            // and the first chassis. A silent edit here desynchronises both.
+        h.test("RH-1 canonical geometry (RH1Design)") { t in
+            // Load-bearing: the numbers the CAD, the viewport chrome and the
+            // physics all read. A silent edit desynchronises all three.
+            let d = RH1Design()
+            t.near(d.plateDiameter, 410, 0); t.near(d.boreDiameter, 12, 0)
+            t.near(d.chamberFloor, 1060, 0); t.near(d.chamberCeiling, 1520, 0)
+            t.near(d.buildChamberHeight, 460, 0)
+            t.near(d.bodyDiameter, 460, 0); t.near(d.overallHeight, 1650, 0)
+            t.near(d.rearGlassOD, 444, 0); t.near(d.frontGlassOD, 464, 0)
+            t.check(d.slotArms == 12, "12 spiral slots"); t.check(d.columnCount == 7, "7 columns")
+        }
+        h.test("RH-1 FS is the simulated machine") { t in
+            let (p, c, w) = RH1Freestanding.standard()
+            t.check(p.gateCount == 6, "3 throat piezos x 2 faces, got \(p.gateCount)")
+            t.check(c.count == p.elements.count && p.elements.count > 10_000, "virtual apertures with couplings")
+            t.near(p.buildVolume.radius, 0.190, 1e-9); t.near(p.buildVolume.height, 0.460, 1e-9)
+            t.near(w.capSeparation, 0.460, 1e-9)
+            t.near(p.medium.soundSpeed, 343.872, 0.01, "room air 20 C, 50 % RH")
+        }
+        h.test("desktop RH-1 v0.3 frozen (receipt replay only)") { t in
+            // Superseded by the free-standing machine (2026-07-30 canon). Kept
+            // so old receipts replay; not maintained.
             t.near(RH1.Dim.buildVolumeDiameter, 280, 0)
             t.near(RH1.Dim.buildVolumeHeight, 300, 0)
             t.near(RH1.Dim.plateDiameter, 300, 0)
@@ -60,7 +79,7 @@ public enum CoreTests {
             t.near(RH1.Dim.columnTangential, 40, 0)
             t.near(RH1.Dim.columnRadial, 20, 0)
         }
-        h.test("RH-1 has 24 acoustic gates") { t in
+        h.test("desktop RH-1 v0.3: 24 acoustic gates (frozen)") { t in
             let p = RH1.preset()
             t.check(p.gateCount == 24, "6 panels x 4 drivers, got \(p.gateCount)")
             t.check(!p.elements.isEmpty, "elements populated")
@@ -546,6 +565,38 @@ public enum CoreTests {
                 let back = try JSONDecoder().decode(Receipt.self, from: data)
                 t.check(back.gates.count == r.gates.count, "gate count preserved")
             } catch { t.fail("\(error)") }
+        }
+    }
+
+    // ------------------------------------------------------------------- air
+    static func air(_ h: TestHarness) {
+        h.test("humid air: sound speed, density, ISO 9613-1 absorption") { t in
+            let dry = AirState(temperatureC: 20, humidity: 0)
+            t.near(dry.soundSpeed, 343.235, 0.01, "dry air 20 C")
+            t.near(dry.density, 1.2041, 1e-3, "dry air density")
+            let room = Medium.air(temperatureC: 20, humidity: 50)
+            t.near(room.soundSpeed, 343.872, 0.01, "20 C, 50 % RH")
+            t.near(ThermalDrift.relativeSpeedDrift(room) * 100, 0.182, 0.002, "dc/c per K, %")
+            let s = room.air!
+            t.near(s.absorptionDB(at: 1_000) * 1000, 4.66, 0.05, "1 kHz, dB/km (ISO table 4.66)")
+            t.near(s.absorptionDB(at: 40_000), 1.32, 0.02, "40 kHz, dB/m")
+            t.near(s.absorptionDB(at: 200_000), 8.23, 0.05, "200 kHz, dB/m")
+            t.near(Medium.air.absorption(at: 40_000), 0, 0, "legacy fixed medium: no absorption")
+            t.near(room.shifted(byKelvin: 1).air!.temperatureC, 21, 1e-12)
+        }
+        h.test("propagator: absorption is exp(-alpha r) on every path") { t in
+            let el = Element(position: .zero, normal: Vec3(0, 0, 1), area: 1e-6, surface: .lowerCap,
+                             gateIndex: 0, directivity: .monopole)
+            let r = 0.3
+            let lat = FieldLattice(origin: Vec3(0, 0, r), spacing: 1, nx: 1, ny: 1, nz: 1)
+            let wet = Medium.air(temperatureC: 20, humidity: 50)
+            var still = wet; still.air = nil
+            let f = 100_000.0
+            let a = Propagator(elements: [el], lattice: lat, frequency: f, medium: wet).H[0].magnitude
+            let b = Propagator(elements: [el], lattice: lat, frequency: f, medium: still).H[0].magnitude
+            t.near(a / b, exp(-wet.absorption(at: f) * r), 1e-12, "cached operator")
+            let row = Propagator(elements: [el], lattice: lat, frequency: f, medium: wet).gateRow(at: Vec3(0, 0, r))
+            t.near(row[0].magnitude, a, 1e-12 * a, "point evaluator agrees")
         }
     }
 }
