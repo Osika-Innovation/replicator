@@ -734,6 +734,81 @@ public enum CoreTests {
             // is a 90 % error.
             t.check(worst.isFinite && worst < 1e-4, "worst relative difference \(worst)")
         }
+        h.test("G-CYL4: lined-wall zeros x J'_m = i s J_m, continued from j'_mn, against 30-digit values") { t in
+            // References: mpmath continuation of the same tracks (s·τ, τ: 0 → 1).
+            let cav = CylinderCavity(radius: 1, length: 1, maxGamma: 80)
+            let refs: [(Int, Double, Double, Double, Double)] = [
+                (0, 0, 8, 2.3829540884486669, -0.30883904018566885),
+                (0, 3.831705970207512, 8, 5.4086982696336624, -0.82222180810165009),
+                (1, 1.841183781340659, 8, 3.7873264300513429, -0.51381904926922239),
+                (2, 9.969467823087596, 8, 10.133909628674557, -1.1090620261935293),
+                (5, 6.415616375700241, 8, 8.3419065553409631, -1.3780860965238331),
+                (20, 22.219146482901301, 8, 22.954320034814519, -1.6834035060545693),
+                (0, 0, 100, 2.4047052014533877, -0.024052490749641846),
+                (3, 4.201188941210528, 100, 6.3798409097787477, -0.063868087998542829),
+                (60, 63.183304236279213, 40, 67.284685840353381, -2.173034915382975),
+                (1, 1.841183781340659, 0.1, 1.8441360269362887, -0.076900011700704761)]
+            for (m, x0, s, re, im) in refs {
+                let x = cav.robinZero(order: m, neumann: x0, s: Complex(s, 0))
+                let err = (x - Complex(re, im)).magnitude
+                t.check(err < 1e-7, "m = \(m), from \(x0), s = \(s): \(x.re) \(x.im)i (error \(err))")
+            }
+            // J at a complex argument, both branches (series and multiplication theorem).
+            for (m, x, re, im) in [(0, Complex(2.5, -0.4), -0.068410104646490844, 0.20225769853157660),
+                                   (7, Complex(30.0, -2.5), 0.82443214825586027, 0.18496160363028145)] {
+                let j = cav.complexJ(m, x).j
+                t.check((j - Complex(re, im)).magnitude < 1e-8, "J_\(m)(\(x.re)\(x.im)i) = \(j.re) \(j.im)i")
+            }
+        }
+        h.test("G-CYL5: lined side wall — power in = power absorbed by the wall") { t in
+            // Lossless air, rigid plates, one piston: every watt the piston
+            // radiates must leave through the lined wall, ½ Re β/(ρ0c) ∮|p|² dS.
+            // This checks the complex modes' normalisation, the wall field and
+            // the plate series together; none of it is built into the balance.
+            let med = Medium(density: 1.2, soundSpeed: 343)
+            let a = 0.05, L = 0.08, f = 12_000.0, beta = 0.4, b = 0.003
+            let cav = CylinderCavity(radius: a, length: L, reflectionLower: 1, reflectionUpper: 1,
+                                     maxGamma: 120 / a)
+            let rs = Vec3(0.013, 0.006, 0)
+            let el = Element(position: rs, normal: Vec3(0, 0, 1), area: Double.pi * b * b,
+                             surface: .lowerCap, gateIndex: 0)
+            let s = cav.source(elements: [el], coupling: nil, gateCount: 1, frequency: f, medium: med,
+                               zMin: 1e-4, wallAdmittance: beta)
+            let rsr = (rs.x * rs.x + rs.y * rs.y).squareRoot(), phis = atan2(rs.y, rs.x)
+            // Power in: the mean face pressure (the piston form factor again).
+            var pbar = Complex.zero
+            for q in 0..<s.modeCount {
+                let md = cav.modes[q], mu = s.mu[q]
+                let w = mu * b
+                let form = cav.complexJ(1, w).j * 2.0 / w
+                let jr = cav.complexJ(md.m, mu * rsr).j
+                let z0 = s.pre[q] * s.invDen[q] * (Complex.one + s.eKL[q] * s.eKL[q] * s.reflectionUpper)
+                pbar += s.lower[q] * z0 * form * jr * Complex.expi(Double(md.m) * phis)
+            }
+            let pIn = -0.5 * pbar.re * el.area                   // twin sign: p = −ρ0 c u
+            // Power out: ∮|p|² at r = a, the φ integral done per m exactly.
+            let gl = TestMath.gaussLegendre(400)
+            var wall = 0.0
+            for (xi, wi) in gl {
+                let z = 0.5 * L * (xi + 1)
+                var Pm: [Int: Complex] = [:]
+                for q in 0..<s.modeCount {
+                    let md = cav.modes[q]
+                    let ja = cav.complexJ(md.m, s.mu[q] * a).j
+                    let ik: Complex = Complex(0, 1) * s.kappa[q]
+                    let e1: Complex = (ik * z).exp
+                    let e2: Complex = (ik * (L - z)).exp
+                    let rl: Complex = s.eKL[q] * s.reflectionUpper
+                    let c: Complex = s.lower[q] * s.pre[q] * s.invDen[q] * (e1 + rl * e2)
+                    Pm[md.m, default: .zero] += ja * c
+                }
+                wall += 0.5 * L * wi * Pm.values.reduce(0) { $0 + $1.magnitudeSquared }
+            }
+            let pOut = 0.5 * beta / (med.density * med.soundSpeed) * 2 * Double.pi * a * wall
+            let rel = abs(pIn - pOut) / pOut
+            t.check(pIn > 0 && rel.isFinite && rel < 1e-4,
+                    "in \(pIn) W, wall \(pOut) W, relative \(rel), modes \(s.modeCount)")
+        }
         h.test("G-CYL2: a closed rigid cylinder rings at its analytic mode frequencies") { t in
             var m = Medium.air(temperatureC: 20, humidity: 50)
             m.extraAbsorption = 0.02
@@ -754,5 +829,30 @@ public enum CoreTests {
                 t.near(bestF / fa, 1, 1e-3, "mode \(name) at \(fa) Hz")
             }
         }
+    }
+}
+
+/// Quadrature for the tests.
+enum TestMath {
+    /// Gauss–Legendre nodes and weights on [−1, 1] (Newton on P_n).
+    static func gaussLegendre(_ n: Int) -> [(x: Double, w: Double)] {
+        var out: [(x: Double, w: Double)] = []
+        for i in 1...n {
+            var x = cos(Double.pi * (Double(i) - 0.25) / (Double(n) + 0.5))
+            var dp = 0.0
+            for _ in 0..<100 {
+                var p0 = 1.0, p1 = x
+                for k in 2...n {
+                    let p2 = ((2 * Double(k) - 1) * x * p1 - Double(k - 1) * p0) / Double(k)
+                    p0 = p1; p1 = p2
+                }
+                dp = Double(n) * (x * p1 - p0) / (x * x - 1)
+                let dx = p1 / dp
+                x -= dx
+                if abs(dx) < 1e-15 { break }
+            }
+            out.append((x, 2 / ((1 - x * x) * dp * dp)))
+        }
+        return out
     }
 }

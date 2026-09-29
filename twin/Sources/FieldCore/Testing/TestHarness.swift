@@ -27,8 +27,13 @@ public final class TestHarness {
         failures.append(Failure(test: current, message: message))
     }
 
+    /// FIELDC_VERBOSE=1 prints every check's message, pass or fail — the
+    /// measured numbers behind a green suite.
+    static let verbose = ProcessInfo.processInfo.environment["FIELDC_VERBOSE"] != nil
+
     public func check(_ cond: Bool, _ message: @autoclosure () -> String) {
         if !cond { fail(message()) }
+        else if TestHarness.verbose { print("  ok    \(current): \(message())") }
     }
 
     public func near(_ a: Double, _ b: Double, _ tol: Double,

@@ -33,6 +33,18 @@ public struct Complex: Equatable, Sendable, Codable {
         return Complex(e * cos(im), e * sin(im))
     }
 
+    /// z^n for an integer n (binary powering; negative n inverts).
+    public func pow(_ n: Int) -> Complex {
+        var base = n < 0 ? Complex.one / self : self
+        var e = abs(n), out = Complex.one
+        while e > 0 {
+            if e & 1 == 1 { out = out * base }
+            base = base * base
+            e >>= 1
+        }
+        return out
+    }
+
     public static func + (a: Complex, b: Complex) -> Complex { Complex(a.re + b.re, a.im + b.im) }
     public static func - (a: Complex, b: Complex) -> Complex { Complex(a.re - b.re, a.im - b.im) }
     public static func * (a: Complex, b: Complex) -> Complex {

@@ -120,6 +120,13 @@ public final class BesselTable: @unchecked Sendable {
 /// series summed in closed form; across the chamber the glass reflects every
 /// order exactly. At 40 kHz it is ~10⁴ mode coefficients per gate against
 /// ~17 000 apertures × 7 image paths — the chamber's "screen", made literal.
+///
+/// A lined (absorbing) side wall is exact too: with specific admittance β the
+/// wall condition ∂p/∂r = ikβp turns each mode's radial wavenumber complex,
+/// x = μa solving x J'_m(x) = i(kaβ) J_m(x), and the modes stay orthogonal
+/// under the unconjugated product. `source(wallAdmittance:)` finds every zero
+/// by continuation from its rigid one, and the fields read J_m at the complex
+/// argument off the same real table (`complexJ`).
 public final class CylinderCavity: @unchecked Sendable {
     public let radius: Double
     public let length: Double
@@ -144,9 +151,11 @@ public final class CylinderCavity: @unchecked Sendable {
         self.reflectionLower = reflectionLower
         self.reflectionUpper = reflectionUpper
         let X = maxGamma * radius
-        // Orders up to X + a margin: J_m(x) is negligible for m ≫ x.
-        let M = Int(X) + 24
-        let table = BesselTable(maxOrder: M, xMax: X + 2)
+        // Orders up to X + a margin: J_m(x) is negligible for m ≫ x, and the
+        // lined-wall modes read up to ~30 orders above their own (complexJ).
+        // Arguments to X + 4: a lined wall's zeros sit up to π/2 above j'_mn.
+        let M = Int(X) + 32
+        let table = BesselTable(maxOrder: M, xMax: X + 4)
         self.table = table
         var ms: [Mode] = []
         let perOrder: [[Double]] = (0...M).map { table.primeZeros(order: $0, upTo: X) }
@@ -190,18 +199,27 @@ public final class CylinderCavity: @unchecked Sendable {
         public var omegaRho: Double
         public var reflectionLower: Double, reflectionUpper: Double
         public var length: Double
+        /// The side wall's specific admittance (0 = rigid glass).
+        public var wallAdmittance: Double = 0
+        /// Per mode: the radial wavenumber μ (real j'/a for a rigid wall),
+        /// λ = μ/Re μ, λ^{|m|−1}, the multiplication-theorem term count
+        /// (0 = real argument), and ∫ψ² dA (unconjugated).
+        public var mu: [Complex] = [], lambda: [Complex] = [], lambdaPow: [Complex] = []
+        public var terms: [Int] = [], norm: [Complex] = []
     }
 
     /// Elements on the lower face (z ≈ 0) and the upper face (z ≈ L) radiate
     /// along their normals; anything else is ignored (the plates are the only
     /// sources of the free-standing machine).
     ///
-    /// - Parameter wallAdmittance: specific admittance β of the side wall
-    ///   (0 = rigid glass; β = (1 − R)/(1 + R) for a normal-incidence
-    ///   reflection R). First-order perturbation: each mode's axial wavenumber
-    ///   picks up κ² += 2ikβ/(a(1 − m²/j'²)) — the modes that graze the wall
-    ///   most (whispering gallery, j' ≈ m) are damped hardest; mode shapes are
-    ///   unchanged, so the table stays valid. Accurate for β ≪ 1.
+    /// - Parameter wallAdmittance: specific acoustic admittance β of the side
+    ///   wall, normalised to ρ0c (0 = rigid glass; a liner with normal-
+    ///   incidence reflection R has β = (1 − R)/(1 + R)). EXACT: each mode's
+    ///   zero is continued from j'_mn to the root of x J'_m(x) = i kaβ J_m(x).
+    ///   Low modes graze the wall and turn pressure-release-like (toward the
+    ///   Dirichlet zeros j_mn) with little loss; modes that meet the wall
+    ///   head-on are the ones a liner kills. (The first version perturbed κ²
+    ///   to first order in β, which fails once kaβ ≳ j'.)
     public func source(elements: [Element], coupling: [Complex]?, weights: [Double]? = nil,
                        gateCount G: Int, frequency f: Double, medium: Medium,
                        zMin: Double, wallAdmittance beta: Double = 0,
@@ -213,15 +231,45 @@ public final class CylinderCavity: @unchecked Sendable {
         let kc = Complex(medium.wavenumber(at: f), medium.absorption(at: f))
         let omega = 2 * Double.pi * f
         let wr = omega * medium.density
+        let a = radius
+        // Radial wavenumbers: the rigid zeros, or their lined-wall continuations
+        // (one per |m| — the ±m pair shares its radial function).
+        var mu = [Complex](repeating: .zero, count: Q), lam = mu, lamPow = mu, nrm = mu
+        var terms = [Int](repeating: 0, count: Q)
+        let s = Complex(kc.re * a * beta, 0)
+        mu.withUnsafeMutableBufferPointer { muB in
+            lam.withUnsafeMutableBufferPointer { lamB in
+                lamPow.withUnsafeMutableBufferPointer { lpB in
+                    nrm.withUnsafeMutableBufferPointer { nB in
+                        terms.withUnsafeMutableBufferPointer { tB in
+                            DispatchQueue.concurrentPerform(iterations: Q) { q in
+                                let md = modes[q]
+                                guard beta != 0 else {
+                                    muB[q] = Complex(md.zero / a, 0); lamB[q] = .one; lpB[q] = .one
+                                    nB[q] = Complex(md.norm, 0); tB[q] = 0
+                                    return
+                                }
+                                // The −m partner of a +m mode is its neighbour
+                                // in the sorted list; both solve it, cheaply.
+                                let x = robinZero(order: md.m, neumann: md.zero, s: s)
+                                let am = abs(md.m)
+                                let l = x / Complex(x.re, 0)
+                                muB[q] = x / a; lamB[q] = l; lpB[q] = l.pow(am - 1)
+                                tB[q] = CylinderCavity.termCount((l * l - .one).magnitude * x.re / 2)
+                                // ∫ J_m(μr)² dA = πa²[J'_m(x)² + (1 − m²/x²) J_m(x)²]
+                                let (j, jm1) = complexJ(am, x)
+                                let jp = jm1 - j * Double(am) / x
+                                let mm = Complex(Double(am * am), 0) / (x * x)
+                                nB[q] = (jp * jp + (Complex.one - mm) * j * j) * (Double.pi * a * a)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         var kappa = [Complex](repeating: .zero, count: Q), eKL = kappa, pre = kappa, invDen = kappa
         for q in 0..<Q {
-            let g = modes[q].zero / radius
-            var k2 = kc * kc - Complex(g * g, 0)
-            if beta > 0 {
-                let md = modes[q]
-                let shape = md.zero == 0 ? 1.0 : max(1e-3, 1 - Double(md.m * md.m) / (md.zero * md.zero))
-                k2 = k2 + Complex(0, 2 * kc.re * beta / (radius * shape))
-            }
+            let k2 = kc * kc - mu[q] * mu[q]
             var kz = k2.squareRoot
             if kz.im < 0 { kz = kz * -1.0 }
             kappa[q] = kz
@@ -233,36 +281,182 @@ public final class CylinderCavity: @unchecked Sendable {
             pre[q] = Complex(-wr, 0) / kz
             invDen[q] = Complex.one / (Complex.one - e * e * (rLo * rUp))
         }
-        // Project the apertures: W += c · A · 2J1(γb)/(γb) · J_m(γ r_a) e^{−imφ_a} / N.
+        // Project the apertures: W += c · A · 2J1(μb)/(μb) · J_m(μ r_a) e^{−imφ_a} / N.
+        // Elements are virtual (one per gate of a physical aperture), so the
+        // Bessel part is evaluated once per distinct aperture.
+        struct Key: Hashable { var x, y, z, area: Double; var mono: Bool }
+        var index: [Key: Int] = [:]
+        var uniq: [(r: Double, phi: Double, b: Double, mono: Bool)] = []
+        var elemU = [Int](repeating: -1, count: elements.count)
+        for (ei, el) in elements.enumerated() {
+            let key = Key(x: el.position.x, y: el.position.y, z: el.position.z, area: el.area,
+                          mono: el.directivity == .monopole)
+            if let u = index[key] { elemU[ei] = u; continue }
+            let u = uniq.count
+            index[key] = u
+            uniq.append(((el.position.x * el.position.x + el.position.y * el.position.y).squareRoot(),
+                         atan2(el.position.y, el.position.x), el.equivalentRadius, key.mono))
+            elemU[ei] = u
+        }
         var lower = [Complex](repeating: .zero, count: Q * G), upper = lower
         let half = length / 2
         lower.withUnsafeMutableBufferPointer { lo in
             upper.withUnsafeMutableBufferPointer { up in
                 DispatchQueue.concurrentPerform(iterations: Q) { q in
                     let md = modes[q]
-                    let g = md.zero / radius
+                    let am = abs(md.m)
+                    let muq = mu[q], invN = Complex.one / nrm[q]
+                    var val = [Complex](repeating: .zero, count: uniq.count)
+                    for (u, ap) in uniq.enumerated() {
+                        // A monopole element is a point velocity source (the
+                        // Propagator's `.monopole`: D = 1, same baffled prefactor).
+                        var form = Complex.one
+                        if !ap.mono {
+                            let w = muq * ap.b
+                            if w.magnitude > 1e-6 { form = complexJ(1, w).j * 2.0 / w }
+                        }
+                        let jm = terms[q] == 0 ? Complex(table.j(am, muq.re * ap.r), 0)
+                            : CylinderCavity.radial(table, am, gamma: muq.re, lambda: lam[q],
+                                                    lambdaPow: lamPow[q], r: ap.r, terms: terms[q]).j
+                        val[u] = form * jm * invN * Complex.expi(-Double(md.m) * ap.phi)
+                    }
                     for (ei, el) in elements.enumerated() {
                         let gi = el.gateIndex
                         guard gi >= 0 && gi < G else { continue }
                         let w = weights?[ei] ?? 1
                         if w == 0 { continue }
-                        let c = (coupling?[ei] ?? .one) * w
-                        let r = (el.position.x * el.position.x + el.position.y * el.position.y).squareRoot()
-                        let phi = atan2(el.position.y, el.position.x)
-                        // A monopole element is a point velocity source (the
-                        // Propagator's `.monopole`: D = 1, same baffled prefactor).
-                        let gb = el.directivity == .monopole ? 0 : g * el.equivalentRadius
-                        let form = gb < 1e-6 ? 1.0 : 2 * besselJ1(gb) / gb
-                        let v = c * (el.area * form * table.j(md.m, g * r) / md.norm)
-                            * Complex.expi(-Double(md.m) * phi)
+                        let v = (coupling?[ei] ?? .one) * val[elemU[ei]] * (el.area * w)
                         if el.position.z < half { lo[q * G + gi] += v } else { up[q * G + gi] += v }
                     }
                 }
             }
         }
-        return Source(frequency: f, modeCount: Q, gateCount: G, kappa: kappa, eKL: eKL, pre: pre,
-                      invDen: invDen, lower: lower, upper: upper, omegaRho: wr,
-                      reflectionLower: rLo, reflectionUpper: rUp, length: length)
+        var src = Source(frequency: f, modeCount: Q, gateCount: G, kappa: kappa, eKL: eKL, pre: pre,
+                         invDen: invDen, lower: lower, upper: upper, omegaRho: wr,
+                         reflectionLower: rLo, reflectionUpper: rUp, length: length)
+        src.wallAdmittance = beta
+        src.mu = mu; src.lambda = lam; src.lambdaPow = lamPow; src.terms = terms; src.norm = nrm
+        return src
+    }
+
+    /// Multiplication-theorem terms for |t| (t ≈ i·Im x at the wall): the
+    /// first K with |t|^{K+1}/(K+1)! < 1e-12.
+    static func termCount(_ t: Double) -> Int {
+        if t < 1e-14 { return 0 }
+        var k = 0, bound = 1.0
+        repeat { k += 1; bound *= t / Double(k) } while (bound >= 1e-12 || Double(k) < t) && k < 80
+        return k
+    }
+
+    /// J_{|m|−1}, J_|m|, J_{|m|+1} at μr for complex μ = γλ, from the real
+    /// table at z = γr: J_ν(λz) = λ^ν Σ_k (−t)^k/k! J_{ν+k}(z), t = (λ² − 1)z/2
+    /// (DLMF 10.23.1). Orders below the table's reach (J_{−1} = −J_1) and above
+    /// it (negligible) are handled here.
+    @inline(__always)
+    static func radial(_ T: BesselTable, _ am: Int, gamma: Double, lambda: Complex, lambdaPow: Complex,
+                       r: Double, terms K: Int) -> (jm1: Complex, j: Complex, jp1: Complex) {
+        let z = gamma * r
+        @inline(__always) func L(_ n: Int) -> Double {
+            n < 0 ? -T.j(1, z) : (n <= T.maxOrder + 1 ? T.j(n, z) : 0)
+        }
+        let mt = (lambda * lambda - .one) * (-z / 2)
+        var ck = Complex.one
+        var sM1 = Complex.zero, s0 = Complex.zero, sP1 = Complex.zero
+        var lm1 = L(am - 1), l0 = L(am), lp1 = L(am + 1)
+        for k in 0...K {
+            sM1 += ck * lm1; s0 += ck * l0; sP1 += ck * lp1
+            ck = ck * mt * (1 / Double(k + 1))
+            lm1 = l0; l0 = lp1; lp1 = L(am + k + 2)
+        }
+        let lm = lambdaPow * lambda
+        return (lambdaPow * sM1, lm * s0, lm * lambda * sP1)
+    }
+
+    /// J_|m|(x) and J_{|m|−1}(x) at a complex argument: the multiplication
+    /// theorem about z = Re x off the real table, a power series near 0.
+    public func complexJ(_ m: Int, _ x: Complex) -> (j: Complex, jm1: Complex) {
+        let am = abs(m)
+        if x.re < 0 {                                   // J_n(−x) = (−1)^n J_n(x)
+            let (j, jm1) = complexJ(am, -x)
+            let sg = am % 2 == 0 ? 1.0 : -1.0
+            return (j * sg, jm1 * -sg)
+        }
+        if x.magnitude < 1 || x.re < 2 * abs(x.im) {
+            func series(_ n: Int) -> Complex {          // J_n(x), n ≥ 0
+                let h = x * 0.5, h2 = -(h * h)
+                var term = Complex.one
+                if n > 0 { for i in 1...n { term = term * h * (1 / Double(i)) } }
+                var sum = term
+                for k in 1..<200 {
+                    term = term * h2 * (1 / (Double(k) * Double(k + n)))
+                    sum += term
+                    if term.magnitude < 1e-17 * max(sum.magnitude, 1e-300) { break }
+                }
+                return sum
+            }
+            return (series(am), am == 0 ? -series(1) : series(am - 1))
+        }
+        let lam = x / Complex(x.re, 0)
+        let t = (lam * lam - .one).magnitude * x.re / 2
+        let K = max(CylinderCavity.termCount(t), 2)
+        let r3 = CylinderCavity.radial(table, am, gamma: x.re, lambda: lam, lambdaPow: lam.pow(am - 1),
+                                       r: 1, terms: K)
+        return (r3.j, r3.jm1)
+    }
+
+    /// The zero x = μa of the lined-wall condition x J'_m(x) = i s J_m(x)
+    /// (s = kaβ) that the rigid zero x0 = j'_mn continues into, followed along
+    /// s·τ, τ: 0 → 1, with an Euler predictor and a Newton corrector. Each
+    /// track runs from j'_mn toward the Dirichlet zero above it and never
+    /// crosses another, so a step that lands near its prediction is the same
+    /// zero. The m = 0 plane-wave mode starts off its branch point,
+    /// x² ≈ −2iτs.
+    public func robinZero(order m: Int, neumann x0: Double, s: Complex) -> Complex {
+        let am = abs(m), md = Double(am)
+        let I = Complex(0, 1)
+        func eval(_ x: Complex, _ tau: Double) -> (f: Complex, df: Complex, dfdtau: Complex) {
+            let (j, jm1) = complexJ(am, x)
+            let xjp = x * jm1 - j * md                  // x J'_m(x)
+            let st = s * tau
+            let f = xjp - I * st * j
+            let df = -(x - Complex(md * md, 0) / x) * j - I * st * (xjp / x)
+            return (f, df, -(I * s * j))
+        }
+        var tau = 0.0
+        var x = Complex(x0, 0)
+        if x0 == 0 {
+            tau = min(1, 1e-6 / max(s.magnitude, 1e-300))
+            x = (Complex(0, -2) * s * tau).squareRoot
+            if x.re < 0 { x = -x }
+        }
+        var h = 1.0 - tau
+        var guardSteps = 0
+        while tau < 1 && guardSteps < 4000 {
+            guardSteps += 1
+            let e0 = eval(x, tau)
+            let v = -(e0.dfdtau / e0.df)                 // dx/dτ
+            h = min(h, 1 - tau, 0.2 / max(v.magnitude, 1e-12))
+            var accepted = false
+            for _ in 0..<60 {
+                let tn = min(1, tau + h)
+                let xp = x + v * (tn - tau)
+                var xn = xp, ok = false
+                for _ in 0..<16 {
+                    guard xn.re > 0 && xn.re < table.xMax - 0.5 else { break }
+                    let e = eval(xn, tn)
+                    let dx = e.f / e.df
+                    xn = xn - dx
+                    if dx.magnitude < 1e-11 * max(1, xn.magnitude) { ok = true; break }
+                }
+                if ok && (xn - xp).magnitude < 0.1 && xn.re > 0 {
+                    x = xn; tau = tn; accepted = true; h *= 2
+                    break
+                }
+                h *= 0.5
+            }
+            if !accepted { break }
+        }
+        return x
     }
 
     /// Gate rows of p and ∇p at x (the same contract as
@@ -274,14 +468,22 @@ public final class CylinderCavity: @unchecked Sendable {
         let r = max((x.x * x.x + x.y * x.y).squareRoot(), 1e-9)
         let phi = atan2(x.y, x.x)
         let cph = cos(phi), sph = sin(phi)
+        let lined = !s.terms.isEmpty
         for q in 0..<s.modeCount {
             let md = modes[q]
-            let g = md.zero / radius
-            let jm = table.j(md.m, g * r), jp = table.jPrime(md.m, g * r) * g
             let e = Complex.expi(Double(md.m) * phi)
-            let psi = e * jm
+            let psi: Complex, dpsiR: Complex
+            if lined && s.terms[q] > 0 {
+                let t3 = CylinderCavity.radial(table, abs(md.m), gamma: s.mu[q].re, lambda: s.lambda[q],
+                                               lambdaPow: s.lambdaPow[q], r: r, terms: s.terms[q])
+                psi = e * t3.j
+                dpsiR = e * s.mu[q] * ((t3.jm1 - t3.jp1) * 0.5)
+            } else {
+                let g = lined ? s.mu[q].re : md.zero / radius
+                psi = e * table.j(md.m, g * r)
+                dpsiR = e * (table.jPrime(md.m, g * r) * g)
+            }
             // radial and azimuthal derivatives of ψ → Cartesian
-            let dpsiR = e * jp
             let dpsiPhi = Complex(0, Double(md.m)) * psi
             let dpsiX = dpsiR * cph - dpsiPhi * (sph / r)
             let dpsiY = dpsiR * sph + dpsiPhi * (cph / r)

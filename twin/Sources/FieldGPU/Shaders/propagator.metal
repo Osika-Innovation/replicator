@@ -200,11 +200,22 @@ kernel void buildPortFields(device float2*            H        [[buffer(0)]],
         if (el.gateIndex < 0 || uint(el.gateIndex) >= nG) continue;
         float z0 = el.position.z;
         float2 sum = float2(0.0f);
-        int nImg = walls ? 1 + 2 * P.order : 1;
+        // A source ON a plate is baffled by it already (FieldCore
+        // Propagator.Walls.images): one image per order, bouncing off the far
+        // plate and the near one in turn — not the between-walls pair.
+        float tol = 1e-6f * max(L, 1.0f);
+        bool onLower = walls && fabs(z0) < tol, onUpper = walls && fabs(z0 - L) < tol;
+        bool onWall = onLower || onUpper, towardUpper = onLower;
+        float zw = z0;
+        int nImg = walls ? (onWall ? 1 + P.order : 1 + 2 * P.order) : 1;
         for (int im = 0; im < nImg; ++im) {
             // image 0 = direct; then for m = 1..order two images of weight R^m
             float zi = z0, w = 1.0f;
-            if (im > 0) {
+            if (im > 0 && onWall) {
+                zw = towardUpper ? 2.0f * L - zw : -zw;
+                towardUpper = !towardUpper;
+                zi = zw; w = pow(P.reflection, float(im));
+            } else if (im > 0) {
                 int m = (im + 1) / 2;
                 bool first = (im % 2) == 1;
                 w = pow(P.reflection, float(m));
@@ -250,10 +261,18 @@ kernel void buildPortFieldsGrad(device float2*            H        [[buffer(0)]]
         if (el.gateIndex < 0 || uint(el.gateIndex) >= nG) continue;
         float z0 = el.position.z;
         float2 s0 = float2(0.0f), sx = float2(0.0f), sy = float2(0.0f), sz = float2(0.0f);
-        int nImg = walls ? 1 + 2 * P.order : 1;
+        float tol = 1e-6f * max(L, 1.0f);
+        bool onLower = walls && fabs(z0) < tol, onUpper = walls && fabs(z0 - L) < tol;
+        bool onWall = onLower || onUpper, towardUpper = onLower;
+        float zw = z0;
+        int nImg = walls ? (onWall ? 1 + P.order : 1 + 2 * P.order) : 1;
         for (int im = 0; im < nImg; ++im) {
             float zi = z0, w = 1.0f;
-            if (im > 0) {
+            if (im > 0 && onWall) {
+                zw = towardUpper ? 2.0f * L - zw : -zw;
+                towardUpper = !towardUpper;
+                zi = zw; w = pow(P.reflection, float(im));
+            } else if (im > 0) {
                 int m = (im + 1) / 2;
                 bool first = (im % 2) == 1;
                 w = pow(P.reflection, float(m));
@@ -300,13 +319,18 @@ kernel void buildPortFieldsGrad(device float2*            H        [[buffer(0)]]
 // (p, ∂p/∂x, ∂p/∂y, ∂p/∂z) when P.withGradient == 1.
 
 struct CavMode {
-    float  gamma;
+    float  gamma;     // Re μ, the radial wavenumber
     int    m;
     float2 kappa;     // axial wavenumber (Im ≥ 0)
     float2 a0;        // pre · invDen
     float2 rl;        // e^{iκL} · R_upper
     float2 r0;        // e^{iκL} · R_lower
     float2 dz;        // pre · iκ · invDen  (for ∂/∂z)
+    float2 lam;       // λ = μ / Re μ  (1 on a rigid wall)
+    float2 lamPow;    // λ^{|m|−1}
+    float2 tfac;      // (λ² − 1)/2
+    int    terms;     // multiplication-theorem terms; 0 = real argument
+    int    pad;
 };
 
 struct CavParams {
@@ -324,6 +348,7 @@ inline float2 cmul(float2 a, float2 b) { return float2(a.x * b.x - a.y * b.y, a.
 
 inline float besselTab(device const float* T, constant CavParams& P, int m, float x) {
     uint mm = uint(abs(m));
+    if (mm >= P.tableOrders) return 0.0f;            // J_m(x) ≈ 0 for m ≫ x
     float u = x / P.tableDx;
     int i = clamp(int(u), 1, int(P.tableCount) - 3);
     float t = u - float(i);
@@ -352,10 +377,38 @@ kernel void buildCavityFields(device float2*          H      [[buffer(0)]],
     for (uint q = 0; q < P.modeCount; ++q) {
         CavMode md = modes[q];
         float xa = md.gamma * r;
-        float jm = besselTab(T, P, md.m, xa);
+        int am = abs(md.m);
+        // Radial function J_|m|(μr) and ∂/∂r of it. On a lined wall μ is
+        // complex: J_ν(λz) = λ^ν Σ_k (−t)^k/k! J_{ν+k}(z), z = Re μ · r,
+        // t = (λ² − 1) z/2, off the same real table (DLMF 10.23.1).
+        float2 radial, dradial = float2(0.0f);
+        if (md.terms == 0) {
+            radial = float2(besselTab(T, P, am, xa), 0.0f);
+            if (grad) {
+                float jp = (am == 0 ? -besselTab(T, P, 1, xa)
+                                    : 0.5f * (besselTab(T, P, am - 1, xa) - besselTab(T, P, am + 1, xa))) * md.gamma;
+                dradial = float2(jp, 0.0f);
+            }
+        } else {
+            float2 mt = -md.tfac * xa;
+            float2 ck = float2(1.0f, 0.0f), sM1 = float2(0.0f), s0 = float2(0.0f), sP1 = float2(0.0f);
+            float lm1 = am == 0 ? -besselTab(T, P, 1, xa) : besselTab(T, P, am - 1, xa);
+            float l0 = besselTab(T, P, am, xa), lp1 = besselTab(T, P, am + 1, xa);
+            for (int k = 0; k <= md.terms; ++k) {
+                sM1 += ck * lm1; s0 += ck * l0; sP1 += ck * lp1;
+                ck = cmul(ck, mt) / float(k + 1);
+                lm1 = l0; l0 = lp1; lp1 = besselTab(T, P, am + k + 2, xa);
+            }
+            float2 lm = cmul(md.lamPow, md.lam);
+            radial = cmul(lm, s0);
+            if (grad) {
+                float2 mu = md.lam * md.gamma;
+                dradial = cmul(mu, 0.5f * (cmul(md.lamPow, sM1) - cmul(cmul(lm, md.lam), sP1)));
+            }
+        }
         float cm, sm = sincos(float(md.m) * phi, cm);
         float2 e = float2(cm, sm);
-        float2 psi = e * jm;
+        float2 psi = cmul(e, radial);
         // e1 = e^{iκz}, e2 = e^{iκ(L−z)}
         float2 k = md.kappa;
         float d1 = exp(-k.y * x.z), d2 = exp(-k.y * (P.length - x.z));
@@ -368,10 +421,7 @@ kernel void buildCavityFields(device float2*          H      [[buffer(0)]],
         if (grad) {
             dz0 = cmul(md.dz, e1 - cmul(md.rl, e2));
             dzl = cmul(md.dz, cmul(md.r0, e1) - e2);
-            int am = abs(md.m);
-            float jp = (am == 0 ? -besselTab(T, P, 1, xa)
-                                : 0.5f * (besselTab(T, P, am - 1, xa) - besselTab(T, P, am + 1, xa))) * md.gamma;
-            float2 dR = e * jp;
+            float2 dR = cmul(e, dradial);
             float2 dPhi = float2(-psi.y, psi.x) * float(md.m);          // i m ψ
             dpx = dR * cph - dPhi * (sph / r);
             dpy = dR * sph + dPhi * (cph / r);

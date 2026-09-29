@@ -295,6 +295,28 @@ case "gpu":
                                                pts.count, fs.gateCount, src.modeCount, cav.radius * 1000, tG))
             print(gc.line)
             gates.append(gc)
+            // The same with the glass lined (β = 0.5, R = 1/3): complex radial
+            // wavenumbers, read off the real table by the multiplication theorem.
+            let t1 = Date()
+            let srcL = cav.source(elements: fs.elements, coupling: coupling, gateCount: fs.gateCount,
+                                  frequency: 40_000, medium: fs.medium, zMin: zMin, wallAdmittance: 0.5)
+            let tS = Date().timeIntervalSince(t1)
+            let t2 = Date()
+            let hGL = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: srcL, points: pts, withGradient: true)
+            let tGL = Date().timeIntervalSince(t2)
+            var hCL: [Complex] = []
+            for x in pts {
+                let r = cav.rows(at: x, source: srcL)
+                for gi in 0..<fs.gateCount { hCL += [r.p[gi], r.grad[0][gi], r.grad[1][gi], r.grad[2][gi]] }
+            }
+            let maxK = srcL.terms.max() ?? 0
+            let meanK = Double(srcL.terms.reduce(0, +)) / Double(max(1, srcL.terms.count))
+            let gl = GateResult(id: "G-GPU-CYL-lined", name: "cavity modal sum, glass lined (β = 0.5), with gradient, 40 kHz, vs CPU",
+                                measured: hGL.relativeL2(to: hCL), threshold: 1e-4,
+                                detail: String(format: "%d modes, terms mean %.1f max %d; zeros + projection %.2fs, GPU %.2fs",
+                                               srcL.modeCount, meanK, maxK, tS, tGL))
+            print(gl.line)
+            gates.append(gl)
         }
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "gpu", gates: gates, durationSeconds: 0,
@@ -423,7 +445,7 @@ case "wallsweep":
         }
         var gates: [GateResult] = []
         print(String(format: "glass cylinder (a = %.0f mm) between the plates; target: mid-plane; 200 µm PLA bead", cav.radius * 1000))
-        print("side wall: FIRST-ORDER admittance — reliable for β ≪ 1 only (β → 1 is outside it)")
+        print("side wall: exact lined-wall modes, locally reacting, β = (1 − R)/(1 + R) from its normal-incidence R")
         print("sibling ratio = deepest competing well within ±17 mm ÷ target well (< 0.5 = one trap)")
         for (label, freqs) in sets {
             let fMax = freqs.max()!, fMid = (freqs.min()! + fMax) / 2

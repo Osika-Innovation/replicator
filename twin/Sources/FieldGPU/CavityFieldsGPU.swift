@@ -9,13 +9,18 @@ import FieldCore
 public enum CavityFieldsGPU {
 
     struct CavMode {
-        var gamma: Float
+        var gamma: Float              // Re μ
         var m: Int32
         var kappa: SIMD2<Float>
         var a0: SIMD2<Float>
         var rl: SIMD2<Float>
         var r0: SIMD2<Float>
         var dz: SIMD2<Float>
+        var lam: SIMD2<Float>         // λ = μ/Re μ (1 for a rigid wall)
+        var lamPow: SIMD2<Float>      // λ^{|m|−1}
+        var tfac: SIMD2<Float>        // (λ² − 1)/2
+        var terms: Int32              // multiplication-theorem terms (0 = real argument)
+        var pad: Int32 = 0
     }
 
     struct CavParams {
@@ -53,10 +58,15 @@ public enum CavityFieldsGPU {
         precondition(G <= 16, "the cavity kernel accumulates at most 16 gates per point")
         let modes: [CavMode] = (0..<Q).map { q in
             let a0 = s.pre[q] * s.invDen[q]
-            return CavMode(gamma: Float(cav.modes[q].zero / cav.radius), m: Int32(cav.modes[q].m),
+            let lam = s.lambda.isEmpty ? Complex.one : s.lambda[q]
+            return CavMode(gamma: Float(s.mu.isEmpty ? cav.modes[q].zero / cav.radius : s.mu[q].re),
+                           m: Int32(cav.modes[q].m),
                            kappa: f2(s.kappa[q]), a0: f2(a0),
                            rl: f2(s.eKL[q] * s.reflectionUpper), r0: f2(s.eKL[q] * s.reflectionLower),
-                           dz: f2(Complex(0, -s.omegaRho) * s.invDen[q]))
+                           dz: f2(Complex(0, -s.omegaRho) * s.invDen[q]),
+                           lam: f2(lam), lamPow: f2(s.lambdaPow.isEmpty ? .one : s.lambdaPow[q]),
+                           tfac: f2((lam * lam - .one) * 0.5),
+                           terms: Int32(s.terms.isEmpty ? 0 : s.terms[q]))
         }
         var W = [SIMD2<Float>](repeating: .zero, count: Q * G * 2)
         for q in 0..<Q {
