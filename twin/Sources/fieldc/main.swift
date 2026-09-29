@@ -422,6 +422,122 @@ case "drift":
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
+case "carry":
+    // Pick up, carry, place: move a force-compiled trap in the glass chamber
+    // 8 lattice steps up and 8 across (~5 mm each), re-compiling at every
+    // step from the last drive. A bead is carried only if, at each step, the
+    // trap is unique, sits on its point, and the new potential runs downhill
+    // from the old well to the new one — no barrier for the bead to stall
+    // behind, no sibling for it to fall into. (Drives switch step to step;
+    // cross-fades and timing are the next layer.)
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let lam40 = air.wavelength(at: 40_000)
+        let x0 = Vec3(0, 0, L / 2)
+        let freqs = (0..<10).map { 30_000 + 40_000 * (Double($0) + 0.5) / 10 }
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: 70_000), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        let h = air.wavelength(at: freqs.max()!) / 8
+        let n = Int((2 * 2 * lam40 / h).rounded()) | 1
+        let half = Double(n - 1) / 2 * h
+        let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+        let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
+        var o = ForceCompiler.Options()
+        o.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
+        let particle = ParticleMaterial.pla()
+        var tones: [ForceCompiler.Tone] = []
+        var base: [[Complex]] = []
+        for f in freqs {
+            var op = RH1Freestanding.Options()
+            op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+            let (p, c) = RH1Freestanding.preset(op)
+            let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                 frequency: f, medium: air, zMin: zMin)
+            tones.append(ForceCompiler.Tone(frequency: f, medium: air,
+                                            rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                                            points: lat.positions, withGradient: true)))
+            let prop = Propagator(elements: p.elements, lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                  frequency: f, medium: air, gateCount: p.gateCount, elementCoupling: c,
+                                  cavity: cav, cavitySource: src)
+            let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                        method: .gspat, iterations: 80, trap: .twinTrap)
+            base.append(u.map { $0 * (1 / (u.l2 * Double(freqs.count).squareRoot())) })
+        }
+        // Pick up: the unique trap at the centre.
+        let c0 = ((n - 1) / 2, (n - 1) / 2, (n - 1) / 2)
+        let r0 = ForceCompiler.compile(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                       options: o, starts: [base], target: c0)
+        guard let w0 = r0.targetWell else { print("no trap at the start"); exit(1) }
+        // Carry: 5 mm up, then 5 mm across, in 0.25 mm steps between lattice
+        // points, each a minimal drive change that puts the well on the point.
+        let stepLen = 0.25e-3
+        var path: [Vec3] = [w0]
+        for k in 1...20 { path.append(w0 + Vec3(0, 0, Double(k) * stepLen)) }
+        for k in 1...20 { path.append(w0 + Vec3(Double(k) * stepLen, 0, 20 * stepLen)) }
+        print(String(format: "glass chamber, bare; 10 tones 32–68 kHz; lattice %.2f mm, path steps 0.25 mm; 200 µm PLA", h * 1000))
+        print(String(format: "picked up: sibling ratio %.2f (%d), well %.2f mm from the centre", r0.siblingRatio,
+                     r0.siblings, r0.targetOffset * 1000))
+        print("step  target (mm from pick-up)   well off target   moved     ratio (siblings)   depth vs start   old well → new: downhill?")
+        var g = r0.drives
+        var prevWell = w0
+        let depth0 = r0.targetDepth
+        var ok = true, worstRatio = 0.0, worstOff = 0.0, notUnique = 0, minDepth = Double.infinity
+        for (i, x) in path.enumerated() where i > 0 {
+            g = ForceCompiler.carryStep(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                        options: o, drives: g, to: x)
+            let r = ForceCompiler.evaluate(tones, drives: g, lattice: lat, target: x, gates: 6,
+                                           particle: particle, options: o, wavelength: lam40)
+            // Downhill from the old well to the new one under the new drive.
+            let U = ForceCompiler.potential(tones, drives: g, gates: 6, particle: particle, count: lat.count)
+            let wNew = r.targetWell ?? x
+            var rise = 0.0, last = ForceCompiler.interpolate(U, lattice: lat, at: prevWell)
+            for q in 1...10 {
+                let u = ForceCompiler.interpolate(U, lattice: lat, at: prevWell + (wNew - prevWell) * (Double(q) / 10))
+                rise = max(rise, u - last)
+                last = u
+            }
+            let barrier = rise / max(r.targetDepth, 1e-300)
+            // Carried = on the point, a continuous move, downhill from the old
+            // well, still the deepest well, and at least half the starting depth.
+            // (Global uniqueness, ratio < 0.5, is the LOADING criterion — a bead
+            // already in its well cares about its own well and the path.)
+            let moved = (wNew - prevWell).length
+            let fine = r.targetOffset < 0.25e-3 && moved < 2 * stepLen && barrier <= 0.05
+                && r.siblingRatio < 1 && r.targetDepth >= 0.5 * depth0
+            if !fine { ok = false }
+            if r.siblingRatio >= 0.5 { notUnique += 1 }
+            worstRatio = max(worstRatio, r.siblingRatio); worstOff = max(worstOff, r.targetOffset)
+            minDepth = min(minDepth, r.targetDepth / max(depth0, 1e-300))
+            if i % 4 == 0 || !fine {
+                let d = x - w0
+                print(String(format: "%3d   (%5.2f, %5.2f, %5.2f)        %5.2f mm         %4.2f mm   %5.2f (%3d)      %5.2f            %@",
+                             i, d.x * 1000, d.y * 1000, d.z * 1000, r.targetOffset * 1000,
+                             (wNew - prevWell).length * 1000, r.siblingRatio, r.siblings,
+                             r.targetDepth / max(depth0, 1e-300),
+                             barrier <= 0.05 ? "yes" : String(format: "barrier %.0f%% of depth", barrier * 100)))
+            }
+            prevWell = wNew
+        }
+        print(String(format: "worst offset %.2f mm · shallowest %.2f of the start · worst sibling ratio %.2f (%d of %d steps ≥ 0.5)",
+                     worstOff * 1000, minDepth, worstRatio, notUnique, path.count - 1))
+        let gate = GateResult(id: "G-P1", name: "bead carried 5 mm up and 5 mm across the glass chamber: on the point, continuous, downhill, still the deepest well",
+                           measured: ok ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
+                           detail: String(format: "%d steps of 0.25 mm, 10 tones; worst offset %.2f mm, shallowest %.2f; sibling ratio worst %.2f, %d steps ≥ 0.5",
+                                          path.count - 1, worstOff * 1000, minDepth, worstRatio, notUnique))
+        print(gate.line)
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "carry", gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+        exit(ok ? 0 : 1)
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
 case "levitate":
     // How hard must the plates drive to hold a bead against gravity?
     // The twin's rows are Rayleigh/modal pressure per unit aperture velocity

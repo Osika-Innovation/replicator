@@ -204,7 +204,15 @@ public enum ForceCompiler {
                                   u[n - sz] > c, u[n + sz] > c else { continue }
                             let d = (u[n - s * sx] + u[n + s * sx] + u[n - s * sy] + u[n + s * sy]
                                      + u[n - s * sz] + u[n + s * sz]) / 6 - c
-                            if d > 0 { found.append(Well(ijk: (i, j, k), position: lat.position(i, j, k), depth: d)) }
+                            guard d > 0 else { continue }
+                            // Sub-grid position: a parabola through each axis's three samples.
+                            func off(_ a: Double, _ b: Double) -> Double {
+                                let den = a - 2 * c + b
+                                return den > 0 ? 0.5 * (a - b) / den : 0
+                            }
+                            let pos = lat.position(i, j, k) + Vec3(off(u[n - sx], u[n + sx]), off(u[n - sy], u[n + sy]),
+                                                                   off(u[n - sz], u[n + sz])) * lat.spacing
+                            found.append(Well(ijk: (i, j, k), position: pos, depth: d))
                         }
                     }
                     out[q] = found
@@ -494,6 +502,184 @@ public enum ForceCompiler {
             }
         }
         return best
+    }
+
+    // MARK: - Moving a trap
+
+    /// Trilinear weights of the 8 lattice points around x.
+    static func trilinear(_ lat: FieldLattice, _ x: Vec3) -> [(Int, Double)] {
+        let f = (x - lat.origin) / lat.spacing
+        let i0 = max(1, min(lat.nx - 3, Int(f.x.rounded(.down))))
+        let j0 = max(1, min(lat.ny - 3, Int(f.y.rounded(.down))))
+        let k0 = max(1, min(lat.nz - 3, Int(f.z.rounded(.down))))
+        let tx = f.x - Double(i0), ty = f.y - Double(j0), tz = f.z - Double(k0)
+        var out: [(Int, Double)] = []
+        for (dk, wz) in [(0, 1 - tz), (1, tz)] {
+            for (dj, wy) in [(0, 1 - ty), (1, ty)] {
+                for (di, wx) in [(0, 1 - tx), (1, tx)] {
+                    out.append((lat.index(i0 + di, j0 + dj, k0 + dk), wx * wy * wz))
+                }
+            }
+        }
+        return out
+    }
+
+    /// U at a point between lattice nodes (trilinear).
+    public static func interpolate(_ U: [Double], lattice lat: FieldLattice, at x: Vec3) -> Double {
+        trilinear(lat, x).reduce(0) { $0 + U[$1.0] * $1.1 }
+    }
+
+    /// Move the trap onto x with the smallest change of drive: Newton on
+    /// ∇U(x) = 0, with ∇U read off the lattice (central differences,
+    /// trilinear between nodes) and each step the minimal-norm solution of
+    /// the linearised three equations. A continuation, not a re-compile: the
+    /// field changes as little as the move needs, so rivals do not appear from
+    /// nowhere, and x can sit between lattice points. (Re-compiling from the
+    /// last drive either kept the old well while the target moved away, or
+    /// hopped to a different one — `fieldc carry`, 29 Sep.)
+    public static func moveWell(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
+                                particle: ParticleMaterial, drives start: [[Complex]], to x: Vec3,
+                                iterations: Int = 8) -> (drives: [[Complex]], residual: Double) {
+        var g = normalize(start)
+        let h = lat.spacing
+        let axes = [1, lat.nx, lat.nx * lat.ny]
+        let corners = trilinear(lat, x)
+        // c^(j): the weights that turn U into the interpolated ∂U/∂x_j at x.
+        var cj = [[Double]](repeating: [Double](repeating: 0, count: lat.count), count: 3)
+        for (j, st) in axes.enumerated() {
+            for (n, w) in corners {
+                cj[j][n + st] += w / (2 * h)
+                cj[j][n - st] -= w / (2 * h)
+            }
+        }
+        var residual = 0.0
+        for _ in 0..<iterations {
+            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let grad = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } }
+            // Scale: the well's curvature × one lattice step.
+            var curv = 0.0
+            for (n, w) in corners {
+                for st in axes { curv += w * (U[n + st] + U[n - st] - 2 * U[n]) / (h * h) }
+            }
+            residual = (grad.reduce(0) { $0 + $1 * $1 }).squareRoot() / max(abs(curv) / 3, 1e-300)
+            if residual < 1e-6 { break }                     // well within a micrometre of x
+            // Real Jacobian rows: ∂G_j/∂Re g = 2 Re w, ∂G_j/∂Im g = 2 Im w, w = ∂G_j/∂g*.
+            let W = (0..<3).map { adjoint(tones, drives: g, weights: cj[$0], gates: G, particle: particle) }
+            let A: [[Double]] = W.map { w in w.flatMap { $0.flatMap { [2 * $0.re, 2 * $0.im] } } }
+            // Minimal-norm step: Δθ = −Aᵀ (A Aᵀ)⁻¹ G.
+            var M = [[Double]](repeating: [0, 0, 0], count: 3)
+            for a in 0..<3 { for b in 0..<3 { M[a][b] = zip(A[a], A[b]).reduce(0) { $0 + $1.0 * $1.1 } } }
+            guard let y = solve3(M, grad) else { break }
+            var dtheta = [Double](repeating: 0, count: A[0].count)
+            for a in 0..<3 { for q in dtheta.indices { dtheta[q] -= A[a][q] * y[a] } }
+            // Damped: never more than a fifth of the drive's norm per step.
+            let norm = (dtheta.reduce(0) { $0 + $1 * $1 }).squareRoot()
+            if norm > 0.2 { dtheta = dtheta.map { $0 * 0.2 / norm } }
+            var q = 0
+            for f in g.indices {
+                for i in 0..<G {
+                    g[f][i] += Complex(dtheta[q], dtheta[q + 1]); q += 2
+                }
+            }
+            g = normalize(g)
+        }
+        return (g, residual)
+    }
+
+    /// One carry step: put the well on x AND keep it the only one. Each
+    /// iteration takes a Newton step on ∇U(x) = 0 and a descent step on the
+    /// rival ratio (softmax of rival depths over the target's, as `smooth`)
+    /// projected onto the constraint's null space — so the rival step does not,
+    /// to first order, move the well. (`moveWell` alone places the well to
+    /// 0.1 mm but lets the rivals grow: 0.43 → 0.97 in four 0.25 mm steps.)
+    public static func carryStep(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
+                                 particle: ParticleMaterial, wavelength: Double, options o: Options,
+                                 drives start: [[Complex]], to x: Vec3,
+                                 iterations: Int = 60) -> [[Complex]] {
+        var g = normalize(start)
+        let h = lat.spacing, s = o.shellSteps
+        let axes = [1, lat.nx, lat.nx * lat.ny]
+        let corners = trilinear(lat, x)
+        var cj = [[Double]](repeating: [Double](repeating: 0, count: lat.count), count: 3)
+        for (j, st) in axes.enumerated() {
+            for (n, w) in corners { cj[j][n + st] += w / (2 * h); cj[j][n - st] -= w / (2 * h) }
+        }
+        let f = (x - lat.origin) / h
+        let ci = lat.index(Int(f.x.rounded()), Int(f.y.rounded()), Int(f.z.rounded()))
+        func depth(_ U: [Double], _ n: Int) -> Double {
+            var m = 0.0
+            for st in axes { m += U[n - s * st] + U[n + s * st] }
+            return m / 6 - U[n]
+        }
+        func spread(_ c: inout [Double], _ n: Int, _ w: Double) {
+            c[n] -= w
+            for st in axes { c[n - s * st] += w / 6; c[n + s * st] += w / 6 }
+        }
+        func real(_ w: [[Complex]]) -> [Double] { w.flatMap { $0.flatMap { [2 * $0.re, 2 * $0.im] } } }
+        var best: (g: [[Complex]], ratio: Double)? = nil
+        for it in 0..<iterations {
+            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let G3 = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } }
+            let A = (0..<3).map { real(adjoint(tones, drives: g, weights: cj[$0], gates: G, particle: particle)) }
+            var M = [[Double]](repeating: [0, 0, 0], count: 3)
+            for a in 0..<3 { for b in 0..<3 { M[a][b] = zip(A[a], A[b]).reduce(0) { $0 + $1.0 * $1.1 } } }
+            // Newton on the constraint.
+            var step = [Double](repeating: 0, count: A[0].count)
+            if let y = solve3(M, G3) {
+                for a in 0..<3 { for q in step.indices { step[q] -= A[a][q] * y[a] } }
+                let nn = (step.reduce(0) { $0 + $1 * $1 }).squareRoot()
+                if nn > 0.1 { step = step.map { $0 * 0.1 / nn } }
+            }
+            // Rival step, projected onto the null space of A.
+            let ws = wells(U, lattice: lat, steps: s)
+            let rivals = ws.filter { ($0.position - x).length > wavelength / 4 }
+                .map { lat.index($0.ijk.0, $0.ijk.1, $0.ijk.2) }
+            let d0 = depth(U, ci)
+            if d0 > 0, !rivals.isEmpty {
+                var D = rivals.map { depth(U, $0) }
+                let mx = D.max()!
+                let T = d0 * (0.1 * pow(0.1, Double(it) / Double(iterations)))
+                var w = D.map { $0 > mx - 30 * T ? exp(($0 - mx) / T) : 0 }
+                let Z = w.reduce(0, +)
+                w = w.map { $0 / Z }
+                let sm = zip(w, D).reduce(0) { $0 + $1.0 * $1.1 }
+                let ratio = sm / d0
+                if best == nil || ratio < best!.ratio { best = (g, ratio) }
+                var cw = [Double](repeating: 0, count: lat.count)
+                for (q, n) in rivals.enumerated() where w[q] > 1e-12 { spread(&cw, n, w[q] * (1 + (D[q] - sm) / T) / d0) }
+                spread(&cw, ci, -sm / (d0 * d0))
+                var v = real(adjoint(tones, drives: g, weights: cw, gates: G, particle: particle))
+                if let y = solve3(M, (0..<3).map { a in zip(A[a], v).reduce(0) { $0 + $1.0 * $1.1 } }) {
+                    for a in 0..<3 { for q in v.indices { v[q] -= A[a][q] * y[a] } }
+                }
+                let vn = (v.reduce(0) { $0 + $1 * $1 }).squareRoot()
+                let lr = 0.03 * (1 - 0.9 * Double(it) / Double(iterations))
+                if vn > 0 { for q in step.indices { step[q] -= v[q] * lr / vn } }
+                D.removeAll()
+            }
+            var q = 0
+            for fi in g.indices { for i in 0..<G { g[fi][i] += Complex(step[q], step[q + 1]); q += 2 } }
+            g = normalize(g)
+        }
+        // Finish on the constraint from the best rival state seen.
+        let from = best?.g ?? g
+        return moveWell(tones, lattice: lat, gates: G, particle: particle, drives: from, to: x, iterations: 4).drives
+    }
+
+    /// 3×3 linear solve (Cramer); nil if singular.
+    static func solve3(_ M: [[Double]], _ b: [Double]) -> [Double]? {
+        func det(_ m: [[Double]]) -> Double {
+            m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+                - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+                + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
+        }
+        let d = det(M)
+        guard abs(d) > 1e-300 else { return nil }
+        return (0..<3).map { c in
+            var m = M
+            for r in 0..<3 { m[r][c] = b[r] }
+            return det(m) / d
+        }
     }
 
     /// Prefer a unique trap at the target; among those, a deeper one.
