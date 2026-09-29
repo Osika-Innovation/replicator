@@ -422,6 +422,193 @@ case "drift":
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
+case "fly":
+    // A bead that moves. A 200 µm PLA bead is integrated through the carry
+    // sequence of `fieldc carry` — time-averaged Gor'kov force (the acoustic
+    // period, 25 µs, is far below the bead's ~0.1 s trap period), gravity and
+    // Stokes drag (streaming ignored) — with the drive at twice the power
+    // that holds it at the pick-up. A drive switch reaches the bead over the
+    // chamber's settling time (air absorption plus plate loss), modelled as an
+    // exponential cross-fade of the potential. The question: how fast can the
+    // machine carry before the bead is left behind?
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let lam40 = air.wavelength(at: 40_000)
+        let x0 = Vec3(0, 0, L / 2)
+        let freqs = (0..<10).map { 30_000 + 40_000 * (Double($0) + 0.5) / 10 }
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: 70_000), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        let h = air.wavelength(at: freqs.max()!) / 8
+        let n = Int((2 * 2 * lam40 / h).rounded()) | 1
+        let half = Double(n - 1) / 2 * h
+        let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+        let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
+        var o = ForceCompiler.Options()
+        o.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
+        let particle = ParticleMaterial.pla()
+        var sources: [CylinderCavity.Source] = []
+        var tones: [ForceCompiler.Tone] = []
+        var base: [[Complex]] = []
+        for f in freqs {
+            var op = RH1Freestanding.Options()
+            op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+            let (p, c) = RH1Freestanding.preset(op)
+            let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                 frequency: f, medium: air, zMin: zMin)
+            sources.append(src)
+            tones.append(ForceCompiler.Tone(frequency: f, medium: air,
+                                            rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                                            points: lat.positions, withGradient: true)))
+            let prop = Propagator(elements: p.elements, lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                  frequency: f, medium: air, gateCount: p.gateCount, elementCoupling: c,
+                                  cavity: cav, cavitySource: src)
+            let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                        method: .gspat, iterations: 80, trap: .twinTrap)
+            base.append(u.map { $0 * (1 / (u.l2 * Double(freqs.count).squareRoot())) })
+        }
+        // The carry sequence (as `fieldc carry`).
+        let c0 = ((n - 1) / 2, (n - 1) / 2, (n - 1) / 2)
+        let r0 = ForceCompiler.compile(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                       options: o, starts: [base], target: c0)
+        guard let w0 = r0.targetWell else { print("no trap at the start"); exit(1) }
+        let stepLen = 0.25e-3
+        var path: [Vec3] = [w0]
+        for k in 1...20 { path.append(w0 + Vec3(0, 0, Double(k) * stepLen)) }
+        for k in 1...20 { path.append(w0 + Vec3(Double(k) * stepLen, 0, 20 * stepLen)) }
+        var drives: [[[Complex]]] = [r0.drives]
+        for x in path.dropFirst() {
+            drives.append(ForceCompiler.carryStep(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                                  options: o, drives: drives.last!, to: x))
+        }
+        // A fine box around the path, 0.1 mm, where the bead can go.
+        let margin = 3e-3, fs = 0.1e-3
+        let lo = Vec3(path.map(\.x).min()! - margin, path.map(\.y).min()! - margin, path.map(\.z).min()! - margin)
+        let hi = Vec3(path.map(\.x).max()! + margin, path.map(\.y).max()! + margin, path.map(\.z).max()! + margin)
+        let fb = FieldLattice(origin: lo, spacing: fs, nx: Int(((hi.x - lo.x) / fs).rounded()) + 1,
+                              ny: Int(((hi.y - lo.y) / fs).rounded()) + 1, nz: Int(((hi.z - lo.z) / fs).rounded()) + 1)
+        let fine = try zip(freqs, sources).map { f, src in
+            ForceCompiler.Tone(frequency: f, medium: air,
+                               rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                               points: fb.positions, withGradient: true))
+        }
+        let Us = drives.map { ForceCompiler.potential(fine, drives: $0, gates: 6, particle: particle, count: fb.count) }
+        // ∇U at x: central differences on the fine box, trilinear between nodes.
+        func gradU(_ U: [Double], _ x: Vec3) -> Vec3? {
+            let f = (x - fb.origin) / fs
+            let i0 = Int(f.x.rounded(.down)), j0 = Int(f.y.rounded(.down)), k0 = Int(f.z.rounded(.down))
+            guard i0 >= 1, j0 >= 1, k0 >= 1, i0 + 2 < fb.nx, j0 + 2 < fb.ny, k0 + 2 < fb.nz else { return nil }
+            let tx = f.x - Double(i0), ty = f.y - Double(j0), tz = f.z - Double(k0)
+            var gsum = Vec3(0, 0, 0)
+            for (dk, wz) in [(0, 1 - tz), (1, tz)] { for (dj, wy) in [(0, 1 - ty), (1, ty)] { for (di, wx) in [(0, 1 - tx), (1, tx)] {
+                let i = i0 + di, j = j0 + dj, k = k0 + dk
+                let gx = (U[fb.index(i + 1, j, k)] - U[fb.index(i - 1, j, k)]) / (2 * fs)
+                let gy = (U[fb.index(i, j + 1, k)] - U[fb.index(i, j - 1, k)]) / (2 * fs)
+                let gz = (U[fb.index(i, j, k + 1)] - U[fb.index(i, j, k - 1)]) / (2 * fs)
+                gsum = gsum + Vec3(gx, gy, gz) * (wx * wy * wz)
+            } } }
+            return gsum
+        }
+        // Power: twice what holds the bead at the pick-up.
+        let mass = particle.mass(), g0 = 9.81
+        var fUp = 0.0
+        for q in -15...15 {
+            if let gr = gradU(Us[0], w0 + Vec3(0, 0, Double(q) * fs)) { fUp = max(fUp, -gr.z) }
+        }
+        guard fUp > 0 else { print("the pick-up well pushes nowhere upward"); exit(1) }
+        let power = 2 * mass * g0 / fUp
+        // Lift margin along the path: each step's strongest upward force at
+        // this drive, over the weight (< 1: the bead falls, however slow).
+        var margins: [Double] = []
+        for (i, U) in Us.enumerated() {
+            var up = 0.0
+            for q in -15...15 {
+                if let gr = gradU(U, path[i] + Vec3(0, 0, Double(q) * fs)) { up = max(up, -gr.z) }
+            }
+            margins.append(up * power / (mass * g0))
+        }
+        let weakest = margins.indices.min { margins[$0] < margins[$1] }!
+        print(String(format: "lift margin along the path: min %.2f at step %d, median %.2f",
+                     margins[weakest], weakest, margins.sorted()[margins.count / 2]))
+        let muAir = 1.81e-5, gamma = 6 * Double.pi * muAir * particle.radius
+        // Settling of the potential: field amplitude decays at α c + (−ln R) c / L; U ∝ amplitude².
+        let alpha = air.absorption(at: 50_000)
+        let tauU = 0.5 / (alpha * air.soundSpeed + -log(0.9) * air.soundSpeed / L)
+        print(String(format: "glass chamber, 10 tones; carry 5 mm up + 5 mm across in 0.25 mm steps; 200 µm PLA, drive = 2 × holding (%.1f m/s rms)",
+                     (power / 60).squareRoot()))
+        print(String(format: "bead: m %.2e kg, drag %.2e kg/s (1/e in %.0f ms); potential settles with τ = %.1f ms",
+                     mass, gamma, mass / gamma * 1000, tauU * 1000))
+        print("each step ramps the potential linearly from the old drive to the new (cross terms ignored), on top of the settling τ;")
+        print("the bead is loaded gently (20× drag for 0.3 s), then released to air drag")
+        print("drive × holding   step time   carry time   worst lag   at the end   result")
+        var gates: [GateResult] = []
+        var csv = "power_x,step_ms,t_s,x_mm,y_mm,z_mm,well_x_mm,well_y_mm,well_z_mm\n"
+        var anyCarried = false
+        for mult in [2.0, 4.0, 8.0] {
+            let P = power * mult / 2
+            for Tstep in [0.01, 0.02, 0.04, 0.08] {
+                var x = w0, v = Vec3(0, 0, 0)
+                var t = 0.0
+                let dt = 1e-4
+                var worst = 0.0, escaped = false
+                var record: String? = (mult == 4 && Tstep == 0.04) ? "" : nil
+                // Potential as a blend of step potentials: `from` → `to`, a linear
+                // command ramp over the step, followed by the chamber's settling.
+                func step(from a: Int, to b: Int, duration: Double, drag: Double, ramp: Bool) {
+                    var tt = 0.0
+                    while tt < duration && !escaped {
+                        let cmd = ramp ? min(1, tt / duration) : 1
+                        let lagged = max(0, cmd - tauU / duration * (1 - exp(-tt / tauU)))
+                        let wb = a == b ? 1 : lagged, wa = 1 - wb
+                        guard let ga = gradU(Us[a], x), let gb = gradU(Us[b], x) else { escaped = true; return }
+                        let gr = ga * wa + gb * wb
+                        let force = gr * (-P) + Vec3(0, 0, -mass * g0) - v * (gamma * drag)
+                        v = v + force * (dt / mass)
+                        x = x + v * dt
+                        tt += dt; t += dt
+                        if a != b { worst = max(worst, (x - path[b]).length) }
+                        if record != nil, Int((t / 1e-3).rounded()) != Int(((t - dt) / 1e-3).rounded()) {
+                            record! += String(format: "%.0f,%.0f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", mult, Tstep * 1000, t,
+                                              (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000,
+                                              (path[b].x - w0.x) * 1000, (path[b].y - w0.y) * 1000, (path[b].z - w0.z) * 1000)
+                        }
+                    }
+                }
+                step(from: 0, to: 0, duration: 0.3, drag: 20, ramp: false)   // gentle loading
+                step(from: 0, to: 0, duration: 0.2, drag: 1, ramp: false)
+                for i in 1..<drives.count where !escaped { step(from: i - 1, to: i, duration: Tstep, drag: 1, ramp: true) }
+                if !escaped { step(from: drives.count - 1, to: drives.count - 1, duration: 0.4, drag: 1, ramp: false) }
+                let end = (x - path.last!).length
+                let carried = !escaped && end < 0.5e-3
+                if carried { anyCarried = true }
+                print(String(format: "      %3.0f×          %4.0f ms     %5.2f s      %5.2f mm     %5.2f mm     %@",
+                             mult, Tstep * 1000, Tstep * Double(drives.count - 1), worst * 1000,
+                             escaped ? .nan : end * 1000,
+                             escaped ? "escaped the trap" : (carried ? "carried" : "left behind")))
+                gates.append(GateResult(id: "FLY", name: String(format: "%.0f× holding drive, %.0f ms per 0.25 mm step", mult, Tstep * 1000),
+                                        measured: escaped ? .infinity : end, threshold: 0.5e-3, comparison: .informational,
+                                        detail: String(format: "worst lag %.2f mm, %@", worst * 1000,
+                                                       escaped ? "escaped" : (carried ? "carried" : "left behind"))))
+                if let r = record { csv += r }
+            }
+        }
+        let g2 = GateResult(id: "G-P2", name: "a 200 µm PLA bead, integrated through the fields, rides the carry 5 mm up and 5 mm across",
+                            measured: anyCarried ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
+                            detail: "at least one drive level and step time carries it to within 0.5 mm of the drop-off")
+        print(g2.line)
+        gates.append(g2)
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "fly", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+            try? csv.write(toFile: "Receipts/fly_trajectory_4x_40ms.csv", atomically: true, encoding: .utf8)
+        }
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
 case "carry":
     // Pick up, carry, place: move a force-compiled trap in the glass chamber
     // 8 lattice steps up and 8 across (~5 mm each), re-compiling at every
