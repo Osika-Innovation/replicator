@@ -292,3 +292,103 @@ kernel void buildPortFieldsGrad(device float2*            H        [[buffer(0)]]
     uint base = gid * P.gateCount * 4;
     for (uint g = 0; g < nG; ++g) for (uint c = 0; c < 4; ++c) H[base + g * 4 + c] = acc[g][c];
 }
+
+// ---------------------------------------------------------------------------
+// Cylindrical cavity (glass side wall + both plates): the modal sum of
+// FieldCore.CylinderCavity.rows, one thread per point. J_|m| comes from the
+// same Miller table (float, Catmull–Rom). Output per point and gate: p, or
+// (p, ∂p/∂x, ∂p/∂y, ∂p/∂z) when P.withGradient == 1.
+
+struct CavMode {
+    float  gamma;
+    int    m;
+    float2 kappa;     // axial wavenumber (Im ≥ 0)
+    float2 a0;        // pre · invDen
+    float2 rl;        // e^{iκL} · R_upper
+    float2 r0;        // e^{iκL} · R_lower
+    float2 dz;        // pre · iκ · invDen  (for ∂/∂z)
+};
+
+struct CavParams {
+    uint  pointCount;
+    uint  modeCount;
+    uint  gateCount;
+    uint  withGradient;
+    uint  tableCount;     // samples per order
+    uint  tableOrders;    // orders stored (maxOrder + 2)
+    float tableDx;
+    float length;
+};
+
+inline float2 cmul(float2 a, float2 b) { return float2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
+
+inline float besselTab(device const float* T, constant CavParams& P, int m, float x) {
+    uint mm = uint(abs(m));
+    float u = x / P.tableDx;
+    int i = clamp(int(u), 1, int(P.tableCount) - 3);
+    float t = u - float(i);
+    uint b = mm * P.tableCount + uint(i);
+    float p0 = T[b - 1], p1 = T[b], p2 = T[b + 1], p3 = T[b + 2];
+    return p1 + 0.5f * t * (p2 - p0 + t * (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3 + t * (3.0f * (p1 - p2) + p3 - p0)));
+}
+
+kernel void buildCavityFields(device float2*          H      [[buffer(0)]],
+                              device const CavMode*   modes  [[buffer(1)]],
+                              device const float2*    W      [[buffer(2)]],   // [q][W0 g…, WL g…]
+                              device const float*     T      [[buffer(3)]],
+                              device const float4*    points [[buffer(4)]],
+                              constant CavParams&     P      [[buffer(5)]],
+                              uint                    gid    [[thread_position_in_grid]])
+{
+    if (gid >= P.pointCount) return;
+    float3 x = points[gid].xyz;
+    uint G = min(P.gateCount, 16u);
+    float2 acc[16][4];
+    for (uint g = 0; g < G; ++g) for (uint c = 0; c < 4; ++c) acc[g][c] = float2(0.0f);
+    float r = max(length(x.xy), 1e-9f);
+    float phi = atan2(x.y, x.x);
+    float cph = cos(phi), sph = sin(phi);
+    bool grad = P.withGradient == 1;
+    for (uint q = 0; q < P.modeCount; ++q) {
+        CavMode md = modes[q];
+        float xa = md.gamma * r;
+        float jm = besselTab(T, P, md.m, xa);
+        float cm, sm = sincos(float(md.m) * phi, cm);
+        float2 e = float2(cm, sm);
+        float2 psi = e * jm;
+        // e1 = e^{iκz}, e2 = e^{iκ(L−z)}
+        float2 k = md.kappa;
+        float d1 = exp(-k.y * x.z), d2 = exp(-k.y * (P.length - x.z));
+        float c1, s1 = sincos(k.x * x.z, c1);
+        float c2, s2 = sincos(k.x * (P.length - x.z), c2);
+        float2 e1 = float2(c1, s1) * d1, e2 = float2(c2, s2) * d2;
+        float2 z0 = cmul(md.a0, e1 + cmul(md.rl, e2));
+        float2 zl = cmul(md.a0, e2 + cmul(md.r0, e1));
+        float2 dz0 = float2(0.0f), dzl = float2(0.0f), dpx = float2(0.0f), dpy = float2(0.0f);
+        if (grad) {
+            dz0 = cmul(md.dz, e1 - cmul(md.rl, e2));
+            dzl = cmul(md.dz, cmul(md.r0, e1) - e2);
+            int am = abs(md.m);
+            float jp = (am == 0 ? -besselTab(T, P, 1, xa)
+                                : 0.5f * (besselTab(T, P, am - 1, xa) - besselTab(T, P, am + 1, xa))) * md.gamma;
+            float2 dR = e * jp;
+            float2 dPhi = float2(-psi.y, psi.x) * float(md.m);          // i m ψ
+            dpx = dR * cph - dPhi * (sph / r);
+            dpy = dR * sph + dPhi * (cph / r);
+        }
+        uint wb = q * P.gateCount * 2;
+        for (uint g = 0; g < G; ++g) {
+            float2 w0 = W[wb + g], wl = W[wb + P.gateCount + g];
+            float2 zs = cmul(w0, z0) + cmul(wl, zl);
+            acc[g][0] += cmul(psi, zs);
+            if (grad) {
+                acc[g][1] += cmul(dpx, zs);
+                acc[g][2] += cmul(dpy, zs);
+                acc[g][3] += cmul(psi, cmul(w0, dz0) + cmul(wl, dzl));
+            }
+        }
+    }
+    uint per = grad ? 4u : 1u;
+    uint base = gid * P.gateCount * per;
+    for (uint g = 0; g < G; ++g) for (uint c = 0; c < per; ++c) H[base + g * per + c] = acc[g][c];
+}

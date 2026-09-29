@@ -268,6 +268,34 @@ case "gpu":
                 gates.append(gg)
             }
         }
+        // G-GPU-CYL: the cavity modal sum (glass + plates) with gradients.
+        do {
+            let (fs, coupling, _) = RH1Freestanding.standard(frequency: 40_000)
+            let k = fs.medium.wavenumber(at: 40_000)
+            let zMin = 0.02
+            let cav = RH1Freestanding.chamber(maxGamma: (k * k + pow(log(1e4) / zMin, 2)).squareRoot())
+            let src = cav.source(elements: fs.elements, coupling: coupling, gateCount: fs.gateCount,
+                                 frequency: 40_000, medium: fs.medium, zMin: zMin)
+            var rng = SplitMix64(seed: 11)
+            let pts: [Vec3] = (0..<64).map { _ in
+                let r = 0.18 * rng.nextUnit().squareRoot(), a = 2 * Double.pi * rng.nextUnit()
+                return Vec3(r * cos(a), r * sin(a), zMin + (cav.length - 2 * zMin) * rng.nextUnit())
+            }
+            let t0 = Date()
+            let hG = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src, points: pts, withGradient: true)
+            let tG = Date().timeIntervalSince(t0)
+            var hC: [Complex] = []
+            for x in pts {
+                let r = cav.rows(at: x, source: src)
+                for gi in 0..<fs.gateCount { hC += [r.p[gi], r.grad[0][gi], r.grad[1][gi], r.grad[2][gi]] }
+            }
+            let gc = GateResult(id: "G-GPU-CYL", name: "cavity modal sum (glass + plates) with gradient, 40 kHz, vs CPU",
+                                measured: hG.relativeL2(to: hC), threshold: 1e-4,
+                                detail: String(format: "%d points x %d gates x 4; %d modes (a = %.0f mm), %.2fs",
+                                               pts.count, fs.gateCount, src.modeCount, cav.radius * 1000, tG))
+            print(gc.line)
+            gates.append(gc)
+        }
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "gpu", gates: gates, durationSeconds: 0,
                                  device: deviceName(), gitSHA: gitSHA()))
@@ -277,17 +305,41 @@ case "gpu":
 
 case "drift":
     // How fast a compiled trap goes stale as the air warms (ThermalDrift):
-    // compile at 20 °C, keep the drive, re-solve at +ΔT, track the trap.
+    // compile at 20 °C, keep the drive, re-solve at +ΔT, track the trap —
+    // with direct paths only, with the plates as mirrors, and with the glass
+    // cylinder as well (the cavity model; ≤ 100 kHz, the Bessel table beyond
+    // that is ~1 GB and wants an asymptotic form).
     do {
         let ctx = try MetalContext()
         let t0 = Date()
         let freqs = args.contains("--quick") ? [40_000.0] : [40_000.0, 100_000.0, 200_000.0]
         let dTs = [0, 0.1, 0.3, 1, 3]
-        let rows = try ThermalDrift.run(frequencies: freqs, dTs: dTs) { p, c, w, pts, f, m in
-            try PortFieldsGPU.build(ctx: ctx, elements: p.elements, coupling: c, walls: w,
-                                    points: pts, frequency: f, medium: m, gateCount: p.gateCount)
-        }
         let air = RH1Freestanding.roomAir
+        let plateWalls = RH1Freestanding.walls()
+        func images(_ w: Propagator.Walls) -> ThermalDrift.Builder {
+            { p, c, lat, f, m in
+                try PortFieldsGPU.propagator(ctx: ctx, elements: p.elements, coupling: c, walls: w,
+                                             lattice: lat, frequency: f, medium: m, gateCount: p.gateCount)
+            }
+        }
+        let cavityFMax = 100_000.0
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: cavityFMax), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        let glass: ThermalDrift.Builder = { p, c, lat, f, m in
+            let zlo = lat.origin.z, zhi = lat.origin.z + Double(lat.nz - 1) * lat.spacing
+            let zMin = max(0.05, min(zlo, cav.length - zhi))
+            return try CavityFieldsGPU.propagator(ctx: ctx, cavity: cav, elements: p.elements, coupling: c,
+                                                  lattice: lat, frequency: f, medium: m,
+                                                  gateCount: p.gateCount, zMin: zMin)
+        }
+        let conditions = [
+            ThermalDrift.Condition("direct paths only", build: images(.none)),
+            ThermalDrift.Condition("both plates as mirrors (3 image orders, R = 0.9)", build: images(plateWalls)),
+            ThermalDrift.Condition(String(format: "glass cylinder (a = %.0f mm) + plates, R = 0.9", cav.radius * 1000),
+                                   maxFrequency: cavityFMax, build: glass),
+        ]
+        let rows = try ThermalDrift.run(frequencies: freqs, dTs: dTs, conditions: conditions)
         let dcdT = ThermalDrift.relativeSpeedDrift(air)
         print(String(format: "room air 20 °C, 50 %% RH: c = %.2f m/s, dc/c = %.3f %%/K; "
                      + "drive compiled at 20 °C and held; 200 µm PLA bead", air.soundSpeed, dcdT * 100))
@@ -296,13 +348,12 @@ case "drift":
             let fill = String(repeating: " ", count: max(0, n - x.count)); return left ? fill + x : x + fill }
         let head = dTs.dropFirst().map { pad(String(format: "+%.1f K", $0), 12, left: true) }.joined()
         for f in freqs {
-            for walls in [false, true] {
-                print(String(format: "\n%.0f kHz, %@", f / 1000,
-                             walls ? "both plates as walls (3 image orders, R = 0.9)" : "direct paths only"))
+            for cond in conditions where f <= cond.maxFrequency {
+                print(String(format: "\n%.0f kHz, %@", f / 1000, cond.label))
                 print(pad("target", 30) + head)
-                let targets = Array(Set(rows.filter { $0.frequency == f && $0.walls == walls }.map(\.target))).sorted()
-                for t in ThermalDrift.defaultTargets().map(\.label) where targets.contains(t) {
-                    let r = rows.filter { $0.frequency == f && $0.walls == walls && $0.target == t && $0.dT > 0 }
+                for t in ThermalDrift.defaultTargets().map(\.label) {
+                    let r = rows.filter { $0.frequency == f && $0.condition == cond.label && $0.target == t && $0.dT > 0 }
+                    guard !r.isEmpty else { continue }
                     let cells = r.map { String(format: "%6.0f/%.2f%@", $0.shift * 1e6, $0.depthRatio, $0.hopped ? "*" : " ") }
                     print(pad(t, 30) + cells.map { pad($0, 12, left: true) }.joined())
                     let fixed = r.map { String(format: "%6.0f/%.2f ", $0.resolvedShift * 1e6, $0.resolvedDepthRatio) }
@@ -313,8 +364,8 @@ case "drift":
         // G-T1: with direct paths only, a node a distance d off the mid-plane
         // moves by d·Δc/c. Checked at 40 kHz, +3 K, on both axial targets.
         var gates: [GateResult] = []
-        for r in rows where r.frequency == 40_000 && !r.walls && r.dT == 3 && abs(r.offMidPlane) > 0.01
-                            && r.target != "60 mm off-axis, mid-plane" {
+        for r in rows where r.frequency == 40_000 && r.condition == conditions[0].label && r.dT == 3
+                            && abs(r.offMidPlane) > 0.01 && r.target != "60 mm off-axis, mid-plane" {
             let expect = r.offMidPlane * ((air.shifted(byKelvin: 3).soundSpeed - air.soundSpeed) / air.soundSpeed)
             let err = abs(r.shiftZ - expect) / abs(expect)
             let g = GateResult(id: "G-T1", name: "thermal node drift vs d·Δc/c (\(r.target), direct paths, +3 K)",
@@ -323,13 +374,12 @@ case "drift":
             print(g.line)
             gates.append(g)
         }
-        for f in freqs {
-            for r in rows where r.frequency == f && r.walls && r.dT == 1 {
-                gates.append(GateResult(id: "T-drift", name: String(format: "%.0f kHz, walls, %@, +1 K", f / 1000, r.target),
-                                        measured: r.depthRatio, threshold: 0, comparison: .informational,
-                                        detail: String(format: "shift %.0f µm, depth %.2f of 20 °C%@",
-                                                       r.shift * 1e6, r.depthRatio, r.hopped ? ", sibling now deepest" : "")))
-            }
+        for r in rows where r.condition != conditions[0].label && r.dT == 1 {
+            gates.append(GateResult(id: "T-drift", name: String(format: "%.0f kHz, %@, %@, +1 K", r.frequency / 1000,
+                                                                  r.condition, r.target),
+                                    measured: r.depthRatio, threshold: 0, comparison: .informational,
+                                    detail: String(format: "shift %.0f µm, depth %.2f of 20 °C%@",
+                                                   r.shift * 1e6, r.depthRatio, r.hopped ? ", sibling now deepest" : "")))
         }
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {

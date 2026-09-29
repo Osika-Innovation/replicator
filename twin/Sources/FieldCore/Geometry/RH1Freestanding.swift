@@ -161,6 +161,25 @@ public enum RH1Freestanding {
         return (p, c, walls(o.design))
     }
 
+    /// The build chamber as a glass-walled cylinder: the rear glass's inner
+    /// radius (Ø444 OD, 4 mm wall → 218 mm; the Ø464 door half is ignored),
+    /// the two faces 460 mm apart, each reflecting R. Built once per mode
+    /// range (the Bessel table grows with maxGamma·a) and cached.
+    public static func chamber(maxGamma: Double, reflection: Double = 0.9,
+                               design d: RH1Design = RH1Design()) -> CylinderCavity {
+        let key = "\(Int(maxGamma.rounded(.up)))-\(reflection)"
+        chamberLock.lock(); defer { chamberLock.unlock() }
+        if let c = chambers[key] { return c }
+        let c = CylinderCavity(radius: (d.rearGlassOD / 2 - d.glassWall) * 0.001,
+                               length: d.buildChamberHeight * 0.001,
+                               reflectionLower: reflection, reflectionUpper: reflection,
+                               maxGamma: maxGamma.rounded(.up))
+        chambers[key] = c
+        return c
+    }
+    static let chamberLock = NSLock()
+    nonisolated(unsafe) static var chambers: [String: CylinderCavity] = [:]
+
     /// The two facing plates are the cavity walls: image sources at 0 and L.
     public static func walls(_ d: RH1Design = RH1Design(), order: Int = 3,
                              reflection: Double = 0.9) -> Propagator.Walls {

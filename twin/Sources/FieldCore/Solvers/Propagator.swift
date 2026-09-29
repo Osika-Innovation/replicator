@@ -136,6 +136,10 @@ public struct Propagator: Sendable {
     public let elementCoupling: [Complex]?
     /// Per-element image table, computed once.
     let imageTable: [[(z: Double, weight: Double)]]
+    /// The chamber as a glass-walled cylinder: when set, every evaluator uses
+    /// the cavity's modal sum instead of free field + plate images.
+    public let cavity: CylinderCavity?
+    public let cavitySource: CylinderCavity.Source?
 
     /// - Parameter precomputedH: an operator already built for exactly these
     ///   arguments (the GPU port-field build, `FieldGPU.PortFieldsGPU`). The
@@ -146,6 +150,9 @@ public struct Propagator: Sendable {
                 elementWeights: [Double]? = nil,
                 elementCoupling: [Complex]? = nil,
                 walls: Walls = .none,
+                cavity: CylinderCavity? = nil,
+                cavitySource: CylinderCavity.Source? = nil,
+                cavityZMin: Double = 0.01,
                 precomputedH: [Complex]? = nil) {
         self.elements = elements
         self.lattice = lattice
@@ -158,11 +165,29 @@ public struct Propagator: Sendable {
         self.imageTable = table
         let nG = gateCount ?? ((elements.map(\.gateIndex).max() ?? -1) + 1)
         self.gateCount = nG
+        self.cavity = cavity
+        let src = cavity.map {
+            cavitySource ?? $0.source(elements: elements, coupling: elementCoupling, weights: elementWeights,
+                                      gateCount: nG, frequency: frequency, medium: medium, zMin: cavityZMin)
+        }
+        self.cavitySource = src
 
         let nP = lattice.count
         if let pre = precomputedH {
             precondition(pre.count == nP * nG, "precomputed H has the wrong shape")
             self.H = pre
+            return
+        }
+        if let cav = cavity, let s = src {
+            var h = [Complex](repeating: .zero, count: nP * nG)
+            let positions = lattice.positions
+            h.withUnsafeMutableBufferPointer { buf in
+                DispatchQueue.concurrentPerform(iterations: nP) { n in
+                    let row = cav.rows(at: positions[n], source: s).p
+                    for g in 0..<nG { buf[n * nG + g] = row[g] }
+                }
+            }
+            self.H = h
             return
         }
         let k = medium.wavenumber(at: frequency)
@@ -270,6 +295,7 @@ public struct Propagator: Sendable {
     /// inverse solver's control matrix is built from this, so the solver
     /// optimizes the machine the field is then evaluated on.
     public func gateRow(at x: Vec3) -> [Complex] {
+        if let cav = cavity, let s = cavitySource { return cav.rows(at: x, source: s).p }
         let k = medium.wavenumber(at: frequency)
         let alpha = medium.absorption(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
@@ -301,6 +327,7 @@ public struct Propagator: Sendable {
     /// needs: the Gor'kov potential is a quadratic form in u built from exactly
     /// these rows (directivity held locally constant, as in `velocity`).
     public func gateGradientRows(at x: Vec3) -> (p: [Complex], grad: [[Complex]]) {
+        if let cav = cavity, let s = cavitySource { return cav.rows(at: x, source: s) }
         let k = medium.wavenumber(at: frequency)
         let alpha = medium.absorption(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
@@ -344,6 +371,10 @@ public struct Propagator: Sendable {
 
     /// Pressure at one arbitrary point, without touching the cached lattice.
     public func pressure(at x: Vec3, drive: [Complex]) -> Complex {
+        if cavity != nil {
+            let row = gateRow(at: x)
+            return zip(row, drive).reduce(Complex.zero) { $0 + $1.0 * $1.1 }
+        }
         let k = medium.wavenumber(at: frequency)
         let alpha = medium.absorption(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
@@ -373,6 +404,13 @@ public struct Propagator: Sendable {
     /// gradient of a quantity that is already a gradient and the error shows up
     /// as visible trap jitter.
     public func velocity(at x: Vec3, drive: [Complex]) -> (Complex, Complex, Complex) {
+        if cavity != nil {
+            let r = gateGradientRows(at: x)
+            func sum(_ v: [Complex]) -> Complex { zip(v, drive).reduce(Complex.zero) { $0 + $1.0 * $1.1 } }
+            let s = 1.0 / (2 * .pi * frequency * medium.density)
+            let gx = sum(r.grad[0]), gy = sum(r.grad[1]), gz = sum(r.grad[2])
+            return (Complex(-gx.im, gx.re) * s, Complex(-gy.im, gy.re) * s, Complex(-gz.im, gz.re) * s)
+        }
         let k = medium.wavenumber(at: frequency)
         let alpha = medium.absorption(at: frequency)
         let omega = 2 * .pi * frequency

@@ -28,7 +28,8 @@ public enum ThermalDrift {
 
     public struct Row: Sendable {
         public var frequency: Double
-        public var walls: Bool
+        /// The field model's label (direct paths, plates, glass + plates…).
+        public var condition: String
         public var target: String
         /// Distance from the chamber mid-plane (m) — the lever arm of the drift.
         public var offMidPlane: Double
@@ -48,9 +49,20 @@ public enum ThermalDrift {
         public var resolvedDepthRatio: Double
     }
 
+    /// Builds the field model (a `Propagator` over the probe lattice) for one
+    /// machine state — free field, plate images, or the glass cavity.
     public typealias Builder = (_ preset: MachinePreset, _ coupling: [Complex],
-                                _ walls: Propagator.Walls, _ points: [Vec3],
-                                _ frequency: Double, _ medium: Medium) throws -> [Complex]
+                                _ lattice: FieldLattice, _ frequency: Double,
+                                _ medium: Medium) throws -> Propagator
+
+    public struct Condition {
+        public var label: String
+        public var maxFrequency: Double
+        public var build: Builder
+        public init(_ label: String, maxFrequency: Double = .infinity, build: @escaping Builder) {
+            self.label = label; self.maxFrequency = maxFrequency; self.build = build
+        }
+    }
 
     /// Targets on the free-standing machine (build frame, faces at z = 0 and L).
     public static func defaultTargets(_ d: RH1Design = RH1Design()) -> [Target] {
@@ -63,11 +75,10 @@ public enum ThermalDrift {
 
     public static func run(frequencies: [Double] = [40_000, 100_000, 200_000],
                            dTs: [Double] = [0, 0.1, 0.3, 1, 3],
-                           walls withWalls: [Bool] = [false, true],
+                           conditions: [Condition],
                            targets: [Target]? = nil,
                            particle: ParticleMaterial = .pla(),
-                           base: Medium = RH1Freestanding.roomAir,
-                           builder: Builder) throws -> [Row] {
+                           base: Medium = RH1Freestanding.roomAir) throws -> [Row] {
         let design = RH1Design()
         let L = design.buildChamberHeight * 0.001
         let tgts = targets ?? defaultTargets(design)
@@ -82,21 +93,16 @@ public enum ThermalDrift {
                 o.frequency = f; o.medium = m; o.slotSegment = segment
                 return RH1Freestanding.preset(o)
             }
-            for useWalls in withWalls {
-                let walls = useWalls ? RH1Freestanding.walls(design) : .none
+            for cond in conditions where f <= cond.maxFrequency {
                 for t in tgts {
                     // Probe lattice: ±1.5 λ around the target at λ/12.
                     let s = lambda0 / 12, n = 37
                     let half = Double(n - 1) / 2 * s
                     let lat = FieldLattice(origin: t.position - Vec3(half, half, half),
                                            spacing: s, nx: n, ny: n, nz: n)
-                    let pts = lat.positions
                     func field(_ m: Medium) throws -> Propagator {
                         let (p, c) = machine(m)
-                        let H = try builder(p, c, walls, pts, f, m)
-                        return Propagator(elements: p.elements, lattice: lat, frequency: f,
-                                          medium: m, gateCount: p.gateCount,
-                                          elementCoupling: c, walls: walls, precomputedH: H)
+                        return try cond.build(p, c, lat, f, m)
                     }
                     let prop0 = try field(base)
                     let drive = InverseSolver.solve(
@@ -128,7 +134,7 @@ public enum ThermalDrift {
                                 rDepth = back.depth / max(ref!.depth, 1e-300)
                             }
                         }
-                        rows.append(Row(frequency: f, walls: useWalls, target: t.label,
+                        rows.append(Row(frequency: f, condition: cond.label, target: t.label,
                                         offMidPlane: t.position.z - L / 2, dT: dT,
                                         shift: (tracked.pos - ref!.pos).length,
                                         shiftZ: tracked.pos.z - ref!.pos.z,
