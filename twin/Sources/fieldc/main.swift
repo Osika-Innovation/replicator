@@ -773,9 +773,11 @@ case "forcetrap":
                     let held = ForceCompiler.evaluate(TT, drives: rF.drives, lattice: lat, target: w0, gates: 6,
                                                       particle: particle, options: o, wavelength: lam40)
                     // Re-compile at the true T, warm-started from the held drive:
-                    // the continuous-calibration loop.
+                    // the continuous-calibration loop (no per-tone pre-pass).
+                    var ow = o
+                    ow.perToneStarts = false
                     let redo = ForceCompiler.compile(TT, lattice: lat, gates: 6, particle: particle,
-                                                     wavelength: lam40, options: o, starts: [rF.drives])
+                                                     wavelength: lam40, options: ow, starts: [rF.drives])
                     func cell(_ r: ForceCompiler.Result) -> String {
                         guard let w = r.targetWell else { return "lost" }
                         return String(format: "%.0f µm, %.2f deep, ratio %.2f", (w - w0).length * 1e6,

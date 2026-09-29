@@ -43,8 +43,13 @@ public enum ForceCompiler {
         public var step = 0.15
         /// How many of the deepest competing wells enter the penalty.
         public var siblingsPenalised = 24
-        /// Adam iterations of the all-points refinement (`smooth`); 0 = off.
+        /// Adam iterations of the all-wells refinement (`smooth`); 0 = off.
         public var smoothIterations = 240
+        /// For a chord, first compile every tone alone (with this many
+        /// `smooth` iterations) and start from their sum. Off for warm
+        /// re-compiles, which start from the last drive.
+        public var perToneStarts = true
+        public var perToneIterations = 100
         public init() {}
     }
 
@@ -87,15 +92,20 @@ public enum ForceCompiler {
             let g = drives[fi]
             t.rows.withUnsafeBufferPointer { r in
                 U.withUnsafeMutableBufferPointer { u in
-                    DispatchQueue.concurrentPerform(iterations: count) { n in
-                        var s = [Complex](repeating: .zero, count: 4)
-                        let base = n * G * 4
-                        for gi in 0..<G {
-                            let d = g[gi]
-                            for c in 0..<4 { s[c] += r[base + gi * 4 + c] * d }
+                    // Chunked, and no per-point heap arrays: this runs every
+                    // step of every refinement.
+                    let chunks = max(1, min(256, count / 512))
+                    DispatchQueue.concurrentPerform(iterations: chunks) { ch in
+                        for n in (ch * count / chunks)..<((ch + 1) * count / chunks) {
+                            var s0 = Complex.zero, s1 = Complex.zero, s2 = Complex.zero, s3 = Complex.zero
+                            let base = n * G * 4
+                            for gi in 0..<G {
+                                let d = g[gi], b = base + gi * 4
+                                s0 += r[b] * d; s1 += r[b + 1] * d; s2 += r[b + 2] * d; s3 += r[b + 3] * d
+                            }
+                            u[n] += k1 * s0.magnitudeSquared
+                                - k2 * (s1.magnitudeSquared + s2.magnitudeSquared + s3.magnitudeSquared)
                         }
-                        u[n] += k1 * s[0].magnitudeSquared
-                            - k2 * (s[1].magnitudeSquared + s[2].magnitudeSquared + s[3].magnitudeSquared)
                     }
                 }
             }
@@ -173,23 +183,30 @@ public enum ForceCompiler {
 
     /// Local minima of U (6-neighbour) with their shell depth, deepest first.
     public static func wells(_ U: [Double], lattice lat: FieldLattice, steps s: Int) -> [Well] {
-        var out: [Well] = []
-        guard lat.nx > 2 * s + 1, lat.ny > 2 * s + 1, lat.nz > 2 * s + 1 else { return out }
-        for k in s..<(lat.nz - s) {
-            for j in s..<(lat.ny - s) {
-                for i in s..<(lat.nx - s) {
-                    let u = U[lat.index(i, j, k)]
-                    let nb = [U[lat.index(i-1, j, k)], U[lat.index(i+1, j, k)], U[lat.index(i, j-1, k)],
-                              U[lat.index(i, j+1, k)], U[lat.index(i, j, k-1)], U[lat.index(i, j, k+1)]]
-                    guard nb.allSatisfy({ $0 > u }) else { continue }
-                    let shell = [U[lat.index(i-s, j, k)], U[lat.index(i+s, j, k)], U[lat.index(i, j-s, k)],
-                                 U[lat.index(i, j+s, k)], U[lat.index(i, j, k-s)], U[lat.index(i, j, k+s)]]
-                    let d = shell.reduce(0, +) / 6 - u
-                    if d > 0 { out.append(Well(ijk: (i, j, k), position: lat.position(i, j, k), depth: d)) }
+        guard lat.nx > 2 * s + 1, lat.ny > 2 * s + 1, lat.nz > 2 * s + 1 else { return [] }
+        let sx = 1, sy = lat.nx, sz = lat.nx * lat.ny
+        let ks = Array(s..<(lat.nz - s))
+        var slices = [[Well]](repeating: [], count: ks.count)
+        U.withUnsafeBufferPointer { u in
+            slices.withUnsafeMutableBufferPointer { out in
+                DispatchQueue.concurrentPerform(iterations: ks.count) { q in
+                    let k = ks[q]
+                    var found: [Well] = []
+                    for j in s..<(lat.ny - s) {
+                        for i in s..<(lat.nx - s) {
+                            let n = lat.index(i, j, k), c = u[n]
+                            guard u[n - sx] > c, u[n + sx] > c, u[n - sy] > c, u[n + sy] > c,
+                                  u[n - sz] > c, u[n + sz] > c else { continue }
+                            let d = (u[n - s * sx] + u[n + s * sx] + u[n - s * sy] + u[n + s * sy]
+                                     + u[n - s * sz] + u[n + s * sz]) / 6 - c
+                            if d > 0 { found.append(Well(ijk: (i, j, k), position: lat.position(i, j, k), depth: d)) }
+                        }
+                    }
+                    out[q] = found
                 }
             }
         }
-        return out.sorted { $0.depth > $1.depth }
+        return slices.flatMap { $0 }.sorted { $0.depth > $1.depth }
     }
 
     /// Score a set of drives: the well nearest the target (within λ/4) against
@@ -256,9 +273,11 @@ public enum ForceCompiler {
             // like noise while the target adds in step — the start a joint
             // refinement needs (from an equal-power GS-PAT chord it cannot
             // even find the best single tone, which is always available).
-            if tones.count > 1 {
+            if tones.count > 1 && o.perToneStarts {
+                var solo = o
+                solo.smoothIterations = o.perToneIterations
                 let each = tones.map { t in
-                    compile([t], lattice: lat, gates: G, particle: particle, wavelength: wavelength, options: o)
+                    compile([t], lattice: lat, gates: G, particle: particle, wavelength: wavelength, options: solo)
                 }
                 starts2.append(normalize(each.map { $0.drives[0] }))
                 // Weighted by how well each tone traps alone (a tone with no
