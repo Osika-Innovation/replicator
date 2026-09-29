@@ -422,6 +422,141 @@ case "drift":
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
+case "levitate":
+    // How hard must the plates drive to hold a bead against gravity?
+    // The twin's rows are Rayleigh/modal pressure per unit aperture velocity
+    // (Pa per m/s), so a gate drive g is the velocity amplitude of an
+    // aperture whose horn coupling is 1. Compile the unique trap, read the
+    // largest upward force its well offers per unit drive power along a
+    // fine vertical line through it, and scale the power until that force
+    // carries the bead's weight. The Gor'kov force and the weight both go
+    // as a³, so in the Rayleigh limit the answer depends on the material,
+    // not the size. MODEL numbers: the horn coupling is a stub.
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let lam40 = air.wavelength(at: 40_000)
+        let x0 = Vec3(0, 0, L / 2)
+        let grid5 = [30_000.0, 40_000, 50_000, 60_000, 70_000]
+        let spread10 = (0..<10).map { 30_000 + 40_000 * (Double($0) + 0.5) / 10 }
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: 70_000), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        let plateWalls = RH1Freestanding.walls()
+        let cases: [(String, Bool, [Double])] = [
+            ("plates only (image model), 5-tone chord 30–70 kHz", false, grid5),
+            ("glass chamber, 5-tone chord 30–70 kHz", true, grid5),
+            ("glass chamber, 10 tones 32–68 kHz", true, spread10),
+        ]
+        let beads: [(String, ParticleMaterial)] = [
+            ("PLA Ø200 µm", .pla()),
+            ("aluminium Ø200 µm", ParticleMaterial(density: 2700, soundSpeed: 6320, radius: 100e-6)),
+            ("steel Ø200 µm", ParticleMaterial(density: 7850, soundSpeed: 5900, radius: 100e-6)),
+        ]
+        func machine(_ f: Double) -> (MachinePreset, [Complex]) {
+            var o = RH1Freestanding.Options()
+            o.frequency = f; o.medium = air; o.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+            return RH1Freestanding.preset(o)
+        }
+        func rows(_ f: Double, glass: Bool, points: [Vec3], zMin: Double) throws -> [Complex] {
+            let (p, c) = machine(f)
+            if glass {
+                let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                     frequency: f, medium: air, zMin: zMin)
+                return try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src, points: points, withGradient: true)
+            }
+            return try PortFieldsGPU.buildWithGradient(ctx: ctx, elements: p.elements, coupling: c, walls: plateWalls,
+                                                       points: points, frequency: f, medium: air, gateCount: p.gateCount)
+        }
+        func dB(_ pAmp: Double) -> Double { 20 * log10(pAmp / 2.squareRoot() / 20e-6) }
+        var gates: [GateResult] = []
+        print("drive = velocity amplitude of an aperture at horn coupling 1 (m/s); plane-wave level ρ0c·u in brackets")
+        print("MODEL numbers — the horn coupling is a stub; bench G-A0 decides the real throat → aperture gain")
+        for (label, glass, freqs) in cases {
+            let h = air.wavelength(at: freqs.max()!) / 8
+            let n = Int((2 * 2 * lam40 / h).rounded()) | 1
+            let half = Double(n - 1) / 2 * h
+            let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+            let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
+            var o = ForceCompiler.Options()
+            o.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
+            let tones = try freqs.map { f in
+                ForceCompiler.Tone(frequency: f, medium: air, rows: try rows(f, glass: glass, points: lat.positions, zMin: zMin))
+            }
+            // GS-PAT chord as a start (as forcetrap and tonesweep do).
+            let base: [[Complex]] = try freqs.map { f in
+                let (p, c) = machine(f)
+                let one = FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1)
+                let prop: Propagator
+                if glass {
+                    let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                         frequency: f, medium: air, zMin: zMin)
+                    prop = Propagator(elements: p.elements, lattice: one, frequency: f, medium: air,
+                                      gateCount: p.gateCount, elementCoupling: c, cavity: cav, cavitySource: src)
+                } else {
+                    prop = try PortFieldsGPU.propagator(ctx: ctx, elements: p.elements, coupling: c, walls: plateWalls,
+                                                        lattice: one, frequency: f, medium: air, gateCount: p.gateCount)
+                }
+                let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                            method: .gspat, iterations: 80, trap: .twinTrap)
+                return u.map { $0 * (1 / (u.l2 * Double(freqs.count).squareRoot())) }
+            }
+            // Compile for the PLA bead (f1, f2 differ little between solids).
+            let r = ForceCompiler.compile(tones, lattice: lat, gates: 6, particle: .pla(), wavelength: lam40,
+                                          options: o, starts: [base])
+            print(String(format: "\n%@: sibling ratio %.2f (%d), well %.1f mm from the point", label,
+                         r.siblingRatio, r.siblings, r.targetOffset * 1000))
+            guard let w = r.targetWell else { print("  no well at the target"); continue }
+            // Fine lines through the well: vertical ±3 mm, lateral ±3 mm, 20 µm.
+            let dz = 20e-6, m = 150
+            let vert = (-m...m).map { w + Vec3(0, 0, Double($0) * dz) }
+            let lat1 = (-m...m).map { w + Vec3(Double($0) * dz, 0, 0) }
+            let lineTones = try freqs.map { f in
+                ForceCompiler.Tone(frequency: f, medium: air, rows: try rows(f, glass: glass, points: vert + lat1, zMin: zMin))
+            }
+            // The loudest point of the probe volume at unit power (incoherent over tones).
+            var pmax2 = 0.0
+            for i in 0..<lat.count {
+                var e = 0.0
+                for (fi, t) in tones.enumerated() {
+                    var p = Complex.zero
+                    for g in 0..<6 { p += t.rows[(i * 6 + g) * 4] * r.drives[fi][g] }
+                    e += p.magnitudeSquared
+                }
+                pmax2 = max(pmax2, e)
+            }
+            let gmax = r.drives.flatMap { $0 }.map(\.magnitude).max() ?? 0
+            for (bname, bead) in beads {
+                let U = ForceCompiler.potential(lineTones, drives: r.drives, gates: 6, particle: bead, count: vert.count + lat1.count)
+                let Uz = Array(U[0..<vert.count]), Ux = Array(U[vert.count...])
+                var fUp = 0.0                                     // max of −dU/dz (upward force), N per (m/s)²
+                for i in 1..<(Uz.count - 1) { fUp = max(fUp, -(Uz[i + 1] - Uz[i - 1]) / (2 * dz)) }
+                let weight = bead.mass() * 9.81
+                guard fUp > 0 else { print("  \(bname): the well pushes nowhere upward"); continue }
+                let P = weight / fUp                              // required Σ|g|², (m/s)²
+                let kx = (Ux[m + 1] - 2 * Ux[m] + Ux[m - 1]) / (dz * dz) * P
+                let fx = kx > 0 ? (kx / bead.mass()).squareRoot() / (2 * Double.pi) : 0
+                let u = gmax * P.squareRoot()                     // hardest-driven gate, m/s
+                let uRMS = (P / Double(6 * freqs.count)).squareRoot()
+                let pPeak = (pmax2 * P).squareRoot()
+                print(String(format: "  %-18@ weight %.2e N · needs %5.2f m/s on the hardest gate (%3.0f dB), %4.2f m/s rms · field peak %3.0f dB · lateral %3.0f Hz",
+                             bname as NSString, weight, u, dB(air.density * air.soundSpeed * u), uRMS, dB(pPeak), fx))
+                gates.append(GateResult(id: "LEV", name: "\(label): \(bname)", measured: u, threshold: 0,
+                                        comparison: .informational,
+                                        detail: String(format: "hardest gate %.2f m/s (%.0f dB plane-wave), rms %.2f m/s; field peak %.0f dB; lateral %.0f Hz; sibling ratio %.2f",
+                                                       u, dB(air.density * air.soundSpeed * u), uRMS, dB(pPeak), fx, r.siblingRatio)))
+            }
+        }
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "levitate", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
 case "tonesweep":
     // Does the spectrum buy back what the glass takes? Sibling ratio against
     // the number of tones N, spread evenly over 30–70 kHz, in the glass
@@ -468,7 +603,7 @@ case "tonesweep":
                      cav.radius * 1000, liner, beta, x0.x * 1000, x0.y * 1000, x0.z * 1000))
         print(String(format: "probe ±%.1f mm at %.2f mm (%d³); tones evenly over 30–70 kHz", half * 1000, h * 1000, n))
         print("sibling ratio = deepest competing well ÷ target well (< 0.5 = one trap); depth per unit total drive power")
-        print("  tones   GS-PAT chord           force compiler         depth vs 1 tone   1/√N")
+        print("  tones   GS-PAT chord           force compiler    offset     depth vs 1 tone   1/√N")
         var gates: [GateResult] = []
         var depth1 = 0.0
         if gspatOnly { print("GS-PAT chords only, streamed tone by tone (no force compile)") }
@@ -552,8 +687,8 @@ case "tonesweep":
                                         : "no well at target  "
             }
             let ref = N == counts[0] ? "" : String(format: "%.2f", 1 / Double(N).squareRoot())
-            print(String(format: "  %5d   %@      %@      %8.2f          %@", N, cell(rB), cell(rF),
-                         depth1 > 0 ? rF.targetDepth / depth1 : 0, ref))
+            print(String(format: "  %5d   %@      %@  %4.1f mm  %8.2f          %@", N, cell(rB), cell(rF),
+                         rF.targetOffset * 1000, depth1 > 0 ? rF.targetDepth / depth1 : 0, ref))
             gates.append(GateResult(id: "N-\(N)", name: String(format: "%d tones, glass liner R %.2f", N, liner),
                                     measured: rF.siblingRatio, threshold: 0.5, comparison: .informational,
                                     detail: String(format: "force %.2f (%d siblings), GS-PAT %.2f (%d); depth %.3g",

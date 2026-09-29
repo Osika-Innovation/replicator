@@ -50,6 +50,11 @@ public enum ForceCompiler {
         /// re-compiles, which start from the last drive.
         public var perToneStarts = true
         public var perToneIterations = 100
+        /// How far the target well may sit from the requested point (m); nil
+        /// = λ/8. `evaluate` still finds the well within λ/4 and reports the
+        /// offset; the compiler prefers results inside this radius, and the
+        /// smooth refinement treats a well outside it as "no target yet".
+        public var placement: Double? = nil
         public init() {}
     }
 
@@ -249,9 +254,17 @@ public enum ForceCompiler {
     public static func compile(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
                                particle: ParticleMaterial, wavelength: Double,
                                options o: Options = Options(),
-                               starts: [[[Complex]]] = []) -> Result {
-        let c = ((lat.nx - 1) / 2, (lat.ny - 1) / 2, (lat.nz - 1) / 2)
+                               starts: [[[Complex]]] = [],
+                               target t: (Int, Int, Int)? = nil) -> Result {
+        let c = t ?? ((lat.nx - 1) / 2, (lat.ny - 1) / 2, (lat.nz - 1) / 2)
         let target = lat.position(c.0, c.1, c.2)
+        let place = o.placement ?? wavelength / 8
+        // Prefer a result whose well sits on the point; then the usual score.
+        func better(_ a: Result, _ b: Result) -> Bool {
+            let pa = a.targetOffset <= place, pb = b.targetOffset <= place
+            if pa != pb { return pa }
+            return score(a) > score(b)
+        }
         let A0 = depthForm(tones, lattice: lat, at: c, steps: o.shellSteps, gates: G, particle: particle)
         // Eigenvector start: each tone's deepest-well direction, power ∝ its eigenvalue.
         let eig = A0.map { topEigenvector($0, G) }
@@ -262,7 +275,7 @@ public enum ForceCompiler {
         for start in [eigStart] + starts.map(normalize) {
             let r = refine(tones, lattice: lat, gates: G, particle: particle, wavelength: wavelength,
                            options: o, target: target, A0: A0, start: start)
-            if best == nil || score(r) > score(best!) { best = r }
+            if best == nil || better(r, best!) { best = r }
         }
         // Then every probe point at once, from the best so far and from the
         // eigenvector start.
@@ -276,8 +289,9 @@ public enum ForceCompiler {
             if tones.count > 1 && o.perToneStarts {
                 var solo = o
                 solo.smoothIterations = o.perToneIterations
-                let each = tones.map { t in
-                    compile([t], lattice: lat, gates: G, particle: particle, wavelength: wavelength, options: solo)
+                let each = tones.map { tn in
+                    compile([tn], lattice: lat, gates: G, particle: particle, wavelength: wavelength,
+                            options: solo, target: c)
                 }
                 starts2.append(normalize(each.map { $0.drives[0] }))
                 // Weighted by how well each tone traps alone (a tone with no
@@ -291,14 +305,14 @@ public enum ForceCompiler {
                     let solo = each.indices.map { $0 == bi ? each[$0].drives[0] : [Complex](repeating: .zero, count: G) }
                     let rs = evaluate(tones, drives: normalize(solo), lattice: lat, target: target, gates: G,
                                       particle: particle, options: o, wavelength: wavelength)
-                    if score(rs) > score(best!) { best = rs }
+                    if better(rs, best!) { best = rs }
                 }
             }
             for start in starts2 {
                 let r = smooth(tones, lattice: lat, gates: G, particle: particle, wavelength: wavelength,
                                options: o, target: target, center: c, start: start,
                                iterations: o.smoothIterations)
-                if score(r) > score(best!) { best = r }
+                if better(r, best!) { best = r }
             }
         }
         return best!
@@ -401,6 +415,12 @@ public enum ForceCompiler {
         let s = o.shellSteps
         let nx = lat.nx, ny = lat.ny
         let ci = lat.index(c.0, c.1, c.2)
+        let place = o.placement ?? wavelength / 8
+        func better(_ a: Result, _ b: Result) -> Bool {
+            let pa = a.targetOffset <= place, pb = b.targetOffset <= place
+            if pa != pb { return pa }
+            return score(a) > score(b)
+        }
         let strides = [1, nx, nx * ny]
         func depth(_ U: [Double], _ n: Int) -> Double {
             var m = 0.0
@@ -427,7 +447,7 @@ public enum ForceCompiler {
             // requested point (within λ/4), its rivals are the other WELLS —
             // points of positive curvature on a slope are not rivals.
             let ws = wells(U, lattice: lat, steps: s)
-            let tw = ws.filter { ($0.position - target).length <= wavelength / 4 }
+            let tw = ws.filter { ($0.position - target).length <= place }
                 .min { ($0.position - target).length < ($1.position - target).length }
             let ti = tw.map { lat.index($0.ijk.0, $0.ijk.1, $0.ijk.2) } ?? ci
             let rivals = ws.filter { ($0.position - (tw?.position ?? target)).length > wavelength / 4 }
@@ -470,7 +490,7 @@ public enum ForceCompiler {
             if it % 20 == 0 || it == iterations {
                 let r = evaluate(tones, drives: g, lattice: lat, target: target, gates: G,
                                  particle: particle, options: o, wavelength: wavelength)
-                if score(r) > score(best) { best = r }
+                if better(r, best) { best = r }
             }
         }
         return best
