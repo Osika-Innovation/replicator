@@ -171,14 +171,17 @@ public enum SceneRegistry {
         }, solid: "plate"),
     ]
 
+    /// Fixture rows for the simulated machine — the same numbers the live app
+    /// reads from `RH1Freestanding.standard()` at launch.
     static func machineSections() -> [AppState.InspectorSection] {
         [.init(title: "Machine", rows: [
-            ("preset", "RH-1"), ("gates", "24 acoustic"),
-            ("build volume", "Ø280 × 300"), ("λ @ 40 kHz", "8.575 mm"),
+            ("preset", "RH-1 free-standing"), ("gates", "6 acoustic (3 throat piezos × 2 faces)"),
+            ("build volume", "Ø380 × 460"), ("λ @ 40 kHz", "8.597 mm"),
         ]),
          .init(title: "Carrier", rows: [
-            ("band", "20–80 kHz"), ("medium", "air 343 m/s"),
-            ("solver", "T0 propagator"),
+            ("band", "30–75 kHz"), ("medium", "air 20 °C 50 % RH, 343.87 m/s"),
+            ("walls", "plates, 3 image orders, R 0.90"),
+            ("solver", "T0 port fields (GPU)"),
          ])]
     }
 }
