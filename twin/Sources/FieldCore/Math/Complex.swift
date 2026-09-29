@@ -20,6 +20,19 @@ public struct Complex: Equatable, Sendable, Codable {
     public var phase: Double { atan2(im, re) }
     public var conjugate: Complex { Complex(re, -im) }
 
+    /// Principal square root (Re ≥ 0).
+    public var squareRoot: Complex {
+        let m = magnitude
+        let r = ((m + re) / 2).squareRoot(), i = ((m - re) / 2).squareRoot()
+        return Complex(r, im < 0 ? -i : i)
+    }
+
+    /// e^z.
+    public var exp: Complex {
+        let e = Foundation.exp(re)
+        return Complex(e * cos(im), e * sin(im))
+    }
+
     public static func + (a: Complex, b: Complex) -> Complex { Complex(a.re + b.re, a.im + b.im) }
     public static func - (a: Complex, b: Complex) -> Complex { Complex(a.re - b.re, a.im - b.im) }
     public static func * (a: Complex, b: Complex) -> Complex {

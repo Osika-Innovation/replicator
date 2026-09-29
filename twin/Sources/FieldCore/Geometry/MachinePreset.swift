@@ -86,6 +86,9 @@ public struct Medium: Sendable, Codable {
     /// presets, whose absorption is taken as zero (every legacy gate and
     /// receipt was computed that way and stays reproducible).
     public var air: AirState?
+    /// Extra amplitude loss (Np/m) on top of the air's own — an effective
+    /// chamber loss, or a test's way of silencing distant walls.
+    public var extraAbsorption: Double = 0
     public init(density: Double, soundSpeed: Double, air: AirState? = nil) {
         self.density = density; self.soundSpeed = soundSpeed; self.air = air
     }
@@ -106,14 +109,16 @@ public struct Medium: Sendable, Codable {
     /// The same medium, warmer or colder by `dT` kelvin (fixed media unchanged).
     public func shifted(byKelvin dT: Double) -> Medium {
         guard let s = air else { return self }
-        return .air(temperatureC: s.temperatureC + dT, humidity: s.humidity,
-                    pressure: s.pressure)
+        var m = Medium.air(temperatureC: s.temperatureC + dT, humidity: s.humidity,
+                           pressure: s.pressure)
+        m.extraAbsorption = extraAbsorption
+        return m
     }
 
     public func wavelength(at f: Double) -> Double { soundSpeed / f }
     public func wavenumber(at f: Double) -> Double { 2 * .pi * f / soundSpeed }
     /// Amplitude absorption, nepers per metre: ISO 9613-1 for air, 0 otherwise.
-    public func absorption(at f: Double) -> Double { air?.absorptionNp(at: f) ?? 0 }
+    public func absorption(at f: Double) -> Double { (air?.absorptionNp(at: f) ?? 0) + extraAbsorption }
 }
 
 /// Humid air: temperature, relative humidity, static pressure — and the sound

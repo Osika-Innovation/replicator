@@ -3,13 +3,25 @@ import Foundation
 /// The unit suite. Run with `fieldc test`.
 public enum CoreTests {
 
+    /// One test group by name (`fieldc test cavity`) — fast iteration on one area.
+    public static func run(group: String) -> TestHarness? {
+        let groups: [String: (TestHarness) -> Void] = [
+            "math": math, "geometry": geometry, "propagator": propagator, "gorkov": gorkov,
+            "inverse": inverse, "cad": cad, "plates": wallsAndPlates, "air": air,
+            "force": force, "cavity": cavity]
+        guard let g = groups[group] else { return nil }
+        let h = TestHarness()
+        g(h)
+        return h
+    }
+
     public static func runAll() -> TestHarness {
         let h = TestHarness()
         math(h); geometry(h); propagator(h); gorkov(h); inverse(h)
         pencil(h); trapKinds(h); chordAndVerbs(h); callResponse(h)
         surfaceHologram(h)
         provenance(h); gates(h)
-        cad(h); wallsAndPlates(h); air(h); force(h)
+        cad(h); wallsAndPlates(h); air(h); force(h); cavity(h)
         return h
     }
 
@@ -641,6 +653,72 @@ public enum CoreTests {
             let ref = Gorkov(medium: wet, particle: particle)
                 .potential(p: prop.pressure(at: x, drive: g), v: prop.velocity(at: x, drive: g))
             t.near(U / ref, 1, 1e-9, "gHKg vs Gorkov.potential")
+        }
+    }
+
+    // ---------------------------------------------------------------- cavity
+    static func cavity(_ h: TestHarness) {
+        h.test("Bessel table: every order, against 60-digit series") { t in
+            let tab = BesselTable(maxOrder: 60, xMax: 62)
+            for (m, x, ref) in [(0, 1.0, 0.7651976865579666), (1, 1.0, 0.4400505857449335),
+                                (5, 10.0, -0.2340615281867936), (20, 25.0, 0.05199404922830323),
+                                (50, 60.0, -0.1379827314853521), (3, 0.5, 0.002563729994587244),
+                                (0, 40.0, 0.00736689058423729), (12, 40.0, -0.1269779961178481)] {
+                t.near(tab.j(m, x), ref, 1e-9, "J_\(m)(\(x))")
+            }
+            t.near(tab.primeZeros(order: 1, upTo: 6)[0], 1.8411837813, 1e-8, "j'_11")
+            t.near(tab.primeZeros(order: 2, upTo: 6)[0], 3.0542369282, 1e-8, "j'_21")
+            t.near(tab.primeZeros(order: 0, upTo: 6)[1], 3.8317059702, 1e-8, "j'_02")
+            t.near(tab.primeZeros(order: 1, upTo: 6)[1], 5.3314427735, 1e-8, "j'_12")
+        }
+        h.test("G-CYL1: cavity with a lossy far wall = the half-space (Rayleigh) field") { t in
+            // One small piston on a rigid lower face; the side wall 0.6 m away and
+            // the far end absorbing. Loss silences the wall echoes, so the modal
+            // sum must reproduce the baffled-source field directly.
+            var m = Medium.air(temperatureC: 20, humidity: 50)
+            m.extraAbsorption = 12
+            let f = 5_000.0, b = 1e-3
+            let cav = CylinderCavity(radius: 0.6, length: 2.0, reflectionLower: 1, reflectionUpper: 0,
+                                     maxGamma: 210)
+            let el = Element(position: Vec3(0.1, 0, 0), normal: Vec3(0, 0, 1), area: Double.pi * b * b,
+                             surface: .lowerCap, gateIndex: 0)
+            let src = cav.source(elements: [el], coupling: nil, gateCount: 1, frequency: f, medium: m, zMin: 0.05)
+            let k = m.wavenumber(at: f), alpha = m.absorption(at: f), omega = 2 * Double.pi * f
+            var worst = 0.0
+            for x in [Vec3(0.15, 0.05, 0.12), Vec3(0, 0, 0.2), Vec3(0.3, -0.1, 0.25), Vec3(0.1, 0, 0.05)] {
+                let d = x - el.position, R = d.length
+                let sinT = (d.x * d.x + d.y * d.y).squareRoot() / R
+                let q = k * b * sinT
+                let D = q < 1e-9 ? 1 : 2 * besselJ1(q) / q
+                let ref = Complex(0, omega * m.density * el.area / (2 * Double.pi)) * D
+                    * (Complex.expi(k * R) * (exp(-alpha * R) / R))
+                let got = cav.rows(at: x, source: src).p[0]
+                let err = (got - ref).magnitude / ref.magnitude
+                // NaN-safe: a NaN must fail, and Swift's max(0, .nan) is 0.
+                if !(err <= worst) { worst = err }
+            }
+            t.check(worst.isFinite && worst < 5e-3, "worst relative error \(worst)")
+            t.check(src.modeCount > 1000, "modes used \(src.modeCount)")
+        }
+        h.test("G-CYL2: a closed rigid cylinder rings at its analytic mode frequencies") { t in
+            var m = Medium.air(temperatureC: 20, humidity: 50)
+            m.extraAbsorption = 0.02
+            let a = 0.05, L = 0.1, c = m.soundSpeed
+            let cav = CylinderCavity(radius: a, length: L, reflectionLower: 1, reflectionUpper: 1, maxGamma: 600)
+            let el = Element(position: Vec3(0.02, 0, 0), normal: Vec3(0, 0, 1), area: 1e-6,
+                             surface: .lowerCap, gateIndex: 0)
+            let probe = Vec3(0.03, 0.01, 0.07)
+            for (name, fa) in [("(0,0,1)", c / (2 * L)), ("(1,1,0)", c * 1.8411837813 / (2 * Double.pi * a))] {
+                var best = 0.0, bestF = 0.0
+                for i in -60...60 {
+                    let f = fa * (1 + Double(i) * 0.0005)
+                    let s = cav.source(elements: [el], coupling: nil, gateCount: 1, frequency: f, medium: m, zMin: 0.02)
+                    let v = cav.rows(at: probe, source: s).p[0].magnitude
+                    if v > best { best = v; bestF = f }
+                }
+                t.check(best.isFinite && best > 0, "response is finite at \(name)")
+                t.near(bestF / fa, 1, 1e-3, "mode \(name) at \(fa) Hz")
+            }
         }
     }
 }

@@ -91,6 +91,11 @@ case "gate", "gates":
 
 case "test":
     let t0 = Date()
+    if args.count > 1, let hg = CoreTests.run(group: args[1]) {
+        print(hg.summary)
+        print(String(format: "(%.2fs)", Date().timeIntervalSince(t0)))
+        exit(hg.allPassed ? 0 : 1)
+    }
     let h = CoreTests.runAll()
     print(h.summary)
     print(String(format: "(%.2fs)", Date().timeIntervalSince(t0)))
