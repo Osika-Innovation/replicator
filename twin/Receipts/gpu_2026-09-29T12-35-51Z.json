@@ -1,0 +1,37 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T12:35:51Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "512 points x 64 gates; float32 GPU vs float64 CPU; build 0.003s",
+      "id" : "G-GPU",
+      "measured" : 3.7922459338747084e-06,
+      "name" : "Metal propagator vs CPU reference",
+      "passed" : true,
+      "threshold" : 1e-05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "192 points x 6 gates, 17184 elements, walls order 3, air 1.32 dB\/m; 1097 M terms\/s",
+      "id" : "G-GPU-FS",
+      "measured" : 1.2841780811541052e-05,
+      "name" : "port fields, RH-1 FS at 40 kHz, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "192 points x 6 gates, 18048 elements, walls order 3, air 3.28 dB\/m; 1107 M terms\/s",
+      "id" : "G-GPU-FS",
+      "measured" : 5.3447555162831123e-05,
+      "name" : "port fields, RH-1 FS at 100 kHz, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    }
+  ],
+  "gitSHA" : "7b53f44",
+  "name" : "gpu"
+}

@@ -1,0 +1,136 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T12:35:50Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 18.73077404499054,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "twin +340.1 µm, closed form +328.9 µm",
+      "id" : "G-T1",
+      "measured" : 0.03423655087800667,
+      "name" : "thermal node drift vs d·Δc\/c (60 mm above mid-plane, direct paths, +3 K)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "<",
+      "detail" : "twin -775.3 µm, closed form -712.5 µm",
+      "id" : "G-T1",
+      "measured" : 0.08810007707679965,
+      "name" : "thermal node drift vs d·Δc\/c (100 mm above the lower face, direct paths, +3 K)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1256 µm, depth 4.60 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 4.6020207705368215,
+      "name" : "40 kHz, walls, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 404 µm, depth 1.90 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 1.9008839078453093,
+      "name" : "40 kHz, walls, 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 796 µm, depth 0.78 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.7771047176891309,
+      "name" : "40 kHz, walls, 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 688 µm, depth 0.76 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.7581573421836343,
+      "name" : "40 kHz, walls, 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1945 µm, depth 724.46 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 724.4580453824148,
+      "name" : "100 kHz, walls, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1683 µm, depth 1.81 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 1.811224816321294,
+      "name" : "100 kHz, walls, 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1164 µm, depth 1.36 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 1.3621402646210203,
+      "name" : "100 kHz, walls, 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 2013 µm, depth 3.59 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 3.5930549228133266,
+      "name" : "100 kHz, walls, 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 793 µm, depth 12.63 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 12.634452136204304,
+      "name" : "200 kHz, walls, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 850 µm, depth 1.40 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 1.4029685038963968,
+      "name" : "200 kHz, walls, 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1525 µm, depth 2.45 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 2.45304043781725,
+      "name" : "200 kHz, walls, 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 893 µm, depth 0.59 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.5890772157399826,
+      "name" : "200 kHz, walls, 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "7b53f44",
+  "name" : "drift"
+}
