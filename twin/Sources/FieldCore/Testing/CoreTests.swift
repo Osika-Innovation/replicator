@@ -809,6 +809,46 @@ public enum CoreTests {
             t.check(pIn > 0 && rel.isFinite && rel < 1e-4,
                     "in \(pIn) W, wall \(pOut) W, relative \(rel), modes \(s.modeCount)")
         }
+        h.test("G-CYL6: lined-wall field — Helmholtz inside, ∂p/∂r = ikβp on the wall, gradient rows = finite differences") { t in
+            let med = Medium(density: 1.2, soundSpeed: 343)
+            let a = 0.05, L = 0.08, f = 12_000.0, beta = 0.4
+            let cav = CylinderCavity(radius: a, length: L, reflectionLower: 1, reflectionUpper: 0.8,
+                                     maxGamma: 120 / a)
+            let el = Element(position: Vec3(0.013, 0.006, 0), normal: Vec3(0, 0, 1), area: 2.8e-5,
+                             surface: .lowerCap, gateIndex: 0)
+            let s = cav.source(elements: [el], coupling: nil, gateCount: 1, frequency: f, medium: med,
+                               zMin: 0.02, wallAdmittance: beta)
+            let k = med.wavenumber(at: f)
+            func p(_ x: Vec3) -> Complex { cav.rows(at: x, source: s).p[0] }
+            var worstGrad = 0.0, worstHelm = 0.0, worstWall = 0.0
+            for x in [Vec3(0.02, -0.01, 0.04), Vec3(-0.03, 0.02, 0.03), Vec3(0.03, 0.03, 0.05)] {
+                let rows = cav.rows(at: x, source: s)
+                let h = 2e-5, H = 2e-4                       // gradient step, Laplacian step
+                let axes = [Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)]
+                var lap = p(x) * -6.0                        // 7-point stencil, × H²
+                for (i, e) in axes.enumerated() {
+                    let fd = (p(x + e * h) - p(x - e * h)) / (2 * h)
+                    let err = (rows.grad[i][0] - fd).magnitude / max(fd.magnitude, 1e-3 * k * rows.p[0].magnitude)
+                    if !(err <= worstGrad) { worstGrad = err }
+                    lap += p(x + e * H) + p(x - e * H)
+                }
+                let helm = (lap / (H * H) + rows.p[0] * (k * k)).magnitude / (k * k * rows.p[0].magnitude)
+                if !(helm <= worstHelm) { worstHelm = helm }
+            }
+            for (phi, z) in [(0.3, 0.03), (2.1, 0.05), (4.0, 0.06)] {
+                let x = Vec3(a * cos(phi), a * sin(phi), z)
+                let rows = cav.rows(at: x, source: s)
+                let dpdr = rows.grad[0][0] * cos(phi) + rows.grad[1][0] * sin(phi)
+                let bc = Complex(0, k * beta) * rows.p[0]
+                let err = (dpdr - bc).magnitude / bc.magnitude
+                if !(err <= worstWall) { worstWall = err }
+            }
+            // Central differences at h = 20 µm carry ~(μh)²/6 ≈ 1e-5 from the
+            // steeper evanescent modes; the rows themselves are exact.
+            t.check(worstGrad < 1e-4, "gradient rows vs central differences: \(worstGrad)")
+            t.check(worstHelm < 1e-3, "|∇²p + k²p| / k²|p|: \(worstHelm)")
+            t.check(worstWall < 1e-6, "|∂p/∂r − ikβp| / |ikβp| on the wall: \(worstWall)")
+        }
         h.test("G-CYL2: a closed rigid cylinder rings at its analytic mode frequencies") { t in
             var m = Medium.air(temperatureC: 20, humidity: 50)
             m.extraAbsorption = 0.02

@@ -118,9 +118,11 @@ public enum CavityFieldsGPU {
     public static func propagator(ctx: MetalContext, cavity cav: CylinderCavity,
                                   elements: [Element], coupling: [Complex]?,
                                   lattice: FieldLattice, frequency: Double, medium: Medium,
-                                  gateCount: Int, zMin: Double) throws -> Propagator {
+                                  gateCount: Int, zMin: Double,
+                                  wallAdmittance: Double = 0) throws -> Propagator {
         let s = cav.source(elements: elements, coupling: coupling, gateCount: gateCount,
-                           frequency: frequency, medium: medium, zMin: zMin)
+                           frequency: frequency, medium: medium, zMin: zMin,
+                           wallAdmittance: wallAdmittance)
         let H = try build(ctx: ctx, cavity: cav, source: s, points: lattice.positions, withGradient: false)
         return Propagator(elements: elements, lattice: lattice, frequency: frequency, medium: medium,
                           gateCount: gateCount, elementCoupling: coupling, cavity: cav, cavitySource: s,

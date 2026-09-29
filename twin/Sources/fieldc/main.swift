@@ -355,11 +355,22 @@ case "drift":
                                                   lattice: lat, frequency: f, medium: m,
                                                   gateCount: p.gateCount, zMin: zMin)
         }
+        // The glass lined with a ρc-matched absorber (normal-incidence R = 0,
+        // β = 1): the best a locally reacting liner does (wallsweep).
+        let lined: ThermalDrift.Builder = { p, c, lat, f, m in
+            let zlo = lat.origin.z, zhi = lat.origin.z + Double(lat.nz - 1) * lat.spacing
+            let zMin = max(0.05, min(zlo, cav.length - zhi))
+            return try CavityFieldsGPU.propagator(ctx: ctx, cavity: cav, elements: p.elements, coupling: c,
+                                                  lattice: lat, frequency: f, medium: m,
+                                                  gateCount: p.gateCount, zMin: zMin, wallAdmittance: 1)
+        }
         let conditions = [
             ThermalDrift.Condition("direct paths only", build: images(.none)),
             ThermalDrift.Condition("both plates as mirrors (3 image orders, R = 0.9)", build: images(plateWalls)),
             ThermalDrift.Condition(String(format: "glass cylinder (a = %.0f mm) + plates, R = 0.9", cav.radius * 1000),
                                    maxFrequency: cavityFMax, build: glass),
+            ThermalDrift.Condition("glass lined (β = 1, R = 0) + plates, R = 0.9",
+                                   maxFrequency: cavityFMax, build: lined),
         ]
         let rows = try ThermalDrift.run(frequencies: freqs, dTs: dTs, conditions: conditions)
         let dcdT = ThermalDrift.relativeSpeedDrift(air)
