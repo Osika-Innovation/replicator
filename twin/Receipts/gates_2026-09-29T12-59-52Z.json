@@ -1,0 +1,109 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T12:59:52Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 52.268608927726746,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "220016 voxels = 112.6 cm^3 vs 113.1 cm^3",
+      "id" : "G1",
+      "measured" : 0.003971300713060949,
+      "name" : "voxelizer volume",
+      "passed" : true,
+      "threshold" : 0.02
+    },
+    {
+      "comparison" : "<",
+      "detail" : "E0 = 1.57243e-10, E1 = 1.56126e-10",
+      "id" : "G2",
+      "measured" : 0.007099409679659803,
+      "name" : "energy drift (lossless, 10000 steps)",
+      "passed" : true,
+      "threshold" : 0.01
+    },
+    {
+      "comparison" : "<",
+      "detail" : "first echo 2.108 ms vs 2.099 ms (L = 720 mm)",
+      "id" : "G3",
+      "measured" : 0.004348905777786718,
+      "name" : "axial round-trip time of flight",
+      "passed" : true,
+      "threshold" : 0.02
+    },
+    {
+      "comparison" : "<",
+      "detail" : "160 points, 1.5–3.7 lambda from source; 10.0 kHz, dx = lambda\/12, 132^3 cells; one complex scale fitted (|a| = 0.00431)",
+      "id" : "G5",
+      "measured" : 0.041775453773468724,
+      "name" : "T0 propagator vs T1 FDTD (empty chamber)",
+      "passed" : true,
+      "threshold" : 0.05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "mean 4.2874 mm vs lambda\/2 4.2875 mm; 70 nodes (expected ~69)",
+      "id" : "G6",
+      "measured" : 2.5351755608960555e-05,
+      "name" : "standing-wave node spacing",
+      "passed" : true,
+      "threshold" : 0.01
+    },
+    {
+      "comparison" : "<",
+      "detail" : "worst rel. err at z = 8.103 mm; contrast Phi = 2.4978",
+      "id" : "G7",
+      "measured" : 3.579327489171274e-07,
+      "name" : "Gor'kov vs closed form",
+      "passed" : true,
+      "threshold" : 0.02
+    },
+    {
+      "comparison" : "<",
+      "detail" : "mm; lattice spacing 2.14 mm; axial spread 6.9 mm (depth of focus, expected)",
+      "id" : "G9a",
+      "measured" : 1.785490338291118,
+      "name" : "lateral focus placement error (single plate)",
+      "passed" : true,
+      "threshold" : 2.64375
+    },
+    {
+      "comparison" : "info",
+      "detail" : "dB outside the dilated main lobe. SPEC BAR -10 dB NOT MET and believed unachievable in this regime; needs an operator ruling, not a quiet edit",
+      "id" : "G9b",
+      "measured" : -7.210711451168872,
+      "name" : "worst sidelobe (single plate, off-axis)",
+      "passed" : true,
+      "threshold" : -10
+    },
+    {
+      "comparison" : "info",
+      "detail" : "dB — lambda\/2-spaced standing-wave lobes are the levitation mechanism; placement spread 9.7 mm",
+      "id" : "I2",
+      "measured" : -0.7304308403852445,
+      "name" : "opposed-plate axial lobes (expected, not a fault)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : ">",
+      "detail" : "IBP 18.03x, GS-PAT 18.03x, Diff-PAT 18.03x over volume mean",
+      "id" : "G9c",
+      "measured" : 1,
+      "name" : "focusing gain, best method vs IBP",
+      "passed" : true,
+      "threshold" : 0.98
+    },
+    {
+      "comparison" : "info",
+      "detail" : "RH-1 10.8x vs dense 18.0x over volume mean. NOT a channel-count finding — see `fieldc broadband`, which measures the force-level metric with walls and a chord and finds parity",
+      "id" : "I1-freefield",
+      "measured" : 10.770447621623523,
+      "name" : "focusing gain, FREE-FIELD MONOCHROMATIC diagnostic only",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "a226307",
+  "name" : "gates"
+}
