@@ -73,7 +73,19 @@ public struct Receipt: Sendable, Codable {
     public func json() throws -> Data {
         let enc = JSONEncoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        // A study may measure "no well" (∞) or "lost" (NaN); the default
+        // encoder throws on those, and `writeReceipt` then wrote nothing.
+        enc.nonConformingFloatEncodingStrategy = .convertToString(positiveInfinity: "inf",
+                                                                  negativeInfinity: "-inf", nan: "nan")
         return try enc.encode(self)
+    }
+
+    /// Read a receipt back (∞ / NaN as written by `json()`).
+    public static func decode(_ data: Data) throws -> Receipt {
+        let dec = JSONDecoder()
+        dec.nonConformingFloatDecodingStrategy = .convertFromString(positiveInfinity: "inf",
+                                                                    negativeInfinity: "-inf", nan: "nan")
+        return try dec.decode(Receipt.self, from: data)
     }
 
     public var summary: String {

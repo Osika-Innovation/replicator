@@ -577,12 +577,18 @@ public enum CoreTests {
             S[0][2] = Complex(99, 0)
             t.check(!PhysicsGates.g15Reciprocity(S).passed, "asymmetry must be caught")
         }
-        h.test("receipt round-trips through JSON") { t in
+        h.test("receipt round-trips through JSON, ∞ and NaN included") { t in
             do {
-                let r = Receipt(name: "t", gates: PhysicsGates.runAll(), durationSeconds: 1)
-                let data = try r.json()
-                let back = try JSONDecoder().decode(Receipt.self, from: data)
+                var gates = PhysicsGates.runAll()
+                gates.append(GateResult(id: "X", name: "no well", measured: .infinity, threshold: 0,
+                                        comparison: .informational, detail: ""))
+                gates.append(GateResult(id: "Y", name: "lost", measured: .nan, threshold: 0,
+                                        comparison: .informational, detail: ""))
+                let r = Receipt(name: "t", gates: gates, durationSeconds: 1)
+                let back = try Receipt.decode(try r.json())
                 t.check(back.gates.count == r.gates.count, "gate count preserved")
+                t.check(back.gates[back.gates.count - 2].measured == .infinity && back.gates.last!.measured.isNaN,
+                        "∞ and NaN survive")
             } catch { t.fail("\(error)") }
         }
     }

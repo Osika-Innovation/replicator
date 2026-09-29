@@ -58,9 +58,11 @@ func writeReceipt(_ r: Receipt) {
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     let stamp = r.date.replacingOccurrences(of: ":", with: "-")
     let url = dir.appendingPathComponent("\(r.name)_\(stamp).json")
-    if let data = try? r.json() {
-        try? data.write(to: url)
+    do {
+        try r.json().write(to: url)
         print("receipt written: \(url.path)")
+    } catch {
+        print("RECEIPT NOT WRITTEN (\(url.lastPathComponent)): \(error)")
     }
 }
 
