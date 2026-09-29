@@ -1,0 +1,280 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T14:48:58Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 306.33219492435455,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "twin +340.1 µm, closed form +328.9 µm",
+      "id" : "G-T1",
+      "measured" : 0.03423655087800667,
+      "name" : "thermal node drift vs d·Δc\/c (60 mm above mid-plane, direct paths, +3 K)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "<",
+      "detail" : "twin -775.3 µm, closed form -712.5 µm",
+      "id" : "G-T1",
+      "measured" : 0.08810007707679965,
+      "name" : "thermal node drift vs d·Δc\/c (100 mm above the lower face, direct paths, +3 K)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1088 µm, depth 6.17 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 6.173183058535144,
+      "name" : "40 kHz, both plates as mirrors (3 image orders, R = 0.9), mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 474 µm, depth 1.88 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 1.8760758399297142,
+      "name" : "40 kHz, both plates as mirrors (3 image orders, R = 0.9), 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1467 µm, depth 0.96 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 0.9559389281670093,
+      "name" : "40 kHz, both plates as mirrors (3 image orders, R = 0.9), 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 680 µm, depth 0.73 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.7297694680618156,
+      "name" : "40 kHz, both plates as mirrors (3 image orders, R = 0.9), 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 91 µm, depth 0.54 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.5372400527509996,
+      "name" : "40 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1854 µm, depth 18.42 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 18.42137412232718,
+      "name" : "40 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 4254 µm, depth 0.06 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.05632960301480778,
+      "name" : "40 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1056 µm, depth 0.26 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.2646091693153987,
+      "name" : "40 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 496 µm, depth 4.57 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 4.5736878580046945,
+      "name" : "40 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 334 µm, depth 5.68 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 5.675000916835583,
+      "name" : "40 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 3076 µm, depth 3.17 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 3.1700884107343703,
+      "name" : "40 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 2366 µm, depth 0.46 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.46241085878152643,
+      "name" : "40 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 506 µm, depth 44.02 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 44.02154524152593,
+      "name" : "100 kHz, both plates as mirrors (3 image orders, R = 0.9), mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1696 µm, depth 0.20 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.20358413108457024,
+      "name" : "100 kHz, both plates as mirrors (3 image orders, R = 0.9), 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1267 µm, depth 1.45 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 1.446750404687376,
+      "name" : "100 kHz, both plates as mirrors (3 image orders, R = 0.9), 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 603 µm, depth 1.07 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 1.0718358848039466,
+      "name" : "100 kHz, both plates as mirrors (3 image orders, R = 0.9), 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 1591 µm, depth 1.31 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 1.3134362042782826,
+      "name" : "100 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 890 µm, depth 2.69 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 2.688736123122808,
+      "name" : "100 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 2603 µm, depth 9.54 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 9.537798907112796,
+      "name" : "100 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 861 µm, depth 0.86 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.8591962833025042,
+      "name" : "100 kHz, glass cylinder (a = 218 mm) + plates, R = 0.9, 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 823 µm, depth 4.15 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 4.149363631079368,
+      "name" : "100 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 95 µm, depth 7.31 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 7.308183346465774,
+      "name" : "100 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 510 µm, depth 1.44 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 1.4444501269972754,
+      "name" : "100 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 187 µm, depth 3.93 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 3.9278759252667452,
+      "name" : "100 kHz, glass lined (β = 1, R = 0) + plates, R = 0.9, 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 824 µm, depth 12.33 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 12.326836759757352,
+      "name" : "200 kHz, both plates as mirrors (3 image orders, R = 0.9), mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 861 µm, depth 1.48 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 1.4828609822802739,
+      "name" : "200 kHz, both plates as mirrors (3 image orders, R = 0.9), 60 mm above mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 2015 µm, depth 2.29 of 20 °C",
+      "id" : "T-drift",
+      "measured" : 2.288255501210642,
+      "name" : "200 kHz, both plates as mirrors (3 image orders, R = 0.9), 60 mm off-axis, mid-plane, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shift 875 µm, depth 0.55 of 20 °C, sibling now deepest",
+      "id" : "T-drift",
+      "measured" : 0.5491411157856457,
+      "name" : "200 kHz, both plates as mirrors (3 image orders, R = 0.9), 100 mm above the lower face, +1 K",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "cce6bf5",
+  "name" : "drift"
+}
