@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-29T18:04:48Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 70.46905601024628,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "40 steps of 0.25 mm, 10 tones; worst offset 0.17 mm, shallowest 0.71; sibling ratio worst 0.72, 4 steps ≥ 0.5",
+      "id" : "G-P1",
+      "measured" : 1,
+      "name" : "bead carried 5 mm up and 5 mm across the glass chamber: on the point, continuous, downhill, still the deepest well",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "4766ea5",
+  "name" : "carry"
+}

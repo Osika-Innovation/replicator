@@ -19,6 +19,8 @@ swift build -c release
 ./.build/release/fieldc forcetrap --receipt   # compile for force vs GS-PAT: unique trap? thermal hold? (--glass)
 ./.build/release/fieldc tonesweep --receipt   # glass chamber: sibling ratio vs number of tones (--target, --liner)
 ./.build/release/fieldc wallsweep --receipt   # glass liner / plate reflection grid (--plates)
+./.build/release/fieldc levitate --receipt    # the drive to hold PLA / aluminium / steel against gravity, in SI
+./.build/release/fieldc carry --receipt       # pick up, carry 5 mm up and 5 mm across, place (G-P1)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -53,6 +55,11 @@ plates as walls, humid air at 20 °C / 50 % RH. See "Round 6" below.
 The build chamber is modelled as the glass cylinder it is (bare or lined), and
 a force compiler that works in its speckle holds one trap with 3–10 tones, on
 axis and off. A liner is not the lever; temperature tracking is. See "Round 7".
+
+**2026-09-29, evening — how hard to drive, and a carried bead.** In SI units a
+PLA bead needs ~160 dB and steel ~168 dB in the glass chamber (MODEL: the horn
+is a stub), and the twin carries a trap 5 mm up and 5 mm across on its point,
+downhill every step (G-P1). See "Round 8".
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -102,6 +109,57 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 8 — how hard to drive, and how to carry (2026-09-29)
+
+**Placement is pinned.** A force-compiled well now sits within λ/8 (≈ 1 mm) of
+the requested point, positions sub-grid (a parabola per axis). The price in the
+glass chamber at 10 tones: sibling ratio 0.24 → 0.36, still unique.
+
+**`fieldc levitate` — the drive to hold a bead, in SI.** The rows are pressure
+per unit aperture velocity (Pa per m/s), so a compiled drive is a set of
+aperture velocities at horn coupling 1. The horn is still a stub, so these are
+MODEL numbers until bench G-A0 measures the throat → aperture gain. The study
+reads the largest upward force the trap's well offers along a 20 µm vertical
+line, and scales the drive until that force carries the bead's weight. Force
+and weight both scale as a³, so in the Rayleigh limit the answer depends on the
+material, not the size. Hardest-driven gate, velocity amplitude (receipt):
+
+| trap | PLA | aluminium | steel | field peak, PLA / steel |
+|---|---|---|---|---|
+| plates only, 5 tones | 25.5 m/s | 37.7 m/s | 64.2 m/s | 160 / 168 dB |
+| glass chamber, 5 tones | 10.1 m/s | 15.0 m/s | 25.5 m/s | 163 / 171 dB |
+| glass chamber, 10 tones | 4.5 m/s | 6.6 m/s | 11.3 m/s | 160 / 168 dB |
+
+* The glass keeps the energy in: the same trap needs 2.5–6× less drive than the
+  plates alone.
+* PLA needs a ~160 dB field — the level working acoustic levitators use. Steel
+  needs ~168–171 dB, where the air turns nonlinear (shock distance ~6 cm at
+  160 dB) and streaming drag on fine powder rivals its weight. That is where
+  the next physics layers — nonlinearity and streaming — stop being optional.
+* Lateral stiffness is weak: 4–26 Hz for PLA at the holding drive.
+
+**`fieldc carry` — pick up, carry, place (G-P1).** Re-compiling at each step of a
+path either kept the old well while the target moved away (three steps) or
+hopped 4.5 mm to another. Placing the well by Newton alone kept it on the point
+while the rivals grew until the trap was lost (0.43 → 0.97 in four steps). The
+carry step does both at once:
+
+* a Newton step on ∇U(x) = 0 — the smallest drive change that puts the well on
+  the point (`ForceCompiler.moveWell`);
+* a rival-suppression step projected onto that constraint's null space, so it
+  does not move the well (`ForceCompiler.carryStep`).
+
+In the bare glass chamber with 10 tones, the trap was carried 5 mm up and 5 mm
+across in 40 steps of 0.25 mm. Every step was within 0.17 mm of its point,
+continuous, and downhill from the old well. The bead's well stayed the deepest
+throughout, never below 0.71 of its starting depth. 36 of 40 steps were also
+globally unique (worst 0.72, the first). Global uniqueness is the loading
+criterion; a bead already in its well needs its own well and a clear path.
+
+**Not modelled yet:** the transient between steps (drives switch instantly;
+the chamber rings for ~10 ms, so a step takes at least that); the bead's own
+dynamics (inertia, drag, streaming); sag under the scaled drive; the horn.
 
 ## Round 7 — the glass chamber (2026-09-29)
 
@@ -367,10 +425,10 @@ returns −6 dB regardless of beam quality.
   placement is exact, so the solver is sound and the bar was wrong. Per §20 law
   L5 this reports informational and **needs an operator ruling**, rather than
   being edited quietly to whatever was measured.
-- **Drive amplitudes are not physical.** `maxAmplitude` is dimensionless, so
-  `fieldc focus` reporting "holds 200 µm PLA: no" is not a real result — it
-  compares a normalized field against real gravity. Drive needs to be specified
-  as surface velocity or source pressure in SI before any levitation claim.
+- **Drive amplitudes are not physical in `fieldc focus`.** `maxAmplitude` is
+  dimensionless there, so "holds 200 µm PLA: no" is not a real result. The
+  force compiler's drives ARE in SI (aperture velocity, m/s) — see `fieldc
+  levitate`, Round 8 — but the horn coupling behind them is a stub.
 - **`I1` RETRACTED as originally stated — do not send it to the hardware lane.**
   The first pass measured RH-1's 24 channels at 10.8× focusing gain vs a
   512-channel array's 18.0× and read it as "24 DOF cannot focus". That number
