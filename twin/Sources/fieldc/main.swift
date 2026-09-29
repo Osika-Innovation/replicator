@@ -245,6 +245,23 @@ case "gpu":
                                       + String(format: "%.0f M terms/s", terms / tG / 1e6))
             print(gf.line)
             gates.append(gf)
+            if f == 40_000 {
+                // The gradient kernel (force compiler input) vs the CPU rows.
+                let sub = Array(pts.prefix(64))
+                let hG4 = try PortFieldsGPU.buildWithGradient(ctx: ctx, elements: fs.elements, coupling: coupling,
+                                                              walls: walls, points: sub, frequency: f,
+                                                              medium: fs.medium, gateCount: fs.gateCount)
+                var hC4: [Complex] = []
+                for x in sub {
+                    let r = ref.gateGradientRows(at: x)
+                    for gi in 0..<fs.gateCount { hC4 += [r.p[gi], r.grad[0][gi], r.grad[1][gi], r.grad[2][gi]] }
+                }
+                let gg = GateResult(id: "G-GPU-FS-grad", name: "port fields + analytic gradient, RH-1 FS at 40 kHz, vs CPU",
+                                    measured: hG4.relativeL2(to: hC4), threshold: 1e-4,
+                                    detail: "\(sub.count) points x \(fs.gateCount) gates x (p, ∂p/∂x, ∂p/∂y, ∂p/∂z)")
+                print(gg.line)
+                gates.append(gg)
+            }
         }
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "gpu", gates: gates, durationSeconds: 0,
@@ -312,6 +329,120 @@ case "drift":
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "drift", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+        exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
+case "forcetrap":
+    // Compile for FORCE (ForceCompiler) vs the GS-PAT twin trap, on the
+    // free-standing machine: is the trap unique, and does it survive a warmer
+    // room once the compiler knows the temperature?
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let particle = ParticleMaterial.pla()               // the 200 µm PLA bead
+        let lam40 = air.wavelength(at: 40_000)
+        let quick = args.contains("--quick")
+        var toneSets: [(String, [Double])] = [("1 tone, 40 kHz", [40_000])]
+        if !quick { toneSets.append(("5-tone chord, 30–70 kHz", [30_000, 40_000, 50_000, 60_000, 70_000])) }
+        let targets: [(String, Vec3)] = [("mid-plane", Vec3(0, 0, L / 2)),
+                                         ("100 mm above the lower face", Vec3(0, 0, 0.10))]
+        let walls = RH1Freestanding.walls(design)
+        func machine(_ f: Double, _ m: Medium) -> (MachinePreset, [Complex]) {
+            var o = RH1Freestanding.Options()
+            o.frequency = f; o.medium = m; o.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+            return RH1Freestanding.preset(o)
+        }
+        func tones(_ freqs: [Double], _ m: Medium, _ lat: FieldLattice) throws -> [ForceCompiler.Tone] {
+            try freqs.map { f in
+                let (p, c) = machine(f, m)
+                let rows = try PortFieldsGPU.buildWithGradient(ctx: ctx, elements: p.elements, coupling: c,
+                                                               walls: walls, points: lat.positions,
+                                                               frequency: f, medium: m, gateCount: p.gateCount)
+                return ForceCompiler.Tone(frequency: f, medium: m, rows: rows)
+            }
+        }
+        var gates: [GateResult] = []
+        func fmt(_ r: ForceCompiler.Result) -> String {
+            String(format: "sibling ratio %5.2f · %3d siblings ≥ 0.5 · offset %4.1f mm",
+                   r.siblingRatio, r.siblings, r.targetOffset * 1000)
+        }
+        for (label, freqs) in toneSets {
+            let fMax = freqs.max()!, fMid = (freqs.min()! + fMax) / 2
+            let h = air.wavelength(at: fMax) / (freqs.count > 1 ? 8 : 10)
+            let n = Int((2 * 2 * lam40 / h).rounded()) | 1                // ±2 λ(40 kHz), odd
+            var o = ForceCompiler.Options()
+            o.shellSteps = max(2, Int((air.wavelength(at: fMid) / 4 / h).rounded()))
+            print("\n\(label): probe ±\(String(format: "%.1f", 2 * lam40 * 1000)) mm at \(String(format: "%.2f", h * 1000)) mm (\(n)³ points), walls: both plates")
+            for (tName, x0) in targets {
+                let half = Double(n - 1) / 2 * h
+                let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+                let T0 = try tones(freqs, air, lat)
+                // Baseline: GS-PAT twin trap per tone, equal power per tone.
+                let base: [[Complex]] = freqs.map { f in
+                    let (p, c) = machine(f, air)
+                    let prop = Propagator(elements: p.elements,
+                                          lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                          frequency: f, medium: air, gateCount: p.gateCount,
+                                          elementCoupling: c, walls: walls)
+                    let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                                method: .gspat, iterations: 80, trap: .twinTrap)
+                    let s = 1 / (u.l2 * Double(freqs.count).squareRoot())
+                    return u.map { $0 * s }
+                }
+                let rB = ForceCompiler.evaluate(T0, drives: base, lattice: lat, target: x0, gates: 6,
+                                                particle: particle, options: o, wavelength: lam40)
+                let rF = ForceCompiler.compile(T0, lattice: lat, gates: 6, particle: particle,
+                                               wavelength: lam40, options: o, starts: [base])
+                let deeper = rB.targetDepth > 0 ? rF.targetDepth / rB.targetDepth : .infinity
+                print("  \(tName)")
+                print("    GS-PAT twin trap : " + fmt(rB))
+                print("    force compiler   : " + fmt(rF) + String(format: " · depth %.1f× GS-PAT", deeper))
+                if freqs.count > 1 && tName == "mid-plane" {
+                    // G-F1: the chord, compiled for force, holds ONE trap at the
+                    // mid-plane — every competing well within ±2λ under half its
+                    // depth (the plate study's own 0.5 bar, which GS-PAT misses).
+                    let g1 = GateResult(id: "G-F1", name: "force compiler + 5-tone chord: unique trap at the mid-plane",
+                                        measured: rF.siblingRatio, threshold: 0.5,
+                                        detail: String(format: "sibling ratio %.2f, %d siblings ≥ 0.5, offset %.1f mm; GS-PAT %@",
+                                                       rF.siblingRatio, rF.siblings, rF.targetOffset * 1000,
+                                                       rB.siblingRatio.isFinite ? String(format: "%.2f", rB.siblingRatio) : "no well at the target"))
+                    print(g1.line)
+                    gates.append(g1)
+                }
+                gates.append(GateResult(id: "F-\(freqs.count)t", name: "\(label), \(tName): force vs GS-PAT sibling ratio",
+                                        measured: rF.siblingRatio, threshold: 0, comparison: .informational,
+                                        detail: String(format: "force %.2f (%d siblings), GS-PAT %.2f (%d); depth %.1f×",
+                                                       rF.siblingRatio, rF.siblings, rB.siblingRatio, rB.siblings, deeper)))
+                // Warm the room: hold the force-compiled drive, then re-compile at the true T.
+                guard let w0 = rF.targetWell, rF.targetDepth > 0 else { continue }
+                var line = "    warmer, held / re-compiled:"
+                for dT in quick ? [0.3] : [0.1, 0.3, 1.0] {
+                    let m = air.shifted(byKelvin: dT)
+                    let TT = try tones(freqs, m, lat)
+                    let held = ForceCompiler.evaluate(TT, drives: rF.drives, lattice: lat, target: w0, gates: 6,
+                                                      particle: particle, options: o, wavelength: lam40)
+                    // Re-compile at the true T, warm-started from the held drive:
+                    // the continuous-calibration loop.
+                    let redo = ForceCompiler.compile(TT, lattice: lat, gates: 6, particle: particle,
+                                                     wavelength: lam40, options: o, starts: [rF.drives])
+                    func cell(_ r: ForceCompiler.Result) -> String {
+                        guard let w = r.targetWell else { return "lost" }
+                        return String(format: "%.0f µm, %.2f deep, ratio %.2f", (w - w0).length * 1e6,
+                                      r.targetDepth / rF.targetDepth, r.siblingRatio)
+                    }
+                    line += String(format: "\n      +%.1f K  held: %@   re-compiled: %@", dT, cell(held), cell(redo))
+                }
+                print(line)
+            }
+        }
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "forcetrap", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
                                  device: deviceName(), gitSHA: gitSHA()))
         }
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)

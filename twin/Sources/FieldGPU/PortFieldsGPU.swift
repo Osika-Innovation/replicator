@@ -50,6 +50,29 @@ public enum PortFieldsGPU {
                              frequency: Double, medium: Medium,
                              gateCount: Int) throws -> [Complex] {
         precondition(gateCount <= 64, "the kernel accumulates at most 64 gates per point")
+        return try run("buildPortFields", outputsPerGate: 1, ctx: ctx, elements: elements,
+                       coupling: coupling, weights: weights, walls: walls, points: points,
+                       frequency: frequency, medium: medium, gateCount: gateCount)
+    }
+
+    /// Pressure rows and their analytic gradients: layout
+    /// [(point · gates + gate) · 4 + c], c = 0 → p, 1…3 → ∂p/∂x, ∂p/∂y, ∂p/∂z.
+    /// Mirrors `Propagator.gateGradientRows`.
+    public static func buildWithGradient(ctx: MetalContext, elements: [Element],
+                                         coupling: [Complex]? = nil, weights: [Double]? = nil,
+                                         walls: Propagator.Walls = .none, points: [Vec3],
+                                         frequency: Double, medium: Medium,
+                                         gateCount: Int) throws -> [Complex] {
+        precondition(gateCount <= 16, "the gradient kernel accumulates at most 16 gates per point")
+        return try run("buildPortFieldsGrad", outputsPerGate: 4, ctx: ctx, elements: elements,
+                       coupling: coupling, weights: weights, walls: walls, points: points,
+                       frequency: frequency, medium: medium, gateCount: gateCount)
+    }
+
+    static func run(_ kernel: String, outputsPerGate: Int, ctx: MetalContext, elements: [Element],
+                    coupling: [Complex]?, weights: [Double]?, walls: Propagator.Walls,
+                    points: [Vec3], frequency: Double, medium: Medium,
+                    gateCount: Int) throws -> [Complex] {
         let els: [ElementPF] = elements.enumerated().map { i, e in
             let w = weights?[i] ?? 1
             let c = (coupling?[i] ?? .one) * w
@@ -65,7 +88,8 @@ public enum PortFieldsGPU {
         let dev = ctx.device
         guard let eb = dev.makeBuffer(bytes: els, length: max(1, els.count) * MemoryLayout<ElementPF>.stride,
                                       options: .storageModeShared) else { throw MetalContext.Error.noDevice }
-        var out = [Complex](repeating: .zero, count: points.count * gateCount)
+        let per = gateCount * outputsPerGate
+        var out = [Complex](repeating: .zero, count: points.count * per)
         var start = 0
         while start < points.count {
             let n = min(chunk, points.count - start)
@@ -83,19 +107,19 @@ public enum PortFieldsGPU {
                 reflection: Float(walls.reflectionCoefficient))
             guard let pb = dev.makeBuffer(bytes: pts, length: n * MemoryLayout<SIMD4<Float>>.stride,
                                           options: .storageModeShared),
-                  let hb = dev.makeBuffer(length: n * gateCount * MemoryLayout<SIMD2<Float>>.stride,
+                  let hb = dev.makeBuffer(length: n * per * MemoryLayout<SIMD2<Float>>.stride,
                                           options: .storageModeShared) else {
                 throw MetalContext.Error.noDevice
             }
-            try ctx.dispatch("buildPortFields", count: n) { enc in
+            try ctx.dispatch(kernel, count: n) { enc in
                 enc.setBuffer(hb, offset: 0, index: 0)
                 enc.setBuffer(eb, offset: 0, index: 1)
                 enc.setBuffer(pb, offset: 0, index: 2)
                 enc.setBytes(&params, length: MemoryLayout<PFParams>.stride, index: 3)
             }
-            let h = hb.contents().bindMemory(to: SIMD2<Float>.self, capacity: n * gateCount)
-            for i in 0..<(n * gateCount) {
-                out[start * gateCount + i] = Complex(Double(h[i].x), Double(h[i].y))
+            let h = hb.contents().bindMemory(to: SIMD2<Float>.self, capacity: n * per)
+            for i in 0..<(n * per) {
+                out[start * per + i] = Complex(Double(h[i].x), Double(h[i].y))
             }
             start += n
         }

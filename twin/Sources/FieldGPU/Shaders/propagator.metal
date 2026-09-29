@@ -48,6 +48,37 @@ inline float besselJ1(float x) {
     return x < 0.0f ? -ans : ans;
 }
 
+// Bessel J0 — Numerical Recipes bessj0, the same family as besselJ1.
+inline float besselJ0(float x) {
+    float ax = fabs(x);
+    if (ax < 8.0f) {
+        float y = x * x;
+        float a1 = 57568490574.0f + y * (-13362590354.0f + y * (651619640.7f
+                 + y * (-11214424.18f + y * (77392.33017f + y * (-184.9052456f)))));
+        float a2 = 57568490411.0f + y * (1029532985.0f + y * (9494680.718f
+                 + y * (59272.64853f + y * (267.8532712f + y))));
+        return a1 / a2;
+    }
+    float z = 8.0f / ax, y = z * z, xx = ax - 0.785398164f;
+    float a1 = 1.0f + y * (-0.1098628627e-2f + y * (0.2734510407e-4f
+             + y * (-0.2073370639e-5f + y * 0.2093887211e-6f)));
+    float a2 = -0.1562499995e-1f + y * (0.1430488765e-3f
+             + y * (-0.6911147651e-5f + y * (0.7621095161e-6f - y * 0.934935152e-7f)));
+    return sqrt(0.636619772f / ax) * (cos(xx) * a1 - z * sin(xx) * a2);
+}
+
+// Directivity and its slope dD/d(cos θ) — mirrors
+// Propagator.pistonDirectivityAndSlope.
+inline float2 directivityAndSlope(float k, float a, float c) {
+    float ka = k * a;
+    if (ka < 0.5f) return float2(c, 1.0f);
+    float s2 = max(0.0f, 1.0f - c * c);
+    float x = ka * sqrt(s2);
+    if (x < 1e-3f) return float2(1.0f - x * x / 8.0f, ka * ka * c / 4.0f);
+    float j1 = besselJ1(x), j2 = 2.0f * j1 / x - besselJ0(x);
+    return float2(2.0f * j1 / x, 2.0f * j2 * c / s2);
+}
+
 inline float directivity(float k, float a, float cosTheta) {
     float ka = k * a;
     if (ka < 0.5f) return cosTheta;
@@ -193,4 +224,71 @@ kernel void buildPortFields(device float2*            H        [[buffer(0)]],
     }
     uint base = gid * P.gateCount;
     for (uint g = 0; g < nG; ++g) H[base + g] = acc[g];
+}
+
+// Port fields WITH their analytic gradient: for every point and gate, p and
+// dp/dx, dp/dy, dp/dz (layout [(point * gates + gate) * 4 + c], c = 0 is p).
+// Same terms as buildPortFields; mirrors FieldCore.Propagator.gateGradientRows.
+// The Gor'kov potential is a quadratic form built from exactly these rows, so
+// the force compiler needs no finite differences.
+kernel void buildPortFieldsGrad(device float2*            H        [[buffer(0)]],
+                                device const ElementPF*   elements [[buffer(1)]],
+                                device const float4*      points   [[buffer(2)]],
+                                constant PFParams&        P        [[buffer(3)]],
+                                uint                      gid      [[thread_position_in_grid]])
+{
+    if (gid >= P.pointCount) return;
+    float3 x = points[gid].xyz;
+    float2 acc[16][4];
+    uint nG = min(P.gateCount, 16u);
+    for (uint g = 0; g < nG; ++g) for (uint c = 0; c < 4; ++c) acc[g][c] = float2(0.0f);
+    bool walls = P.capSeparation > 0.0f && P.order > 0;
+    float L = P.capSeparation;
+
+    for (uint e = 0; e < P.elementCount; ++e) {
+        ElementPF el = elements[e];
+        if (el.gateIndex < 0 || uint(el.gateIndex) >= nG) continue;
+        float z0 = el.position.z;
+        float2 s0 = float2(0.0f), sx = float2(0.0f), sy = float2(0.0f), sz = float2(0.0f);
+        int nImg = walls ? 1 + 2 * P.order : 1;
+        for (int im = 0; im < nImg; ++im) {
+            float zi = z0, w = 1.0f;
+            if (im > 0) {
+                int m = (im + 1) / 2;
+                bool first = (im % 2) == 1;
+                w = pow(P.reflection, float(m));
+                if (m % 2 == 0) zi = first ? z0 + float(m) * L : z0 - float(m) * L;
+                else            zi = first ? -z0 + float(1 + m) * L : -z0 + float(1 - m) * L;
+            }
+            float3 d = x - float3(el.position.x, el.position.y, zi);
+            float r = max(length(d), 1e-9f);
+            float dn = dot(d, el.normal.xyz);
+            float cosTheta = fabs(dn) / r;
+            float2 ds = el.monopole == 1 ? float2(1.0f, 0.0f)
+                                         : directivityAndSlope(P.k, el.equivalentRadius, cosTheta);
+            float amp0 = P.prefactorMag * el.area * w * exp(-P.alpha * r) / r;
+            float c; float s = sincos(P.k * r, c);
+            float2 base = float2(-s, c) * amp0;                    // i e^{ikr} amp (no D)
+            float2 term = base * ds.x;
+            // radial: times ((ik - α) - 1/r) = (a + ib), a = -α - 1/r, b = k
+            float a = -P.alpha - 1.0f / r, b = P.k;
+            float2 dterm = float2(term.x * a - term.y * b, term.x * b + term.y * a);
+            // angular: D'(cosθ) ∇cosθ, ∇cosθ = (sign(d·n) n − cosθ d̂)/r
+            float3 u = d / r;
+            float3 gc = ((dn >= 0.0f ? 1.0f : -1.0f) * el.normal.xyz - cosTheta * u) / r;
+            float2 ang = base * ds.y;
+            s0 += term;
+            sx += dterm * u.x + ang * gc.x;
+            sy += dterm * u.y + ang * gc.y;
+            sz += dterm * u.z + ang * gc.z;
+        }
+        float2 cp = el.coupling;
+        uint gi = uint(el.gateIndex);
+        acc[gi][0] += float2(s0.x * cp.x - s0.y * cp.y, s0.x * cp.y + s0.y * cp.x);
+        acc[gi][1] += float2(sx.x * cp.x - sx.y * cp.y, sx.x * cp.y + sx.y * cp.x);
+        acc[gi][2] += float2(sy.x * cp.x - sy.y * cp.y, sy.x * cp.y + sy.y * cp.x);
+        acc[gi][3] += float2(sz.x * cp.x - sz.y * cp.y, sz.x * cp.y + sz.y * cp.x);
+    }
+    uint base = gid * P.gateCount * 4;
+    for (uint g = 0; g < nG; ++g) for (uint c = 0; c < 4; ++c) H[base + g * 4 + c] = acc[g][c];
 }

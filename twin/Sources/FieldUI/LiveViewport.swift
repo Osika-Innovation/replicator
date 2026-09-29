@@ -588,19 +588,18 @@ public final class Document: ObservableObject {
             // the GPU (horn couplings, both plates as walls, air absorption);
             // every drive after that is a weighted sum of six columns.
             let tOp = Date()
-            var onGPU = false
-            let prop: Propagator
-            if let ctx = LiveMachine.gpu,
-               let p = try? PortFieldsGPU.propagator(ctx: ctx, elements: preset.elements,
-                                                     coupling: coupling, walls: walls, lattice: lat,
-                                                     frequency: f, medium: preset.medium,
-                                                     gateCount: preset.gateCount) {
-                prop = p; onGPU = true
-            } else {
-                prop = Propagator(elements: preset.elements, lattice: lat, frequency: f,
-                                  medium: preset.medium, gateCount: preset.gateCount,
-                                  elementCoupling: coupling, walls: walls)
-            }
+            let (prop, onGPU): (Propagator, Bool) = {
+                if let ctx = LiveMachine.gpu,
+                   let p = try? PortFieldsGPU.propagator(ctx: ctx, elements: preset.elements,
+                                                         coupling: coupling, walls: walls, lattice: lat,
+                                                         frequency: f, medium: preset.medium,
+                                                         gateCount: preset.gateCount) {
+                    return (p, true)
+                }
+                return (Propagator(elements: preset.elements, lattice: lat, frequency: f,
+                                   medium: preset.medium, gateCount: preset.gateCount,
+                                   elementCoupling: coupling, walls: walls), false)
+            }()
             let opSecs = Date().timeIntervalSince(tOp)
             // Control points on the object surface, chosen by FARTHEST-POINT
             // sampling so they actually span the shape. Striding over triangle

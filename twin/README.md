@@ -10,12 +10,13 @@ No Xcode required — Command Line Tools only.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test              # unit suite (47 tests)
+./.build/release/fieldc test              # unit suite (50 tests)
 ./.build/release/fieldc gate --receipt    # physics acceptance gates, writes Receipts/
 ./.build/release/fieldc machine           # the simulated machine: RH-1 free-standing, room air (--desktop: frozen v0.3)
 ./.build/release/fieldc focus             # compile a centre trap on the full chamber (GPU port fields)
 ./.build/release/fieldc gpu               # Metal propagator + port-field kernel vs CPU reference
 ./.build/release/fieldc drift --receipt   # how fast a compiled trap goes stale as the air warms
+./.build/release/fieldc forcetrap --receipt   # compile for force vs GS-PAT: unique trap? thermal hold?
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -131,6 +132,26 @@ trap at 20 °C, hold the drive, warm the air.
 
 The live Compile shows the same thing honestly: all 4 000 wells lie within 45 %
 of the deepest, median miss 10 mm.
+
+**The force compiler** (`ForceCompiler`, `fieldc forcetrap`). Per tone the Gor'kov
+potential is an exact quadratic form in the gate drive, U(x) = gᴴK(x)g, built
+from the port-field rows and their analytic gradients (a GPU kernel,
+**G-GPU-FS-grad** 1.4e-5). The gradients now include the piston directivity's
+angular slope — the old "locally constant" shortcut missed 1–2 % of the lateral
+gradient at ka ≈ 1.8 — so rows match finite differences to 1e-8. A well's depth
+(shell mean − centre) is then a quadratic form too; the compiler maximises the
+target's depth and penalises every competing well deeper than half of it, from
+several starts (eigenvector, GS-PAT), warm-starting when the room changes.
+* One tone, 6 drives: no unique trap anywhere (sibling ratio 0.94, 8–32 wells
+  above half depth). Contrast is capped near the number of drives.
+* **Five-tone chord (30 drives) at the mid-plane: G-F1 passes — sibling ratio
+  0.43, no competing well within ±17 mm above half the target's depth, 0.6 mm
+  from the requested point.** The first unique trap the twin has produced on the
+  plate machine; the GS-PAT chord makes no well at the target at all. Warming
+  with the drive held, it does not move (0 µm through +1 K); it stays unique to
+  +0.3 K (0.49) and loosens by +1 K (0.66).
+* 100 mm above the lower face the chord reaches 0.80 — the same as GS-PAT: the
+  plate's own standing wave keeps 22 siblings there.
 
 **Still missing** for these numbers to be the machine's: the glass cylinder
 (the walls are the two plates only), the horn (a labelled stub), and SI drive

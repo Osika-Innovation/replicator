@@ -9,7 +9,7 @@ public enum CoreTests {
         pencil(h); trapKinds(h); chordAndVerbs(h); callResponse(h)
         surfaceHologram(h)
         provenance(h); gates(h)
-        cad(h); wallsAndPlates(h); air(h)
+        cad(h); wallsAndPlates(h); air(h); force(h)
         return h
     }
 
@@ -32,6 +32,13 @@ public enum CoreTests {
                 t.near(besselJ1(z), 0, 2e-6, "J1 zero at \(z)")
             }
             t.near(besselJ1(1.0), 0.4400505857, 1e-6, "J1(1)")
+        }
+        h.test("bessel J0 zeros and value") { t in
+            for z in [2.404825557695773, 5.520078110286311, 8.653727912911013] {
+                t.near(besselJ0(z), 0, 2e-7, "J0 zero at \(z)")
+            }
+            t.near(besselJ0(1.0), 0.7651976866, 1e-7, "J0(1)")
+            t.near(besselJ0(10.0), -0.2459357645, 1e-7, "J0(10)")
         }
     }
 
@@ -597,6 +604,43 @@ public enum CoreTests {
             t.near(a / b, exp(-wet.absorption(at: f) * r), 1e-12, "cached operator")
             let row = Propagator(elements: [el], lattice: lat, frequency: f, medium: wet).gateRow(at: Vec3(0, 0, r))
             t.near(row[0].magnitude, a, 1e-12 * a, "point evaluator agrees")
+        }
+    }
+
+    // ----------------------------------------------------------------- force
+    static func force(_ h: TestHarness) {
+        let preset = TestPresets.singlePlate(n: 6)
+        let wet = Medium.air(temperatureC: 20, humidity: 50)
+        let walls = Propagator.Walls(capSeparation: 0.2, order: 2, reflectionCoefficient: 0.8)
+        let lat = FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1)
+        let prop = Propagator(elements: preset.elements, lattice: lat, frequency: 40_000,
+                              medium: wet, gateCount: preset.gateCount, walls: walls)
+        let x = Vec3(0.004, -0.003, 0.061)
+        h.test("gate gradient rows match finite differences (walls, absorption)") { t in
+            let rows = prop.gateGradientRows(at: x)
+            let hstep = 1e-6
+            for (axis, e) in [Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)].enumerated() {
+                let up = prop.gateRow(at: x + e * hstep), dn = prop.gateRow(at: x - e * hstep)
+                let fd = zip(up, dn).map { ($0 - $1) * (1 / (2 * hstep)) }
+                t.check(rows.grad[axis].relativeL2(to: fd) < 1e-5, "axis \(axis)")
+            }
+            t.check(rows.p.relativeL2(to: prop.gateRow(at: x)) < 1e-12, "p rows = gateRow")
+        }
+        h.test("force compiler's quadratic form equals the Gor'kov potential") { t in
+            let particle = ParticleMaterial.pla()
+            var rng = SplitMix64(seed: 3)
+            let g = (0..<preset.gateCount).map { _ in Complex(rng.nextUnit() - 0.5, rng.nextUnit() - 0.5) }
+            let rows = prop.gateGradientRows(at: x)
+            var flat: [Complex] = []
+            for gi in 0..<preset.gateCount {
+                flat.append(rows.p[gi]); for c in 0..<3 { flat.append(rows.grad[c][gi]) }
+            }
+            let tone = ForceCompiler.Tone(frequency: 40_000, medium: wet, rows: flat)
+            let U = ForceCompiler.potential([tone], drives: [g], gates: preset.gateCount,
+                                            particle: particle, count: 1)[0]
+            let ref = Gorkov(medium: wet, particle: particle)
+                .potential(p: prop.pressure(at: x, drive: g), v: prop.velocity(at: x, drive: g))
+            t.near(U / ref, 1, 1e-9, "gHKg vs Gorkov.potential")
         }
     }
 }

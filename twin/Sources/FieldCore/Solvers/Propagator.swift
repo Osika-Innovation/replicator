@@ -216,6 +216,23 @@ public struct Propagator: Sendable {
         return 2 * besselJ1(x) / x
     }
 
+    /// Directivity and its slope dD/d(cos θ). The piston's D = 2J1(x)/x with
+    /// x = ka·sin θ has dD/dx = −2J2(x)/x, so dD/dcosθ = 2J2(x)·cosθ/sin²θ
+    /// (→ (ka)²·cosθ/4 on axis); the small-element branch D = cos θ has slope 1.
+    /// The gradient of a term then carries D' ∇cosθ as well as the radial part —
+    /// dropping it (the old "locally constant" shortcut) misses 1–2 % of the
+    /// lateral gradient at ka ≈ 1.8.
+    @inline(__always)
+    static func pistonDirectivityAndSlope(k: Double, a: Double, cosTheta c: Double) -> (Double, Double) {
+        let ka = k * a
+        if ka < 0.5 { return (c, 1) }
+        let s2 = max(0, 1 - c * c)
+        let x = ka * s2.squareRoot()
+        if x < 1e-3 { return (1 - x * x / 8, ka * ka * c / 4) }
+        let j1 = besselJ1(x), j2 = 2 * j1 / x - besselJ0(x)
+        return (2 * j1 / x, 2 * j2 * c / s2)
+    }
+
     /// Forward: complex drive -> complex pressure field.
     public func forward(_ drive: [Complex]) -> [Complex] {
         precondition(drive.count == gateCount, "drive must be gate-granular")
@@ -279,6 +296,52 @@ public struct Propagator: Sendable {
         return row
     }
 
+    /// Gate rows of the pressure AND its analytic gradient at one point:
+    /// p = Σ_g p[g]·u_g, ∂p/∂x_k = Σ_g grad[k][g]·u_g. What the force compiler
+    /// needs: the Gor'kov potential is a quadratic form in u built from exactly
+    /// these rows (directivity held locally constant, as in `velocity`).
+    public func gateGradientRows(at x: Vec3) -> (p: [Complex], grad: [[Complex]]) {
+        let k = medium.wavenumber(at: frequency)
+        let alpha = medium.absorption(at: frequency)
+        let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)
+        var p = [Complex](repeating: .zero, count: gateCount)
+        var g = [[Complex]](repeating: [Complex](repeating: .zero, count: gateCount), count: 3)
+        for (ei, el) in elements.enumerated() {
+            guard el.gateIndex >= 0 && el.gateIndex < gateCount else { continue }
+            let w = elementWeights?[ei] ?? 1.0
+            if w == 0 { continue }
+            let c = elementCoupling?[ei] ?? Complex.one
+            var acc = Complex.zero, ax = Complex.zero, ay = Complex.zero, az = Complex.zero
+            for (zi, refl) in imageTable[ei] {
+                let d = x - Vec3(el.position.x, el.position.y, zi)
+                let r = max(d.length, 1e-9)
+                let dn = d.dot(el.normal)
+                let cosTheta = abs(dn) / r
+                let (dir, slope) = el.directivity == .monopole ? (1.0, 0.0)
+                    : Propagator.pistonDirectivityAndSlope(k: k, a: el.equivalentRadius, cosTheta: cosTheta)
+                let ph = Complex.expi(k * r)
+                let base = Complex(-ph.im, ph.re)
+                    * (prefactorMag * el.area * w * refl * exp(-alpha * r) / r)
+                let term = base * dir
+                // radial part: d/dr [e^{(ik-α)r}/r] / [e^{(ik-α)r}/r] = (ik - α) - 1/r
+                let radial = term * Complex(-alpha - 1 / r, k)
+                // angular part: D'(cosθ) ∇cosθ, ∇cosθ = (sign(d·n) n − cosθ d̂)/r
+                let sgn = dn >= 0 ? 1.0 : -1.0
+                let gc = (el.normal * sgn - d * (cosTheta / r)) * (1 / r)
+                let ang = base * slope
+                acc += term
+                ax += radial * (d.x / r) + ang * gc.x
+                ay += radial * (d.y / r) + ang * gc.y
+                az += radial * (d.z / r) + ang * gc.z
+            }
+            p[el.gateIndex] += acc * c
+            g[0][el.gateIndex] += ax * c
+            g[1][el.gateIndex] += ay * c
+            g[2][el.gateIndex] += az * c
+        }
+        return (p, g)
+    }
+
     /// Pressure at one arbitrary point, without touching the cached lattice.
     public func pressure(at x: Vec3, drive: [Complex]) -> Complex {
         let k = medium.wavenumber(at: frequency)
@@ -323,20 +386,24 @@ public struct Propagator: Sendable {
             for (zi, refl) in imageTable[ei] {
                 let d = x - Vec3(el.position.x, el.position.y, zi)
                 let r = max(d.length, 1e-9)
-                let cosTheta = abs(d.dot(el.normal)) / r
-                // Directivity treated as locally constant in the gradient (the
-                // far-field term dominates at kr >> 1) — the same approximation
-                // the first version made, now applied to every image as well.
-                let dir = el.directivity == .monopole ? 1.0
-                    : Propagator.pistonDirectivity(k: k, a: el.equivalentRadius,
-                                                   cosTheta: cosTheta)
-                let amp = prefactorMag * el.area * dir * w * refl * exp(-alpha * r)
+                let dn = d.dot(el.normal)
+                let cosTheta = abs(dn) / r
+                // Directivity AND its angular slope (see pistonDirectivityAndSlope).
+                let (dir, slope) = el.directivity == .monopole ? (1.0, 0.0)
+                    : Propagator.pistonDirectivityAndSlope(k: k, a: el.equivalentRadius,
+                                                           cosTheta: cosTheta)
+                let amp = prefactorMag * el.area * w * refl * exp(-alpha * r)
                 let ph = Complex.expi(k * r)
                 let iph = Complex(-ph.im, ph.re)
                 // d/dr [ e^{(ik-α)r}/r ] = e^{(ik-α)r} ((ik - α) r - 1)/r^2
                 let dfdr = iph * ((Complex(-alpha * r, k * r) - Complex.one) / (r * r))
-                let g = dfdr * c * amp * drive[el.gateIndex]
-                gx += g * (d.x / r); gy += g * (d.y / r); gz += g * (d.z / r)
+                let g = dfdr * c * (amp * dir) * drive[el.gateIndex]
+                let sgn = dn >= 0 ? 1.0 : -1.0
+                let gc = (el.normal * sgn - d * (cosTheta / r)) * (1 / r)
+                let ga = iph * c * (amp * slope / r) * drive[el.gateIndex]
+                gx += g * (d.x / r) + ga * gc.x
+                gy += g * (d.y / r) + ga * gc.y
+                gz += g * (d.z / r) + ga * gc.z
             }
         }
         // v = -(1/(i*omega*rho0)) grad p  ==  (i/(omega*rho0)) grad p
@@ -345,6 +412,26 @@ public struct Propagator: Sendable {
                 Complex(-gy.im, gy.re) * s,
                 Complex(-gz.im, gz.re) * s)
     }
+}
+
+/// Bessel J0 — the same rational-approximation family as `besselJ1`
+/// (Numerical Recipes bessj0; A&S 9.4.1/9.4.3), ~1e-8.
+public func besselJ0(_ x: Double) -> Double {
+    let ax = abs(x)
+    if ax < 8.0 {
+        let y = x * x
+        let a1 = 57568490574.0 + y * (-13362590354.0 + y * (651619640.7
+               + y * (-11214424.18 + y * (77392.33017 + y * (-184.9052456)))))
+        let a2 = 57568490411.0 + y * (1029532985.0 + y * (9494680.718
+               + y * (59272.64853 + y * (267.8532712 + y))))
+        return a1 / a2
+    }
+    let z = 8.0 / ax, y = z * z, xx = ax - 0.785398164
+    let a1 = 1.0 + y * (-0.1098628627e-2 + y * (0.2734510407e-4
+           + y * (-0.2073370639e-5 + y * 0.2093887211e-6)))
+    let a2 = -0.1562499995e-1 + y * (0.1430488765e-3
+           + y * (-0.6911147651e-5 + y * (0.7621095161e-6 - y * 0.934935152e-7)))
+    return (0.636619772 / ax).squareRoot() * (cos(xx) * a1 - z * sin(xx) * a2)
 }
 
 /// Bessel J1 — Abramowitz & Stegun 9.4.4/9.4.6 rational approximations.
