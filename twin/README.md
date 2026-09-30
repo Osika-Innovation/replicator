@@ -23,7 +23,7 @@ swift build -c release
 ./.build/release/fieldc carry --receipt       # pick up, carry 5 mm up and 5 mm across, place (G-P1)
 ./.build/release/fieldc fly --receipt         # integrate a PLA bead through the carry: drive level × step time (G-P2)
 ./.build/release/fieldc build --receipt       # the first build: N beads laid in a row on a support (G-B1; --beads N)
-./.build/release/fieldc build --shape tetra --receipt   # four beads: a triangle on the support and one in its pocket (G-B2)
+./.build/release/fieldc build --shape tetra --row-dir y --receipt   # four beads: a triangle and one in its pocket (G-B2)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -119,6 +119,55 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 10 — part growth: the part is in the field (2026-09-30)
+
+**Placed beads scatter** (`Scatterers`). Each bead scatters as a monopole
+(compressibility contrast f1) plus a dipole (density contrast f2). It is driven
+by its local field: the chamber's plus every other bead's scattered field, so a
+cluster's multiple scattering is solved per gate (coupled dipoles). Everything
+stays linear in the drive, so the part adds per-gate rows that the compiler,
+the carry and the force balance all see. The gates:
+
+* **G-S1:** the exact rigid-sphere series at ka = 0.1, matched to 1.3 %.
+* **G-S2:** the time-averaged interaction energy of two beads in an
+  oscillating flow, −(π/2) f2² ρ0 a⁶ v² (1 − 3cos²θ)/R³ (Koenig), matched to
+  1.0 %. Beads attract side by side and repel end to end.
+
+**What the part does to a build.** The part changes how every later bead
+has to be placed:
+
+* **A balance next to a neighbour is a saddle.** The neighbour's pull near
+  contact is comparable to the trap's force. Beads therefore land 0.6 mm back,
+  outside the ~5-radius capture range, and are slid in along the support. The
+  slide trap is aimed on the chamber field alone, so trap and attraction pull
+  the same way into contact.
+* **Rows are laid across the local flow.** The first scattering build grew
+  along y by itself: along the flow, neighbours repel.
+* **Stacking is dropped, not pushed.** Above its neighbours a bead is end to
+  end along the mostly vertical flow, where they repel. The repulsion scales
+  with the drive, so more power does not help; gravity does not scale, so the
+  top bead is centred 0.5 mm up and dropped.
+* **Contact is physical.** The support pushes back and resists rolling. A bead
+  that touches a placed bead is held by the binder as a liquid bridge. The
+  machine then releases it, it settles under gravity along its contacts, and
+  the bond cures.
+
+The row passes (G-B1): all five beads on the support, gripped to their
+neighbours, 17–23 µm from their sites. The tetrahedron passes with its base
+along y (G-B2): the base closes by attraction, and the top bead settles into
+the pocket at 163.3 µm, which is 2a·√(2/3), touching all three.
+
+**Open:** with the orientation chosen automatically, the tetrahedron's carries
+still lose a bead. Traps are soft and can be saddles off-axis, so a carry path
+must be checked for trappability before it is committed. Placed beads now take
+up to ~12× their weight from the traps that bring the next bead.
+
+**Where this goes next.** Pick-and-place was the proving ground for the
+compiler, the part's field and the bead dynamics. The replicator's own loop is
+to scan an object, then mold a copy in one shot: one field whose wells form the
+whole shape, filled with powder that is overdamped and follows the field
+without swinging. That is the next round.
 
 ## Round 9 — the first build (2026-09-30)
 
