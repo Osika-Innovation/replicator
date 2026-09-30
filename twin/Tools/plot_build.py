@@ -15,6 +15,7 @@ import sys
 traj_src = sys.argv[1] if len(sys.argv) > 1 else "Receipts/build_trajectories.csv"
 placed_src = sys.argv[2] if len(sys.argv) > 2 else "Receipts/build_placed.csv"
 dst = sys.argv[3] if len(sys.argv) > 3 else "shots/build_row.svg"
+title = sys.argv[4] if len(sys.argv) > 4 else None
 
 paths = {}
 for r in csv.DictReader(open(traj_src)):
@@ -51,8 +52,9 @@ H = int(top + max(H1, H2) + 70)
 out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
        f'font-family="-apple-system, Helvetica, Arial, sans-serif">',
        f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
-       f'<text x="{left}" y="26" font-size="15" font-weight="600" fill="{ink}">The twin\'s first build: '
-       f'{len(placed)} Ø200 µm PLA beads laid in a row in the glass chamber</text>',
+       f'<text x="{left}" y="26" font-size="15" font-weight="600" fill="{ink}">'
+       + (title or f"The twin's first build: {len(placed)} Ø200 µm PLA beads laid in a row in the glass chamber")
+       + '</text>',
        f'<text x="{left}" y="44" font-size="11.5" fill="{ink}">side view (mm from the pick-up trap) — each bead\'s '
        f'path from the pick-up down onto the support</text>',
        f'<text x="{left2}" y="44" font-size="11.5" fill="{ink}">top view of the finished row (mm)</text>']
@@ -80,21 +82,25 @@ for k, pts in sorted(paths.items()):
     c = colours[k % len(colours)]
     d = " ".join(f"{sx(p[0]):.1f},{sz(p[2]):.1f}" for p in pts)
     out.append(f'<polyline points="{d}" fill="none" stroke="{c}" stroke-width="1.2" stroke-opacity="0.8"/>')
-for k, x, y, z, on in placed:
+for k, x, y, z, on in sorted(placed, key=lambda p: -p[2]):   # far beads (larger y) first
     c = colours[k % len(colours)]
     out.append(f'<circle cx="{sx(x):.1f}" cy="{sz(z):.1f}" r="{radius * scale:.1f}" fill="{c}" fill-opacity="0.85" stroke="{ink}" stroke-width="0.8"/>')
     out.append(f'<text x="{sx(x):.1f}" y="{sz(z) + 4:.1f}" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">{k}</text>')
 # Top view.
 out.append(f'<rect x="{left2:.0f}" y="{top}" width="{W2:.0f}" height="{H2:.0f}" fill="#eaeef2" stroke="{grid}"/>')
-for k, x, y, z, on in placed:
+for k, x, y, z, on in sorted(placed, key=lambda p: p[3]):    # low beads first, the top one last
     c = colours[k % len(colours)]
     out.append(f'<circle cx="{tsx(x):.1f}" cy="{tsy(y):.1f}" r="{radius * tscale:.1f}" fill="{c}" fill-opacity="0.85" stroke="{ink}" stroke-width="0.8"/>')
     out.append(f'<text x="{tsx(x):.1f}" y="{tsy(y) + 4:.1f}" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">{k}</text>')
 for v in (tx0 + 0.05, (tx0 + tx1) / 2, tx1 - 0.05):
     out.append(f'<text x="{tsx(v):.1f}" y="{top + H2 + 16:.0f}" font-size="11" text-anchor="middle" fill="{ink}">{v:.2f}</text>')
-gaps = [((placed[i][1] - placed[i - 1][1]) ** 2 + (placed[i][2] - placed[i - 1][2]) ** 2) ** 0.5 * 1000 - 2 * radius * 1000
-        for i in range(1, len(placed))]
-out.append(f'<text x="{left2:.0f}" y="{top + H2 + 38:.0f}" font-size="11.5" fill="{ink}">gaps between neighbours: '
+gaps = []
+for i in range(len(placed)):
+    for j in range(i):
+        d = sum((placed[i][q] - placed[j][q]) ** 2 for q in (1, 2, 3)) ** 0.5 * 1000 - 2 * radius * 1000
+        if d < 100:
+            gaps.append(d)
+out.append(f'<text x="{left2:.0f}" y="{top + H2 + 38:.0f}" font-size="11.5" fill="{ink}">gaps between touching beads: '
            + ", ".join(f"{g:.0f} µm" for g in gaps) + '</text>')
 out.append(f'<text x="{left}" y="{H - 14}" font-size="11" fill="#57606a">Gor\'kov force from the exact glass-chamber modes '
            f'(10 tones, 4× holding drive), gravity, air drag; beads fuse where they first touch. Not modelled: scattering by the '

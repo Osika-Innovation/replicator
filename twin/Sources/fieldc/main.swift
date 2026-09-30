@@ -448,6 +448,11 @@ case "build":
         let x0 = Vec3(0, 0, L / 2)
         var N = 5
         if let i = args.firstIndex(of: "--beads"), i + 1 < args.count, let v = Int(args[i + 1]) { N = max(1, v) }
+        // --shape row (default): N beads in a line; tetra: three touching on the
+        // support and a fourth in their pocket — the first bead laid on beads.
+        var shape = "row"
+        if let i = args.firstIndex(of: "--shape"), i + 1 < args.count { shape = args[i + 1] }
+        if shape == "tetra" { N = 4 }
         let freqs = (0..<10).map { 30_000 + 40_000 * (Double($0) + 0.5) / 10 }
         let cav = RH1Freestanding.chamber(maxGamma: {
             let k = air.wavenumber(at: 70_000), e = log(1e4) / 0.05
@@ -549,12 +554,28 @@ case "build":
         var csv = "bead,t_s,x_mm,y_mm,z_mm\n"
         var t = 0.0
         var misses = 0
-        print(String(format: "glass chamber, 10 tones, 4× holding drive (%.1f m/s rms); %d PLA beads Ø%.0f µm, support %.1f mm below the pick-up",
-                     (power / 60).squareRoot(), N, 2 * a * 1e6, (w0.z - zs) * 1000))
+        print(String(format: "glass chamber, 10 tones, 4× holding drive (%.1f m/s rms); %d PLA beads Ø%.0f µm (%@), support %.1f mm below the pick-up",
+                     (power / 60).squareRoot(), N, 2 * a * 1e6, shape, (w0.z - zs) * 1000))
         print("each bead: gentle load → carry (0.25 mm, 40 ms steps) → hover 0.15 mm up → closed-loop lowering (0.05 mm steps) → fuse on first touch")
+        // Sites are laid off where the earlier beads actually came to rest.
+        func siteFor(_ k: Int) -> Vec3 {
+            let d = 2 * a + gapAim
+            if shape == "tetra" && k == 2 {
+                let p0 = placed[0].p, p1 = placed[1].p
+                let mid = (p0 + p1) * 0.5, half = (p1 - p0).length / 2
+                let side = Vec3(-(p1.y - p0.y), p1.x - p0.x, 0) * (1 / (2 * half))
+                let off = max(0, d * d - half * half).squareRoot()
+                return Vec3(mid.x + side.x * off, mid.y + side.y * off, zs + a)
+            }
+            if shape == "tetra" && k == 3 {
+                let c = (placed[0].p + placed[1].p + placed[2].p) * (1.0 / 3)
+                let rc = placed.prefix(3).reduce(0.0) { $0 + Vec3($1.p.x - c.x, $1.p.y - c.y, 0).length } / 3
+                return Vec3(c.x, c.y, zs + a + max(0, d * d - rc * rc).squareRoot())
+            }
+            return k == 0 ? first : Vec3(placed[k - 1].p.x + d, placed[k - 1].p.y, zs + a)
+        }
         for k in 0..<N {
-            let site = k == 0 ? first
-                : Vec3(placed[k - 1].p.x + 2 * a + gapAim, placed[k - 1].p.y, zs + a)
+            let site = siteFor(k)
             let hover = site + Vec3(0, 0, 0.15e-3)
             // Drives along the way: g[0] at the pick-up (force-balanced), then one per waypoint.
             var drives: [[[Complex]]] = [pickDrive]
@@ -644,43 +665,58 @@ case "build":
                 break
             }
         }
-        print("bead   site (µm from the first site)   placed at             miss    rests on        gap to the previous   pushed afterwards")
+        print("bead   site (µm from the first site)   placed at             miss      first touched     gaps to the beads it rests against   pushed afterwards")
         var gaps: [Double] = []
+        var touching: [Int] = []
         for (k, b) in placed.enumerated() {
             let rel = (b.p - first) * 1e6, srel = (b.site - first) * 1e6
-            let miss = Vec3(b.p.x - b.site.x, b.p.y - b.site.y, 0).length * 1e6
-            var gapText = "—"
-            if k > 0 {
-                let g = (b.p - placed[k - 1].p).length - 2 * a
-                gaps.append(g)
-                gapText = String(format: "%5.1f µm", g * 1e6)
-            }
-            print(String(format: "%3d    (%6.1f, %5.1f)                (%6.1f, %5.1f, %5.1f)  %5.1f µm  %@  %@            %@",
-                         k, srel.x, srel.y, rel.x, rel.y, rel.z, miss,
-                         (b.on < 0 ? "the support   " : String(format: "bead %d (perched)", b.on)) as NSString,
-                         gapText as NSString,
+            let miss = (b.p - b.site).length * 1e6
+            // Its neighbours: earlier beads it rests against (gap under 0.1 mm).
+            let near = placed.prefix(k).map { ($0.p - b.p).length - 2 * a }.filter { $0 < 0.1e-3 }
+            gaps += near
+            touching.append(near.filter { abs($0) < 30e-6 }.count)
+            let gapText = near.isEmpty ? "—" : near.map { String(format: "%.1f", $0 * 1e6) }.joined(separator: ", ") + " µm"
+            print(String(format: "%3d    (%6.1f, %6.1f, %5.1f)        (%6.1f, %6.1f, %5.1f)  %5.1f µm  %@  %@  %@",
+                         k, srel.x, srel.y, srel.z, rel.x, rel.y, rel.z, miss,
+                         (b.on < 0 ? "the support   " : String(format: "bead %d        ", b.on)) as NSString,
+                         gapText.padding(toLength: 36, withPad: " ", startingAt: 0) as NSString,
                          k == placed.count - 1 ? "—" : String(format: "%.2f × weight", push[k])))
         }
-        let onSupport = placed.filter { $0.on < 0 }.count
         let worstGap = gaps.map(abs).max() ?? 0
         let worstPush = push.dropLast().max() ?? 0
-        let ok = misses == 0 && onSupport == N && worstGap < 30e-6
-        let gate = GateResult(id: "G-B1", name: "first build: \(N) PLA beads in a row on the support, touching (|gap| < 30 µm), none lost or perched",
+        let ok: Bool
+        let gate: GateResult
+        if shape == "tetra" {
+            // Three on the support touching one another; the fourth touching all three.
+            let base = placed.prefix(3).allSatisfy { $0.on < 0 }
+            ok = misses == 0 && placed.count == 4 && base && touching.count == 4
+                && touching[1] == 1 && touching[2] == 2 && touching[3] == 3 && worstGap < 30e-6
+            gate = GateResult(id: "G-B2", name: "a tetrahedron: three PLA beads touching on the support, a fourth resting on all three",
+                              measured: ok ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
+                              detail: String(format: "%d/4 placed; base on the support: %@; top touches %d of 3; worst gap %.1f µm; placed beads pushed ≤ %.2f × weight",
+                                             placed.count, base ? "yes" : "no", touching.count == 4 ? touching[3] : 0,
+                                             worstGap * 1e6, worstPush))
+        } else {
+            let onSupport = placed.filter { $0.on < 0 }.count
+            ok = misses == 0 && onSupport == N && worstGap < 30e-6
+            gate = GateResult(id: "G-B1", name: "first build: \(N) PLA beads in a row on the support, touching (|gap| < 30 µm), none lost or perched",
                               measured: ok ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
                               detail: String(format: "%d/%d placed on the support; worst gap %.1f µm; placed beads pushed ≤ %.2f × weight afterwards",
                                              onSupport, N, worstGap * 1e6, worstPush))
+        }
         print(gate.line)
         print(String(format: "build time %.1f s (simulated); (%.1fs)", t, Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
-            writeReceipt(Receipt(name: "build", gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
-                                 device: deviceName(), gitSHA: gitSHA()))
+            let tag = shape == "row" ? "" : "_" + shape
+            writeReceipt(Receipt(name: shape == "row" ? "build" : "build-" + shape, gates: [gate],
+                                 durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
             var fin = "bead,x_mm,y_mm,z_mm,site_x_mm,site_y_mm,on\n"
             for (k, b) in placed.enumerated() {
                 fin += String(format: "%d,%.4f,%.4f,%.4f,%.4f,%.4f,%d\n", k, (b.p.x - w0.x) * 1000, (b.p.y - w0.y) * 1000,
                               (b.p.z - w0.z) * 1000, (b.site.x - w0.x) * 1000, (b.site.y - w0.y) * 1000, b.on)
             }
-            try? csv.write(toFile: "Receipts/build_trajectories.csv", atomically: true, encoding: .utf8)
-            try? fin.write(toFile: "Receipts/build_placed.csv", atomically: true, encoding: .utf8)
+            try? csv.write(toFile: "Receipts/build\(tag)_trajectories.csv", atomically: true, encoding: .utf8)
+            try? fin.write(toFile: "Receipts/build\(tag)_placed.csv", atomically: true, encoding: .utf8)
         }
         exit(ok ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
