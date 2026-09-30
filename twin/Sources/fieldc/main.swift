@@ -435,9 +435,13 @@ case "build":
     // moves the well by the bead's lateral miss before and during the
     // lowering. A bead fuses where it first touches the support or a placed
     // bead (a binder coat), and the next site is laid off the placed bead's
-    // ACTUAL position. Not modelled: the support's and the placed beads' own
-    // scattering (the support is an acoustically open mesh), secondary
-    // Bjerknes forces between beads, streaming.
+    // ACTUAL position. The part grows into the field: every placed bead
+    // scatters (Scatterers — monopole + dipole, multiple scattering solved), so
+    // the traps that bring the next bead are compiled in, and the bead flies
+    // through, the field the part has already changed; near the part a 25 µm
+    // grid resolves the scattered near field down to contact (--no-scatter:
+    // the part is acoustically invisible, as before). Not modelled: the
+    // support's own scattering (an acoustically open mesh), streaming.
     do {
         let ctx = try MetalContext()
         let t0 = Date()
@@ -465,6 +469,7 @@ case "build":
         var o = ForceCompiler.Options()
         o.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
         let particle = ParticleMaterial.pla()
+        let scatterOn = !args.contains("--no-scatter")
         var sources: [CylinderCavity.Source] = []
         var tones: [ForceCompiler.Tone] = []
         var base: [[Complex]] = []
@@ -485,6 +490,7 @@ case "build":
                                         method: .gspat, iterations: 80, trap: .twinTrap)
             base.append(u.map { $0 * (1 / (u.l2 * Double(freqs.count).squareRoot())) })
         }
+        let tonesIn = tones                            // the chamber alone; `tones` gains the part
         let c0 = ((n - 1) / 2, (n - 1) / 2, (n - 1) / 2)
         let r0 = ForceCompiler.compile(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
                                        options: o, starts: [base], target: c0)
@@ -499,27 +505,105 @@ case "build":
         let hi = Vec3(first.x + Double(N) * 2 * a + 2.5e-3, w0.y + 2.5e-3, w0.z + 2e-3)
         let fb = FieldLattice(origin: lo, spacing: fs, nx: Int(((hi.x - lo.x) / fs).rounded()) + 1,
                               ny: Int(((hi.y - lo.y) / fs).rounded()) + 1, nz: Int(((hi.z - lo.z) / fs).rounded()) + 1)
-        let fine = try zip(freqs, sources).map { f, src in
+        var fine = try zip(freqs, sources).map { f, src in
             ForceCompiler.Tone(frequency: f, medium: air,
                                rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
                                                                points: fb.positions, withGradient: true))
         }
+        let fineIn = fine
         func potentialFine(_ g: [[Complex]]) -> [Double] {
             ForceCompiler.potential(fine, drives: g, gates: 6, particle: particle, count: fb.count)
         }
-        func gradU(_ U: [Double], _ x: Vec3) -> Vec3? {
-            let f = (x - fb.origin) / fs
+        // ∇U at x on a lattice: central differences, trilinear between nodes;
+        // nil within `margin` cells of the edge.
+        func gradOn(_ L: FieldLattice, _ U: [Double], _ x: Vec3, margin: Int = 1) -> Vec3? {
+            let hs = L.spacing
+            let f = (x - L.origin) / hs
             let i0 = Int(f.x.rounded(.down)), j0 = Int(f.y.rounded(.down)), k0 = Int(f.z.rounded(.down))
-            guard i0 >= 1, j0 >= 1, k0 >= 1, i0 + 2 < fb.nx, j0 + 2 < fb.ny, k0 + 2 < fb.nz else { return nil }
+            guard i0 >= margin, j0 >= margin, k0 >= margin,
+                  i0 + 1 + margin < L.nx, j0 + 1 + margin < L.ny, k0 + 1 + margin < L.nz else { return nil }
             let tx = f.x - Double(i0), ty = f.y - Double(j0), tz = f.z - Double(k0)
             var gsum = Vec3(0, 0, 0)
             for (dk, wz) in [(0, 1 - tz), (1, tz)] { for (dj, wy) in [(0, 1 - ty), (1, ty)] { for (di, wx) in [(0, 1 - tx), (1, tx)] {
                 let i = i0 + di, j = j0 + dj, k = k0 + dk
-                gsum = gsum + Vec3((U[fb.index(i + 1, j, k)] - U[fb.index(i - 1, j, k)]) / (2 * fs),
-                                   (U[fb.index(i, j + 1, k)] - U[fb.index(i, j - 1, k)]) / (2 * fs),
-                                   (U[fb.index(i, j, k + 1)] - U[fb.index(i, j, k - 1)]) / (2 * fs)) * (wx * wy * wz)
+                gsum = gsum + Vec3((U[L.index(i + 1, j, k)] - U[L.index(i - 1, j, k)]) / (2 * hs),
+                                   (U[L.index(i, j + 1, k)] - U[L.index(i, j - 1, k)]) / (2 * hs),
+                                   (U[L.index(i, j, k + 1)] - U[L.index(i, j, k - 1)]) / (2 * hs)) * (wx * wy * wz)
             } } }
             return gsum
+        }
+        func gradU(_ U: [Double], _ x: Vec3) -> Vec3? { gradOn(fb, U, x) }
+        struct Placed { var p: Vec3; var on: Int; var site: Vec3 }  // on: −1 = support, j = fused to bead j
+        var placed: [Placed] = []
+        // ---- The part in the field --------------------------------------
+        let kc = freqs.map { Complex(air.wavenumber(at: $0), air.absorption(at: $0)) }
+        var part = Scatterers(centers: [], particle: particle, medium: air, fused: true)
+        var partSources: [Scatterers.Sources] = []
+        var nearLat: FieldLattice? = nil               // 25 µm around the part
+        var near: [ForceCompiler.Tone] = []
+        // Placed beads' own push: the local field (chamber + the other beads)
+        // at a ±10 µm stencil round each bead, per tone.
+        let hst = 10e-6
+        let stencil = [Vec3(0, 0, 0), Vec3(hst, 0, 0), Vec3(-hst, 0, 0), Vec3(0, hst, 0), Vec3(0, -hst, 0),
+                       Vec3(0, 0, hst), Vec3(0, 0, -hst)]
+        var stencilTones: [ForceCompiler.Tone] = []
+        func incidentRows(_ f: Int, _ x: Vec3) -> (p: [Complex], grad: [[Complex]]) {
+            cav.rows(at: x, source: sources[f])
+        }
+        func updatePart() throws {
+            part.centers = placed.map(\.p)
+            partSources = []
+            tones = tonesIn; fine = fineIn
+            if scatterOn && !placed.isEmpty {
+                for f in freqs.indices {
+                    let src = part.solve(incident: part.centers.map { incidentRows(f, $0) }, k: kc[f])
+                    partSources.append(src)
+                    part.addField(to: &tones[f].rows, points: lat.positions, sources: src)
+                    part.addField(to: &fine[f].rows, points: fb.positions, sources: src)
+                }
+                // The near grid: the part and the next site, from the support up past the hover height.
+                let xs = part.centers.map(\.x), ys = part.centers.map(\.y)
+                let nlo = Vec3(xs.min()! - 0.45e-3, ys.min()! - 0.45e-3, zs - 0.05e-3)
+                let nhi = Vec3(xs.max()! + 0.45e-3, ys.max()! + 0.45e-3, zs + 0.6e-3)
+                let ns = 25e-6
+                let L = FieldLattice(origin: nlo, spacing: ns, nx: Int(((nhi.x - nlo.x) / ns).rounded()) + 1,
+                                     ny: Int(((nhi.y - nlo.y) / ns).rounded()) + 1, nz: Int(((nhi.z - nlo.z) / ns).rounded()) + 1)
+                near = try freqs.indices.map { f in
+                    var rows = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: sources[f],
+                                                         points: L.positions, withGradient: true)
+                    part.addField(to: &rows, points: L.positions, sources: partSources[f])
+                    return ForceCompiler.Tone(frequency: freqs[f], medium: air, rows: rows)
+                }
+                nearLat = L
+            } else { nearLat = nil; near = [] }
+            // Stencil rows for every placed bead: chamber + the OTHER beads.
+            stencilTones = freqs.indices.map { f in
+                var rows: [Complex] = []
+                for (j, c) in placed.enumerated() {
+                    for d in stencil {
+                        let x = c.p + d
+                        var inc = incidentRows(f, x)
+                        if scatterOn, !partSources.isEmpty {
+                            let sf = part.field(at: x, sources: partSources[f], skip: j)
+                            for g in 0..<6 {
+                                inc.p[g] += sf.p[g]
+                                for q in 0..<3 { inc.grad[q][g] += sf.grad[q][g] }
+                            }
+                        }
+                        for g in 0..<6 { rows += [inc.p[g], inc.grad[0][g], inc.grad[1][g], inc.grad[2][g]] }
+                    }
+                }
+                return ForceCompiler.Tone(frequency: freqs[f], medium: air, rows: rows)
+            }
+        }
+        // Per drive: the push on every placed bead, ∇U by central differences.
+        func pushes(_ g: [[Complex]]) -> [Vec3] {
+            guard !placed.isEmpty else { return [] }
+            let U = ForceCompiler.potential(stencilTones, drives: g, gates: 6, particle: particle, count: 7 * placed.count)
+            return placed.indices.map { j in
+                let b = 7 * j
+                return Vec3(U[b + 1] - U[b + 2], U[b + 3] - U[b + 4], U[b + 5] - U[b + 6]) * (1 / (2 * hst))
+            }
         }
         let mass = particle.mass(), g0 = 9.81, weight = mass * g0
         let Upick = potentialFine(r0.drives)
@@ -540,23 +624,105 @@ case "build":
         // The balance is re-solved on the 0.1 mm box: the probe lattice (0.63 mm)
         // interpolates ∇U too coarsely for a trap this soft sideways — its
         // balance point sat 1.2 mm from the fine field's.
-        func placeFine(_ g: [[Complex]], _ x: Vec3) -> [[Complex]] {
-            ForceCompiler.moveWell(fine, lattice: fb, gates: 6, particle: particle, drives: g, to: x,
-                                   iterations: 6, balance: hold).drives
+        // Near the part the balance is solved on its 25 µm grid, whose field includes the
+        // part's near field; elsewhere on the 0.1 mm box.
+        func inside(_ L: FieldLattice, _ x: Vec3, margin: Int) -> Bool {
+            let f = (x - L.origin) / L.spacing
+            return f.x >= Double(margin) && f.y >= Double(margin) && f.z >= Double(margin)
+                && f.x <= Double(L.nx - 1 - margin) && f.y <= Double(L.ny - 1 - margin) && f.z <= Double(L.nz - 1 - margin)
+        }
+        // `withPart: false` aims the trap on the chamber field alone — for the final
+        // approach: compiled WITH the part, the balance leans the trap away to
+        // hold the bead off its neighbour's pull, and the bead, on a ridge
+        // between the two, falls outward; aimed without it, trap and attraction
+        // pull the same way, into contact.
+        func placeFine(_ g: [[Complex]], _ x: Vec3, withPart: Bool = true, carry: Double = 1) -> [[Complex]] {
+            if !withPart {
+                return ForceCompiler.moveWell(fineIn, lattice: fb, gates: 6, particle: particle, drives: g, to: x,
+                                              iterations: 6, balance: hold * carry).drives
+            }
+            if let L = nearLat, inside(L, x, margin: 3) {
+                let mv = ForceCompiler.moveWell(near, lattice: L, gates: 6, particle: particle, drives: g, to: x,
+                                                iterations: 6, balance: hold)
+                if args.contains("--debug") {
+                    // Stiffness of P·U + mgz at the aim: second differences on the near grid.
+                    let U = ForceCompiler.potential(near, drives: mv.drives, gates: 6, particle: particle, count: L.count)
+                    func Uat(_ y: Vec3) -> Double { ForceCompiler.interpolate(U, lattice: L, at: y) }
+                    let hh = 2 * L.spacing
+                    let kxx = (Uat(x + Vec3(hh, 0, 0)) - 2 * Uat(x) + Uat(x - Vec3(hh, 0, 0))) / (hh * hh) * power
+                    let kyy = (Uat(x + Vec3(0, hh, 0)) - 2 * Uat(x) + Uat(x - Vec3(0, hh, 0))) / (hh * hh) * power
+                    let kzz = (Uat(x + Vec3(0, 0, hh)) - 2 * Uat(x) + Uat(x - Vec3(0, 0, hh))) / (hh * hh) * power
+                    let gr = gradOn(L, U, x).map { $0 * power + Vec3(0, 0, weight) } ?? Vec3(0, 0, 0)
+                    print(String(format: "      near-part balance at (%.3f, %.3f, %.3f) mm: residual %.1f µm, net force %.2f × weight, stiffness x %.2e y %.2e z %.2e N/m",
+                                 (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000, mv.residual * 1e6,
+                                 gr.length / weight, kxx, kyy, kzz))
+                }
+                return mv.drives
+            }
+            return ForceCompiler.moveWell(fine, lattice: fb, gates: 6, particle: particle, drives: g, to: x,
+                                          iterations: 6, balance: hold).drives
         }
         let pickDrive = placeFine(ForceCompiler.carryStep(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
                                                           options: o60, drives: r0.drives, to: w0, balance: hold), w0)
         let pickU = potentialFine(pickDrive)
 
-        struct Placed { var p: Vec3; var on: Int; var site: Vec3 }  // on: −1 = support, j = fused to bead j
-        var placed: [Placed] = []
         var push = [Double]()                          // max acoustic force on each placed bead afterwards, × weight
         var csv = "bead,t_s,x_mm,y_mm,z_mm\n"
         var t = 0.0
         var misses = 0
         print(String(format: "glass chamber, 10 tones, 4× holding drive (%.1f m/s rms); %d PLA beads Ø%.0f µm (%@), support %.1f mm below the pick-up",
                      (power / 60).squareRoot(), N, 2 * a * 1e6, shape, (w0.z - zs) * 1000))
+        print(scatterOn ? "the part scatters: placed beads join the field (coupled monopoles + dipoles), 25 µm grid near the part"
+                        : "the part is acoustically invisible (--no-scatter)")
         print("each bead: gentle load → carry (0.25 mm, 40 ms steps) → hover 0.15 mm up → closed-loop lowering (0.05 mm steps) → fuse on first touch")
+        // The row's direction. Neighbours in an oscillating flow attract side by
+        // side and repel end to end (G-S2), so with the part scattering, a row laid
+        // along the local flow does not stay there — the first scattering build
+        // grew along y by itself. After the first bead lands, the twin reads the
+        // flow at it (Σ over tones of Re ∇p ∇pᴴ/ω², horizontal part) and lays the
+        // row across it (`--row-dir x|y` forces one).
+        var rowDir = Vec3(1, 0, 0)
+        var flowNote = "row along x (fixed)"
+        func chooseRowDirection(drive g: [[Complex]]) {
+            if let i = args.firstIndex(of: "--row-dir"), i + 1 < args.count {
+                rowDir = args[i + 1] == "y" ? Vec3(0, 1, 0) : Vec3(1, 0, 0)
+                flowNote = "row along \(args[i + 1]) (forced)"
+                return
+            }
+            guard scatterOn, let p0 = placed.first?.p else { return }
+            var txx = 0.0, txy = 0.0, tyy = 0.0, tzz = 0.0
+            for f in freqs.indices {
+                let r = incidentRows(f, p0)
+                var gp = [Complex.zero, .zero, .zero]
+                for q in 0..<3 { for gi in 0..<6 { gp[q] += r.grad[q][gi] * g[f][gi] } }
+                let w2 = pow(2 * Double.pi * freqs[f], 2)
+                txx += gp[0].magnitudeSquared / w2; tyy += gp[1].magnitudeSquared / w2; tzz += gp[2].magnitudeSquared / w2
+                txy += (gp[0] * gp[1].conjugate).re / w2
+            }
+            // Horizontal block's eigenvector with the SMALLER eigenvalue: least flow along it.
+            let tr = txx + tyy, det = txx * tyy - txy * txy
+            let lMin = tr / 2 - max(0, tr * tr / 4 - det).squareRoot()
+            var d = abs(txy) > 1e-30 ? Vec3(txy, lMin - txx, 0) : (txx <= tyy ? Vec3(1, 0, 0) : Vec3(0, 1, 0))
+            d = d * (1 / d.length)
+            if d.x < 0 || (abs(d.x) < 1e-9 && d.y < 0) { d = d * -1 }
+            rowDir = d
+            let total = txx + tyy + tzz
+            flowNote = String(format: "flow at the first bead: %.0f%% along x, %.0f%% along y, %.0f%% along z → row laid along (%.2f, %.2f)",
+                              100 * txx / total, 100 * tyy / total, 100 * tzz / total, d.x, d.y)
+        }
+        // The weakest of a trap's three stiffnesses at x (N/m), from second differences
+        // of P·U on the grid that holds x — a balance can sit on a saddle.
+        func weakest(_ U: [Double], _ UN: [Double]?, _ x: Vec3) -> Double {
+            let (L, V): (FieldLattice, [Double]) = {
+                if let L = nearLat, let UN, inside(L, x, margin: 4) { return (L, UN) }
+                return (fb, U)
+            }()
+            let hh = 2 * L.spacing
+            func u(_ y: Vec3) -> Double { ForceCompiler.interpolate(V, lattice: L, at: y) }
+            let c = u(x)
+            return [Vec3(hh, 0, 0), Vec3(0, hh, 0), Vec3(0, 0, hh)]
+                .map { (u(x + $0) - 2 * c + u(x - $0)) / (hh * hh) * power }.min()!
+        }
         // Sites are laid off where the earlier beads actually came to rest.
         func siteFor(_ k: Int) -> Vec3 {
             let d = 2 * a + gapAim
@@ -572,19 +738,90 @@ case "build":
                 let rc = placed.prefix(3).reduce(0.0) { $0 + Vec3($1.p.x - c.x, $1.p.y - c.y, 0).length } / 3
                 return Vec3(c.x, c.y, zs + a + max(0, d * d - rc * rc).squareRoot())
             }
-            return k == 0 ? first : Vec3(placed[k - 1].p.x + d, placed[k - 1].p.y, zs + a)
+            return k == 0 ? first : Vec3(placed[k - 1].p.x + rowDir.x * d, placed[k - 1].p.y + rowDir.y * d, zs + a)
         }
+        // With the part in the field, a bead is not lowered straight onto a site
+        // beside a neighbour: close in, the neighbour's scattering turns the trap
+        // into a saddle (Koenig — attraction side by side, repulsion end to end
+        // along the flow; `--debug` prints the stiffness). It lands `backOff`
+        // behind its site, outside that reach, and is slid in along the support,
+        // where the side-by-side attraction takes it the last micrometres.
+        var backOff = scatterOn ? 0.6e-3 : 0             // 8 bead radii: outside the ~5-radius capture range
+        if let i = args.firstIndex(of: "--backoff"), i + 1 < args.count, let v = Double(args[i + 1]) { backOff = v * 1e-3 }
+        let muStatic = 0.02, muKinetic = 0.01           // a bead ROLLS on the support: rolling resistance ~1 % of the load
         for k in 0..<N {
             let site = siteFor(k)
-            let hover = site + Vec3(0, 0, 0.15e-3)
+            let stack = site.z > zs + a + 1e-6          // rests on beads, not the support
+            var approach = site
+            var slideDir = Vec3(0, 0, 0)
+            if let nb = placed.min(by: { ($0.p - site).length < ($1.p - site).length }), !stack, backOff > 0 {
+                // Slide in from where every bead it must touch pulls equally: away from
+                // the one neighbour, or down the bisector of a notch between two (from one
+                // side, the nearer bead captures it first and the notch stays open).
+                let touching = placed.filter { ($0.p - site).length < 2 * a + 3 * gapAim }
+                let centre = touching.count >= 2
+                    ? touching.reduce(Vec3(0, 0, 0)) { $0 + $1.p } * (1 / Double(touching.count)) : nb.p
+                var u = Vec3(site.x - centre.x, site.y - centre.y, 0)
+                u = u * (1 / max(u.length, 1e-12))
+                approach = site + u * backOff
+                slideDir = u * -1
+            }
+            // A bead laid ON beads is dropped, not pushed: above its neighbours it sits end
+            // to end with them along the (mostly vertical) flow, where they repel (G-S2) and
+            // every trap within ~0.4 mm of the pocket is a saddle — and that repulsion
+            // scales with the drive, so more power does not help; gravity does not. It
+            // hovers 0.5 mm up, is centred, and falls the rest with the drive off.
+            let hover = approach + Vec3(0, 0, stack ? 0.5e-3 : 0.15e-3)
             // Drives along the way: g[0] at the pick-up (force-balanced), then one per waypoint.
+            // Each carries its potential on the fine box, on the near grid, and
+            // its push on every placed bead.
             var drives: [[[Complex]]] = [pickDrive]
-            var Us: [[Double]] = [pickU]
+            var Us: [[Double]] = [potentialFine(pickDrive)]
+            var UsNear: [[Double]] = nearLat.map { L in [ForceCompiler.potential(near, drives: pickDrive, gates: 6, particle: particle, count: L.count)] } ?? []
+            var pushBy: [[Vec3]] = [pushes(pickDrive)]
             var aims: [Vec3] = [w0]
-            func addDrive(to x: Vec3) {
-                let g = placeFine(ForceCompiler.carryStep(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
-                                                          options: o60, drives: drives.last!, to: x, balance: hold), x)
+            func addDrive(to x: Vec3, withPart: Bool = true, carry: Double = 1, checkStable: Bool = true) {
+                // Rivals over the whole probe volume on the chamber field (the part is a
+                // negligible perturbation 17 mm out, and its near field does not fit a
+                // 0.63 mm lattice); the balance then on the grid that resolves the part.
+                func compile(from start: [[Complex]], iterations: Int) -> [[Complex]] {
+                    placeFine(ForceCompiler.carryStep(tonesIn, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                                      options: o60, drives: start, to: x, iterations: iterations, balance: hold), x,
+                              withPart: withPart, carry: carry)
+                }
+                var g = compile(from: drives.last!, iterations: 60)
+                // A trap whose balance sits on a saddle throws the bead (0.66 mm down the
+                // tetrahedron's apex path, 3 mm at 110 mm/s): re-compile, longer and from the
+                // pick-up drive, and keep the stiffest.
+                if checkStable {
+                    func score(_ g: [[Complex]]) -> Double {
+                        weakest(potentialFine(g), nearLat.map { L in ForceCompiler.potential(near, drives: g, gates: 6, particle: particle, count: L.count) }, x)
+                    }
+                    var best = score(g)
+                    if best <= 0 {
+                        // Stiffen in place first (keeps the balance), then try fresh compiles.
+                        let (L, T): (FieldLattice, [ForceCompiler.Tone]) = {
+                            if withPart, let L = nearLat, inside(L, x, margin: 4) { return (L, near) }
+                            return (fb, withPart ? fine : fineIn)
+                        }()
+                        let gs = ForceCompiler.stiffen(T, lattice: L, gates: 6, particle: particle, drives: g, at: x,
+                                                       balance: hold * carry, step: 2 * L.spacing)
+                        let ss = score(gs)
+                        if ss > best { best = ss; g = gs }
+                        for start in [drives.last!, pickDrive] where best <= 0 {
+                            let g2 = compile(from: start, iterations: 150)
+                            let s2 = score(g2)
+                            if s2 > best { best = s2; g = g2 }
+                        }
+                        if args.contains("--debug") {
+                            print(String(format: "      unstable trap at (%.3f, %.3f, %.3f) mm re-compiled: weakest stiffness now %.2e N/m",
+                                         (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000, best))
+                        }
+                    }
+                }
                 drives.append(g); Us.append(potentialFine(g)); aims.append(x)
+                if let L = nearLat { UsNear.append(ForceCompiler.potential(near, drives: g, gates: 6, particle: particle, count: L.count)) }
+                pushBy.append(pushes(g))
             }
             func waypoints(_ from: Vec3, _ to: Vec3, _ step: Double) -> [Vec3] {
                 let d = to - from, m = max(1, Int((d.length / step).rounded(.up)))
@@ -593,30 +830,79 @@ case "build":
             // The bead and its integrator.
             var x = w0, v = Vec3(0, 0, 0)
             var fused: Placed? = nil
+            var resting = false
             var recent: [Vec3] = []
-            func run(from ia: Int, to ib: Int, duration: Double, drag: Double, ramp: Bool) {
+            func run(from ia: Int, to ib: Int, duration: Double, drag: Double, ramp: Bool, released: Bool = false) {
                 var tt = 0.0
                 recent.removeAll()
                 while tt < duration && fused == nil {
                     let cmd = ramp ? min(1, tt / duration) : 1
                     let wb = ia == ib ? 1 : max(0, cmd - tauU / duration * (1 - exp(-tt / tauU))), wa = 1 - wb
-                    guard let ga = gradU(Us[ia], x), let gb = gradU(Us[ib], x) else { return }
-                    let force = (ga * wa + gb * wb) * (-power) + Vec3(0, 0, -weight) - v * (gamma * drag)
-                    v = v + force * (dt / mass)
-                    x = x + v * dt
-                    tt += dt; t += dt
-                    // The placed beads feel the same field.
-                    for (q, pb) in placed.enumerated() {
-                        if let pa = gradU(Us[ia], pb.p), let pbg = gradU(Us[ib], pb.p) {
-                            push[q] = max(push[q], ((pa * wa + pbg * wb) * power).length / weight)
+                    // Near the part, the 25 µm grid resolves its scattered near field.
+                    var ga: Vec3? = nil, gb: Vec3? = nil
+                    if let L = nearLat, let na = gradOn(L, UsNear[ia], x, margin: 2), let nb = gradOn(L, UsNear[ib], x, margin: 2) {
+                        ga = na; gb = nb
+                    } else { ga = gradU(Us[ia], x); gb = gradU(Us[ib], x) }
+                    guard let ga, let gb else { return }
+                    var force = (released ? Vec3(0, 0, 0) : (ga * wa + gb * wb) * (-power)) + Vec3(0, 0, -weight) - v * (gamma * drag)
+                    // The support pushes back and holds by friction; it does not glue.
+                    if x.z - a <= zs + 1e-7 && force.z < 0 {
+                        let normal = -force.z
+                        force = Vec3(force.x, force.y, 0)
+                        if v.z < 0 { v = Vec3(v.x, v.y, 0) }
+                        let vl = Vec3(v.x, v.y, 0), fl = Vec3(force.x, force.y, 0)
+                        if vl.length < 1e-5 && fl.length <= muStatic * normal {
+                            v = Vec3(0, 0, v.z); force = Vec3(0, 0, 0)
+                        } else if vl.length >= 1e-5 {
+                            force = force - vl * (muKinetic * normal / vl.length)
                         }
                     }
-                    // Contact: the support, or a placed bead — fuse where it first touches.
-                    if x.z - a <= zs {
-                        fused = Placed(p: Vec3(x.x, x.y, zs + a), on: -1, site: site)
-                    } else if let j = placed.indices.first(where: { (x - placed[$0].p).length <= 2 * a }) {
-                        let d = x - placed[j].p
-                        fused = Placed(p: placed[j].p + d * (2 * a / d.length), on: j, site: site)
+                    let vBefore = Vec3(v.x, v.y, 0)
+                    v = v + force * (dt / mass)
+                    // Kinetic friction stops a slide; it does not reverse it.
+                    if x.z - a <= zs + 1e-7, v.x * vBefore.x + v.y * vBefore.y < 0 {
+                        v = Vec3(0, 0, v.z)
+                    }
+                    x = x + v * dt
+                    if x.z - a < zs { x = Vec3(x.x, x.y, zs + a); if v.z < 0 { v = Vec3(v.x, v.y, 0) } }
+                    resting = x.z - a <= zs + 1e-6
+                    tt += dt; t += dt
+                    // The placed beads feel the field too — the chamber's and the other beads'.
+                    for q in placed.indices where q < pushBy[ia].count && q < pushBy[ib].count {
+                        push[q] = max(push[q], ((pushBy[ia][q] * wa + pushBy[ib][q] * wb) * power).length / weight)
+                    }
+                    // A placed bead: the binder coat grips on touch — as a liquid bridge
+                    // first — and the machine releases the bead (drive off). For 0.15 s it
+                    // stays in contact but settles under gravity along the beads it touches
+                    // (joining any it meets) onto the support or into a pocket, heavily
+                    // damped; then the bond cures where it lies. (Freezing it at first touch
+                    // kept a snap's micrometre lift, and a row ratcheted up 1, 2, 4, 6 µm;
+                    // settling with the trap still on, the trap — aimed up to 0.4 mm back —
+                    // hauled it up its neighbour.)
+                    if let j = placed.indices.first(where: { (x - placed[$0].p).length <= 2 * a }) {
+                        var bonds = [j]
+                        var xs = x, vs = v
+                        func project() {
+                            for _ in 0..<6 {
+                                for q in bonds { let d = xs - placed[q].p; xs = placed[q].p + d * (2 * a / max(d.length, 1e-12)) }
+                                if xs.z - a < zs { xs = Vec3(xs.x, xs.y, zs + a) }
+                            }
+                        }
+                        project()
+                        for _ in 0..<Int(0.15 / dt) {
+                            let fs = Vec3(0, 0, -weight) - vs * (gamma * 50)
+                            let prev = xs
+                            vs = vs + fs * (dt / mass)
+                            xs = xs + vs * dt
+                            if let q = placed.indices.first(where: { !bonds.contains($0) && (xs - placed[$0].p).length < 2 * a }) {
+                                bonds.append(q)
+                            }
+                            project()
+                            vs = (xs - prev) * (1 / dt)
+                            t += dt
+                        }
+                        x = xs; v = Vec3(0, 0, 0)
+                        fused = Placed(p: xs, on: j, site: site)
                     }
                     if duration - tt < 0.02 { recent.append(x) }
                     if Int((t / 2e-3).rounded()) != Int(((t - dt) / 2e-3).rounded()) {
@@ -634,30 +920,118 @@ case "build":
                              (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000, v.length * 1000))
             }
             // 2. Carry across at pick-up height, then down to the hover point.
+            // 80 ms per 0.25 mm step and a 50 ms settle: the traps are soft sideways
+            // (y about a third as stiff as x), and at 40 ms a bead carried along y
+            // swung ±0.3 mm and dropped into a shallow neighbouring well.
             for wp in waypoints(w0, Vec3(hover.x, hover.y, w0.z), 0.25e-3) + waypoints(Vec3(hover.x, hover.y, w0.z), hover, 0.25e-3) {
                 addDrive(to: wp)
-                run(from: drives.count - 2, to: drives.count - 1, duration: Tstep, drag: 1, ramp: true)
+                run(from: drives.count - 2, to: drives.count - 1, duration: 2 * Tstep, drag: 1, ramp: true)
+                run(from: drives.count - 1, to: drives.count - 1, duration: 0.05, drag: 1, ramp: false)
+                if args.contains("--trace") {
+                    print(String(format: "    carry: aim (%+.3f, %+.3f, %+.3f), bead (%+.3f, %+.3f, %+.3f) mm from the pick-up",
+                                 (wp.x - w0.x) * 1000, (wp.y - w0.y) * 1000, (wp.z - w0.z) * 1000,
+                                 (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000))
+                }
             }
             run(from: drives.count - 1, to: drives.count - 1, duration: 0.3, drag: 1, ramp: false)
             if args.contains("--debug") {
                 print(String(format: "  bead %d at hover: (%+.3f, %+.3f, %+.3f) mm from the hover aim, %.1f mm/s", k,
                              (x.x - hover.x) * 1000, (x.y - hover.y) * 1000, (x.z - hover.z) * 1000, v.length * 1000))
             }
-            // 3. Closed-loop lowering: move the well by the bead's lateral miss, 0.05 mm down per step.
+            // 3. Closed-loop lowering onto the support; a bead laid on beads is centred at the
+            //    hover and dropped.
             var aim = aims.last!
             var zAim = hover.z
             var steps = 0
-            while fused == nil && zAim > site.z - 0.5e-3 && steps < 20 {
+            if stack {
+                for _ in 0..<3 {
+                    let seen = mean(recent)
+                    aim = Vec3(aim.x + 0.5 * (approach.x - seen.x), aim.y + 0.5 * (approach.y - seen.y), hover.z)
+                    addDrive(to: aim)
+                    run(from: drives.count - 2, to: drives.count - 1, duration: Tstep, drag: 1, ramp: true)
+                    run(from: drives.count - 1, to: drives.count - 1, duration: 0.2, drag: 1, ramp: false)
+                }
+                if args.contains("--trace") {
+                    print(String(format: "    drop from (%+.3f, %+.3f, %+.3f) mm off the pocket", (x.x - site.x) * 1000,
+                                 (x.y - site.y) * 1000, (x.z - site.z) * 1000))
+                }
+                run(from: drives.count - 1, to: drives.count - 1, duration: 0.5, drag: 1, ramp: false, released: true)
+                steps = 99
+            }
+            while fused == nil && !resting && zAim > approach.z - 0.5e-3 && steps < 20 {
                 let seen = mean(recent)
-                aim = Vec3(aim.x + (site.x - seen.x), aim.y + (site.y - seen.y), zAim - 0.05e-3)
+                // Half the miss per step: a bead still swinging is not chased.
+                aim = Vec3(aim.x + 0.5 * (approach.x - seen.x), aim.y + 0.5 * (approach.y - seen.y), zAim - 0.05e-3)
                 zAim -= 0.05e-3
-                addDrive(to: aim)
+                addDrive(to: aim, withPart: !stack)
                 run(from: drives.count - 2, to: drives.count - 1, duration: Tstep, drag: 1, ramp: true)
                 if fused == nil { run(from: drives.count - 1, to: drives.count - 1, duration: 0.15, drag: 1, ramp: false) }
                 steps += 1
+                if args.contains("--trace") {
+                    print(String(format: "    lower %d: aim (%+.3f, %+.3f, %+.3f), bead (%+.3f, %+.3f, %+.3f) mm from the site%@", steps,
+                                 (aim.x - site.x) * 1000, (aim.y - site.y) * 1000, (aim.z - site.z) * 1000,
+                                 (x.x - site.x) * 1000, (x.y - site.y) * 1000, (x.z - site.z) * 1000,
+                                 fused != nil ? " — gripped" : (resting ? " — on the support" : "")))
+                }
             }
+            // 4. Slide in along the support: to the site and 30 µm past it, 20 µm a step.
+            if fused == nil && resting && slideDir.length > 0 {
+                var sOff = 0.0
+                while fused == nil && sOff < backOff + 30e-6 {
+                    sOff += 20e-6
+                    let tgt = approach + slideDir * sOff
+                    // The trap carries 90 % of the weight: the bead rolls, pressed lightly on the support.
+                    addDrive(to: Vec3(tgt.x, tgt.y, site.z), withPart: false, carry: 0.9, checkStable: false)
+                    run(from: drives.count - 2, to: drives.count - 1, duration: Tstep, drag: 1, ramp: true)
+                    if fused == nil { run(from: drives.count - 1, to: drives.count - 1, duration: 0.1, drag: 1, ramp: false) }
+                    if args.contains("--trace") {
+                        print(String(format: "    slide %.0f µm: aim (%+.3f, %+.3f), bead (%+.3f, %+.3f, %+.3f) mm from the site%@", sOff * 1e6,
+                                     (tgt.x - site.x) * 1000, (tgt.y - site.y) * 1000,
+                                     (x.x - site.x) * 1000, (x.y - site.y) * 1000, (x.z - site.z) * 1000,
+                                     fused != nil ? " — gripped" : ""))
+                    }
+                }
+            }
+            // 5. Cure: a bead resting on the support that touched no bead is fixed where it lies.
+            if fused == nil && resting { fused = Placed(p: Vec3(x.x, x.y, zs + a), on: -1, site: site) }
             if let f = fused {
                 placed.append(f); push.append(0)
+                if k == 0 {
+                    chooseRowDirection(drive: drives.last!)
+                    // A tetrahedron's apex bead comes down a column 0.6 mm out along the
+                    // notch's bisector — which can be untrappable (with the base along x it
+                    // was: a saddle in y all the way down). Before committing, compile test
+                    // traps at eight heights down both candidate columns on the chamber field
+                    // and keep the orientation with more trappable heights (then the larger
+                    // median stiffness). A lone saddle just above the support is not fatal —
+                    // the lowering and the slide handle it — a column of them is.
+                    if shape == "tetra" && !args.contains("--row-dir") {
+                        func column(_ dir: Vec3) -> (stable: Int, median: Double) {
+                            let d = 2 * a + gapAim
+                            let p0 = placed[0].p, p1 = p0 + dir * d
+                            let perp = Vec3(-dir.y, dir.x, 0)
+                            let apex = (p0 + p1) * 0.5 + perp * (d * 3.0.squareRoot() / 2)
+                            let top = apex + perp * backOff
+                            var ks: [Double] = []
+                            var g = pickDrive
+                            for q in 0..<8 {
+                                let pt = Vec3(top.x, top.y, zs + a + 1.55e-3 - Double(q) * 0.2e-3)
+                                g = placeFine(ForceCompiler.carryStep(tonesIn, lattice: lat, gates: 6, particle: particle,
+                                                                      wavelength: lam40, options: o60, drives: g,
+                                                                      to: pt, balance: hold), pt, withPart: false)
+                                ks.append(weakest(potentialFine(g), nil, pt))
+                            }
+                            return (ks.filter { $0 > 0 }.count, ks.sorted()[ks.count / 2])
+                        }
+                        let alt = Vec3(-rowDir.y, rowDir.x, 0)
+                        let cA = column(rowDir), cB = column(alt)
+                        if cB.stable > cA.stable || (cB.stable == cA.stable && cB.median > cA.median) { rowDir = alt }
+                        flowNote += String(format: "; apex columns trappable at %d/8 vs %d/8 heights → base along (%.2f, %.2f)",
+                                           cA.stable, cB.stable, rowDir.x, rowDir.y)
+                    }
+                    print("  " + flowNote)
+                }
+                try updatePart()                          // the part grows into the field
             } else {
                 misses += 1
                 print(String(format: "  bead %d: not placed (at %.2f, %.2f, %.2f mm from the pick-up)", k,
@@ -665,7 +1039,7 @@ case "build":
                 break
             }
         }
-        print("bead   site (µm from the first site)   placed at             miss      first touched     gaps to the beads it rests against   pushed afterwards")
+        print("bead   site (µm from the first site)   placed at             miss      fixed by          gaps to the beads it rests against   pushed afterwards")
         var gaps: [Double] = []
         var touching: [Int] = []
         for (k, b) in placed.enumerated() {
@@ -678,7 +1052,7 @@ case "build":
             let gapText = near.isEmpty ? "—" : near.map { String(format: "%.1f", $0 * 1e6) }.joined(separator: ", ") + " µm"
             print(String(format: "%3d    (%6.1f, %6.1f, %5.1f)        (%6.1f, %6.1f, %5.1f)  %5.1f µm  %@  %@  %@",
                          k, srel.x, srel.y, srel.z, rel.x, rel.y, rel.z, miss,
-                         (b.on < 0 ? "the support   " : String(format: "bead %d        ", b.on)) as NSString,
+                         (b.on < 0 ? "cured on support" : String(format: "gripped bead %d ", b.on)) as NSString,
                          gapText.padding(toLength: 36, withPad: " ", startingAt: 0) as NSString,
                          k == placed.count - 1 ? "—" : String(format: "%.2f × weight", push[k])))
         }
@@ -688,7 +1062,7 @@ case "build":
         let gate: GateResult
         if shape == "tetra" {
             // Three on the support touching one another; the fourth touching all three.
-            let base = placed.prefix(3).allSatisfy { $0.on < 0 }
+            let base = placed.prefix(3).allSatisfy { abs($0.p.z - (zs + a)) < 5e-6 }
             ok = misses == 0 && placed.count == 4 && base && touching.count == 4
                 && touching[1] == 1 && touching[2] == 2 && touching[3] == 3 && worstGap < 30e-6
             gate = GateResult(id: "G-B2", name: "a tetrahedron: three PLA beads touching on the support, a fourth resting on all three",
@@ -697,7 +1071,7 @@ case "build":
                                              placed.count, base ? "yes" : "no", touching.count == 4 ? touching[3] : 0,
                                              worstGap * 1e6, worstPush))
         } else {
-            let onSupport = placed.filter { $0.on < 0 }.count
+            let onSupport = placed.filter { abs($0.p.z - (zs + a)) < 5e-6 }.count
             ok = misses == 0 && onSupport == N && worstGap < 30e-6
             gate = GateResult(id: "G-B1", name: "first build: \(N) PLA beads in a row on the support, touching (|gap| < 30 µm), none lost or perched",
                               measured: ok ? 1 : 0, threshold: 0.5, comparison: .greaterThan,

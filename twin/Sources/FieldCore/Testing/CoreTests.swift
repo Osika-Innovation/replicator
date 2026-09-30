@@ -8,7 +8,7 @@ public enum CoreTests {
         let groups: [String: (TestHarness) -> Void] = [
             "math": math, "geometry": geometry, "propagator": propagator, "gorkov": gorkov,
             "inverse": inverse, "cad": cad, "plates": wallsAndPlates, "air": air,
-            "force": force, "cavity": cavity]
+            "force": force, "cavity": cavity, "scatter": scatter]
         guard let g = groups[group] else { return nil }
         let h = TestHarness()
         g(h)
@@ -21,7 +21,7 @@ public enum CoreTests {
         pencil(h); trapKinds(h); chordAndVerbs(h); callResponse(h)
         surfaceHologram(h)
         provenance(h); gates(h)
-        cad(h); wallsAndPlates(h); air(h); force(h); cavity(h)
+        cad(h); wallsAndPlates(h); air(h); force(h); cavity(h); scatter(h)
         return h
     }
 
@@ -693,6 +693,97 @@ public enum CoreTests {
                 }
             }
             t.check(worst < 1e-6, "worst relative error \(worst)")
+        }
+    }
+
+    // --------------------------------------------------------------- scatter
+    static func scatter(_ h: TestHarness) {
+        h.test("G-S1: a small rigid sphere scatters as the exact series says (ka = 0.1)") { t in
+            // Plane wave e^{ikz} on a rigid, immovable sphere: the exact field is
+            // p_sc = −Σ (2n+1) iⁿ [j_n'(ka)/h_n'(ka)] h_n(kr) P_n(cos θ). The
+            // monopole + dipole model must agree to O((ka)²).
+            let a = 1e-4, k = 1000.0
+            func sj(_ n: Int, _ x: Double) -> Double {                 // j_n by its series
+                var term = 1.0
+                for m in 0..<n { term *= x / Double(2 * m + 3) }
+                term /= 1                                                // x^n/(2n+1)!!
+                var s = 0.0, t2 = term
+                for q in 0..<40 {
+                    s += t2
+                    t2 *= -x * x / (2 * Double(q + 1) * Double(2 * n + 2 * q + 3))
+                }
+                return s
+            }
+            func sy(_ n: Int, _ x: Double) -> Double {                 // y_n by upward recurrence
+                var y0 = -cos(x) / x, y1 = -cos(x) / (x * x) - sin(x) / x
+                if n == 0 { return y0 }
+                for m in 1..<max(1, n) { let y2 = Double(2 * m + 1) / x * y1 - y0; y0 = y1; y1 = y2 }
+                return y1
+            }
+            func sh(_ n: Int, _ x: Double) -> Complex { Complex(sj(n, x), sy(n, x)) }
+            func dj(_ n: Int, _ x: Double) -> Double { n == 0 ? -sj(1, x) : sj(n - 1, x) - Double(n + 1) / x * sj(n, x) }
+            func dh(_ n: Int, _ x: Double) -> Complex {
+                n == 0 ? sh(1, x) * -1.0 : sh(n - 1, x) - sh(n, x) * (Double(n + 1) / x)
+            }
+            func legendre(_ n: Int, _ c: Double) -> Double {
+                var p0 = 1.0, p1 = c
+                if n == 0 { return p0 }
+                for m in 1..<max(1, n) { let p2 = (Double(2 * m + 1) * c * p1 - Double(m) * p0) / Double(m + 1); p0 = p1; p1 = p2 }
+                return p1
+            }
+            func iPow(_ n: Int) -> Complex { [Complex(1, 0), Complex(0, 1), Complex(-1, 0), Complex(0, -1)][n % 4] }
+            let sc = Scatterers(centers: [Vec3(0, 0, 0)], radius: a, f1: 1, f2: 1)
+            let src = sc.solve(incident: [(p: [Complex.one], grad: [[.zero], [.zero], [Complex(0, k)]])], k: Complex(k, 0))
+            var worst = 0.0
+            for r in [3 * a, 10 * a] {
+                var errs: [Double] = [], mags: [Double] = []
+                for deg in [0.0, 60, 120, 180] {
+                    let th = deg * .pi / 180
+                    var exact = Complex.zero
+                    for n in 0...6 {
+                        let coef = Complex(dj(n, k * a), 0) / dh(n, k * a)
+                        exact -= iPow(n) * coef * sh(n, k * r) * (Double(2 * n + 1) * legendre(n, cos(th)))
+                    }
+                    let model = sc.field(at: Vec3(r * sin(th), 0, r * cos(th)), sources: src).p[0]
+                    errs.append((model - exact).magnitude); mags.append(exact.magnitude)
+                }
+                let e = errs.max()! / mags.max()!
+                if !(e <= worst) { worst = e }
+            }
+            t.check(worst < 0.02, "worst relative difference at r = 3a and 10a: \(worst)")
+        }
+        h.test("G-S2: two beads in an oscillating flow — attract side by side, repel end to end (Koenig)") { t in
+            // A standing wave's velocity antinode, ∇p = k ẑ at the origin, p = 0.
+            // Bead 1 there; bead 2 at R, angle θ from the flow. The interaction
+            // energy of two small rigid spheres in the near field (kR ≪ 1) is
+            // U = −(π/2) f2² ρ0 a⁶ |v0|² (1 − 3cos²θ)/R³.
+            let air = Medium(density: 1.2, soundSpeed: 343)
+            let a = 1e-4, k = 100.0, omega = k * air.soundSpeed
+            let bead = ParticleMaterial(density: 1e9, soundSpeed: 1e6, radius: a)   // rigid, immovable
+            let (K1, K2) = ForceCompiler.coefficients(particle: bead, medium: air, frequency: omega / (2 * .pi))
+            let f2 = 2 * (bead.density - air.density) / (2 * bead.density + air.density)
+            let sc = Scatterers(centers: [Vec3(0, 0, 0)], radius: a, f1: 1, f2: 1)
+            let src = sc.solve(incident: [(p: [Complex.zero], grad: [[.zero], [.zero], [Complex(k, 0)]])], k: Complex(k, 0))
+            let v0 = k / (omega * air.density)
+            var worst = 0.0
+            for R in [4 * a, 6 * a] {
+                for deg in [0.0, 30, 90] {
+                    let th = deg * .pi / 180
+                    let x = Vec3(R * sin(th), 0, R * cos(th))
+                    let pin = Complex(sin(k * x.z), 0)
+                    let gin = [Complex.zero, .zero, Complex(k * cos(k * x.z), 0)]
+                    let f = sc.field(at: x, sources: src)
+                    let p = pin + f.p[0]
+                    let gtot = (0..<3).map { gin[$0] + f.grad[$0][0] }
+                    let U = K1 * p.magnitudeSquared - K2 * gtot.reduce(0) { $0 + $1.magnitudeSquared }
+                    let U0 = K1 * pin.magnitudeSquared - K2 * gin.reduce(0) { $0 + $1.magnitudeSquared }
+                    let expect = -Double.pi / 2 * f2 * 1 * air.density * pow(a, 6) * v0 * v0
+                        * (1 - 3 * cos(th) * cos(th)) / (R * R * R)
+                    let err = abs((U - U0) - expect) / abs(expect)
+                    if !(err <= worst) { worst = err }
+                }
+            }
+            t.check(worst < 0.03, "worst relative difference from the Koenig energy: \(worst)")
         }
     }
 

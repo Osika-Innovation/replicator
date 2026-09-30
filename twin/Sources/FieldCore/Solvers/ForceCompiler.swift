@@ -675,6 +675,74 @@ public enum ForceCompiler {
                         balance: balance).drives
     }
 
+    /// Stiffen a trap without moving it: raise its weakest directional curvature at
+    /// x (a soft minimum over ∂²U/∂x², ∂²U/∂y², ∂²U/∂z², second differences at
+    /// ±`step` read off the lattice) by steps projected onto the null space of the
+    /// balance ∇U(x) = balance, then put the balance back. The compiler's other
+    /// objectives — one well, placed on its point, holding the weight — say
+    /// nothing about stiffness, and a balance can sit on a saddle: a carried bead
+    /// was thrown 3 mm from one (`fieldc build`, the tetrahedron's apex column).
+    public static func stiffen(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
+                               particle: ParticleMaterial, drives start: [[Complex]], at x: Vec3,
+                               balance: Vec3, step h: Double, iterations: Int = 24) -> [[Complex]] {
+        var g = normalize(start)
+        let hs = lat.spacing
+        let axes = [1, lat.nx, lat.nx * lat.ny]
+        let corners = trilinear(lat, x)
+        var cj = [[Double]](repeating: [Double](repeating: 0, count: lat.count), count: 3)
+        for (j, st) in axes.enumerated() {
+            for (n, w) in corners { cj[j][n + st] += w / (2 * hs); cj[j][n - st] -= w / (2 * hs) }
+        }
+        // Curvature weights along each axis: U(x+h e) − 2U(x) + U(x−h e), over h².
+        let dirs = [Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)]
+        let cw: [[(Int, Double)]] = dirs.map { e in
+            var acc: [Int: Double] = [:]
+            for (sgn, pt) in [(1.0, x + e * h), (-2.0, x), (1.0, x - e * h)] {
+                for (n, w) in trilinear(lat, pt) { acc[n, default: 0] += sgn * w / (h * h) }
+            }
+            return acc.map { ($0.key, $0.value) }
+        }
+        func real(_ w: [[Complex]]) -> [Double] { w.flatMap { $0.flatMap { [2 * $0.re, 2 * $0.im] } } }
+        let n = 2 * G * tones.count
+        let lr0 = 0.05 / Double(n).squareRoot()
+        for it in 0..<iterations {
+            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let C = cw.map { $0.reduce(0.0) { $0 + U[$1.0] * $1.1 } }
+            // Soft minimum of the three curvatures.
+            let scale = max(C.map(abs).max() ?? 1, 1e-300)
+            let T = 0.1 * scale
+            let lo = C.min()!
+            let e = C.map { exp(-($0 - lo) / T) }, z = e.reduce(0, +)
+            let wsm = e.map { $0 / z }
+            let sm = zip(wsm, C).reduce(0) { $0 + $1.0 * $1.1 }
+            var weights = [Double](repeating: 0, count: lat.count)
+            for (q, list) in cw.enumerated() {
+                let dq = wsm[q] * (1 - (C[q] - sm) / T)          // ∂(soft min)/∂C_q
+                for (n, w) in list { weights[n] += dq * w }
+            }
+            var v = real(adjoint(tones, drives: g, weights: weights, gates: G, particle: particle))
+            // Keep the balance to first order: project out the constraint's rows.
+            let A = (0..<3).map { real(adjoint(tones, drives: g, weights: cj[$0], gates: G, particle: particle)) }
+            var M = [[Double]](repeating: [0, 0, 0], count: 3)
+            for a in 0..<3 { for b in 0..<3 { M[a][b] = zip(A[a], A[b]).reduce(0) { $0 + $1.0 * $1.1 } } }
+            if let y = solve3(M, (0..<3).map { a in zip(A[a], v).reduce(0) { $0 + $1.0 * $1.1 } }) {
+                for a in 0..<3 { for q in v.indices { v[q] -= A[a][q] * y[a] } }
+            }
+            let vn = (v.reduce(0) { $0 + $1 * $1 }).squareRoot()
+            guard vn > 0 else { break }
+            let lr = lr0 * (1 - 0.8 * Double(it) / Double(iterations))
+            var q = 0
+            for f in g.indices { for i in 0..<G { g[f][i] += Complex(v[q], v[q + 1]) * (lr / vn); q += 2 } }
+            g = normalize(g)
+            if it % 6 == 5 {
+                g = moveWell(tones, lattice: lat, gates: G, particle: particle, drives: g, to: x, iterations: 3,
+                             balance: balance).drives
+            }
+        }
+        return moveWell(tones, lattice: lat, gates: G, particle: particle, drives: g, to: x, iterations: 4,
+                        balance: balance).drives
+    }
+
     /// 3×3 linear solve (Cramer); nil if singular.
     static func solve3(_ M: [[Double]], _ b: [Double]) -> [Double]? {
         func det(_ m: [[Double]]) -> Double {
