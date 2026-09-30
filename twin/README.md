@@ -23,6 +23,7 @@ swift build -c release
 ./.build/release/fieldc carry --receipt       # pick up, carry 5 mm up and 5 mm across, place (G-P1)
 ./.build/release/fieldc fly --receipt         # integrate a PLA bead through the carry: drive level × step time (G-P2)
 ./.build/release/fieldc build --receipt       # the first build: N beads laid in a row on a support (G-B1; --beads N)
+./.build/release/fieldc build --shape tetra --receipt   # four beads: a triangle on the support and one in its pocket (G-B2)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -64,10 +65,11 @@ is a stub). The twin carries a trap 5 mm up and 5 mm across on its point,
 downhill every step (G-P1). A PLA bead integrated through the fields rides it
 at 4× the holding drive, 10 mm in 0.4 s (G-P2). See "Round 8".
 
-**2026-09-30 — the first build.** Five PLA beads are laid in a row on a
+**2026-09-30 — the first builds.** Five PLA beads are laid in a row on a
 support, each within 2–3.5 µm of its site and touching its neighbour (7–9 µm
-gaps), by compiling the force balance rather than the potential minimum and
-placing closed-loop (G-B1). See "Round 9".
+gaps). This works by compiling the force balance rather than the potential
+minimum, and by placing closed-loop (G-B1). A tetrahedron follows: a fourth
+bead rests on three, touching all of them (G-B2). See "Round 9".
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -149,7 +151,17 @@ first touches (a binder coat).
   ones with up to 4.5× their weight. The binder, or the fuse step, must hold
   that.
 
-`python3 Tools/plot_build.py` redraws the figure from `Receipts/build_*.csv`.
+**A tetrahedron (`fieldc build --shape tetra`, G-B2): a bead laid on beads.**
+Three beads are laid touching on the support, each off the others' actual
+positions; the third goes at the apex of the triangle on the first two. A
+fourth is lowered into their pocket. It first touched bead 1 and rests against
+all three: gaps 1.7, 0.0 and 3.3 µm, 11 µm from the pocket. The base gaps are
+5–9 µm, and the build takes 6.7 s of simulated time.
+
+![The twin's second build: a tetrahedron](shots/build_tetra.svg)
+
+`python3 Tools/plot_build.py` redraws the row from `Receipts/build_*.csv`;
+pass the `build_tetra_*` files, an output path and a title for the tetrahedron.
 
 **Not modelled:** scattering by the support and the placed beads (the support
 is taken as an acoustically open mesh); secondary Bjerknes forces between

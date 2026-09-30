@@ -38,9 +38,9 @@ sx = lambda x: left + (x - x0) * scale
 sz = lambda z: top + (z1 - z) * scale
 
 # Top view of the row, zoomed.
-xs = [p[1] for p in placed]
+xs, ys = [p[1] for p in placed], [p[2] for p in placed]
 tx0, tx1 = min(xs) - 0.25, max(xs) + 0.25
-ty0, ty1 = -0.25, 0.25
+ty0, ty1 = min(ys) - 0.25, max(ys) + 0.25
 tscale = 520.0
 W2, H2 = (tx1 - tx0) * tscale, (ty1 - ty0) * tscale
 left2 = left + W1 + 60
@@ -57,7 +57,7 @@ out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBo
        + '</text>',
        f'<text x="{left}" y="44" font-size="11.5" fill="{ink}">side view (mm from the pick-up trap) — each bead\'s '
        f'path from the pick-up down onto the support</text>',
-       f'<text x="{left2}" y="44" font-size="11.5" fill="{ink}">top view of the finished row (mm)</text>']
+       f'<text x="{left2}" y="44" font-size="11.5" fill="{ink}">top view of the finished build (mm)</text>']
 # Side view frame and grid.
 out.append(f'<rect x="{left}" y="{top}" width="{W1:.0f}" height="{H1:.0f}" fill="none" stroke="{grid}"/>')
 v = -2.5
