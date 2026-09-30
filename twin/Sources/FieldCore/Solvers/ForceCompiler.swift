@@ -537,9 +537,15 @@ public enum ForceCompiler {
     /// nowhere, and x can sit between lattice points. (Re-compiling from the
     /// last drive either kept the old well while the target moved away, or
     /// hopped to a different one — `fieldc carry`, 29 Sep.)
+    ///
+    /// - Parameter balance: an external force per unit drive power (N per
+    ///   (m/s)²) the trap must hold at x — gravity is (0, 0, −mg/P). The
+    ///   condition becomes ∇U(x) = balance: the bead then RESTS on x, instead
+    ///   of sagging below the potential's minimum and sliding sideways along
+    ///   its tilted axes (0.5 mm at 4× the holding drive, `fieldc build`).
     public static func moveWell(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
                                 particle: ParticleMaterial, drives start: [[Complex]], to x: Vec3,
-                                iterations: Int = 8) -> (drives: [[Complex]], residual: Double) {
+                                iterations: Int = 8, balance: Vec3 = Vec3(0, 0, 0)) -> (drives: [[Complex]], residual: Double) {
         var g = normalize(start)
         let h = lat.spacing
         let axes = [1, lat.nx, lat.nx * lat.ny]
@@ -553,9 +559,10 @@ public enum ForceCompiler {
             }
         }
         var residual = 0.0
+        let bal = [balance.x, balance.y, balance.z]
         for _ in 0..<iterations {
             let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
-            let grad = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } }
+            let grad = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } - bal[j] }
             // Scale: the well's curvature × one lattice step.
             var curv = 0.0
             for (n, w) in corners {
@@ -595,7 +602,7 @@ public enum ForceCompiler {
     public static func carryStep(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
                                  particle: ParticleMaterial, wavelength: Double, options o: Options,
                                  drives start: [[Complex]], to x: Vec3,
-                                 iterations: Int = 60) -> [[Complex]] {
+                                 iterations: Int = 60, balance: Vec3 = Vec3(0, 0, 0)) -> [[Complex]] {
         var g = normalize(start)
         let h = lat.spacing, s = o.shellSteps
         let axes = [1, lat.nx, lat.nx * lat.ny]
@@ -617,9 +624,10 @@ public enum ForceCompiler {
         }
         func real(_ w: [[Complex]]) -> [Double] { w.flatMap { $0.flatMap { [2 * $0.re, 2 * $0.im] } } }
         var best: (g: [[Complex]], ratio: Double)? = nil
+        let bal = [balance.x, balance.y, balance.z]
         for it in 0..<iterations {
             let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
-            let G3 = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } }
+            let G3 = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } - bal[j] }
             let A = (0..<3).map { real(adjoint(tones, drives: g, weights: cj[$0], gates: G, particle: particle)) }
             var M = [[Double]](repeating: [0, 0, 0], count: 3)
             for a in 0..<3 { for b in 0..<3 { M[a][b] = zip(A[a], A[b]).reduce(0) { $0 + $1.0 * $1.1 } } }
@@ -663,7 +671,8 @@ public enum ForceCompiler {
         }
         // Finish on the constraint from the best rival state seen.
         let from = best?.g ?? g
-        return moveWell(tones, lattice: lat, gates: G, particle: particle, drives: from, to: x, iterations: 4).drives
+        return moveWell(tones, lattice: lat, gates: G, particle: particle, drives: from, to: x, iterations: 4,
+                        balance: balance).drives
     }
 
     /// 3×3 linear solve (Cramer); nil if singular.

@@ -424,6 +424,267 @@ case "drift":
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
+case "build":
+    // The first build: N 200 µm PLA beads laid in a row on a support.
+    //
+    // Each bead is loaded gently into the unique trap at the glass chamber's
+    // mid-plane, carried (carryStep; ramped 40 ms steps at 4× the holding
+    // drive, as `fieldc fly`) to hover 0.15 mm above its site, and lowered onto
+    // a support 2 mm below the pick-up. Placement is closed-loop: the twin
+    // reads where the bead actually hangs — as the machine's scan would — and
+    // moves the well by the bead's lateral miss before and during the
+    // lowering. A bead fuses where it first touches the support or a placed
+    // bead (a binder coat), and the next site is laid off the placed bead's
+    // ACTUAL position. Not modelled: the support's and the placed beads' own
+    // scattering (the support is an acoustically open mesh), secondary
+    // Bjerknes forces between beads, streaming.
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let lam40 = air.wavelength(at: 40_000)
+        let x0 = Vec3(0, 0, L / 2)
+        var N = 5
+        if let i = args.firstIndex(of: "--beads"), i + 1 < args.count, let v = Int(args[i + 1]) { N = max(1, v) }
+        let freqs = (0..<10).map { 30_000 + 40_000 * (Double($0) + 0.5) / 10 }
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: 70_000), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        let h = air.wavelength(at: freqs.max()!) / 8
+        let n = Int((2 * 2 * lam40 / h).rounded()) | 1
+        let half = Double(n - 1) / 2 * h
+        let lat = FieldLattice(origin: x0 - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+        let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
+        var o = ForceCompiler.Options()
+        o.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
+        let particle = ParticleMaterial.pla()
+        var sources: [CylinderCavity.Source] = []
+        var tones: [ForceCompiler.Tone] = []
+        var base: [[Complex]] = []
+        for f in freqs {
+            var op = RH1Freestanding.Options()
+            op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+            let (p, c) = RH1Freestanding.preset(op)
+            let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount,
+                                 frequency: f, medium: air, zMin: zMin)
+            sources.append(src)
+            tones.append(ForceCompiler.Tone(frequency: f, medium: air,
+                                            rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                                            points: lat.positions, withGradient: true)))
+            let prop = Propagator(elements: p.elements, lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                  frequency: f, medium: air, gateCount: p.gateCount, elementCoupling: c,
+                                  cavity: cav, cavitySource: src)
+            let u = InverseSolver.solve(propagator: prop, points: [.init(position: x0)],
+                                        method: .gspat, iterations: 80, trap: .twinTrap)
+            base.append(u.map { $0 * (1 / (u.l2 * Double(freqs.count).squareRoot())) })
+        }
+        let c0 = ((n - 1) / 2, (n - 1) / 2, (n - 1) / 2)
+        let r0 = ForceCompiler.compile(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                       options: o, starts: [base], target: c0)
+        guard let w0 = r0.targetWell else { print("no trap at the pick-up"); exit(1) }
+        let a = particle.radius
+        let zs = w0.z - 2e-3                          // the support: bead bottoms rest here
+        let gapAim = 10e-6                            // aim 10 µm off contact: a miss leaves a gap, not a perch
+        let first = Vec3(w0.x + 0.5e-3, w0.y, zs + a)
+        // A fine box over the whole build, 0.1 mm.
+        let fs = 0.1e-3
+        let lo = Vec3(w0.x - 2.5e-3, w0.y - 2.5e-3, zs - 0.5e-3)
+        let hi = Vec3(first.x + Double(N) * 2 * a + 2.5e-3, w0.y + 2.5e-3, w0.z + 2e-3)
+        let fb = FieldLattice(origin: lo, spacing: fs, nx: Int(((hi.x - lo.x) / fs).rounded()) + 1,
+                              ny: Int(((hi.y - lo.y) / fs).rounded()) + 1, nz: Int(((hi.z - lo.z) / fs).rounded()) + 1)
+        let fine = try zip(freqs, sources).map { f, src in
+            ForceCompiler.Tone(frequency: f, medium: air,
+                               rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                               points: fb.positions, withGradient: true))
+        }
+        func potentialFine(_ g: [[Complex]]) -> [Double] {
+            ForceCompiler.potential(fine, drives: g, gates: 6, particle: particle, count: fb.count)
+        }
+        func gradU(_ U: [Double], _ x: Vec3) -> Vec3? {
+            let f = (x - fb.origin) / fs
+            let i0 = Int(f.x.rounded(.down)), j0 = Int(f.y.rounded(.down)), k0 = Int(f.z.rounded(.down))
+            guard i0 >= 1, j0 >= 1, k0 >= 1, i0 + 2 < fb.nx, j0 + 2 < fb.ny, k0 + 2 < fb.nz else { return nil }
+            let tx = f.x - Double(i0), ty = f.y - Double(j0), tz = f.z - Double(k0)
+            var gsum = Vec3(0, 0, 0)
+            for (dk, wz) in [(0, 1 - tz), (1, tz)] { for (dj, wy) in [(0, 1 - ty), (1, ty)] { for (di, wx) in [(0, 1 - tx), (1, tx)] {
+                let i = i0 + di, j = j0 + dj, k = k0 + dk
+                gsum = gsum + Vec3((U[fb.index(i + 1, j, k)] - U[fb.index(i - 1, j, k)]) / (2 * fs),
+                                   (U[fb.index(i, j + 1, k)] - U[fb.index(i, j - 1, k)]) / (2 * fs),
+                                   (U[fb.index(i, j, k + 1)] - U[fb.index(i, j, k - 1)]) / (2 * fs)) * (wx * wy * wz)
+            } } }
+            return gsum
+        }
+        let mass = particle.mass(), g0 = 9.81, weight = mass * g0
+        let Upick = potentialFine(r0.drives)
+        var fUp = 0.0
+        for q in -15...15 { if let gr = gradU(Upick, w0 + Vec3(0, 0, Double(q) * fs)) { fUp = max(fUp, -gr.z) } }
+        guard fUp > 0 else { print("the pick-up well pushes nowhere upward"); exit(1) }
+        let power = 4 * weight / fUp                  // 4× the holding drive (fly: carries at every step time)
+        let gamma = 6 * Double.pi * 1.81e-5 * a
+        let alpha = air.absorption(at: 50_000)
+        let tauU = 0.5 / (alpha * air.soundSpeed + -log(0.9) * air.soundSpeed / L)
+        let Tstep = 0.04, dt = 1e-4
+        var o60 = o
+        o60.perToneStarts = false
+        // Compile the FORCE BALANCE, not the potential minimum: at power P the
+        // trap must hold the weight at the aim, P∇U(x) = −mg ẑ, so the bead
+        // rests on its aim instead of hanging 0.2 mm below and 0.5 mm aside.
+        let hold = Vec3(0, 0, -weight / power)
+        // The balance is re-solved on the 0.1 mm box: the probe lattice (0.63 mm)
+        // interpolates ∇U too coarsely for a trap this soft sideways — its
+        // balance point sat 1.2 mm from the fine field's.
+        func placeFine(_ g: [[Complex]], _ x: Vec3) -> [[Complex]] {
+            ForceCompiler.moveWell(fine, lattice: fb, gates: 6, particle: particle, drives: g, to: x,
+                                   iterations: 6, balance: hold).drives
+        }
+        let pickDrive = placeFine(ForceCompiler.carryStep(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                                          options: o60, drives: r0.drives, to: w0, balance: hold), w0)
+        let pickU = potentialFine(pickDrive)
+
+        struct Placed { var p: Vec3; var on: Int; var site: Vec3 }  // on: −1 = support, j = fused to bead j
+        var placed: [Placed] = []
+        var push = [Double]()                          // max acoustic force on each placed bead afterwards, × weight
+        var csv = "bead,t_s,x_mm,y_mm,z_mm\n"
+        var t = 0.0
+        var misses = 0
+        print(String(format: "glass chamber, 10 tones, 4× holding drive (%.1f m/s rms); %d PLA beads Ø%.0f µm, support %.1f mm below the pick-up",
+                     (power / 60).squareRoot(), N, 2 * a * 1e6, (w0.z - zs) * 1000))
+        print("each bead: gentle load → carry (0.25 mm, 40 ms steps) → hover 0.15 mm up → closed-loop lowering (0.05 mm steps) → fuse on first touch")
+        for k in 0..<N {
+            let site = k == 0 ? first
+                : Vec3(placed[k - 1].p.x + 2 * a + gapAim, placed[k - 1].p.y, zs + a)
+            let hover = site + Vec3(0, 0, 0.15e-3)
+            // Drives along the way: g[0] at the pick-up (force-balanced), then one per waypoint.
+            var drives: [[[Complex]]] = [pickDrive]
+            var Us: [[Double]] = [pickU]
+            var aims: [Vec3] = [w0]
+            func addDrive(to x: Vec3) {
+                let g = placeFine(ForceCompiler.carryStep(tones, lattice: lat, gates: 6, particle: particle, wavelength: lam40,
+                                                          options: o60, drives: drives.last!, to: x, balance: hold), x)
+                drives.append(g); Us.append(potentialFine(g)); aims.append(x)
+            }
+            func waypoints(_ from: Vec3, _ to: Vec3, _ step: Double) -> [Vec3] {
+                let d = to - from, m = max(1, Int((d.length / step).rounded(.up)))
+                return (1...m).map { from + d * (Double($0) / Double(m)) }
+            }
+            // The bead and its integrator.
+            var x = w0, v = Vec3(0, 0, 0)
+            var fused: Placed? = nil
+            var recent: [Vec3] = []
+            func run(from ia: Int, to ib: Int, duration: Double, drag: Double, ramp: Bool) {
+                var tt = 0.0
+                recent.removeAll()
+                while tt < duration && fused == nil {
+                    let cmd = ramp ? min(1, tt / duration) : 1
+                    let wb = ia == ib ? 1 : max(0, cmd - tauU / duration * (1 - exp(-tt / tauU))), wa = 1 - wb
+                    guard let ga = gradU(Us[ia], x), let gb = gradU(Us[ib], x) else { return }
+                    let force = (ga * wa + gb * wb) * (-power) + Vec3(0, 0, -weight) - v * (gamma * drag)
+                    v = v + force * (dt / mass)
+                    x = x + v * dt
+                    tt += dt; t += dt
+                    // The placed beads feel the same field.
+                    for (q, pb) in placed.enumerated() {
+                        if let pa = gradU(Us[ia], pb.p), let pbg = gradU(Us[ib], pb.p) {
+                            push[q] = max(push[q], ((pa * wa + pbg * wb) * power).length / weight)
+                        }
+                    }
+                    // Contact: the support, or a placed bead — fuse where it first touches.
+                    if x.z - a <= zs {
+                        fused = Placed(p: Vec3(x.x, x.y, zs + a), on: -1, site: site)
+                    } else if let j = placed.indices.first(where: { (x - placed[$0].p).length <= 2 * a }) {
+                        let d = x - placed[j].p
+                        fused = Placed(p: placed[j].p + d * (2 * a / d.length), on: j, site: site)
+                    }
+                    if duration - tt < 0.02 { recent.append(x) }
+                    if Int((t / 2e-3).rounded()) != Int(((t - dt) / 2e-3).rounded()) {
+                        csv += String(format: "%d,%.4f,%.4f,%.4f,%.4f\n", k, t, (x.x - w0.x) * 1000,
+                                      (x.y - w0.y) * 1000, (x.z - w0.z) * 1000)
+                    }
+                }
+            }
+            func mean(_ v: [Vec3]) -> Vec3 { v.isEmpty ? x : v.reduce(Vec3(0, 0, 0), +) * (1 / Double(v.count)) }
+            // 1. Load gently at the pick-up.
+            run(from: 0, to: 0, duration: 0.3, drag: 20, ramp: false)
+            run(from: 0, to: 0, duration: 0.2, drag: 1, ramp: false)
+            if args.contains("--debug") {
+                print(String(format: "  bead %d loaded: (%+.3f, %+.3f, %+.3f) mm from the well, %.1f mm/s", k,
+                             (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000, v.length * 1000))
+            }
+            // 2. Carry across at pick-up height, then down to the hover point.
+            for wp in waypoints(w0, Vec3(hover.x, hover.y, w0.z), 0.25e-3) + waypoints(Vec3(hover.x, hover.y, w0.z), hover, 0.25e-3) {
+                addDrive(to: wp)
+                run(from: drives.count - 2, to: drives.count - 1, duration: Tstep, drag: 1, ramp: true)
+            }
+            run(from: drives.count - 1, to: drives.count - 1, duration: 0.3, drag: 1, ramp: false)
+            if args.contains("--debug") {
+                print(String(format: "  bead %d at hover: (%+.3f, %+.3f, %+.3f) mm from the hover aim, %.1f mm/s", k,
+                             (x.x - hover.x) * 1000, (x.y - hover.y) * 1000, (x.z - hover.z) * 1000, v.length * 1000))
+            }
+            // 3. Closed-loop lowering: move the well by the bead's lateral miss, 0.05 mm down per step.
+            var aim = aims.last!
+            var zAim = hover.z
+            var steps = 0
+            while fused == nil && zAim > site.z - 0.5e-3 && steps < 20 {
+                let seen = mean(recent)
+                aim = Vec3(aim.x + (site.x - seen.x), aim.y + (site.y - seen.y), zAim - 0.05e-3)
+                zAim -= 0.05e-3
+                addDrive(to: aim)
+                run(from: drives.count - 2, to: drives.count - 1, duration: Tstep, drag: 1, ramp: true)
+                if fused == nil { run(from: drives.count - 1, to: drives.count - 1, duration: 0.15, drag: 1, ramp: false) }
+                steps += 1
+            }
+            if let f = fused {
+                placed.append(f); push.append(0)
+            } else {
+                misses += 1
+                print(String(format: "  bead %d: not placed (at %.2f, %.2f, %.2f mm from the pick-up)", k,
+                             (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000))
+                break
+            }
+        }
+        print("bead   site (µm from the first site)   placed at             miss    rests on        gap to the previous   pushed afterwards")
+        var gaps: [Double] = []
+        for (k, b) in placed.enumerated() {
+            let rel = (b.p - first) * 1e6, srel = (b.site - first) * 1e6
+            let miss = Vec3(b.p.x - b.site.x, b.p.y - b.site.y, 0).length * 1e6
+            var gapText = "—"
+            if k > 0 {
+                let g = (b.p - placed[k - 1].p).length - 2 * a
+                gaps.append(g)
+                gapText = String(format: "%5.1f µm", g * 1e6)
+            }
+            print(String(format: "%3d    (%6.1f, %5.1f)                (%6.1f, %5.1f, %5.1f)  %5.1f µm  %@  %@            %@",
+                         k, srel.x, srel.y, rel.x, rel.y, rel.z, miss,
+                         (b.on < 0 ? "the support   " : String(format: "bead %d (perched)", b.on)) as NSString,
+                         gapText as NSString,
+                         k == placed.count - 1 ? "—" : String(format: "%.2f × weight", push[k])))
+        }
+        let onSupport = placed.filter { $0.on < 0 }.count
+        let worstGap = gaps.map(abs).max() ?? 0
+        let worstPush = push.dropLast().max() ?? 0
+        let ok = misses == 0 && onSupport == N && worstGap < 30e-6
+        let gate = GateResult(id: "G-B1", name: "first build: \(N) PLA beads in a row on the support, touching (|gap| < 30 µm), none lost or perched",
+                              measured: ok ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
+                              detail: String(format: "%d/%d placed on the support; worst gap %.1f µm; placed beads pushed ≤ %.2f × weight afterwards",
+                                             onSupport, N, worstGap * 1e6, worstPush))
+        print(gate.line)
+        print(String(format: "build time %.1f s (simulated); (%.1fs)", t, Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "build", gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+            var fin = "bead,x_mm,y_mm,z_mm,site_x_mm,site_y_mm,on\n"
+            for (k, b) in placed.enumerated() {
+                fin += String(format: "%d,%.4f,%.4f,%.4f,%.4f,%.4f,%d\n", k, (b.p.x - w0.x) * 1000, (b.p.y - w0.y) * 1000,
+                              (b.p.z - w0.z) * 1000, (b.site.x - w0.x) * 1000, (b.site.y - w0.y) * 1000, b.on)
+            }
+            try? csv.write(toFile: "Receipts/build_trajectories.csv", atomically: true, encoding: .utf8)
+            try? fin.write(toFile: "Receipts/build_placed.csv", atomically: true, encoding: .utf8)
+        }
+        exit(ok ? 0 : 1)
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
 case "fly":
     // A bead that moves. A 200 µm PLA bead is integrated through the carry
     // sequence of `fieldc carry` — time-averaged Gor'kov force (the acoustic
