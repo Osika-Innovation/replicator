@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-30T15:03:53Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 292.5851229429245,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "4 scatterers, 90 frequencies 30–100 kHz, SNR 40 dB; precision 36%, recall 100% (within 2.0 mm)",
+      "id" : "SCAN",
+      "measured" : 0.35526315789473684,
+      "name" : "scan of bead-tetra: image overlap with the object",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "e51c922",
+  "name" : "scan3d-bead-tetra"
+}

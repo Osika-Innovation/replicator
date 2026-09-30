@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-30T14:59:00Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 292.1112059354782,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "249 scatterers, 90 frequencies 30–100 kHz, SNR 40 dB; precision 33%, recall 99% (within 2.0 mm)",
+      "id" : "SCAN",
+      "measured" : 0.3327312863736705,
+      "name" : "scan of R: image overlap with the object",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "e51c922",
+  "name" : "scan3d-R"
+}
