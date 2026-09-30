@@ -862,7 +862,7 @@ public enum ForceCompiler {
         // reach covers its share of the shape). Then each site gathers the
         // powder that lands in its own stretch of the shape.
         let tPos = targets.map { lat.position($0.0, $0.1, $0.2) }
-        var landing: [(n: Int, v: (Double, Double))] = []
+        var landing: [(n: Int, v: (Double, Double), site: Int)] = []
         for k in 1..<(lat.nz - 1) {
             for j in 1..<(lat.ny - 1) {
                 for i in 1..<(lat.nx - 1) {
@@ -876,10 +876,12 @@ public enum ForceCompiler {
                         let w = exp(-(d[q] - dMin) / ell)
                         gv = gv + (x - t) * (w / d[q]); z += w
                     }
-                    landing.append((lat.index(i, j, k), (gv.x / z, gv.y / z)))
+                    landing.append((lat.index(i, j, k), (gv.x / z, gv.y / z), d.firstIndex(of: dMin)!))
                 }
             }
         }
+        var perSite = [Int](repeating: 0, count: targets.count)
+        for l in landing { perSite[l.site] += 1 }
         func landingSlopes(_ U: [Double]) -> [Double] {
             landing.map { l in
                 (l.v.0 * (U[l.n + 1] - U[l.n - 1]) + l.v.1 * (U[l.n + lat.nx] - U[l.n - lat.nx])) / (2 * h)
@@ -919,8 +921,11 @@ public enum ForceCompiler {
             let ls = landingSlopes(U)
             if let log, it % 50 == 1 {
                 let fun = Double(ls.filter { $0 > 0 }.count) / Double(max(ls.count, 1))
-                log(String(format: "    it %d: contrast %.2f, %d/%d sites held sideways, %.0f%% of the landing band funnels to its site",
-                           it - 1, now, hNow, targets.count, 100 * fun))
+                var ok = [Int](repeating: 0, count: targets.count)
+                for (m, l) in landing.enumerated() where ls[m] > 0 { ok[l.site] += 1 }
+                let worst = targets.indices.filter { perSite[$0] > 0 }.map { Double(ok[$0]) / Double(perSite[$0]) }.min() ?? 0
+                log(String(format: "    it %d: contrast %.2f, %d/%d sites held sideways, %.0f%% of the landing band funnels to its site (worst site %.0f%%)",
+                           it - 1, now, hNow, targets.count, 100 * fun, 100 * worst))
             }
             // loss = log smax − log smin (+ sideways depth where a target has none).
             var cw = [Double](repeating: 0, count: lat.count)
@@ -951,10 +956,22 @@ public enum ForceCompiler {
                 }
             }
             if !ls.isEmpty, smin > 0 {
+                // Per site, the mean logistic hinge of its stretch of the band; then
+                // a soft maximum over the sites, so the worst-served site leads (an
+                // average let two sites of sixteen stay empty, run after run).
                 let sig = 0.25 * (ls.reduce(0) { $0 + $1 * $1 } / Double(ls.count)).squareRoot()
                 if sig > 0 {
+                    var loss = [Double](repeating: 0, count: targets.count)
                     for (m, l) in landing.enumerated() {
-                        let q = -1 / (1 + exp(ls[m] / sig)) / (sig * Double(ls.count) * 2 * h)
+                        let u = -ls[m] / sig
+                        loss[l.site] += (u > 30 ? u : Foundation.log(1 + exp(u))) / Double(perSite[l.site])
+                    }
+                    let Tl = 0.05
+                    let lmax = loss.max()!
+                    let el = loss.map { exp(($0 - lmax) / Tl) }, zl = el.reduce(0, +)
+                    for (m, l) in landing.enumerated() {
+                        let ws = el[l.site] / zl / Double(perSite[l.site])
+                        let q = -ws / (1 + exp(ls[m] / sig)) / (sig * 2 * h)
                         cw[l.n + 1] += q * l.v.0; cw[l.n - 1] -= q * l.v.0
                         cw[l.n + lat.nx] += q * l.v.1; cw[l.n - lat.nx] -= q * l.v.1
                     }

@@ -425,15 +425,21 @@ case "drift":
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "mold":
-    // The single-shot acoustic mold. One chord drive whose potential has a well
-    // at every point of a shape (ForceCompiler.compileMold) — then a cloud of
-    // powder, released at random through the volume, drifts in it until it has
-    // collected where the wells are. A 40 µm grain in air relaxes in ~6 ms, so
-    // it is overdamped: it follows the field without swinging (what defeated
-    // single-bead carrying). Gravity stays on — force and weight both go as a³,
-    // so small grains are not weightless; the drive is set so the weakest target
-    // well holds a grain with margin. Not modelled: grain–grain contact and
-    // interaction (the cloud is dilute until it clumps), streaming.
+    // The single-shot acoustic mold: one chord drive, and a cloud of powder
+    // released at random through the volume that ends on the shape. A 40 µm
+    // grain in air relaxes in ~6 ms, so it is overdamped: it follows the field
+    // without swinging (what defeated single-bead carrying). Gravity stays on —
+    // force and weight both go as a³, so small grains are not weightless.
+    //
+    // A still field reaches a grain only within ~λ/4 of its lowest tone, so a
+    // mold of wells (`--objective wells`) catches only the powder that starts
+    // near the shape, and no drive makes the whole volume slope toward it
+    // (`--objective funnel`). The default is the SIEVE: a drive under which the
+    // shape is the only place that can hold a grain up, run at a power between
+    // what the shape holds and what anywhere else could — every other grain
+    // falls and is sprinkled in again at the top (`--no-recirculate` turns that
+    // off). Not modelled: grain–grain contact and interaction (the cloud is
+    // dilute until it clumps), streaming, the clump's own scattering.
     do {
         let ctx = try MetalContext()
         let t0 = Date()
@@ -444,7 +450,8 @@ case "mold":
         let centre = Vec3(0, 0, L / 2)
         var shape = "ring"
         if let i = args.firstIndex(of: "--shape"), i + 1 < args.count { shape = args[i + 1] }
-        var nTones = 20, nGrains = 3000
+        let objective = args.firstIndex(of: "--objective").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? "sieve"
+        var nTones = objective == "sieve" ? 40 : 20, nGrains = 3000
         if let i = args.firstIndex(of: "--tones"), i + 1 < args.count, let v = Int(args[i + 1]) { nTones = v }
         if let i = args.firstIndex(of: "--grains"), i + 1 < args.count, let v = Int(args[i + 1]) { nGrains = v }
         let freqs: [Double] = (0..<nTones).map { q in
@@ -528,8 +535,7 @@ case "mold":
         let inRelease: (Vec3) -> Bool = { x in
             x.x >= lo.x && x.x <= hi.x && x.y >= lo.y && x.y <= hi.y && x.z >= lo.z && x.z <= hi.z
         }
-        let objective = args.firstIndex(of: "--objective").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? "funnel"
-        var iters = 300
+        var iters = objective == "sieve" ? 400 : 300
         if let i = args.firstIndex(of: "--iterations"), i + 1 < args.count, let v = Int(args[i + 1]) { iters = v }
         let drives: [[Complex]]
         if objective == "wells" || objective == "sieve" {
@@ -593,16 +599,17 @@ case "mold":
         print(String(format: "  sieve: the weakest target can lift %.2f× what any point %.1f mm or more from the shape can%@",
                      contrast, rOut * 1000, contrast > 1 ? " — a power window exists" : " — no window: somewhere else holds a grain first"))
         let noGravity = args.contains("--no-gravity")
-        let sieve = args.contains("--sieve")
-        var powerX = 4.0
+        // Power: the sieve runs at the middle of its window (√contrast × what
+        // holds a grain at the weakest site); the other objectives at 4×, or --power-x.
+        var powerX = objective == "sieve" ? (contrast > 1 ? contrast.squareRoot() : 1.05) : 4.0
         if let i = args.firstIndex(of: "--power-x"), i + 1 < args.count, let v = Double(args[i + 1]) { powerX = v }
-        if sieve { powerX = contrast > 1 ? contrast.squareRoot() : 1.05 }     // the middle of the window
         let power = powerX * weight / max(fUpMin, 1e-300)
-        let recirculate = args.contains("--recirculate")
+        let recirculate = args.contains("--recirculate") || (objective == "sieve" && !args.contains("--no-recirculate"))
         let gamma = 6 * Double.pi * 1.81e-5 * grain.radius
-        print(String(format: "  drive: %.0f× what holds a grain in the weakest well (%.1f m/s rms); a grain relaxes in %.1f ms; %@",
+        print(String(format: "  drive: %.2f× what holds a grain at the weakest site (%.1f m/s rms); a grain relaxes in %.1f ms; %@; %@",
                      powerX, (power / Double(6 * nTones)).squareRoot(), grain.mass() / gamma * 1000,
-                     noGravity ? "gravity OFF (--no-gravity)" : "gravity on"))
+                     noGravity ? "gravity OFF (--no-gravity)" : "gravity on",
+                     recirculate ? "fallen grains are sprinkled in again at the top" : "fallen grains are lost"))
         // --- the powder ---
         var rng = SplitMix64(seed: 23)
         var xs: [Vec3] = (0..<nGrains).map { _ in
@@ -610,7 +617,7 @@ case "mold":
                               margin + rng.nextUnit() * (2 * hh - 2 * margin))
         }
         var alive = [Bool](repeating: true, count: nGrains)
-        var seconds = 4.0
+        var seconds = 8.0
         if let i = args.firstIndex(of: "--seconds"), i + 1 < args.count, let v = Double(args[i + 1]) { seconds = v }
         let snaps = [0.0, 0.05, 0.15, 0.4, 1.0, 2.0, 4.0, 8.0, 16.0].filter { $0 < seconds } + [seconds]
         var csv = "t_s,grain,x_mm,y_mm,z_mm\n"
@@ -682,24 +689,30 @@ case "mold":
                      100 * Double(drifting) / Double(nGrains), 100 * Double(lost) / Double(nGrains),
                      recirculate ? String(format: " (%d re-sprinkles, %.1f per grain)", resprinkled.reduce(0, +),
                                           Double(resprinkled.reduce(0, +)) / Double(nGrains)) : ""))
-        let gate = GateResult(id: "G-M1", name: "acoustic mold (\(shape)): every target well filled from a random powder cloud",
-                              measured: Double(filled) / Double(targets.count), threshold: 0.999, comparison: .greaterThan,
-                              detail: String(format: "%@ objective: %d/%d wells filled; %.0f%% of %d grains captured, %.0f%% rogue, %.0f%% lost; mold rival ratio %.2f",
-                                             objective, filled, targets.count, 100 * Double(captured) / Double(nGrains), nGrains,
-                                             100 * Double(rogue) / Double(nGrains), 100 * Double(lost) / Double(nGrains), em.rivalRatio))
-        print(gate.line)
+        let summary = String(format: "%@ objective, %d tones, %.2f× holding%@: %.1f%% of %d grains on the shape after %.0f s, %d/%d sites filled (%d–%d each), %.1f%% rogue, %.1f%% lost; lift contrast %.2f",
+                             objective, nTones, powerX, recirculate ? String(format: ", %.1f re-sprinkles per grain", Double(resprinkled.reduce(0, +)) / Double(nGrains)) : "",
+                             100 * Double(captured) / Double(nGrains), nGrains, snaps.last!, filled, targets.count,
+                             perTarget.min() ?? 0, perTarget.max() ?? 0,
+                             100 * Double(rogue) / Double(nGrains), 100 * Double(lost) / Double(nGrains), contrast)
+        let gates = [
+            GateResult(id: "G-M1", name: "acoustic mold (\(shape)): every site of the shape holds powder",
+                       measured: Double(filled) / Double(targets.count), threshold: 0.999, comparison: .greaterThan, detail: summary),
+            GateResult(id: "G-M2", name: "acoustic mold (\(shape)): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+                       measured: Double(captured) / Double(nGrains), threshold: 0.95, comparison: .greaterThan, detail: summary)]
+        for g in gates { print(g.line) }
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         var tcsv = "x_mm,y_mm,z_mm,grains\n"
         for (q, p) in snapped.enumerated() {
             tcsv += String(format: "%.3f,%.3f,%.3f,%d\n", (p.x - centre.x) * 1000, (p.y - centre.y) * 1000, (p.z - centre.z) * 1000, perTarget[q])
         }
         if args.contains("--receipt") {
-            writeReceipt(Receipt(name: "mold-" + shape, gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
+            writeReceipt(Receipt(name: "mold-\(shape)-\(objective)", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
                                  device: deviceName(), gitSHA: gitSHA()))
         }
-        try? csv.write(toFile: "Receipts/mold_\(shape)_grains.csv", atomically: true, encoding: .utf8)
-        try? tcsv.write(toFile: "Receipts/mold_\(shape)_targets.csv", atomically: true, encoding: .utf8)
-        try? captureCSV.write(toFile: "Receipts/mold_\(shape)_capture.csv", atomically: true, encoding: .utf8)
+        let base = "Receipts/mold_\(shape)" + (objective == "sieve" ? "" : "_\(objective)")
+        try? csv.write(toFile: base + "_grains.csv", atomically: true, encoding: .utf8)
+        try? tcsv.write(toFile: base + "_targets.csv", atomically: true, encoding: .utf8)
+        try? captureCSV.write(toFile: base + "_capture.csv", atomically: true, encoding: .utf8)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "scan3d":
