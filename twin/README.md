@@ -22,6 +22,7 @@ swift build -c release
 ./.build/release/fieldc levitate --receipt    # the drive to hold PLA / aluminium / steel against gravity, in SI
 ./.build/release/fieldc carry --receipt       # pick up, carry 5 mm up and 5 mm across, place (G-P1)
 ./.build/release/fieldc fly --receipt         # integrate a PLA bead through the carry: drive level × step time (G-P2)
+./.build/release/fieldc build --receipt       # the first build: N beads laid in a row on a support (G-B1; --beads N)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -62,6 +63,11 @@ PLA bead needs ~160 dB and steel ~168 dB in the glass chamber (MODEL: the horn
 is a stub). The twin carries a trap 5 mm up and 5 mm across on its point,
 downhill every step (G-P1). A PLA bead integrated through the fields rides it
 at 4× the holding drive, 10 mm in 0.4 s (G-P2). See "Round 8".
+
+**2026-09-30 — the first build.** Five PLA beads are laid in a row on a
+support, each within 2–3.5 µm of its site and touching its neighbour (7–9 µm
+gaps), by compiling the force balance rather than the potential minimum and
+placing closed-loop (G-B1). See "Round 9".
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -111,6 +117,43 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 9 — the first build (2026-09-30)
+
+**Five beads laid in a row (`fieldc build`, G-B1).** Five Ø200 µm PLA beads are
+laid in a row on a support in the glass chamber. Each is loaded into the
+unique 10-tone trap at the mid-plane and carried across and 2 mm down. It is
+then lowered onto the support beside the previous bead, and fuses where it
+first touches (a binder coat).
+
+![The twin's first build](shots/build_row.svg)
+
+* **Compile the force balance, not the potential minimum.** A bead under
+  gravity rests where the trap's force equals its weight, not at the
+  potential's minimum. Compiled as a minimum, a loaded bead hung 0.2 mm low and
+  0.5 mm aside, because the well is soft sideways and its axes tilt. That
+  scattered the first attempt's beads by 0.3–2 mm, one perched on another.
+  `moveWell` and `carryStep` now take the external force per unit drive power
+  (∇U(x) = −(mg/P) ẑ), so the bead rests on its aim.
+* **Solve the balance where the bead lives.** On the 0.63 mm probe lattice the
+  interpolated balance point sat 1.2 mm from the fine field's. The balance is
+  now re-solved on a 0.1 mm box of exact modal rows; the lattice still does the
+  rival suppression.
+* **Closed-loop placement.** Before and during the lowering, the twin reads
+  where the bead hangs (as the machine's scan would) and moves the well by the
+  bead's miss. Each next site is laid off the placed bead's actual position.
+* **Result:** 5/5 beads on the support, 2–3.5 µm from their sites, neighbours
+  7–9 µm apart. The aim was 10 µm, so a miss leaves a gap rather than a perch.
+  The row is straight to ±2 µm, and the build takes 8.5 s of simulated time.
+* **A requirement it found:** the traps that bring later beads push the placed
+  ones with up to 4.5× their weight. The binder, or the fuse step, must hold
+  that.
+
+`python3 Tools/plot_build.py` redraws the figure from `Receipts/build_*.csv`.
+
+**Not modelled:** scattering by the support and the placed beads (the support
+is taken as an acoustically open mesh); secondary Bjerknes forces between
+beads; streaming; how the binder cures.
 
 ## Round 8 — how hard to drive, and how to carry (2026-09-29)
 

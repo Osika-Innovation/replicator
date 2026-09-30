@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-09-30T12:18:31Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 104.2958710193634,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "5\/5 placed on the support; worst gap 9.0 µm; placed beads pushed ≤ 4.52 × weight afterwards",
+      "id" : "G-B1",
+      "measured" : 1,
+      "name" : "first build: 5 PLA beads in a row on the support, touching (|gap| < 30 µm), none lost or perched",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "fd0b816",
+  "name" : "build"
+}
