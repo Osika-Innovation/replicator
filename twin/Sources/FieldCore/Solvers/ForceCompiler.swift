@@ -482,7 +482,11 @@ public enum ForceCompiler {
                 }
                 spread(&cw, ti, -sm / (d0 * d0))
             }
-            let grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            // Adam sees the gradient's direction only: a Gor'kov potential is ∝ a³, so for
+            // fine powder the raw gradients are ~1e-20 and Adam's ε would stall every step.
+            let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
+            if gn > 0 { grad = grad.map { $0.map { $0 * (1 / gn) } } }
             // Adam step, descent; back onto the unit sphere.
             for f in g.indices {
                 for i in 0..<G {
@@ -501,6 +505,487 @@ public enum ForceCompiler {
                 if better(r, best) { best = r }
             }
         }
+        return best
+    }
+
+    // MARK: - An acoustic mold: many wells at once
+
+    public struct Mold: Sendable {
+        /// Per-tone drives, total power Σ|g|² = 1.
+        public var drives: [[Complex]]
+        /// Each target's shell depth (J per unit drive power); ≤ 0: no well there.
+        public var depths: [Double]
+        /// Deepest rival well (outside every target's λ/8) over the shallowest target.
+        public var rivalRatio: Double
+        /// Targets with a well within λ/8.
+        public var formed: Int
+    }
+
+    /// Score a mold: every target should be a well, and no other well should
+    /// come near the shallowest of them.
+    public static func evaluateMold(_ U: [Double], lattice lat: FieldLattice, targets: [(Int, Int, Int)],
+                                    options o: Options, wavelength: Double) -> (depths: [Double], rivalRatio: Double, formed: Int) {
+        let ws = wells(U, lattice: lat, steps: o.shellSteps)
+        let tp = targets.map { lat.position($0.0, $0.1, $0.2) }
+        let s = o.shellSteps
+        let axes = [1, lat.nx, lat.nx * lat.ny]
+        let depths = targets.map { t -> Double in
+            let n = lat.index(t.0, t.1, t.2)
+            var m = 0.0
+            for st in axes { m += U[n - s * st] + U[n + s * st] }
+            return m / 6 - U[n]
+        }
+        let formed = tp.filter { p in ws.contains { ($0.position - p).length <= wavelength / 8 } }.count
+        let rivals = ws.filter { w in !tp.contains { ($0 - w.position).length <= wavelength / 4 } }
+        let weakest = max(depths.min() ?? 0, 1e-300)
+        return (depths, (rivals.first?.depth ?? 0) / weakest, formed)
+    }
+
+    /// Compile a mold: one drive whose potential has a well at every target and
+    /// as few others as possible. Adam on the drives, minimising
+    /// softmax(rival well depths) / softmin(target depths) — the single-trap
+    /// `smooth` objective with the target term generalised to many.
+    public static func compileMold(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
+                                   particle: ParticleMaterial, targets: [(Int, Int, Int)], wavelength: Double,
+                                   options o: Options = Options(), start: [[Complex]],
+                                   iterations: Int = 300, log: ((String) -> Void)? = nil) -> Mold {
+        let s = o.shellSteps
+        let axes = [1, lat.nx, lat.nx * lat.ny]
+        let tIdx = targets.map { lat.index($0.0, $0.1, $0.2) }
+        let tPos = targets.map { lat.position($0.0, $0.1, $0.2) }
+        func depth(_ U: [Double], _ n: Int) -> Double {
+            var m = 0.0
+            for st in axes { m += U[n - s * st] + U[n + s * st] }
+            return m / 6 - U[n]
+        }
+        func spread(_ c: inout [Double], _ n: Int, _ w: Double) {
+            c[n] -= w
+            for st in axes { c[n - s * st] += w / 6; c[n + s * st] += w / 6 }
+        }
+        var g = normalize(start)
+        func score(_ U: [Double]) -> (Mold, Double) {
+            let e = evaluateMold(U, lattice: lat, targets: targets, options: o, wavelength: wavelength)
+            let m = Mold(drives: g, depths: e.depths, rivalRatio: e.rivalRatio, formed: e.formed)
+            // Prefer every target formed; then a low rival ratio.
+            return (m, Double(e.formed) - min(e.rivalRatio, 50) / 100)
+        }
+        var (best, bestScore) = score(potential(tones, drives: g, gates: G, particle: particle, count: lat.count))
+        var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
+        let b1 = 0.9, b2 = 0.999
+        let lr0 = 0.05 / Double(2 * G * tones.count).squareRoot()
+        for it in 1...iterations {
+            let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
+            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let D = tIdx.map { depth(U, $0) }
+            var cw = [Double](repeating: 0, count: lat.count)
+            let dMin = D.min()!
+            if dMin <= 0 {
+                // First make every target a well: deepen the ones that are not.
+                for (q, n) in tIdx.enumerated() where D[q] <= 0 { spread(&cw, n, -1) }
+            } else {
+                // Soft minimum over the targets.
+                let Tt = 0.1 * dMin
+                let et = D.map { exp(-($0 - dMin) / Tt) }, zt = et.reduce(0, +)
+                let wt = et.map { $0 / zt }
+                let smin = zip(wt, D).reduce(0) { $0 + $1.0 * $1.1 }
+                // Soft maximum over the rival wells.
+                let rivals = wells(U, lattice: lat, steps: s).filter { w in !tPos.contains { ($0 - w.position).length <= wavelength / 4 } }
+                    .map { lat.index($0.ijk.0, $0.ijk.1, $0.ijk.2) }
+                if rivals.isEmpty {
+                    for (q, n) in tIdx.enumerated() { spread(&cw, n, -wt[q] * (1 - (D[q] - smin) / Tt) / smin) }
+                } else {
+                    let R = rivals.map { depth(U, $0) }
+                    let mx = R.max()!
+                    let Tr = smin * (0.1 * pow(0.1, Double(it) / Double(iterations)))
+                    var w = R.map { $0 > mx - 30 * Tr ? exp(($0 - mx) / Tr) : 0 }
+                    let Z = w.reduce(0, +)
+                    w = w.map { $0 / Z }
+                    let sm = zip(w, R).reduce(0) { $0 + $1.0 * $1.1 }
+                    // r = sm / smin: ∂r = ∂sm/smin − sm ∂smin/smin²
+                    for (q, n) in rivals.enumerated() where w[q] > 1e-12 {
+                        spread(&cw, n, w[q] * (1 + (R[q] - sm) / Tr) / smin)
+                    }
+                    for (q, n) in tIdx.enumerated() {
+                        spread(&cw, n, -sm / (smin * smin) * wt[q] * (1 - (D[q] - smin) / Tt))
+                    }
+                }
+                // Centring: a target with depth is not yet a well ON its point — its
+                // minimum can sit a millimetre off. + μ Σ_t Σ_j slope²/d_t², slope_j the
+                // one-step difference across the target.
+                let mu = 2.0
+                for (q, n) in tIdx.enumerated() where D[q] > 0 {
+                    var sl2 = 0.0
+                    for st in axes {
+                        let sl = (U[n + st] - U[n - st]) / 2
+                        sl2 += sl * sl
+                        cw[n + st] += mu * sl / (D[q] * D[q])
+                        cw[n - st] -= mu * sl / (D[q] * D[q])
+                    }
+                    spread(&cw, n, -2 * mu * sl2 / (D[q] * D[q] * D[q]))
+                }
+            }
+            var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
+            if gn > 0 { grad = grad.map { $0.map { $0 * (1 / gn) } } }
+            for f in g.indices {
+                for i in 0..<G {
+                    let gr = grad[f][i]
+                    m1[f][i] = m1[f][i] * b1 + gr * (1 - b1)
+                    v2[f][i] = v2[f][i] * b2 + gr.magnitudeSquared * (1 - b2)
+                    let mh = m1[f][i] * (1 / (1 - pow(b1, Double(it))))
+                    let vh = v2[f][i] / (1 - pow(b2, Double(it)))
+                    g[f][i] -= mh * (lr / (vh.squareRoot() + 1e-12))
+                }
+            }
+            g = normalize(g)
+            if it % 20 == 0 || it == iterations {
+                let (m, sc) = score(potential(tones, drives: g, gates: G, particle: particle, count: lat.count))
+                if sc > bestScore { best = m; bestScore = sc }
+                if let log, it % 60 == 0 {
+                    let pos = m.depths.filter { $0 > 0 }.count
+                    log(String(format: "    it %d: %d/%d formed, %d/%d positive depth, depth %.2e…%.2e, rival/weakest %.2f",
+                               it, m.formed, targets.count, pos, targets.count, m.depths.min() ?? 0, m.depths.max() ?? 0,
+                               min(m.rivalRatio, 1e6)))
+                }
+            }
+        }
+        return best
+    }
+
+    // MARK: - A mold that funnels
+
+    public struct Funnel: Sendable {
+        /// Per-tone drives, total power Σ|g|² = 1.
+        public var drives: [[Complex]]
+        /// Share of the release volume (outside the capture radius) where U
+        /// falls toward the nearest target.
+        public var funnelled: Double
+        /// The same on the start drive, for comparison.
+        public var funnelledAtStart: Double
+    }
+
+    /// Compile a mold for the FLOW, not for its wells. A well at every target
+    /// is not enough: powder spread through the volume ends wherever its own
+    /// basin leads, and `compileMold`'s rival-well penalty left most of it in
+    /// layers a wavelength above and below the targets (`fieldc mold`,
+    /// 30 Sep). So ask, at every probe point of the release volume outside the
+    /// capture radius, that U fall toward the nearest target:
+    ///
+    ///     s(x) = ∇U(x) · ∇V(x) > 0,   V = −ℓ log Σ_t exp(−|x − t|/ℓ),
+    ///
+    /// V the distance to the nearest target, softened over ℓ so a ridge
+    /// between two targets asks for nothing. Wherever s > 0 the distance to
+    /// the nearest target falls along an overdamped grain's path (a Lyapunov
+    /// function), so a grain released there must end in a target, and every
+    /// target is a well. The loss is the logistic hinge Σ log(1 + e^(−s/σ)),
+    /// σ a quarter of the rms slope; ∇U is the lattice's central difference,
+    /// so the loss is a lattice weighting of U and `adjoint` gives its
+    /// gradient. Adam on the drives, gradients normalised; the best drive by
+    /// funnelled share is returned.
+    public static func compileFunnel(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
+                                     particle: ParticleMaterial, targets: [Vec3], capture: Double,
+                                     release: (Vec3) -> Bool, softness ell: Double, start: [[Complex]],
+                                     iterations: Int = 300, log: ((String) -> Void)? = nil) -> Funnel {
+        let h = lat.spacing
+        let axes = [1, lat.nx, lat.nx * lat.ny]
+        // The release volume's probe points, and ∇V at each.
+        var idx: [Int] = [], dir: [(Double, Double, Double)] = []
+        for k in 1..<(lat.nz - 1) {
+            for j in 1..<(lat.ny - 1) {
+                for i in 1..<(lat.nx - 1) {
+                    let x = lat.position(i, j, k)
+                    guard release(x) else { continue }
+                    let d = targets.map { ($0 - x).length }
+                    let dMin = d.min()!
+                    guard dMin > capture else { continue }
+                    var gv = Vec3(0, 0, 0), z = 0.0
+                    for (q, t) in targets.enumerated() {
+                        let w = exp(-(d[q] - dMin) / ell)
+                        gv = gv + (x - t) * (w / d[q]); z += w
+                    }
+                    gv = gv * (1 / z)
+                    idx.append(lat.index(i, j, k)); dir.append((gv.x, gv.y, gv.z))
+                }
+            }
+        }
+        let M = Double(idx.count)
+        func slopes(_ U: [Double]) -> [Double] {
+            idx.indices.map { m in
+                let n = idx[m], v = dir[m]
+                return (v.0 * (U[n + axes[0]] - U[n - axes[0]]) + v.1 * (U[n + axes[1]] - U[n - axes[1]])
+                        + v.2 * (U[n + axes[2]] - U[n - axes[2]])) / (2 * h)
+            }
+        }
+        func share(_ s: [Double]) -> Double { Double(s.filter { $0 > 0 }.count) / M }
+        var g = normalize(start)
+        let s0 = share(slopes(potential(tones, drives: g, gates: G, particle: particle, count: lat.count)))
+        var best = Funnel(drives: g, funnelled: s0, funnelledAtStart: s0)
+        var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
+        let b1 = 0.9, b2 = 0.999
+        let lr0 = 0.05 / Double(2 * G * tones.count).squareRoot()
+        for it in 1...iterations {
+            let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
+            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let s = slopes(U)
+            let now = share(s)
+            if now > best.funnelled { best = Funnel(drives: g, funnelled: now, funnelledAtStart: s0) }
+            if let log, it % 50 == 1 { log(String(format: "    it %d: %.1f%% of the release volume funnels", it - 1, 100 * now)) }
+            let sigma = 0.25 * (s.reduce(0) { $0 + $1 * $1 } / M).squareRoot()
+            guard sigma > 0 else { break }
+            var cw = [Double](repeating: 0, count: lat.count)
+            for m in idx.indices {
+                let q = -1 / (1 + exp(s[m] / sigma)) / (sigma * M * 2 * h)      // ∂L/∂s ÷ 2h
+                let n = idx[m], v = dir[m]
+                cw[n + axes[0]] += q * v.0; cw[n - axes[0]] -= q * v.0
+                cw[n + axes[1]] += q * v.1; cw[n - axes[1]] -= q * v.1
+                cw[n + axes[2]] += q * v.2; cw[n - axes[2]] -= q * v.2
+            }
+            var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
+            if gn > 0 { grad = grad.map { $0.map { $0 * (1 / gn) } } }
+            for f in g.indices {
+                for i in 0..<G {
+                    let gr = grad[f][i]
+                    m1[f][i] = m1[f][i] * b1 + gr * (1 - b1)
+                    v2[f][i] = v2[f][i] * b2 + gr.magnitudeSquared * (1 - b2)
+                    let mh = m1[f][i] * (1 / (1 - pow(b1, Double(it))))
+                    let vh = v2[f][i] / (1 - pow(b2, Double(it)))
+                    g[f][i] -= mh * (lr / (vh.squareRoot() + 1e-12))
+                }
+            }
+            g = normalize(g)
+        }
+        let last = share(slopes(potential(tones, drives: g, gates: G, particle: particle, count: lat.count)))
+        if last > best.funnelled { best = Funnel(drives: g, funnelled: last, funnelledAtStart: s0) }
+        log?(String(format: "    best: %.1f%% of the release volume funnels (start %.1f%%)", 100 * best.funnelled, 100 * s0))
+        return best
+    }
+
+    // MARK: - An acoustic sieve
+
+    public struct Sieve: Sendable {
+        /// Per-tone drives, total power Σ|g|² = 1.
+        public var drives: [[Complex]]
+        /// The weakest target's lift over the most any point away from the
+        /// targets can lift. > 1: a power window where only targets hold.
+        public var contrast: Double
+        public var contrastAtStart: Double
+    }
+
+    /// Compile a sieve: a field in which ONLY the targets can hold a grain up.
+    ///
+    /// A still field reaches a grain only within about λ/4 of its lowest tone
+    /// (`fieldc mold`: 90% capture from within 2 mm of the ring, none from
+    /// beyond 6 mm, whatever the objective — a resonant chamber's landscape
+    /// repeats every half wavelength). Gravity reaches everywhere. A grain can
+    /// only come to rest where the lift L = −∂U/∂z (per unit power) equals
+    /// mg/P, so if every target lifts more than any point away from the
+    /// targets, there is a power at which the targets hold and nothing else
+    /// can: every other grain falls, and powder sprinkled from above collects
+    /// only in the targets. The compiler maximises that contrast — the soft
+    /// minimum over targets of the best lift in each target's column (±2
+    /// steps) over the soft maximum of the lift everywhere `outside` the
+    /// shape's neighbourhood (the targets sample the shape; a grain held
+    /// between two of them is still on the shape) — on the unit sphere of
+    /// drives, with Adam.
+    /// A sideways term keeps every target a well in the horizontal plane, at
+    /// its level and one step below (where a held grain sags to): a grain that
+    /// lands on the shape then stays at the site it landed on, instead of
+    /// sliding along the shape to a few deep spots (without it the powder all
+    /// reached the ring but gathered at 8 of 16 sites).
+    public static func compileSieve(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
+                                    particle: ParticleMaterial, targets: [(Int, Int, Int)], outside isOutside: (Vec3) -> Bool,
+                                    sideways sw: Int = 2, softness ell: Double = 0.5e-3, options o: Options = Options(),
+                                    start: [[Complex]], iterations: Int = 300, log: ((String) -> Void)? = nil) -> Sieve {
+        let h = lat.spacing
+        let sz = lat.nx * lat.ny
+        let axes = [1, lat.nx, sz]
+        var outside: [Int] = []
+        for k in 1..<(lat.nz - 1) {
+            for j in 1..<(lat.ny - 1) {
+                for i in 1..<(lat.nx - 1) where isOutside(lat.position(i, j, k)) { outside.append(lat.index(i, j, k)) }
+            }
+        }
+        // A held grain rests where the lift has fallen to its weight, ABOVE the
+        // lift's peak. Asking for the lift at the target itself (and one step
+        // up) puts the rest point on the target; a column reaching two steps
+        // down let the powder hang a millimetre under the ring.
+        let columns: [[Int]] = targets.map { t in
+            (0...1).compactMap { dk in
+                let k = t.2 + dk
+                return k >= 1 && k < lat.nz - 1 ? lat.index(t.0, t.1, k) : nil
+            }
+        }
+        let tIdx = targets.map { lat.index($0.0, $0.1, $0.2) }
+        let s = o.shellSteps
+        func lift(_ U: [Double], _ n: Int) -> Double { -(U[n + sz] - U[n - sz]) / (2 * h) }
+        func depth(_ U: [Double], _ n: Int) -> Double {
+            var m = 0.0
+            for st in axes { m += U[n - s * st] + U[n + s * st] }
+            return m / 6 - U[n]
+        }
+        func measure(_ U: [Double]) -> Double {
+            let out = outside.reduce(0.0) { max($0, lift(U, $1)) }
+            let tl = columns.map { c in c.reduce(-Double.infinity) { max($0, lift(U, $1)) } }.min() ?? 0
+            return tl / max(out, 1e-300)
+        }
+        // Sideways: at each target's level and one up (where its grains rest),
+        // each of the four horizontal neighbours `sw` steps out must lie above
+        // the centre — then a minimum sits within ±sw steps of the target, a
+        // real trap, where a positive mean depth still allowed a tilt that
+        // slid the grain to the next site.
+        let levels: [(site: Int, n: Int)] = targets.enumerated().flatMap { q, t in
+            [0, 1].compactMap { dk -> (site: Int, n: Int)? in
+                let k = t.2 + dk
+                guard k >= 1, k < lat.nz - 1, t.0 - sw >= 0, t.0 + sw < lat.nx, t.1 - sw >= 0, t.1 + sw < lat.ny else { return nil }
+                return (q, lat.index(t.0, t.1, k))
+            }
+        }
+        let side = [-sw, sw, -sw * lat.nx, sw * lat.nx]
+        func held(_ U: [Double]) -> Int {
+            // Held at BOTH levels: a held grain rests between them.
+            (0..<targets.count).filter { q in
+                let ls = levels.filter { $0.site == q }
+                return !ls.isEmpty && ls.allSatisfy { lv in side.allSatisfy { U[lv.n + $0] > U[lv.n] } }
+            }.count
+        }
+        // Best: a real window first (contrast > 1.2), then the most sites held sideways, then the contrast.
+        func better(_ a: (Double, Int), than b: (Double, Int)) -> Bool {
+            let wa = a.0 > 1.2, wb = b.0 > 1.2
+            if wa != wb { return wa }
+            if a.1 != b.1 { return a.1 > b.1 }
+            return a.0 > b.0
+        }
+        // Landing: where a falling grain is caught — near the shape, off the
+        // sites — U must fall sideways toward the nearest site (the funnel of
+        // `compileFunnel`, here only across the landing band, where one site's
+        // reach covers its share of the shape). Then each site gathers the
+        // powder that lands in its own stretch of the shape.
+        let tPos = targets.map { lat.position($0.0, $0.1, $0.2) }
+        var landing: [(n: Int, v: (Double, Double))] = []
+        for k in 1..<(lat.nz - 1) {
+            for j in 1..<(lat.ny - 1) {
+                for i in 1..<(lat.nx - 1) {
+                    let x = lat.position(i, j, k)
+                    guard !isOutside(x) else { continue }
+                    let d = tPos.map { ($0 - x).length }
+                    let dMin = d.min()!
+                    guard dMin > 1.5 * h else { continue }
+                    var gv = Vec3(0, 0, 0), z = 0.0
+                    for (q, t) in tPos.enumerated() {
+                        let w = exp(-(d[q] - dMin) / ell)
+                        gv = gv + (x - t) * (w / d[q]); z += w
+                    }
+                    landing.append((lat.index(i, j, k), (gv.x / z, gv.y / z)))
+                }
+            }
+        }
+        func landingSlopes(_ U: [Double]) -> [Double] {
+            landing.map { l in
+                (l.v.0 * (U[l.n + 1] - U[l.n - 1]) + l.v.1 * (U[l.n + lat.nx] - U[l.n - lat.nx])) / (2 * h)
+            }
+        }
+        var g = normalize(start)
+        let U0 = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+        let c0 = measure(U0)
+        var best = Sieve(drives: g, contrast: c0, contrastAtStart: c0)
+        var bestKey = (c0, held(U0))
+        var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
+        let b1 = 0.9, b2 = 0.999
+        let lr0 = 0.05 / Double(2 * G * tones.count).squareRoot()
+        for it in 1...iterations {
+            let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
+            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            // Soft maximum over the outside (log-sum-exp).
+            let Lo = outside.map { lift(U, $0) }
+            let mo = Lo.max()!
+            let To = max(0.03 * abs(mo), 1e-300)
+            let eo = Lo.map { exp(($0 - mo) / To) }, zo = eo.reduce(0, +)
+            let smax = mo + To * Foundation.log(zo)
+            // Each target's best lift in its column (log-sum-exp), then a soft minimum over targets.
+            var colW: [[Double]] = [], colL: [Double] = []
+            for c in columns {
+                let L = c.map { lift(U, $0) }, m = L.max()!
+                let T = max(0.03 * abs(m), 1e-300)
+                let e = L.map { exp(($0 - m) / T) }, z = e.reduce(0, +)
+                colW.append(e.map { $0 / z }); colL.append(m + T * Foundation.log(z))
+            }
+            let mt = colL.min()!
+            let Tt = max(0.05 * abs(mt), 1e-300)
+            let et = colL.map { exp(-($0 - mt) / Tt) }, zt = et.reduce(0, +)
+            let smin = mt - Tt * Foundation.log(zt)
+            let now = measure(U), hNow = held(U)
+            if better((now, hNow), than: bestKey) { best = Sieve(drives: g, contrast: now, contrastAtStart: c0); bestKey = (now, hNow) }
+            let ls = landingSlopes(U)
+            if let log, it % 50 == 1 {
+                let fun = Double(ls.filter { $0 > 0 }.count) / Double(max(ls.count, 1))
+                log(String(format: "    it %d: contrast %.2f, %d/%d sites held sideways, %.0f%% of the landing band funnels to its site",
+                           it - 1, now, hNow, targets.count, 100 * fun))
+            }
+            // loss = log smax − log smin (+ sideways depth where a target has none).
+            var cw = [Double](repeating: 0, count: lat.count)
+            func addLift(_ n: Int, _ w: Double) { cw[n + sz] -= w / (2 * h); cw[n - sz] += w / (2 * h) }
+            for (q, n) in outside.enumerated() where eo[q] > 1e-12 { addLift(n, eo[q] / zo / smax) }
+            if smin > 0 {
+                for (t, c) in columns.enumerated() {
+                    let wt = et[t] / zt
+                    guard wt > 1e-12 else { continue }
+                    for (q, n) in c.enumerated() { addLift(n, -wt * colW[t][q] / smin) }
+                }
+            } else {
+                for (t, c) in columns.enumerated() where colL[t] <= 0 {
+                    for (q, n) in c.enumerated() { addLift(n, -colW[t][q] / max(smax, 1e-300)) }
+                }
+            }
+            // Sideways: a soft hinge on each neighbour's rise over the centre, in
+            // units of the lift a site must give (rise ≥ 0.2·smin·sw·h).
+            if smin > 0 {
+                let unit = 0.2 * smin * Double(sw) * h, tau = 0.5 * unit
+                let per = 1 / (tau * Double(levels.count * side.count))
+                for lv in levels {
+                    for st in side {
+                        let d = U[lv.n + st] - U[lv.n]
+                        let q = -per / (1 + exp((d - unit) / tau))
+                        cw[lv.n + st] += q; cw[lv.n] -= q
+                    }
+                }
+            }
+            if !ls.isEmpty, smin > 0 {
+                let sig = 0.25 * (ls.reduce(0) { $0 + $1 * $1 } / Double(ls.count)).squareRoot()
+                if sig > 0 {
+                    for (m, l) in landing.enumerated() {
+                        let q = -1 / (1 + exp(ls[m] / sig)) / (sig * Double(ls.count) * 2 * h)
+                        cw[l.n + 1] += q * l.v.0; cw[l.n - 1] -= q * l.v.0
+                        cw[l.n + lat.nx] += q * l.v.1; cw[l.n - lat.nx] -= q * l.v.1
+                    }
+                }
+            }
+            for n in tIdx where depth(U, n) <= 0 {
+                // Deepen: −depth, spread over the shell, scaled like the lift terms.
+                let w = 1 / max(smax * h, 1e-300)
+                cw[n] += w
+                for st in axes { cw[n - s * st] -= w / 6; cw[n + s * st] -= w / 6 }
+            }
+            var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
+            if gn > 0 { grad = grad.map { $0.map { $0 * (1 / gn) } } }
+            for f in g.indices {
+                for i in 0..<G {
+                    let gr = grad[f][i]
+                    m1[f][i] = m1[f][i] * b1 + gr * (1 - b1)
+                    v2[f][i] = v2[f][i] * b2 + gr.magnitudeSquared * (1 - b2)
+                    let mh = m1[f][i] * (1 / (1 - pow(b1, Double(it))))
+                    let vh = v2[f][i] / (1 - pow(b2, Double(it)))
+                    g[f][i] -= mh * (lr / (vh.squareRoot() + 1e-12))
+                }
+            }
+            g = normalize(g)
+        }
+        let UL = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+        if better((measure(UL), held(UL)), than: bestKey) {
+            best = Sieve(drives: g, contrast: measure(UL), contrastAtStart: c0); bestKey = (measure(UL), held(UL))
+        }
+        log?(String(format: "    best: contrast %.2f, %d/%d sites held sideways (start %.2f)", best.contrast, bestKey.1, targets.count, c0))
         return best
     }
 

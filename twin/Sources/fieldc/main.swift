@@ -424,6 +424,284 @@ case "drift":
         exit(gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
+case "mold":
+    // The single-shot acoustic mold. One chord drive whose potential has a well
+    // at every point of a shape (ForceCompiler.compileMold) — then a cloud of
+    // powder, released at random through the volume, drifts in it until it has
+    // collected where the wells are. A 40 µm grain in air relaxes in ~6 ms, so
+    // it is overdamped: it follows the field without swinging (what defeated
+    // single-bead carrying). Gravity stays on — force and weight both go as a³,
+    // so small grains are not weightless; the drive is set so the weakest target
+    // well holds a grain with margin. Not modelled: grain–grain contact and
+    // interaction (the cloud is dilute until it clumps), streaming.
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        let air = RH1Freestanding.roomAir
+        let design = RH1Design()
+        let L = design.buildChamberHeight * 0.001
+        let lam40 = air.wavelength(at: 40_000)
+        let centre = Vec3(0, 0, L / 2)
+        var shape = "ring"
+        if let i = args.firstIndex(of: "--shape"), i + 1 < args.count { shape = args[i + 1] }
+        var nTones = 20, nGrains = 3000
+        if let i = args.firstIndex(of: "--tones"), i + 1 < args.count, let v = Int(args[i + 1]) { nTones = v }
+        if let i = args.firstIndex(of: "--grains"), i + 1 < args.count, let v = Int(args[i + 1]) { nGrains = v }
+        let freqs: [Double] = (0..<nTones).map { q in
+            let frac: Double = (Double(q) + 0.5) / Double(nTones)
+            return 30_000.0 + 40_000.0 * frac
+        }
+        let grain = ParticleMaterial(density: 1240, soundSpeed: 2220, radius: 20e-6)   // Ø40 µm PLA powder
+        let cav = RH1Freestanding.chamber(maxGamma: {
+            let k = air.wavenumber(at: 70_000), e = log(1e4) / 0.05
+            return (k * k + e * e).squareRoot() }())
+        let h = air.wavelength(at: freqs.max()!) / 8
+        let half = 12e-3
+        let n = Int((2 * half / h).rounded()) | 1
+        let hh = Double(n - 1) / 2 * h
+        let lat = FieldLattice(origin: centre - Vec3(hh, hh, hh), spacing: h, nx: n, ny: n, nz: n)
+        let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
+        var o = ForceCompiler.Options()
+        o.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
+        // --- the shape: target wells ---
+        // The shape is a set of segments; the targets sample it (a well at each).
+        var targetPts: [Vec3] = []
+        var segments: [(Vec3, Vec3)] = []
+        switch shape {
+        case "tetra":
+            // 4 vertices + 6 edge midpoints of a tetrahedron with 12 mm edges.
+            let e = 12e-3
+            let v = [Vec3(0, 0, 0), Vec3(e, 0, 0), Vec3(e / 2, e * 3.0.squareRoot() / 2, 0),
+                     Vec3(e / 2, e * 3.0.squareRoot() / 6, e * (2.0 / 3).squareRoot())]
+            let c = (v[0] + v[1] + v[2] + v[3]) * 0.25
+            targetPts = v.map { centre + $0 - c }
+            for i in 0..<4 { for j in (i + 1)..<4 {
+                targetPts.append(centre + (v[i] + v[j]) * 0.5 - c)
+                segments.append((centre + v[i] - c, centre + v[j] - c))
+            } }
+        default:
+            // 16 wells on a horizontal ring, 8 mm radius (3.1 mm apart).
+            targetPts = (0..<16).map { q in
+                let th = 2 * Double.pi * Double(q) / 16
+                return centre + Vec3(8e-3 * cos(th), 8e-3 * sin(th), 0)
+            }
+            segments = (0..<16).map { (targetPts[$0], targetPts[($0 + 1) % 16]) }
+        }
+        func shapeDistance(_ x: Vec3) -> Double {
+            segments.reduce(Double.infinity) { m, s in
+                let d = s.1 - s.0
+                let u = max(0, min(1, (x - s.0).dot(d) / d.dot(d)))
+                return min(m, (x - (s.0 + d * u)).length)
+            }
+        }
+        let targets = targetPts.map { p -> (Int, Int, Int) in
+            let f = (p - lat.origin) / h
+            return (Int(f.x.rounded()), Int(f.y.rounded()), Int(f.z.rounded()))
+        }
+        let snapped = targets.map { lat.position($0.0, $0.1, $0.2) }
+        print(String(format: "acoustic mold: %@, %d wells; %d tones 30–70 kHz; probe ±%.0f mm at %.2f mm (%d³); glass chamber",
+                     shape, targets.count, nTones, hh * 1000, h * 1000, n))
+        // --- fields and a multi-focus start ---
+        var tones: [ForceCompiler.Tone] = []
+        var start: [[Complex]] = []
+        for f in freqs {
+            var op = RH1Freestanding.Options()
+            op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
+            let (p, c) = RH1Freestanding.preset(op)
+            let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount, frequency: f, medium: air, zMin: zMin)
+            tones.append(ForceCompiler.Tone(frequency: f, medium: air,
+                                            rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
+                                                                            points: lat.positions, withGradient: true)))
+            let prop = Propagator(elements: p.elements, lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                  frequency: f, medium: air, gateCount: p.gateCount, elementCoupling: c,
+                                  cavity: cav, cavitySource: src)
+            let u = InverseSolver.solve(propagator: prop, points: snapped.map { .init(position: $0) },
+                                        method: .gspat, iterations: 80, trap: .twinTrap)
+            start.append(u.map { $0 * (1 / (u.l2 * Double(nTones).squareRoot())) })
+        }
+        let U0 = ForceCompiler.potential(tones, drives: start, gates: 6, particle: grain, count: lat.count)
+        let e0 = ForceCompiler.evaluateMold(U0, lattice: lat, targets: targets, options: o, wavelength: lam40)
+        print(String(format: "  multi-focus GS-PAT start: %d/%d wells formed, rival/weakest %.2f", e0.formed, targets.count, e0.rivalRatio))
+        // The powder is released through the probe box less a 2 mm margin.
+        let margin = 2e-3
+        let lo = lat.origin + Vec3(margin, margin, margin), hi = lat.origin + Vec3(2 * hh - margin, 2 * hh - margin, 2 * hh - margin)
+        let inRelease: (Vec3) -> Bool = { x in
+            x.x >= lo.x && x.x <= hi.x && x.y >= lo.y && x.y <= hi.y && x.z >= lo.z && x.z <= hi.z
+        }
+        let objective = args.firstIndex(of: "--objective").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? "funnel"
+        var iters = 300
+        if let i = args.firstIndex(of: "--iterations"), i + 1 < args.count, let v = Int(args[i + 1]) { iters = v }
+        let drives: [[Complex]]
+        if objective == "wells" || objective == "sieve" {
+            let mold = ForceCompiler.compileMold(tones, lattice: lat, gates: 6, particle: grain, targets: targets,
+                                                 wavelength: lam40, options: o, start: start, iterations: iters,
+                                                 log: args.contains("--debug") ? { print($0) } : nil)
+            if objective == "sieve" {
+                // From the wells mold: now make the targets the only places that can hold a grain up.
+                let sv = ForceCompiler.compileSieve(tones, lattice: lat, gates: 6, particle: grain, targets: targets,
+                                                    outside: { shapeDistance($0) >= 1.5e-3 }, options: o, start: mold.drives, iterations: iters,
+                                                    log: args.contains("--debug") ? { print($0) } : nil)
+                drives = sv.drives
+                print(String(format: "  sieve compile: lift contrast %.2f (from the wells mold's %.2f)", sv.contrast, sv.contrastAtStart))
+            } else { drives = mold.drives }
+        } else {
+            let fun = ForceCompiler.compileFunnel(tones, lattice: lat, gates: 6, particle: grain, targets: snapped,
+                                                  capture: 0.75e-3, release: inRelease, softness: 0.5e-3, start: start,
+                                                  iterations: iters, log: args.contains("--debug") ? { print($0) } : nil)
+            drives = fun.drives
+            print(String(format: "  funnel: U falls toward the nearest target through %.0f%% of the release volume (the start: %.0f%%)",
+                         100 * fun.funnelled, 100 * fun.funnelledAtStart))
+        }
+        let U = ForceCompiler.potential(tones, drives: drives, gates: 6, particle: grain, count: lat.count)
+        let em = ForceCompiler.evaluateMold(U, lattice: lat, targets: targets, options: o, wavelength: lam40)
+        print(String(format: "  compiled mold (%@):  %d/%d wells formed, rival/weakest %.2f", objective, em.formed, targets.count, em.rivalRatio))
+        // --- power: the weakest target well must hold a grain, 4× over ---
+        func grad(_ x: Vec3) -> Vec3? {
+            let f = (x - lat.origin) / h
+            let i0 = Int(f.x.rounded(.down)), j0 = Int(f.y.rounded(.down)), k0 = Int(f.z.rounded(.down))
+            guard i0 >= 1, j0 >= 1, k0 >= 1, i0 + 2 < lat.nx, j0 + 2 < lat.ny, k0 + 2 < lat.nz else { return nil }
+            let tx = f.x - Double(i0), ty = f.y - Double(j0), tz = f.z - Double(k0)
+            var gs = Vec3(0, 0, 0)
+            for (dk, wz) in [(0, 1 - tz), (1, tz)] { for (dj, wy) in [(0, 1 - ty), (1, ty)] { for (di, wx) in [(0, 1 - tx), (1, tx)] {
+                let i = i0 + di, j = j0 + dj, k = k0 + dk
+                gs = gs + Vec3((U[lat.index(i + 1, j, k)] - U[lat.index(i - 1, j, k)]) / (2 * h),
+                               (U[lat.index(i, j + 1, k)] - U[lat.index(i, j - 1, k)]) / (2 * h),
+                               (U[lat.index(i, j, k + 1)] - U[lat.index(i, j, k - 1)]) / (2 * h)) * (wx * wy * wz)
+            } } }
+            return gs
+        }
+        let weight = grain.mass() * 9.81
+        var fUpMin = Double.infinity
+        for p in snapped {
+            var up = 0.0
+            for q in -8...8 { if let g = grad(p + Vec3(0, 0, Double(q) * h * 0.25)) { up = max(up, -g.z) } }
+            fUpMin = min(fUpMin, up)
+        }
+        // The sieve: the most any point away from the targets can lift (−∂U/∂z,
+        // per unit power). A grain can only come to rest where the lift equals
+        // its weight, so at a power between weight/fUpMin and weight/liftOut the
+        // targets hold and nothing else in the box can — every other grain falls.
+        let rOut = 1.5e-3
+        var liftOut = 0.0
+        for k in 1..<(lat.nz - 1) { for j in 1..<(lat.ny - 1) { for i in 1..<(lat.nx - 1) {
+            let x = lat.position(i, j, k)
+            guard shapeDistance(x) >= rOut else { continue }
+            let n = lat.index(i, j, k)
+            liftOut = max(liftOut, -(U[n + lat.nx * lat.ny] - U[n - lat.nx * lat.ny]) / (2 * h))
+        } } }
+        let contrast = fUpMin / max(liftOut, 1e-300)
+        print(String(format: "  sieve: the weakest target can lift %.2f× what any point %.1f mm or more from the shape can%@",
+                     contrast, rOut * 1000, contrast > 1 ? " — a power window exists" : " — no window: somewhere else holds a grain first"))
+        let noGravity = args.contains("--no-gravity")
+        let sieve = args.contains("--sieve")
+        var powerX = 4.0
+        if let i = args.firstIndex(of: "--power-x"), i + 1 < args.count, let v = Double(args[i + 1]) { powerX = v }
+        if sieve { powerX = contrast > 1 ? contrast.squareRoot() : 1.05 }     // the middle of the window
+        let power = powerX * weight / max(fUpMin, 1e-300)
+        let recirculate = args.contains("--recirculate")
+        let gamma = 6 * Double.pi * 1.81e-5 * grain.radius
+        print(String(format: "  drive: %.0f× what holds a grain in the weakest well (%.1f m/s rms); a grain relaxes in %.1f ms; %@",
+                     powerX, (power / Double(6 * nTones)).squareRoot(), grain.mass() / gamma * 1000,
+                     noGravity ? "gravity OFF (--no-gravity)" : "gravity on"))
+        // --- the powder ---
+        var rng = SplitMix64(seed: 23)
+        var xs: [Vec3] = (0..<nGrains).map { _ in
+            lat.origin + Vec3(margin + rng.nextUnit() * (2 * hh - 2 * margin), margin + rng.nextUnit() * (2 * hh - 2 * margin),
+                              margin + rng.nextUnit() * (2 * hh - 2 * margin))
+        }
+        var alive = [Bool](repeating: true, count: nGrains)
+        var seconds = 4.0
+        if let i = args.firstIndex(of: "--seconds"), i + 1 < args.count, let v = Double(args[i + 1]) { seconds = v }
+        let snaps = [0.0, 0.05, 0.15, 0.4, 1.0, 2.0, 4.0, 8.0, 16.0].filter { $0 < seconds } + [seconds]
+        var csv = "t_s,grain,x_mm,y_mm,z_mm\n"
+        var captureLog: [String] = []
+        var captureCSV = "t_s,on_shape\n"
+        func record(_ t: Double) {
+            let on = xs.indices.filter { alive[$0] && shapeDistance(xs[$0]) <= 1e-3 }.count
+            captureLog.append(String(format: "%.2g s %.0f%%", t, 100 * Double(on) / Double(nGrains)))
+            captureCSV += String(format: "%.3f,%.4f\n", t, Double(on) / Double(nGrains))
+            for (i, x) in xs.enumerated() where alive[i] {
+                csv += String(format: "%.2f,%d,%.3f,%.3f,%.3f\n", t, i, (x.x - centre.x) * 1000, (x.y - centre.y) * 1000, (x.z - centre.z) * 1000)
+            }
+        }
+        record(0)
+        let dt = 5e-4
+        var t = 0.0
+        var nextSnap = 1
+        var speed = [Double](repeating: 0, count: nGrains)
+        var resprinkled = [Int](repeating: 0, count: nGrains)
+        while t < snaps.last! - 1e-9 {
+            let tNow = t
+            xs.withUnsafeMutableBufferPointer { xb in
+                alive.withUnsafeMutableBufferPointer { ab in
+                    speed.withUnsafeMutableBufferPointer { sb in
+                    resprinkled.withUnsafeMutableBufferPointer { rb in
+                        DispatchQueue.concurrentPerform(iterations: 32) { ch in
+                            for i in (ch * nGrains / 32)..<((ch + 1) * nGrains / 32) where ab[i] {
+                                guard let g = grad(xb[i]) else {
+                                    // Out of the box. With --recirculate it is sprinkled in again at the top.
+                                    if recirculate {
+                                        var r = SplitMix64(seed: UInt64(i) &* 0x9E3779B97F4A7C15 &+ UInt64(tNow * 1e4))
+                                        xb[i] = Vec3(lo.x + r.nextUnit() * (hi.x - lo.x), lo.y + r.nextUnit() * (hi.y - lo.y), hi.z)
+                                        rb[i] += 1
+                                    } else { ab[i] = false }
+                                    continue
+                                }
+                                let F = g * (-power) + Vec3(0, 0, noGravity ? 0 : -weight)
+                                var v = F * (1 / gamma)
+                                let step = v.length * dt
+                                if step > 0.05e-3 { v = v * (0.05e-3 / step) }     // keep a step under 50 µm
+                                xb[i] = xb[i] + v * dt
+                                sb[i] = v.length
+                            }
+                        }
+                    }
+                    }
+                }
+            }
+            t += dt
+            if nextSnap < snaps.count && t >= snaps[nextSnap] - 1e-9 { record(snaps[nextSnap]); nextSnap += 1 }
+        }
+        // --- where did the powder go? ---
+        let capture = 1e-3
+        var perTarget = [Int](repeating: 0, count: targets.count)
+        var captured = 0, rogue = 0, drifting = 0
+        for i in 0..<nGrains where alive[i] {
+            // On the shape (within 1 mm of it) counts; the nearest target keeps the tally along it.
+            if shapeDistance(xs[i]) <= capture,
+               let q = snapped.indices.min(by: { (snapped[$0] - xs[i]).length < (snapped[$1] - xs[i]).length }) {
+                perTarget[q] += 1; captured += 1
+            } else if speed[i] < 0.5e-3 { rogue += 1 } else { drifting += 1 }
+        }
+        print("  on the shape over time: " + captureLog.joined(separator: ", "))
+        let lost = alive.filter { !$0 }.count
+        let filled = perTarget.filter { $0 > 0 }.count
+        print(String(format: "after %.0f s: %.0f%% of the powder on the shape (%d sites; %d/%d with grains, %d–%d each), %.0f%% in rogue wells, %.0f%% still drifting, %.0f%% lost%@",
+                     snaps.last!, 100 * Double(captured) / Double(nGrains), targets.count, filled, targets.count,
+                     perTarget.min() ?? 0, perTarget.max() ?? 0, 100 * Double(rogue) / Double(nGrains),
+                     100 * Double(drifting) / Double(nGrains), 100 * Double(lost) / Double(nGrains),
+                     recirculate ? String(format: " (%d re-sprinkles, %.1f per grain)", resprinkled.reduce(0, +),
+                                          Double(resprinkled.reduce(0, +)) / Double(nGrains)) : ""))
+        let gate = GateResult(id: "G-M1", name: "acoustic mold (\(shape)): every target well filled from a random powder cloud",
+                              measured: Double(filled) / Double(targets.count), threshold: 0.999, comparison: .greaterThan,
+                              detail: String(format: "%@ objective: %d/%d wells filled; %.0f%% of %d grains captured, %.0f%% rogue, %.0f%% lost; mold rival ratio %.2f",
+                                             objective, filled, targets.count, 100 * Double(captured) / Double(nGrains), nGrains,
+                                             100 * Double(rogue) / Double(nGrains), 100 * Double(lost) / Double(nGrains), em.rivalRatio))
+        print(gate.line)
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        var tcsv = "x_mm,y_mm,z_mm,grains\n"
+        for (q, p) in snapped.enumerated() {
+            tcsv += String(format: "%.3f,%.3f,%.3f,%d\n", (p.x - centre.x) * 1000, (p.y - centre.y) * 1000, (p.z - centre.z) * 1000, perTarget[q])
+        }
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "mold-" + shape, gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+        try? csv.write(toFile: "Receipts/mold_\(shape)_grains.csv", atomically: true, encoding: .utf8)
+        try? tcsv.write(toFile: "Receipts/mold_\(shape)_targets.csv", atomically: true, encoding: .utf8)
+        try? captureCSV.write(toFile: "Receipts/mold_\(shape)_capture.csv", atomically: true, encoding: .utf8)
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
 case "scan3d":
     // Scan a 3D object from the six gates, across the band, in the exact glass
     // chamber. By reciprocity a small scatterer at x couples gate j to gate i
