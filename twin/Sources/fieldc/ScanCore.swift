@@ -137,12 +137,33 @@ func mipCSV(_ I: [Double], grid: FieldLattice) -> String {
 /// stays bright along the segment between them (its mean ≥ 0.6 threshold).
 /// A site left unjoined is kept as a lone point.
 func extractShape(image I: [Double], grid: FieldLattice, threshold: Double,
-                  spacing: Double) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
-    let order = I.indices.filter { I[$0] >= threshold }.sorted { I[$0] > I[$1] }
+                  spacing: Double, within: (Vec3) -> Bool = { _ in true }) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
+    let order = I.indices.filter { I[$0] >= threshold && within(grid.positions[$0]) }.sorted { I[$0] > I[$1] }
     var sites: [Vec3] = []
     for n in order {
         let x = grid.positions[n]
         if sites.allSatisfy({ ($0 - x).length >= spacing }) { sites.append(x) }
+    }
+    // Sub-voxel: each site moves to the brightness-weighted centroid of the
+    // voxels within 1.2 mm that are at least 70 % as bright as its peak. On a
+    // wire the patch is symmetric along the wire, so this lands on its
+    // centreline; snapped to the 0.7 mm grid, sites of an 8 mm ring sat at
+    // radii 7.6–8.1 mm and the ones pulled inward got no powder.
+    let r = 1.2e-3, steps = Int((r / grid.spacing).rounded(.up))
+    sites = sites.map { x in
+        let f = (x - grid.origin) / grid.spacing
+        let ci = Int(f.x.rounded()), cj = Int(f.y.rounded()), ck = Int(f.z.rounded())
+        let peak = I[grid.index(ci, cj, ck)]
+        var sum = Vec3(0, 0, 0), w = 0.0
+        for dk in -steps...steps { for dj in -steps...steps { for di in -steps...steps {
+            let i = ci + di, j = cj + dj, k = ck + dk
+            guard i >= 0, j >= 0, k >= 0, i < grid.nx, j < grid.ny, k < grid.nz else { continue }
+            let p = grid.position(i, j, k)
+            guard (p - x).length <= r else { continue }
+            let v = I[grid.index(i, j, k)] - 0.7 * peak
+            if v > 0 { sum = sum + p * v; w += v }
+        } } }
+        return w > 0 ? sum * (1 / w) : x
     }
     var segments: [(Vec3, Vec3)] = []
     var joined = [Bool](repeating: false, count: sites.count)
@@ -176,30 +197,40 @@ func pearson(_ a: [Double], _ b: [Double]) -> Double {
 struct ArrayScanSetup {
     var fLo = 30_000.0
     var fHi = 100_000.0
-    var frequencies = 24
-    /// Random chords per frequency: every element driven at unit amplitude
-    /// with a random phase — many known, mutually distinct illuminations.
-    var chords = 16
+    /// Frequencies, evenly spaced: Δf sets the time window 1/Δf, which must
+    /// hold the direct echoes without the plate bounces wrapping onto them.
+    var frequencies = 320
+    /// Coded pulses: each chord drives every element of ONE plate with a
+    /// random phase, the same pattern at every frequency; the plates alternate.
+    var chords = 8
     var snrDB = 40.0
     var seed: UInt64 = 17
+    /// Keep only the direct echoes (time gate); false = the whole response.
+    var gate = true
 }
 
 /// The matched-field image of `object` (small rigid scatterers of radius
 /// `subunit`) on `grid`, seen by the open-air plate array, normalised to its
-/// peak. For each frequency and random chord d: the elements receive the
-/// object's echo r (Born, by reciprocity, plus measurement noise); r is sent
-/// back conjugated (time reversal) as the drive b; and at every grid point
-/// the outgoing field f and the returning field b are correlated the way a
-/// point scatterer there would couple them,
-///     I(x) = |Σ_{f,d} cM f(x) b(x) + cD ∇f(x)·∇b(x)|,
-/// which is rₓᴴ r, the matched filter, summed over the illuminations. Two
-/// forward passes over the grid per chord; nothing stored.
+/// peak. Pulse-echo, one plate at a time: a coded pulse (a random phase per
+/// element, the same at every frequency) fires one plate and that plate
+/// listens. The plates reflect (R 0.9), so a scatterer's echo also comes back
+/// by way of the other plate — plate → scatterer → far plate → home, a path
+/// of 2L whatever the scatterer's height — which carries no depth and smeared
+/// the image ~10 mm along z. So the echo is time-gated: the spectrum each
+/// element receives is taken to the time domain, cut to the window where the
+/// direct echoes from the work volume arrive, and taken back. Then the gated
+/// echo is sent back time-reversed and correlated at every grid point with
+/// the outgoing field the way a point scatterer there would couple them:
+///     I(x) = |Σ_{f,pulse} cM f(x) b(x) + cD ∇f(x)·∇b(x)|,
+/// the matched filter rₓᴴ r. Two forward passes over the grid per pulse and
+/// frequency; nothing stored.
 func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subunit: Double, grid: FieldLattice,
                     setup: ArrayScanSetup, log: (String) -> Void = { print($0) }) throws -> [Double] {
     let t0 = Date()
     let air = RH1Freestanding.roomAir
     let nF = setup.frequencies
-    let freqs = (0..<nF).map { setup.fLo + (setup.fHi - setup.fLo) * Double($0) / Double(max(1, nF - 1)) }
+    let df = (setup.fHi - setup.fLo) / Double(max(1, nF - 1))
+    let freqs = (0..<nF).map { setup.fLo + df * Double($0) }
     let field = try ArrayFieldGPU(ctx: ctx, array: array, frequencies: freqs, medium: air,
                                   lattice: FieldLattice(origin: grid.origin, spacing: grid.spacing, nx: 1, ny: 1, nz: 1))
     let gridPts = grid.positions.map { SIMD4(Float($0.x), Float($0.y), Float($0.z), 0) }
@@ -210,18 +241,72 @@ func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subuni
         return (-2 * Foundation.log(u1)).squareRoot() * cos(2 * Double.pi * u2)
     }
     let a3 = subunit * subunit * subunit
-    let C = array.channels
-    for (t, f) in freqs.enumerated() {
-        let k = air.wavenumber(at: f)
-        let cM = -k * k * a3 / 3, cD = -a3 / 2
-        for _ in 0..<setup.chords {
-            let d = (0..<C).map { _ in Complex.expi(2 * Double.pi * rng.nextUnit()) * (1 / Double(C).squareRoot()) }
-            var r = try field.scattered(by: object, monopole: cM, dipole: cD, drive: d, tone: t)
-            let rms = (r.reduce(0) { $0 + $1.magnitudeSquared } / Double(C)).squareRoot()
+    let C = array.channels, half = C / 2
+    let c0 = air.soundSpeed
+    // The direct-echo window for a plate: from the nearest work-volume point
+    // straight back, to the farthest point by way of the plate's rim.
+    let gridHalf = Double(grid.nx - 1) / 2 * grid.spacing
+    let centre = grid.origin + Vec3(gridHalf, gridHalf, gridHalf)
+    let reach = gridHalf * 3.0.squareRoot()
+    let W = 1 / df                                           // time window of the frequency grid
+    var logged = false
+    for q in 0..<setup.chords {
+        let side = q % 2
+        let mine = (side * half)..<((side + 1) * half)
+        let zPlate = side == 0 ? 0.0 : array.gap
+        let D = abs(centre.z - zPlate)
+        let tA = 2 * max(0, D - reach) / c0 - 20e-6
+        let tB = 2 * ((D + reach) * (D + reach) + array.plateRadius * array.plateRadius).squareRoot() / c0 + 20e-6
+        if !logged {
+            log(String(format: "  echo gate %.2f–%.2f ms (the first plate bounce arrives at %.2f ms); time window %.2f ms",
+                       tA * 1000, tB * 1000, 2 * array.gap / c0 * 1000, W * 1000))
+            logged = true
+        }
+        var d = [Complex](repeating: .zero, count: C)
+        for e in mine { d[e] = Complex.expi(2 * Double.pi * rng.nextUnit()) * (1 / Double(half).squareRoot()) }
+        // 1. What this plate hears, at every frequency, with noise.
+        var R = [[Complex]](repeating: [Complex](repeating: .zero, count: C), count: nF)
+        for (t, f) in freqs.enumerated() {
+            let k = air.wavenumber(at: f)
+            var r = try field.scattered(by: object, monopole: -k * k * a3 / 3, dipole: -a3 / 2, drive: d, tone: t)
+            for e in 0..<C where !mine.contains(e) { r[e] = .zero }
+            let rms = (mine.reduce(0.0) { $0 + r[$1].magnitudeSquared } / Double(half)).squareRoot()
             let sigma = rms * pow(10, -setup.snrDB / 20) / 2.0.squareRoot()
-            r = r.map { $0 + Complex(gauss() * sigma, gauss() * sigma) }
+            for e in mine { r[e] += Complex(gauss() * sigma, gauss() * sigma) }
+            R[t] = r
+        }
+        // 2. Time gate per element: to the time domain over the band, keep the
+        //    direct-echo window (raised-cosine edges), and back.
+        if setup.gate {
+            let gate: [Double] = (0..<nF).map { m in
+                let tm = Double(m) * W / Double(nF)
+                let edge = 30e-6
+                if tm < tA - edge || tm > tB + edge { return 0 }
+                if tm < tA { return 0.5 * (1 + cos(Double.pi * (tA - tm) / edge)) }
+                if tm > tB { return 0.5 * (1 + cos(Double.pi * (tm - tB) / edge)) }
+                return 1
+            }
+            let tw = (0..<nF).map { Complex.expi(-2 * Double.pi * Double($0) / Double(nF)) }
+            for e in mine {
+                var sig = [Complex](repeating: .zero, count: nF)
+                for m in 0..<nF where gate[m] > 0 {
+                    var v = Complex.zero
+                    for i in 0..<nF { v += R[i][e] * tw[(i * m) % nF] }
+                    sig[m] = v * gate[m]
+                }
+                for i in 0..<nF {
+                    var v = Complex.zero
+                    for m in 0..<nF where gate[m] > 0 { v += sig[m] * tw[(nF - (i * m) % nF) % nF] }
+                    R[i][e] = v * (1 / Double(nF))
+                }
+            }
+        }
+        // 3. Send the echo back time-reversed and correlate on the grid.
+        for (t, f) in freqs.enumerated() {
+            let k = air.wavenumber(at: f)
+            let cM = -k * k * a3 / 3, cD = -a3 / 2
             let fi = try field.fields(d, tone: t, points: gridPts)
-            let fb = try field.fields(r.map { $0.conjugate }, tone: t, points: gridPts)
+            let fb = try field.fields(R[t].map { $0.conjugate }, tone: t, points: gridPts)
             acc.withUnsafeMutableBufferPointer { ab in
                 DispatchQueue.concurrentPerform(iterations: 64) { ch in
                     for n in (ch * grid.count / 64)..<((ch + 1) * grid.count / 64) {
@@ -233,9 +318,84 @@ func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subuni
                 }
             }
         }
-        if t % 6 == 0 { log(String(format: "  %.1f kHz done (%.0f s)", f / 1000, Date().timeIntervalSince(t0))) }
+        log(String(format: "  pulse %d/%d (%@ plate) done (%.0f s)", q + 1, setup.chords, side == 0 ? "lower" : "upper",
+                   Date().timeIntervalSince(t0)))
     }
     let I = acc.map { $0.magnitude }
     let peak = max(I.max() ?? 1, 1e-300)
     return I.map { $0 / peak }
+}
+
+/// Resample a read shape at even spacing. The scan's sites sit where the
+/// image peaked — irregularly (3.2–5.3 mm apart on a ring read at 3 mm), and
+/// uneven spacing lets neighbouring sites steal each other's powder. Keep the
+/// shape, not the peaks: junctions and ends (sites with ≠ 2 neighbours) stay
+/// where they are; every chain between them, and every closed loop, is walked
+/// and sampled at equal arc length, about `spacing` apart.
+func resampleShape(sites: [Vec3], segments: [(Vec3, Vec3)], spacing: Double) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
+    func idx(_ p: Vec3) -> Int? { sites.firstIndex { ($0 - p).length < 1e-9 } }
+    var adj = [[Int]](repeating: [], count: sites.count)
+    for (a, b) in segments {
+        guard let i = idx(a), let j = idx(b), i != j else { continue }
+        if !adj[i].contains(j) { adj[i].append(j); adj[j].append(i) }
+    }
+    var outSites: [Vec3] = [], outSegs: [(Vec3, Vec3)] = []
+    func add(_ p: Vec3) -> Vec3 {
+        if let q = outSites.first(where: { ($0 - p).length < 1e-9 }) { return q }
+        outSites.append(p); return p
+    }
+    var usedEdge = Set<Int>()                      // i * count + j, i < j
+    func key(_ i: Int, _ j: Int) -> Int { min(i, j) * sites.count + max(i, j) }
+    func sample(_ chain: [Vec3], closed: Bool) {
+        var pts = chain
+        if closed { pts.append(chain[0]) }
+        var lens = [0.0]
+        for q in 1..<pts.count { lens.append(lens[q - 1] + (pts[q] - pts[q - 1]).length) }
+        let total = lens.last!
+        let n = max(1, Int((total / spacing).rounded()))
+        var placed: [Vec3] = []
+        let count = closed ? n : n + 1
+        for m in 0..<count {
+            let s = total * Double(m) / Double(n)
+            var q = 1
+            while q < pts.count - 1 && lens[q] < s { q += 1 }
+            let seg = lens[q] - lens[q - 1]
+            let u = seg > 0 ? (s - lens[q - 1]) / seg : 0
+            placed.append(add(pts[q - 1] + (pts[q] - pts[q - 1]) * u))
+        }
+        for m in 1..<placed.count { outSegs.append((placed[m - 1], placed[m])) }
+        if closed && placed.count > 2 { outSegs.append((placed.last!, placed[0])) }
+    }
+    let anchors = sites.indices.filter { adj[$0].count != 2 }
+    // Chains from every anchor.
+    for a in anchors {
+        if adj[a].isEmpty { _ = add(sites[a]); continue }
+        for b0 in adj[a] where !usedEdge.contains(key(a, b0)) {
+            var chain = [sites[a]], prev = a, cur = b0
+            usedEdge.insert(key(a, b0))
+            while true {
+                chain.append(sites[cur])
+                if adj[cur].count != 2 { break }
+                guard let nxt = adj[cur].first(where: { $0 != prev }), !usedEdge.contains(key(cur, nxt)) else { break }
+                usedEdge.insert(key(cur, nxt))
+                prev = cur; cur = nxt
+            }
+            sample(chain, closed: false)
+        }
+    }
+    // Closed loops (every site has two neighbours).
+    for s0 in sites.indices where adj[s0].count == 2 {
+        guard let b0 = adj[s0].first(where: { !usedEdge.contains(key(s0, $0)) }) else { continue }
+        var chain = [sites[s0]], prev = s0, cur = b0
+        usedEdge.insert(key(s0, b0))
+        while cur != s0 {
+            chain.append(sites[cur])
+            guard let nxt = adj[cur].first(where: { $0 != prev }) else { break }
+            if usedEdge.contains(key(cur, nxt)) { break }
+            usedEdge.insert(key(cur, nxt))
+            prev = cur; cur = nxt
+        }
+        sample(chain, closed: true)
+    }
+    return (outSites, outSegs)
 }

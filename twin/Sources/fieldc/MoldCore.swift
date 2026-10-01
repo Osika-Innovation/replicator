@@ -52,6 +52,11 @@ struct MoldOutcome {
     var basinOnShape = 0.0, basinRogue = 0.0
     var basinPerSite: [Double] = []
     var driveRMS = 0.0               // m/s per channel, rms over channels
+    /// The compiled drives (unit total power), the drive power that scales them
+    /// (Σ|v|², (m/s)²) and the tones — what a light view or a replay needs.
+    var drives: [[Complex]] = []
+    var power = 0.0
+    var frequencies: [Double] = []
     var compileSeconds = 0.0
     var grainsCSV = "", sitesCSV = "", captureCSV = ""
     var captureLog: [String] = []
@@ -223,10 +228,14 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
                     onShape: bOn, rogue: bRogue, perSite: bSite, sinks: basins.sinks.count)
     }
     let fairShare = 1 / Double(max(1, targets.count))
-    // Prefer: everything on the shape (≥ 95 %), then the fullest weakest site, then the most on the shape.
+    // Prefer: everything on the shape (≥ 95 %), then the most sites holding a
+    // quarter of their fair share, then the fullest weakest site, then the
+    // most on the shape.
     func better(_ a: Eval, _ b: Eval) -> Bool {
         let aOK = a.onShape >= 0.95, bOK = b.onShape >= 0.95
         if aOK != bOK { return aOK }
+        let af = a.perSite.filter { $0 >= 0.25 * fairShare }.count, bf = b.perSite.filter { $0 >= 0.25 * fairShare }.count
+        if af != bf { return af > bf }
         let am = a.perSite.min() ?? 0, bm = b.perSite.min() ?? 0
         if abs(am - bm) > 1e-9 { return am > bm }
         return a.onShape > b.onShape
@@ -259,17 +268,19 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
         // drive, keep the best. What the machine would do with a scan.
         var siteW = [Double](repeating: 1, count: targets.count)
         var last = drives
+        var latest = ev                       // multiplicative weights follow the LATEST map
         for round in 1...setup.feedback {
             for q in siteW.indices {
-                siteW[q] *= min(4, max(0.5, (fairShare / max(ev.perSite[q], 0.1 * fairShare)).squareRoot()))
+                siteW[q] *= min(2, max(0.5, (fairShare / max(latest.perSite[q], 0.1 * fairShare)).squareRoot()))
             }
             let mean = siteW.reduce(0, +) / Double(siteW.count)
             siteW = siteW.map { $0 / mean }
             let sv = ForceCompiler.compileSieve(field: field, particle: grain, targets: targets,
                                                 outside: { onShapeDistance($0) >= 1.5e-3 }, options: o, siteWeights: siteW,
-                                                start: last, iterations: max(100, iters / 2), log: debugLog)
+                                                returnLast: true, start: last, iterations: max(100, iters / 2), log: debugLog)
             last = sv.drives
             let e2 = evaluate(sv.drives)
+            latest = e2
             log(String(format: "  feedback round %d: contrast %.2f, %.1f%% on the shape, sites %.1f–%.1f%% (fair %.1f%%)",
                        round, e2.contrast, 100 * e2.onShape, 100 * (e2.perSite.min() ?? 0), 100 * (e2.perSite.max() ?? 0), 100 * fairShare))
             if better(e2, ev) { ev = e2; drives = sv.drives }
@@ -292,6 +303,7 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
                recirculate ? "fallen grains are sprinkled in again at the top" : "fallen grains are lost"))
     var out = MoldOutcome()
     out.driveRMS = driveRMS; out.compileSeconds = compileSeconds; out.channels = field.channels
+    out.drives = drives; out.power = power; out.frequencies = freqs
     let bSite = ev.perSite, bOn = ev.onShape, bRogue = ev.rogue
     out.basinOnShape = bOn; out.basinRogue = bRogue; out.basinPerSite = bSite
     log(String(format: "  basin map: %.1f%% of the release ends on the shape%@, %.1f%% in rogue minima, %.1f%% %@; %d sinks; per-site shares %.1f–%.1f%%",

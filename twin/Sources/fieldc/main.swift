@@ -23,7 +23,7 @@ func git(_ args: [String]) -> String? {
 /// HEAD, marked `+dirty` when the working tree differs from it — a receipt
 /// that names a commit the numbers were not produced from is a false receipt.
 /// The mold's test shapes around a centre: sites, and the segments joining them.
-func moldShape(_ shape: String, centre: Vec3) -> ([Vec3], [(Vec3, Vec3)]) {
+func moldShape(_ shape: String, centre: Vec3, ringSites: Int = 16) -> ([Vec3], [(Vec3, Vec3)]) {
     var sites: [Vec3] = []
     var segments: [(Vec3, Vec3)] = []
     switch shape {
@@ -39,12 +39,13 @@ func moldShape(_ shape: String, centre: Vec3) -> ([Vec3], [(Vec3, Vec3)]) {
             segments.append((centre + v[i] - c, centre + v[j] - c))
         } }
     default:
-        // 16 sites on a horizontal ring, 8 mm radius (3.1 mm apart).
-        sites = (0..<16).map { q in
-            let th = 2 * Double.pi * Double(q) / 16
+        // Sites on a horizontal ring, 8 mm radius (16: 3.1 mm apart).
+        let m = ringSites
+        sites = (0..<m).map { q in
+            let th = 2 * Double.pi * Double(q) / Double(m)
             return centre + Vec3(8e-3 * cos(th), 8e-3 * sin(th), 0)
         }
-        segments = (0..<16).map { (sites[$0], sites[($0 + 1) % 16]) }
+        segments = (0..<m).map { (sites[$0], sites[($0 + 1) % m]) }
     }
     return (sites, segments)
 }
@@ -615,16 +616,41 @@ case "mold":
         let chamber: MoldChamber = glass ? .glass : .plates(PlateArray(perPlate: perPlate, reflection: reflection))
         let L = glass ? RH1Design().buildChamberHeight * 0.001 : PlateArray(perPlate: perPlate).gap
         let centre = Vec3(0, 0, L / 2)
-        let (sites, segments) = moldShape(shape, centre: centre)
-        let out = try runMold(ctx: ctx, label: shape, sites: sites, segments: segments, chamber: chamber, setup: setup)
+        var (sites, segments) = moldShape(shape, centre: centre, ringSites: arg("--sites").flatMap(Int.init) ?? 16)
+        if let deg = arg("--rotate").flatMap(Double.init) {
+            // Turn the shape about the vertical axis through the centre (a robustness check).
+            let c = cos(deg * .pi / 180), sn = sin(deg * .pi / 180)
+            func turn(_ p: Vec3) -> Vec3 {
+                let d = p - centre
+                return centre + Vec3(c * d.x - sn * d.y, sn * d.x + c * d.y, d.z)
+            }
+            sites = sites.map(turn); segments = segments.map { (turn($0.0), turn($0.1)) }
+        }
+        let ringSites = arg("--sites").flatMap(Int.init) ?? 16
+        let rotation = arg("--rotate").flatMap(Double.init)
+        let label = shape + (shape == "ring" && ringSites != 16 ? "\(ringSites)" : "")
+            + (rotation.map { String(format: "-rot%g", $0) } ?? "")
+        let out = try runMold(ctx: ctx, label: label, sites: sites, segments: segments, chamber: chamber, setup: setup)
         for g in out.gates { print(g.line) }
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         let tag = glass ? "" : "-plates\(perPlate)"
         if args.contains("--receipt") {
-            writeReceipt(Receipt(name: "mold-\(shape)-\(setup.objective)\(tag)", gates: out.gates,
+            writeReceipt(Receipt(name: "mold-\(label)-\(setup.objective)\(tag)", gates: out.gates,
                                  durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
         }
-        let base = "Receipts/mold_" + (glass ? "" : "plates\(perPlate)_") + shape + (setup.objective == "sieve" ? "" : "_\(setup.objective)")
+        let base = "Receipts/mold_" + (glass ? "" : "plates\(perPlate)_") + label + (setup.objective == "sieve" ? "" : "_\(setup.objective)")
+        if args.contains("--light"), !glass {
+            // What a 633 nm laser along x reads of the compiled field (LightRead.swift).
+            let arr = PlateArray(perPlate: perPlate, reflection: reflection)
+            let lf = try ArrayFieldGPU(ctx: ctx, array: arr, frequencies: out.frequencies, medium: RH1Freestanding.roomAir,
+                                       lattice: FieldLattice(origin: centre, spacing: 1e-3, nx: 1, ny: 1, nz: 1))
+            let view = try lightView(field: lf, drives: out.drives, power: out.power, centre: centre,
+                                     halfWidth: 14e-3, spacing: 0.25e-3, pathHalfLength: 0.15)
+            var lcsv = String(format: "# n=%d spacing_mm=%.4f half_mm=%.3f\nj,k,rad\n", view.n, view.spacing * 1000, view.halfWidth * 1000)
+            for k in 0..<view.n { for j in 0..<view.n { lcsv += String(format: "%d,%d,%.6e\n", j, k, view.amplitude[k * view.n + j]) } }
+            try? lcsv.write(toFile: base + "_light.csv", atomically: true, encoding: .utf8)
+            print(String(format: "light: a 633 nm laser along x through the chamber picks up up to %.1f mrad (rms over tones) — measurable", view.peak * 1000))
+        }
         if setup.particles {
             try? out.grainsCSV.write(toFile: base + "_grains.csv", atomically: true, encoding: .utf8)
             try? out.captureCSV.write(toFile: base + "_capture.csv", atomically: true, encoding: .utf8)
@@ -710,12 +736,12 @@ case "scan3d":
         let L = glass ? RH1Design().buildChamberHeight * 0.001 : PlateArray(perPlate: perPlate).gap
         let centre = Vec3(0, 0, L / 2)
         let objectName = arg("--object") ?? "tetra"
-        var fHi = 100_000.0, nF = glass ? 90 : 24
+        var fHi = 100_000.0, nF = glass ? 90 : 320
         if let v = arg("--fmax").flatMap(Double.init) { fHi = v * 1000 }
         if let v = arg("--nf").flatMap(Int.init) { nF = v }
         let fLo = 30_000.0
         let snrDB = arg("--snr").flatMap(Double.init) ?? 40.0
-        let chords = arg("--chords").flatMap(Int.init) ?? 16
+        let chords = arg("--chords").flatMap(Int.init) ?? 8
         let (object, subunit, half, h) = scanObject(objectName, centre: centre)
         let n = Int((2 * half / h).rounded()) + 1
         let grid = FieldLattice(origin: centre - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
@@ -731,6 +757,7 @@ case "scan3d":
                          objectName, object.count, subunit * 1000, perPlate, nF, fLo / 1000, fHi / 1000, chords, snrDB, half * 1000, h * 1000, n))
             var setup = ArrayScanSetup()
             setup.fHi = fHi; setup.frequencies = nF; setup.chords = chords; setup.snrDB = snrDB
+            setup.gate = !args.contains("--no-gate")
             I = try scanImageArray(ctx: ctx, array: PlateArray(perPlate: perPlate), object: object, subunit: subunit,
                                    grid: grid, setup: setup)
         }
@@ -817,16 +844,24 @@ case "replicate":
                      half * 1000, h * 1000, n))
         print("1. scan the original")
         let I0 = try scanImageArray(ctx: ctx, array: arr, object: object, subunit: 0.3e-3, grid: grid, setup: scan)
-        let read = extractShape(image: I0, grid: grid, threshold: 0.5, spacing: 3e-3)
-        let siteOff = read.sites.map { shapeDistance($0, originalSegments) }
-        let onObject = Double(siteOff.filter { $0 <= 1.5e-3 }.count) / Double(max(1, read.sites.count))
-        let covered = Double(object.filter { o in read.sites.contains { ($0 - o).length <= 2.5e-3 } }.count) / Double(object.count)
+        // Sites only where the mold can put powder: its ±10 mm release box.
+        let read = extractShape(image: I0, grid: grid, threshold: 0.5, spacing: 3e-3, within: { x in
+            abs(x.x - centre.x) <= 9.5e-3 && abs(x.y - centre.y) <= 9.5e-3 && abs(x.z - centre.z) <= 9.5e-3 })
+        // Resample at ~4 mm: at 3.1 mm the sieve's even fill depends on the
+        // shape's orientation against the plates' spirals (Round 12).
+        let siteSpacing = (arg("--spacing").flatMap(Double.init) ?? 4.0) * 1e-3
+        let even = resampleShape(sites: read.sites, segments: read.segments, spacing: siteSpacing)
+        print(String(format: "   read: %d peaks; resampled along the shape to %d sites ~%.1f mm apart",
+                     read.sites.count, even.sites.count, siteSpacing * 1000))
+        let siteOff = even.sites.map { shapeDistance($0, originalSegments) }
+        let onObject = Double(siteOff.filter { $0 <= 1.5e-3 }.count) / Double(max(1, even.sites.count))
+        let covered = Double(object.filter { o in even.sites.contains { ($0 - o).length <= 2.5e-3 } }.count) / Double(object.count)
         print(String(format: "2. the shape read off the scan: %d sites, %d segments; %.0f%% of the sites within 1.5 mm of the object (worst %.2f mm); %.0f%% of the object within 2.5 mm of a site",
-                     read.sites.count, read.segments.count, 100 * onObject, 1000 * (siteOff.max() ?? 0), 100 * covered))
+                     even.sites.count, even.segments.count, 100 * onObject, 1000 * (siteOff.max() ?? 0), 100 * covered))
         print("3. mold the copy (the sieve on the shape read off the scan)")
         var ms = MoldSetup()
         ms.debug = args.contains("--debug")
-        let mold = try runMold(ctx: ctx, label: "read \(objectName)", sites: read.sites, segments: read.segments,
+        let mold = try runMold(ctx: ctx, label: "read \(objectName)", sites: even.sites, segments: even.segments,
                                chamber: .plates(arr), setup: ms)
         let copy = zip(mold.final, mold.onShape).filter { $0.1 }.map { $0.0 }
         let copyOff = copy.map { shapeDistance($0, originalSegments) }
@@ -842,7 +877,7 @@ case "replicate":
         let corr = pearson(I0, I1)
         print(String(format: "5. the two scans correlate %.3f over the %d³ grid", corr, n))
         let detail = String(format: "%@: %d sites read (%.0f%% on the object, %.0f%% of it covered); %@; copy: %.0f%% of the cloud within 1.5 mm of the original (median %.2f mm); scans correlate %.3f",
-                            objectName, read.sites.count, 100 * onObject, 100 * covered, mold.summary, 100 * onOriginal, 1000 * medianOff, corr)
+                            objectName, even.sites.count, 100 * onObject, 100 * covered, mold.summary, 100 * onOriginal, 1000 * medianOff, corr)
         var gates = [
             GateResult(id: "G-R1", name: "replicate (\(objectName)): the shape read off the scan lies on the object (sites within 1.5 mm)",
                        measured: onObject, threshold: 0.9, comparison: .greaterThan, detail: detail),

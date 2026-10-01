@@ -857,7 +857,7 @@ public enum ForceCompiler {
     public static func compileSieve(field: some ForceField,
                                     particle: ParticleMaterial, targets: [(Int, Int, Int)], outside isOutside: (Vec3) -> Bool,
                                     sideways sw: Int = 2, softness ell: Double = 0.5e-3, options o: Options = Options(),
-                                    siteWeights: [Double]? = nil,
+                                    siteWeights: [Double]? = nil, returnLast: Bool = false,
                                     start: [[Complex]], iterations: Int = 300, log: ((String) -> Void)? = nil) -> Sieve {
         let lat = field.lattice, G = field.channels
         // Per-site weights bias every per-site term (the soft minimum of the
@@ -1082,6 +1082,12 @@ public enum ForceCompiler {
             best = Sieve(drives: g, contrast: measure(UL), contrastAtStart: c0); bestKey = (measure(UL), held(UL))
         }
         log?(String(format: "    best: contrast %.2f, %d/%d sites held sideways (start %.2f)", best.contrast, bestKey.1, targets.count, c0))
+        if returnLast {
+            // The caller judges (the mold's basin-map feedback: evenness is not
+            // one of this compiler's own criteria, so its "best" would hand the
+            // start straight back).
+            return Sieve(drives: g, contrast: measure(UL), contrastAtStart: c0)
+        }
         return best
     }
 
