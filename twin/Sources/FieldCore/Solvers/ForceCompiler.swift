@@ -72,6 +72,41 @@ public enum ForceCompiler {
         public var targetWell: Vec3?
     }
 
+    // MARK: - Fields the compiler can work on
+
+    /// A field the compiler can work on: U on its lattice for a set of per-tone
+    /// drives, and the gradient (∂/∂g*) of any lattice weighting Σ w(x) U(x) with
+    /// respect to every drive entry. The glass chamber's stored rows are one
+    /// (`StoredRows`); the plate array's matrix-free GPU operator is another
+    /// (`FieldGPU.ArrayFieldGPU`), with as many channels as the plates have
+    /// elements and no rows stored at all.
+    public protocol ForceField {
+        var lattice: FieldLattice { get }
+        /// Drive entries per tone (gates, or array elements).
+        var channels: Int { get }
+        var toneCount: Int { get }
+        func potential(_ drives: [[Complex]], particle: ParticleMaterial) -> [Double]
+        func adjoint(_ drives: [[Complex]], weights: [Double], particle: ParticleMaterial) -> [[Complex]]
+    }
+
+    /// Per-tone rows stored over the lattice (the glass chamber, the plates'
+    /// gate-granular port fields).
+    public struct StoredRows: ForceField {
+        public let tones: [Tone]
+        public let lattice: FieldLattice
+        public let channels: Int
+        public init(tones: [Tone], lattice: FieldLattice, channels: Int) {
+            self.tones = tones; self.lattice = lattice; self.channels = channels
+        }
+        public var toneCount: Int { tones.count }
+        public func potential(_ drives: [[Complex]], particle: ParticleMaterial) -> [Double] {
+            ForceCompiler.potential(tones, drives: drives, gates: channels, particle: particle, count: lattice.count)
+        }
+        public func adjoint(_ drives: [[Complex]], weights: [Double], particle: ParticleMaterial) -> [[Complex]] {
+            ForceCompiler.adjoint(tones, drives: drives, weights: weights, gates: channels, particle: particle)
+        }
+    }
+
     // MARK: - Quadratic forms
 
     /// K1, K2 of U = K1|p|² − K2|∇p|² for this particle in this medium
@@ -549,6 +584,15 @@ public enum ForceCompiler {
                                    particle: ParticleMaterial, targets: [(Int, Int, Int)], wavelength: Double,
                                    options o: Options = Options(), start: [[Complex]],
                                    iterations: Int = 300, log: ((String) -> Void)? = nil) -> Mold {
+        compileMold(field: StoredRows(tones: tones, lattice: lat, channels: G), particle: particle, targets: targets,
+                    wavelength: wavelength, options: o, start: start, iterations: iterations, log: log)
+    }
+
+    public static func compileMold(field: some ForceField,
+                                   particle: ParticleMaterial, targets: [(Int, Int, Int)], wavelength: Double,
+                                   options o: Options = Options(), start: [[Complex]],
+                                   iterations: Int = 300, log: ((String) -> Void)? = nil) -> Mold {
+        let lat = field.lattice, G = field.channels
         let s = o.shellSteps
         let axes = [1, lat.nx, lat.nx * lat.ny]
         let tIdx = targets.map { lat.index($0.0, $0.1, $0.2) }
@@ -569,13 +613,13 @@ public enum ForceCompiler {
             // Prefer every target formed; then a low rival ratio.
             return (m, Double(e.formed) - min(e.rivalRatio, 50) / 100)
         }
-        var (best, bestScore) = score(potential(tones, drives: g, gates: G, particle: particle, count: lat.count))
+        var (best, bestScore) = score(field.potential(g, particle: particle))
         var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
         let b1 = 0.9, b2 = 0.999
-        let lr0 = 0.05 / Double(2 * G * tones.count).squareRoot()
+        let lr0 = 0.05 / Double(2 * G * field.toneCount).squareRoot()
         for it in 1...iterations {
             let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
-            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let U = field.potential(g, particle: particle)
             let D = tIdx.map { depth(U, $0) }
             var cw = [Double](repeating: 0, count: lat.count)
             let dMin = D.min()!
@@ -624,7 +668,7 @@ public enum ForceCompiler {
                     spread(&cw, n, -2 * mu * sl2 / (D[q] * D[q] * D[q]))
                 }
             }
-            var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            var grad = field.adjoint(g, weights: cw, particle: particle)
             let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
             if gn > 0 { grad = grad.map { $0.map { $0 * (1 / gn) } } }
             for f in g.indices {
@@ -639,7 +683,7 @@ public enum ForceCompiler {
             }
             g = normalize(g)
             if it % 20 == 0 || it == iterations {
-                let (m, sc) = score(potential(tones, drives: g, gates: G, particle: particle, count: lat.count))
+                let (m, sc) = score(field.potential(g, particle: particle))
                 if sc > bestScore { best = m; bestScore = sc }
                 if let log, it % 60 == 0 {
                     let pos = m.depths.filter { $0 > 0 }.count
@@ -686,6 +730,15 @@ public enum ForceCompiler {
                                      particle: ParticleMaterial, targets: [Vec3], capture: Double,
                                      release: (Vec3) -> Bool, softness ell: Double, start: [[Complex]],
                                      iterations: Int = 300, log: ((String) -> Void)? = nil) -> Funnel {
+        compileFunnel(field: StoredRows(tones: tones, lattice: lat, channels: G), particle: particle, targets: targets,
+                      capture: capture, release: release, softness: ell, start: start, iterations: iterations, log: log)
+    }
+
+    public static func compileFunnel(field: some ForceField,
+                                     particle: ParticleMaterial, targets: [Vec3], capture: Double,
+                                     release: (Vec3) -> Bool, softness ell: Double, start: [[Complex]],
+                                     iterations: Int = 300, log: ((String) -> Void)? = nil) -> Funnel {
+        let lat = field.lattice, G = field.channels
         let h = lat.spacing
         let axes = [1, lat.nx, lat.nx * lat.ny]
         // The release volume's probe points, and ∇V at each.
@@ -718,14 +771,14 @@ public enum ForceCompiler {
         }
         func share(_ s: [Double]) -> Double { Double(s.filter { $0 > 0 }.count) / M }
         var g = normalize(start)
-        let s0 = share(slopes(potential(tones, drives: g, gates: G, particle: particle, count: lat.count)))
+        let s0 = share(slopes(field.potential(g, particle: particle)))
         var best = Funnel(drives: g, funnelled: s0, funnelledAtStart: s0)
         var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
         let b1 = 0.9, b2 = 0.999
-        let lr0 = 0.05 / Double(2 * G * tones.count).squareRoot()
+        let lr0 = 0.05 / Double(2 * G * field.toneCount).squareRoot()
         for it in 1...iterations {
             let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
-            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let U = field.potential(g, particle: particle)
             let s = slopes(U)
             let now = share(s)
             if now > best.funnelled { best = Funnel(drives: g, funnelled: now, funnelledAtStart: s0) }
@@ -740,7 +793,7 @@ public enum ForceCompiler {
                 cw[n + axes[1]] += q * v.1; cw[n - axes[1]] -= q * v.1
                 cw[n + axes[2]] += q * v.2; cw[n - axes[2]] -= q * v.2
             }
-            var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            var grad = field.adjoint(g, weights: cw, particle: particle)
             let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
             if gn > 0 { grad = grad.map { $0.map { $0 * (1 / gn) } } }
             for f in g.indices {
@@ -755,7 +808,7 @@ public enum ForceCompiler {
             }
             g = normalize(g)
         }
-        let last = share(slopes(potential(tones, drives: g, gates: G, particle: particle, count: lat.count)))
+        let last = share(slopes(field.potential(g, particle: particle)))
         if last > best.funnelled { best = Funnel(drives: g, funnelled: last, funnelledAtStart: s0) }
         log?(String(format: "    best: %.1f%% of the release volume funnels (start %.1f%%)", 100 * best.funnelled, 100 * s0))
         return best
@@ -797,6 +850,21 @@ public enum ForceCompiler {
                                     particle: ParticleMaterial, targets: [(Int, Int, Int)], outside isOutside: (Vec3) -> Bool,
                                     sideways sw: Int = 2, softness ell: Double = 0.5e-3, options o: Options = Options(),
                                     start: [[Complex]], iterations: Int = 300, log: ((String) -> Void)? = nil) -> Sieve {
+        compileSieve(field: StoredRows(tones: tones, lattice: lat, channels: G), particle: particle, targets: targets,
+                     outside: isOutside, sideways: sw, softness: ell, options: o, start: start, iterations: iterations, log: log)
+    }
+
+    public static func compileSieve(field: some ForceField,
+                                    particle: ParticleMaterial, targets: [(Int, Int, Int)], outside isOutside: (Vec3) -> Bool,
+                                    sideways sw: Int = 2, softness ell: Double = 0.5e-3, options o: Options = Options(),
+                                    siteWeights: [Double]? = nil,
+                                    start: [[Complex]], iterations: Int = 300, log: ((String) -> Void)? = nil) -> Sieve {
+        let lat = field.lattice, G = field.channels
+        // Per-site weights bias every per-site term (the soft minimum of the
+        // lifts, the sideways traps, the landing funnel): a site that gets too
+        // little powder is weighted up and recompiled (`fieldc mold`'s
+        // basin-map feedback). nil = all equal.
+        let sw8 = siteWeights ?? [Double](repeating: 1, count: targets.count)
         let h = lat.spacing
         let sz = lat.nx * lat.ny
         let axes = [1, lat.nx, sz]
@@ -888,16 +956,16 @@ public enum ForceCompiler {
             }
         }
         var g = normalize(start)
-        let U0 = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+        let U0 = field.potential(g, particle: particle)
         let c0 = measure(U0)
         var best = Sieve(drives: g, contrast: c0, contrastAtStart: c0)
         var bestKey = (c0, held(U0))
         var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
         let b1 = 0.9, b2 = 0.999
-        let lr0 = 0.05 / Double(2 * G * tones.count).squareRoot()
+        let lr0 = 0.05 / Double(2 * G * field.toneCount).squareRoot()
         for it in 1...iterations {
             let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
-            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let U = field.potential(g, particle: particle)
             // Soft maximum over the outside (log-sum-exp). Its size is the scale
             // every temperature is floored at: a lift of exactly zero (a column
             // the field does not reach) must not set a temperature of zero.
@@ -917,7 +985,7 @@ public enum ForceCompiler {
             }
             let mt = colL.min()!
             let Tt = 0.05 * max(abs(mt), 0.01 * scale)
-            let et = colL.map { exp(-($0 - mt) / Tt) }, zt = et.reduce(0, +)
+            let et = colL.indices.map { sw8[$0] * exp(-(colL[$0] - mt) / Tt) }, zt = et.reduce(0, +)
             let smin = mt - Tt * Foundation.log(zt)
             let now = measure(U), hNow = held(U)
             if better((now, hNow), than: bestKey) { best = Sieve(drives: g, contrast: now, contrastAtStart: c0); bestKey = (now, hNow) }
@@ -954,7 +1022,7 @@ public enum ForceCompiler {
                 for lv in levels {
                     for st in side {
                         let d = U[lv.n + st] - U[lv.n]
-                        let q = -per / (1 + exp((d - unit) / tau))
+                        let q = -per * sw8[lv.site] / (1 + exp((d - unit) / tau))
                         cw[lv.n + st] += q; cw[lv.n] -= q
                     }
                 }
@@ -972,7 +1040,7 @@ public enum ForceCompiler {
                     }
                     let Tl = 0.05
                     let lmax = loss.max()!
-                    let el = loss.map { exp(($0 - lmax) / Tl) }, zl = el.reduce(0, +)
+                    let el = loss.indices.map { sw8[$0] * exp((loss[$0] - lmax) / Tl) }, zl = el.reduce(0, +)
                     for (m, l) in landing.enumerated() {
                         let ws = el[l.site] / zl / Double(perSite[l.site])
                         let q = -ws / (1 + exp(ls[m] / sig)) / (sig * 2 * h)
@@ -987,7 +1055,7 @@ public enum ForceCompiler {
                 cw[n] += w
                 for st in axes { cw[n - s * st] -= w / 6; cw[n + s * st] -= w / 6 }
             }
-            var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
+            var grad = field.adjoint(g, weights: cw, particle: particle)
             let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
             if let log, it <= 3 || it % 50 == 1 {
                 let weakest = colL.firstIndex(of: colL.min()!)!
@@ -1009,7 +1077,7 @@ public enum ForceCompiler {
             }
             g = normalize(g)
         }
-        let UL = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+        let UL = field.potential(g, particle: particle)
         if better((measure(UL), held(UL)), than: bestKey) {
             best = Sieve(drives: g, contrast: measure(UL), contrastAtStart: c0); bestKey = (measure(UL), held(UL))
         }

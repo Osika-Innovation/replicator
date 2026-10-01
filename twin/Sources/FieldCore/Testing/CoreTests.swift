@@ -8,7 +8,7 @@ public enum CoreTests {
         let groups: [String: (TestHarness) -> Void] = [
             "math": math, "geometry": geometry, "propagator": propagator, "gorkov": gorkov,
             "inverse": inverse, "cad": cad, "plates": wallsAndPlates, "air": air,
-            "force": force, "cavity": cavity, "scatter": scatter]
+            "force": force, "cavity": cavity, "scatter": scatter, "array": plateArray]
         guard let g = groups[group] else { return nil }
         let h = TestHarness()
         g(h)
@@ -21,7 +21,7 @@ public enum CoreTests {
         pencil(h); trapKinds(h); chordAndVerbs(h); callResponse(h)
         surfaceHologram(h)
         provenance(h); gates(h)
-        cad(h); wallsAndPlates(h); air(h); force(h); cavity(h); scatter(h)
+        cad(h); wallsAndPlates(h); air(h); force(h); cavity(h); scatter(h); plateArray(h)
         return h
     }
 
@@ -693,6 +693,61 @@ public enum CoreTests {
                 }
             }
             t.check(worst < 1e-6, "worst relative error \(worst)")
+        }
+    }
+
+    // ----------------------------------------------------------- plate array
+    static func plateArray(_ h: TestHarness) {
+        h.test("plate array: Vogel spiral fills the disc, every element at its own radius") { t in
+            let n = 384, R = 0.205
+            let pts = PlateArray.vogel(n, radius: R)
+            let radii = pts.map { ($0.x * $0.x + $0.y * $0.y).squareRoot() }
+            t.check(radii.allSatisfy { $0 <= R + 1e-12 }, "inside the disc")
+            t.check(Set(radii.map { Int(($0 * 1e7).rounded()) }).count == n, "unique radii")
+            var dMin = Double.infinity
+            for i in 0..<n { for j in (i + 1)..<n {
+                dMin = min(dMin, ((pts[i].x - pts[j].x) * (pts[i].x - pts[j].x) + (pts[i].y - pts[j].y) * (pts[i].y - pts[j].y)).squareRoot())
+            } }
+            let pitch = (Double.pi * R * R / Double(n)).squareRoot()
+            t.check(dMin > 0.5 * pitch, String(format: "nearest neighbours %.1f mm apart (pitch %.1f mm)", dMin * 1000, pitch * 1000))
+            let arr = PlateArray(perPlate: 12)
+            let els = arr.elements()
+            t.check(els.count == 24 && els.prefix(12).allSatisfy { $0.position.z == 0 && $0.normal.z == 1 }
+                    && els.suffix(12).allSatisfy { $0.position.z == arr.gap && $0.normal.z == -1 }, "lower plate up, upper plate down")
+            t.check(els.enumerated().allSatisfy { $0.offset == $0.element.gateIndex }, "one channel per element")
+        }
+        h.test("G-A2: a piston element radiates as the Rayleigh integral over its face says") { t in
+            // One Ø5 mm piston, free field, 70 kHz (ka = 3.2): the element model
+            // (far-field 2J1(x)/x directivity) against the Rayleigh integral
+            // i ρck/(2π) ∫ e^{ikR}/R dS summed over the face, at 230 mm and 0–42°
+            // off axis — the angles at which the plates see the work volume.
+            let air = Medium.air(temperatureC: 20, humidity: 50)
+            let f = 70_000.0, a = 2.5e-3
+            let k = air.wavenumber(at: f)
+            let el = Element(position: Vec3(0, 0, 0), normal: Vec3(0, 0, 1), area: Double.pi * a * a,
+                             surface: .lowerCap, gateIndex: 0)
+            let ref = Propagator(elements: [el], lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
+                                 frequency: f, medium: Medium(density: air.density, soundSpeed: air.soundSpeed), gateCount: 1)
+            let pre = air.density * air.soundSpeed * k / (2 * Double.pi)
+            var worst = 0.0
+            for deg in [0.0, 15, 30, 42] {
+                let th = deg * Double.pi / 180, r = 0.23
+                let x = Vec3(r * sin(th), 0, r * cos(th))
+                let model = ref.gateGradientRows(at: x).p[0]
+                var integral = Complex.zero
+                let nr = 60, nt = 120
+                for i in 0..<nr {
+                    let rr = a * (Double(i) + 0.5) / Double(nr), dr = a / Double(nr)
+                    for j in 0..<nt {
+                        let ph = 2 * Double.pi * (Double(j) + 0.5) / Double(nt)
+                        let s = Vec3(rr * cos(ph), rr * sin(ph), 0)
+                        let R = (x - s).length
+                        integral += Complex(0, pre) * Complex.expi(k * R) * (rr * dr * 2 * Double.pi / Double(nt) / R)
+                    }
+                }
+                worst = max(worst, (model - integral).magnitude / integral.magnitude)
+            }
+            t.check(worst < 0.01, String(format: "worst relative difference %.2e over 0–42° at 230 mm", worst))
         }
     }
 

@@ -35,7 +35,7 @@ public final class MetalContext {
     }
 
     public static func shaderSource(overrideDirectory: URL? = nil) throws -> (String, URL?) {
-        let names = ["propagator", "render", "solid"]
+        let names = ["propagator", "array", "render", "solid"]
         // Prefer an override directory so `fieldc gate --shader-dir ./Shaders`
         // can gate an edited kernel without rebuilding (§23).
         var dir = overrideDirectory
@@ -88,6 +88,23 @@ public final class MetalContext {
     public var deviceDescription: String {
         "\(device.name) (unified memory: \(device.hasUnifiedMemory), "
         + "max buffer: \(device.maxBufferLength / (1024 * 1024)) MB)"
+    }
+
+    /// Dispatch a kernel as `groups` threadgroups of `threads` threads each
+    /// (for kernels that reduce inside a threadgroup).
+    public func dispatchGroups(_ name: String, groups: Int, threads: Int,
+                               _ configure: (MTLComputeCommandEncoder) -> Void) throws {
+        guard groups > 0 else { return }
+        let pso = try pipeline(name)
+        guard let cb = queue.makeCommandBuffer(),
+              let enc = cb.makeComputeCommandEncoder() else { return }
+        enc.setComputePipelineState(pso)
+        configure(enc)
+        enc.dispatchThreadgroups(MTLSize(width: groups, height: 1, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: threads, height: 1, depth: 1))
+        enc.endEncoding()
+        cb.commit()
+        cb.waitUntilCompleted()
     }
 
     /// Dispatch a 1-D compute kernel over `count` threads.
