@@ -53,17 +53,31 @@ public final class BesselTable: @unchecked Sendable {
         return out
     }
 
-    /// J_|m|(x), Catmull–Rom on the table.
+    /// J_|m|(x), Catmull–Rom on the table; below the first step, the series.
     @inline(__always)
     public func j(_ m: Int, _ x: Double) -> Double {
         let mm = abs(m)
         precondition(mm <= maxOrder + 1 && x <= xMax, "Bessel table too small: J_\(mm)(\(x))")
+        // Near the axis the spline extrapolates (clamped to its second
+        // interval): fine for J itself, but the azimuthal gradient divides
+        // J_m(μr) by r, and there the extrapolation error is the answer.
+        if x < dx { return BesselTable.small(mm, x) }
         let u = x / dx
         let i = max(1, min(count - 3, Int(u)))
         let t = u - Double(i)
         let b = mm * count + i
         let p0 = values[b - 1], p1 = values[b], p2 = values[b + 1], p3 = values[b + 2]
         return p1 + 0.5 * t * (p2 - p0 + t * (2 * p0 - 5 * p1 + 4 * p2 - p3 + t * (3 * (p1 - p2) + p3 - p0)))
+    }
+
+    /// J_m(x) for small x, four terms of the series: (x/2)^m/m! · (1 − h²/(m+1)
+    /// + h⁴/(2(m+1)(m+2)) − h⁶/(6(m+1)(m+2)(m+3))), h = x/2.
+    public static func small(_ m: Int, _ x: Double) -> Double {
+        let h = x / 2, h2 = h * h
+        var t = 1.0
+        if m > 0 { for k in 1...m { t *= h / Double(k) } }
+        let a = Double(m + 1), b = Double(m + 2), c = Double(m + 3)
+        return t * (1 - h2 / a + h2 * h2 / (2 * a * b) - h2 * h2 * h2 / (6 * a * b * c))
     }
 
     /// J'_|m|(x) = (J_{m-1} − J_{m+1})/2  (J'_0 = −J_1).

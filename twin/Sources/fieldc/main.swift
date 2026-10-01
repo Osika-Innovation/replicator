@@ -319,6 +319,28 @@ case "gpu":
                                                srcL.modeCount, meanK, maxK, tS, tGL))
             print(gl.line)
             gates.append(gl)
+            // On the axis. A probe lattice with an odd point count puts a column
+            // exactly on x = y = 0, where φ is undefined and the m ≠ 0 terms go
+            // as J_m(μr)/r; the kernel returned exact zeros there (the tetra
+            // mold's apex, 1 Oct). Exactly on the axis and 1 µm off it.
+            var axisPts: [Vec3] = []
+            for q in 0..<8 {
+                let z = zMin + (cav.length - 2 * zMin) * (Double(q) + 0.5) / 8
+                axisPts += [Vec3(0, 0, z), Vec3(1e-6, 0, z), Vec3(0, -1e-6, z)]
+            }
+            let hA = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src, points: axisPts, withGradient: true)
+            var hAC: [Complex] = []
+            for x in axisPts {
+                let r = cav.rows(at: x, source: src)
+                for gi in 0..<fs.gateCount { hAC += [r.p[gi], r.grad[0][gi], r.grad[1][gi], r.grad[2][gi]] }
+            }
+            let ga = GateResult(id: "G-GPU-CYL-axis", name: "cavity modal sum with gradient ON the axis and 1 µm off it, vs CPU",
+                                measured: hA.relativeL2(to: hAC), threshold: 1e-4,
+                                detail: String(format: "%d points; |GPU| %.3e, |CPU| %.3e", axisPts.count,
+                                               hA.reduce(0) { $0 + $1.magnitudeSquared }.squareRoot(),
+                                               hAC.reduce(0) { $0 + $1.magnitudeSquared }.squareRoot()))
+            print(ga.line)
+            gates.append(ga)
         }
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "gpu", gates: gates, durationSeconds: 0,
@@ -694,9 +716,12 @@ case "mold":
                              100 * Double(captured) / Double(nGrains), nGrains, snaps.last!, filled, targets.count,
                              perTarget.min() ?? 0, perTarget.max() ?? 0,
                              100 * Double(rogue) / Double(nGrains), 100 * Double(lost) / Double(nGrains), contrast)
+        // G-M1: every site holds at least a quarter of its fair share of the cloud
+        // (a bare "every site has a grain" passed a run whose sieve had failed).
+        let fairShare = Double(nGrains) / Double(targets.count)
         let gates = [
-            GateResult(id: "G-M1", name: "acoustic mold (\(shape)): every site of the shape holds powder",
-                       measured: Double(filled) / Double(targets.count), threshold: 0.999, comparison: .greaterThan, detail: summary),
+            GateResult(id: "G-M1", name: "acoustic mold (\(shape)): every site holds ≥ ¼ of its fair share of the powder",
+                       measured: Double(perTarget.min() ?? 0) / fairShare, threshold: 0.25, comparison: .greaterThan, detail: summary),
             GateResult(id: "G-M2", name: "acoustic mold (\(shape)): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
                        measured: Double(captured) / Double(nGrains), threshold: 0.95, comparison: .greaterThan, detail: summary)]
         for g in gates { print(g.line) }

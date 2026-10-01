@@ -346,9 +346,20 @@ struct CavParams {
 
 inline float2 cmul(float2 a, float2 b) { return float2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
 
+// J_m(x), small x: the series (x/2)^m/m! (1 − h²/(m+1) + h⁴/(2(m+1)(m+2))), h = x/2.
+inline float besselSmall(uint m, float x) {
+    float h = 0.5f * x, h2 = h * h, t = 1.0f;
+    for (uint k = 1; k <= m; ++k) t *= h / float(k);
+    float a = float(m + 1), b = float(m + 2);
+    return t * (1.0f - h2 / a + h2 * h2 / (2.0f * a * b));
+}
+
 inline float besselTab(device const float* T, constant CavParams& P, int m, float x) {
     uint mm = uint(abs(m));
     if (mm >= P.tableOrders) return 0.0f;            // J_m(x) ≈ 0 for m ≫ x
+    // Below the first step the spline extrapolates; near the axis the
+    // azimuthal gradient divides J_m by r, so use the series there.
+    if (x < P.tableDx) return besselSmall(mm, x);
     float u = x / P.tableDx;
     int i = clamp(int(u), 1, int(P.tableCount) - 3);
     float t = u - float(i);
@@ -370,9 +381,13 @@ kernel void buildCavityFields(device float2*          H      [[buffer(0)]],
     uint G = min(P.gateCount, 16u);
     float2 acc[16][4];
     for (uint g = 0; g < G; ++g) for (uint c = 0; c < 4; ++c) acc[g][c] = float2(0.0f);
-    float r = max(length(x.xy), 1e-9f);
-    float phi = atan2(x.y, x.x);
-    float cph = cos(phi), sph = sin(phi);
+    // On the axis φ is undefined: take φ = 0 there explicitly (atan2(0, 0)
+    // under fast math is not 0), and keep r off zero — the m = ±1 terms'
+    // J_m(μr)/r tends to μ/2, which the series below the table gives.
+    float rr = length(x.xy);
+    float r = max(rr, 1e-9f);
+    float cph = rr > 0.0f ? x.x / rr : 1.0f, sph = rr > 0.0f ? x.y / rr : 0.0f;
+    float phi = atan2(sph, cph);
     bool grad = P.withGradient == 1;
     for (uint q = 0; q < P.modeCount; ++q) {
         CavMode md = modes[q];

@@ -27,18 +27,19 @@ cap_src = f"Receipts/mold_{shape}_capture.csv"
 capture = [(float(r["t_s"]), float(r["on_shape"])) for r in csv.DictReader(open(cap_src))] if os.path.exists(cap_src) else []
 
 span = 12.5                                     # mm, half-width of each panel
-size, pad, top = 300, 44, 74
+size, pad, top = 300, 44, 80
 scale = size / (2 * span)
 chart_h = 150
 W = int(2 * size + 3 * pad)
-H = int(top + 2 * (size + 30) + (chart_h + 60 if capture else 0) + 40)
+H = int(top + 2 * (size + 30) + (chart_h + 60 if capture else 0) + 50)
 ink, mute = "#1f2328", "#57606a"
 out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
        f'font-family="-apple-system, Helvetica, Arial, sans-serif">',
        f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
        f'<text x="{pad}" y="28" font-size="15" font-weight="600" fill="{ink}">{title}</text>',
-       f'<text x="{pad}" y="48" font-size="11.5" fill="{mute}">Ø40 µm powder released at random, then moving in one '
-       f'compiled field; red rings = the sites (grain counts at the end)</text>']
+       f'<text x="{pad}" y="47" font-size="11.5" fill="{mute}">Ø40 µm powder released at random, then moving in one compiled field.</text>',
+       f'<text x="{pad}" y="62" font-size="11.5" fill="{mute}">Red rings: the sites. Gold disks at the end: the powder each holds '
+       f'(area ∝ grains).</text>']
 panels = [(t_first, 0, 1, "x–y", "released"), (t_first, 0, 2, "x–z", "released"),
           (t_last, 0, 1, "x–y", f"after {t_last:g} s"), (t_last, 0, 2, "x–z", f"after {t_last:g} s")]
 for p, (t, a, b, name, when) in enumerate(panels):
@@ -50,7 +51,16 @@ for p, (t, a, b, name, when) in enumerate(panels):
         u, v = g[a], g[b]
         if abs(u) <= span and abs(v) <= span:
             out.append(f'<circle cx="{x0 + (u + span) * scale:.1f}" cy="{y0 + (span - v) * scale:.1f}" r="0.9"/>')
-    out.append('</g><g fill="none" stroke="#ff5555" stroke-width="1.2">')
+    out.append('</g>')
+    if p >= 2:                                  # at the end: each site's clump, area ∝ its grains
+        most = max([tx[3] for tx in targets] + [1])
+        out.append('<g fill="#e3b341" fill-opacity="0.55">')
+        for tx in targets:
+            if tx[3] > 0:
+                out.append(f'<circle cx="{x0 + (tx[a] + span) * scale:.1f}" cy="{y0 + (span - tx[b]) * scale:.1f}" '
+                           f'r="{1.5 + 7 * (tx[3] / most) ** 0.5:.1f}"/>')
+        out.append('</g>')
+    out.append('<g fill="none" stroke="#ff5555" stroke-width="1.2">')
     for tx in targets:
         out.append(f'<circle cx="{x0 + (tx[a] + span) * scale:.1f}" cy="{y0 + (span - tx[b]) * scale:.1f}" r="4.5"/>')
     out.append('</g>')
@@ -82,8 +92,8 @@ if capture:
                f'(within 1 mm of it) over time</text>')
     y = cy0 + ch + 30
 filled = sum(1 for t in targets if t[3] > 0)
-out.append(f'<text x="{pad}" y="{y + 16}" font-size="11" fill="{mute}">{filled}/{len(targets)} sites hold grains at the end. '
-           f'{note}</text>')
+out.append(f'<text x="{pad}" y="{y + 16}" font-size="11" fill="{mute}">{filled}/{len(targets)} sites hold grains at the end.</text>')
+out.append(f'<text x="{pad}" y="{y + 31}" font-size="11" fill="{mute}">{note}</text>')
 out.append('</svg>')
 open(f"shots/mold_{shape}.svg", "w").write("\n".join(out))
 print(f"wrote shots/mold_{shape}.svg ({len(frames[t_last])} grains at the end, {len(capture)} capture points)")

@@ -898,22 +898,25 @@ public enum ForceCompiler {
         for it in 1...iterations {
             let lr = lr0 * (1 - 0.9 * Double(it - 1) / Double(iterations))
             let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
-            // Soft maximum over the outside (log-sum-exp).
+            // Soft maximum over the outside (log-sum-exp). Its size is the scale
+            // every temperature is floored at: a lift of exactly zero (a column
+            // the field does not reach) must not set a temperature of zero.
             let Lo = outside.map { lift(U, $0) }
             let mo = Lo.max()!
-            let To = max(0.03 * abs(mo), 1e-300)
+            let scale = max(abs(mo), 1e-300)
+            let To = 0.03 * scale
             let eo = Lo.map { exp(($0 - mo) / To) }, zo = eo.reduce(0, +)
             let smax = mo + To * Foundation.log(zo)
             // Each target's best lift in its column (log-sum-exp), then a soft minimum over targets.
             var colW: [[Double]] = [], colL: [Double] = []
             for c in columns {
                 let L = c.map { lift(U, $0) }, m = L.max()!
-                let T = max(0.03 * abs(m), 1e-300)
+                let T = 0.03 * max(abs(m), 0.01 * scale)
                 let e = L.map { exp(($0 - m) / T) }, z = e.reduce(0, +)
                 colW.append(e.map { $0 / z }); colL.append(m + T * Foundation.log(z))
             }
             let mt = colL.min()!
-            let Tt = max(0.05 * abs(mt), 1e-300)
+            let Tt = 0.05 * max(abs(mt), 0.01 * scale)
             let et = colL.map { exp(-($0 - mt) / Tt) }, zt = et.reduce(0, +)
             let smin = mt - Tt * Foundation.log(zt)
             let now = measure(U), hNow = held(U)
@@ -931,20 +934,21 @@ public enum ForceCompiler {
             var cw = [Double](repeating: 0, count: lat.count)
             func addLift(_ n: Int, _ w: Double) { cw[n + sz] -= w / (2 * h); cw[n - sz] += w / (2 * h) }
             for (q, n) in outside.enumerated() where eo[q] > 1e-12 { addLift(n, eo[q] / zo / smax) }
-            if smin > 0 {
+            if smin > 0.01 * scale {
                 for (t, c) in columns.enumerated() {
                     let wt = et[t] / zt
                     guard wt > 1e-12 else { continue }
                     for (q, n) in c.enumerated() { addLift(n, -wt * colW[t][q] / smin) }
                 }
             } else {
-                for (t, c) in columns.enumerated() where colL[t] <= 0 {
-                    for (q, n) in c.enumerated() { addLift(n, -colW[t][q] / max(smax, 1e-300)) }
+                // No ratio yet: lift the weakest columns (soft-minimum weights).
+                for (t, c) in columns.enumerated() where et[t] / zt > 1e-12 {
+                    for (q, n) in c.enumerated() { addLift(n, -(et[t] / zt) * colW[t][q] / scale) }
                 }
             }
             // Sideways: a soft hinge on each neighbour's rise over the centre, in
             // units of the lift a site must give (rise ≥ 0.2·smin·sw·h).
-            if smin > 0 {
+            if smin > 0.01 * scale {
                 let unit = 0.2 * smin * Double(sw) * h, tau = 0.5 * unit
                 let per = 1 / (tau * Double(levels.count * side.count))
                 for lv in levels {
@@ -955,7 +959,7 @@ public enum ForceCompiler {
                     }
                 }
             }
-            if !ls.isEmpty, smin > 0 {
+            if !ls.isEmpty, smin > 0.01 * scale {
                 // Per site, the mean logistic hinge of its stretch of the band; then
                 // a soft maximum over the sites, so the worst-served site leads (an
                 // average let two sites of sixteen stay empty, run after run).
@@ -985,7 +989,14 @@ public enum ForceCompiler {
             }
             var grad = adjoint(tones, drives: g, weights: cw, gates: G, particle: particle)
             let gn = grad.reduce(0.0) { $0 + $1.reduce(0.0) { $0 + $1.magnitudeSquared } }.squareRoot()
-            if gn > 0 { grad = grad.map { $0.map { $0 * (1 / gn) } } }
+            if let log, it <= 3 || it % 50 == 1 {
+                let weakest = colL.firstIndex(of: colL.min()!)!
+                log(String(format: "      [it %d] smax %.3e, smin %.3e, weakest site %d column %.3e / %.3e, |cw| %.3e, |grad| %.3e",
+                           it, smax, smin, weakest, colL[weakest], columns[weakest].map { lift(U, $0) }.max()!,
+                           cw.reduce(0) { $0 + abs($1) }, gn))
+            }
+            guard gn.isFinite, gn > 0 else { log?("      [it \(it)] gradient not finite — step skipped"); continue }
+            grad = grad.map { $0.map { $0 * (1 / gn) } }
             for f in g.indices {
                 for i in 0..<G {
                     let gr = grad[f][i]
