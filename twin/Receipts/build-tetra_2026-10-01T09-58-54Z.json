@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T09:58:54Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 81.67603302001953,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "4\/4 placed; base on the support: yes; top touches 3 of 3; worst gap 0.0 µm; placed beads pushed ≤ 12.21 × weight",
+      "id" : "G-B2",
+      "measured" : 1,
+      "name" : "a tetrahedron: three PLA beads touching on the support, a fourth resting on all three",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "77df809+dirty",
+  "name" : "build-tetra"
+}

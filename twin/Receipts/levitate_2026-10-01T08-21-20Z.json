@@ -1,0 +1,91 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T08:21:20Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 876.5892580747604,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 26.33 m\/s (172 dB plane-wave), rms 14.33 m\/s; field peak 160 dB; lateral 3 Hz; sibling ratio 0.29",
+      "id" : "LEV",
+      "measured" : 26.32918781546555,
+      "name" : "plates only (image model), 5-tone chord 30–70 kHz: PLA Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 38.84 m\/s (175 dB plane-wave), rms 21.15 m\/s; field peak 163 dB; lateral 3 Hz; sibling ratio 0.29",
+      "id" : "LEV",
+      "measured" : 38.84271414980026,
+      "name" : "plates only (image model), 5-tone chord 30–70 kHz: aluminium Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 66.22 m\/s (180 dB plane-wave), rms 36.05 m\/s; field peak 168 dB; lateral 3 Hz; sibling ratio 0.29",
+      "id" : "LEV",
+      "measured" : 66.22293952807193,
+      "name" : "plates only (image model), 5-tone chord 30–70 kHz: steel Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 8.95 m\/s (162 dB plane-wave), rms 4.93 m\/s; field peak 162 dB; lateral 24 Hz; sibling ratio 0.34",
+      "id" : "LEV",
+      "measured" : 8.949019512168501,
+      "name" : "glass chamber, 5-tone chord 30–70 kHz: PLA Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 13.20 m\/s (166 dB plane-wave), rms 7.27 m\/s; field peak 166 dB; lateral 24 Hz; sibling ratio 0.34",
+      "id" : "LEV",
+      "measured" : 13.200908863136235,
+      "name" : "glass chamber, 5-tone chord 30–70 kHz: aluminium Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 22.50 m\/s (170 dB plane-wave), rms 12.40 m\/s; field peak 170 dB; lateral 24 Hz; sibling ratio 0.34",
+      "id" : "LEV",
+      "measured" : 22.50493229686039,
+      "name" : "glass chamber, 5-tone chord 30–70 kHz: steel Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 4.45 m\/s (156 dB plane-wave), rms 2.40 m\/s; field peak 159 dB; lateral 11 Hz; sibling ratio 0.33",
+      "id" : "LEV",
+      "measured" : 4.450787827183477,
+      "name" : "glass chamber, 10 tones 32–68 kHz: PLA Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 6.57 m\/s (160 dB plane-wave), rms 3.55 m\/s; field peak 162 dB; lateral 11 Hz; sibling ratio 0.33",
+      "id" : "LEV",
+      "measured" : 6.566161322043962,
+      "name" : "glass chamber, 10 tones 32–68 kHz: aluminium Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest gate 11.19 m\/s (164 dB plane-wave), rms 6.05 m\/s; field peak 167 dB; lateral 11 Hz; sibling ratio 0.33",
+      "id" : "LEV",
+      "measured" : 11.194685397944243,
+      "name" : "glass chamber, 10 tones 32–68 kHz: steel Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "77df809",
+  "name" : "levitate"
+}

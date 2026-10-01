@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T09:59:45Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 50.323145031929016,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "sieve objective, 40 tones, 1.31× holding, 1.0 re-sprinkles per grain: 100.0% of 3000 grains on the shape after 8 s, 15\/16 sites filled (0–445 each), 0.0% rogue, 0.0% lost; lift contrast 1.71",
+      "id" : "G-M1",
+      "measured" : 0,
+      "name" : "acoustic mold (ring): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : false,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "sieve objective, 40 tones, 1.31× holding, 1.0 re-sprinkles per grain: 100.0% of 3000 grains on the shape after 8 s, 15\/16 sites filled (0–445 each), 0.0% rogue, 0.0% lost; lift contrast 1.71",
+      "id" : "G-M2",
+      "measured" : 1,
+      "name" : "acoustic mold (ring): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    }
+  ],
+  "gitSHA" : "77df809+dirty",
+  "name" : "mold-ring-sieve"
+}

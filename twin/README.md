@@ -10,7 +10,7 @@ No Xcode required — Command Line Tools only.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test              # unit suite (58 tests; FIELDC_VERBOSE=1 prints every measured value)
+./.build/release/fieldc test              # unit suite (60 tests; FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gate --receipt    # physics acceptance gates, writes Receipts/
 ./.build/release/fieldc machine           # the simulated machine: RH-1 free-standing, room air (--desktop: frozen v0.3)
 ./.build/release/fieldc focus             # compile a centre trap on the full chamber (GPU port fields)
@@ -24,6 +24,9 @@ swift build -c release
 ./.build/release/fieldc fly --receipt         # integrate a PLA bead through the carry: drive level × step time (G-P2)
 ./.build/release/fieldc build --receipt       # the first build: N beads laid in a row on a support (G-B1; --beads N)
 ./.build/release/fieldc build --shape tetra --row-dir y --receipt   # four beads: a triangle and one in its pocket (G-B2)
+./.build/release/fieldc scan3d --object tetra --receipt   # image a 3D object from the six gates, 30–100 kHz (tetra | R | bead-tetra)
+./.build/release/fieldc mold --receipt        # the acoustic sieve: a random powder cloud onto a 16-site ring (G-M1, G-M2)
+./.build/release/fieldc mold --objective wells --receipt   # the same with a mold of wells alone (the λ/4 limit)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -70,6 +73,20 @@ support, each within 2–3.5 µm of its site and touching its neighbour (7–9 �
 gaps). This works by compiling the force balance rather than the potential
 minimum, and by placing closed-loop (G-B1). A tetrahedron follows: a fourth
 bead rests on three, touching all of them (G-B2). See "Round 9".
+
+**2026-09-30, night — scan an object, mold from powder.** The twin images a
+3D object from the six gates (a 30 mm tetrahedron frame at 100 % recall; the
+letter R readable). A random cloud of Ø40 µm powder then ends 100 % on a
+16-site ring, and 100 % on a 12 mm tetrahedron frame, within 2–4 s. That works
+as a sieve: gravity carries the powder, and the compiled field makes the shape
+the only place that can hold a grain up. A mold of wells alone catches only
+the ~23 % that starts within λ/4 of the shape. Open: an even share per site.
+See "Round 11".
+
+**2026-10-01 — the axis bug.** The GPU cavity fields were exactly zero on the
+chamber axis, where every mid-plane target sits. Fixed and gated
+(G-GPU-CYL-axis); every affected receipt was re-run at 77df809, and the
+conclusions of Rounds 7–11 hold with corrected numbers. See "Round 11".
 
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
@@ -120,6 +137,120 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
 
+## Round 11 — scan an object, then mold from powder (2026-09-30)
+
+The replicator's own loop is to scan an object and then mold a copy in one
+shot. Pick-and-place was the proving ground; this round does the two halves
+of the loop.
+
+**Scan (`fieldc scan3d`).** By reciprocity, a small scatterer at x couples gate
+j to gate i through what each gate's field does there:
+
+    ΔT_ij(f) ∝ −(f1/3) k²a³ p_i(x) p_j(x) − (f2/2) a³ ∇p_i(x)·∇p_j(x)
+
+The chamber-only transfer is calibrated away. An object is a cloud of such
+scatterers (Born approximation; the coupled solve for a few beads). The image
+is the matched field over 90 frequencies from 30 to 100 kHz, every gate pair,
+40 dB SNR, using the same exact glass-chamber fields:
+
+    I(x) = |Σ_f Σ_ij M_ij(x,f)* ΔT_ij(f)| / (Σ|M|²)^½
+
+| object | recall (object within 2 mm of a bright voxel) | bright voxels on the object | what it shows |
+|---|---|---|---|
+| 30 mm tetrahedron frame | 100 % | 14 % | the outline in x–y, blurred 2–3 mm; streaked in z by the plate mirrors |
+| letter R, 40 mm | 99 % | 33 % | the letter, readable in x–z |
+| the twin's own 4-bead tetrahedron | — | — | one blob: 0.36 mm across, below the resolution |
+
+![The twin scans a tetrahedron frame](shots/scan_tetra.svg)
+![The twin scans the letter R](shots/scan_R.svg)
+
+**Mold (`fieldc mold`).** A cloud of Ø40 µm PLA powder, 3000 grains, is
+released at random through a ±10 mm volume. It moves in one compiled
+multi-tone field, with gravity on. A grain relaxes in 6 ms in air, so it is
+overdamped: it follows the field and does not swing, which is what defeated
+single-bead carrying. Force and weight both go as a³, so small grains are not
+weightless.
+
+* **A mold of wells catches only what starts near the shape.** The force
+  compiler, generalised to many wells (`--objective wells`), forms 13 of the
+  16 wells of an 8 mm ring. It puts only 23 % of the cloud on the ring, and
+  fills 5 of 16 sites (G-M1 and G-M2 fail). By starting distance from the ring:
+
+  | start (mm from the ring) | 0–1 | 1–2 | 2–3 | 3–4 | 4–5 | 5–6 | 6–8 | > 8 |
+  |---|---|---|---|---|---|---|---|---|
+  | captured | 88 % | 93 % | 76 % | 37 % | 19 % | 6 % | 2 % | 0 % |
+
+  A still field reaches a grain only within about λ/4 of its lowest tone
+  (2.9 mm at 30 kHz). The rest settles in layers a wavelength above and below
+  the ring. Gravity is not the limiter: runs without gravity, and at 16× the
+  drive, give the same result.
+* **No drive makes the whole volume slope toward the shape.** Asking for U to
+  fall toward the nearest site at every point (`--objective funnel`) moves the
+  funnelled share from 50 % to 52 %, which is chance. A resonant chamber's
+  landscape repeats every half wavelength. The funnel objective is kept as the
+  negative test.
+
+  ![A mold of wells alone](shots/mold_ring_wells.svg)
+* **Gravity is the conveyor; the mold is a sieve.** A grain can come to rest
+  only where the lift −∂U/∂z equals its weight. So the compiler instead makes
+  the shape the only place that can hold a grain up (`compileSieve`). It
+  maximises the weakest site's lift over the most that any point 1.5 mm or
+  more from the shape can lift. In the power window between the two, the sites
+  hold and every other grain falls. Powder that falls out is sprinkled in
+  again at the top, as a hopper or a recirculating loop would. Three more
+  terms make the powder spread evenly along the shape:
+  * each site is a trap sideways, at its level and one step up, where a held
+    grain rests;
+  * the band where grains land funnels to the nearest site;
+  * that funnel is weighted to the worst-served site. Averaged over all sites,
+    the same 2 of 16 stayed empty run after run.
+
+  **Result (40 tones, lift contrast 1.71, drive 1.31× the weakest site's
+  hold; receipts at 77df809):** 99 % of the cloud is on the ring within 2 s
+  and 100 % by 4 s. Nothing is left in a rogue well and nothing is lost; each
+  grain was sprinkled in again 1.0 times on average (G-M2 passes). 15 of the 16
+  sites hold powder (49–445 grains); the site at 247° stays empty and its
+  neighbour takes a double share (G-M1 fails). Before the axis fix the same
+  compile filled all 16 (86–321 grains).
+* **The tetrahedron frame (12 mm edges, 10 sites) works too:** lift contrast
+  1.94, 100 % of the cloud on the frame within 4 s, all 10 sites holding
+  powder, but unevenly, 58–525 grains (G-M2 passes, G-M1 fails at 0.19 of a
+  fair share against 0.25).
+
+  ![The acoustic sieve on a tetrahedron frame](shots/mold_tetra.svg)
+
+  ![The acoustic sieve](shots/mold_ring.svg)
+
+**What this asks of the machine.** Powder is dispensed from above, and what
+falls through is collected and dispensed again. The drive sits inside a window
+set by the lift contrast. At contrast 1.71 the drive power must stay within
+−24 % … +31 % of the window's middle, so the drive level must be known that
+well: calibrated through the scan, and tracked as the air warms (Round 6). The sites are 3.1 mm apart,
+about λ/2 at the top of the band. A continuous part needs the clumps to merge
+or be bridged (binder, sintering), which is not modelled.
+
+**The axis bug (found 1 Oct, fixed at 77df809).** The first sieve compile of
+the tetrahedron froze: its apex site, on the chamber axis, showed exactly zero
+lift. Probe lattices are centred on their target with an odd point count, so a
+target on the axis puts a lattice column exactly on x = y = 0. There the Metal
+cavity kernel returned exact zeros for every tone and every component (φ =
+atan2(0, 0) under fast math). The CPU reference was right for p but took the
+m = ±1 gradient term J_m(μr)/r from a spline extrapolated below the table's
+first step. Both now use the series below the first step and φ = 0 on the
+axis. A new gate, G-GPU-CYL-axis, compares GPU and CPU exactly on the axis and
+1 µm off it: 0.59 before, 6.3e-6 after. Every glass-chamber receipt with
+on-axis content was re-run at 77df809 (Rounds 7, 8, 10 and 11 above). The
+plates-only runs and the off-axis targets do not use this kernel. The
+conclusions hold; the numbers moved by up to ~30 % (the 1-tone mid-plane ratio
+0.88 → 1.19; the 5-tone chord 0.42 → 0.34). The sieve compile also no longer
+lets a zero lift set a zero temperature. And G-M1 now needs every site to hold
+at least a quarter of its fair share: a bare "every site has a grain" passed
+the frozen run.
+
+**Open:** an even share per site (G-M1). Not modelled: grain–grain contact and
+cohesion, the clump's own scattering (`Scatterers` exists for it), and
+streaming.
+
 ## Round 10 — part growth: the part is in the field (2026-09-30)
 
 **Placed beads scatter** (`Scatterers`). Each bead scatters as a monopole
@@ -154,14 +285,14 @@ has to be placed:
   the bond cures.
 
 The row passes (G-B1): all five beads on the support, gripped to their
-neighbours, 17–23 µm from their sites. The tetrahedron passes with its base
+neighbours, 10–13 µm from their sites (re-run at 77df809). The tetrahedron passes with its base
 along y (G-B2): the base closes by attraction, and the top bead settles into
 the pocket at 163.3 µm, which is 2a·√(2/3), touching all three.
 
 **Open:** with the orientation chosen automatically, the tetrahedron's carries
 still lose a bead. Traps are soft and can be saddles off-axis, so a carry path
 must be checked for trappability before it is committed. Placed beads now take
-up to ~12× their weight from the traps that bring the next bead.
+up to 16× their weight from the traps that bring the next bead.
 
 **Where this goes next.** Pick-and-place was the proving ground for the
 compiler, the part's field and the bead dynamics. The replicator's own loop is
@@ -233,9 +364,9 @@ material, not the size. Hardest-driven gate, velocity amplitude (receipt):
 
 | trap | PLA | aluminium | steel | field peak, PLA / steel |
 |---|---|---|---|---|
-| plates only, 5 tones | 25.5 m/s | 37.7 m/s | 64.2 m/s | 160 / 168 dB |
-| glass chamber, 5 tones | 10.1 m/s | 15.0 m/s | 25.5 m/s | 163 / 171 dB |
-| glass chamber, 10 tones | 4.5 m/s | 6.6 m/s | 11.3 m/s | 160 / 168 dB |
+| plates only, 5 tones | 26.3 m/s | 38.8 m/s | 66.2 m/s | 160 / 168 dB |
+| glass chamber, 5 tones | 9.0 m/s | 13.2 m/s | 22.5 m/s | 162 / 170 dB |
+| glass chamber, 10 tones | 4.5 m/s | 6.6 m/s | 11.2 m/s | 159 / 167 dB |
 
 * The glass keeps the energy in: the same trap needs 2.5–6× less drive than the
   plates alone.
@@ -243,7 +374,10 @@ material, not the size. Hardest-driven gate, velocity amplitude (receipt):
   needs ~168–171 dB, where the air turns nonlinear (shock distance ~6 cm at
   160 dB) and streaming drag on fine powder rivals its weight. That is where
   the next physics layers — nonlinearity and streaming — stop being optional.
-* Lateral stiffness is weak: 4–26 Hz for PLA at the holding drive.
+* Lateral stiffness is weak: 3–24 Hz for PLA at the holding drive.
+* Re-run at 77df809 (the axis fix; the targets sit on the axis): the glass rows
+  moved by up to 12 % (5 tones) and < 1 % (10 tones). The plates-only row moved
+  ~3 % with the compiler's normalised gradients.
 
 **`fieldc carry` — pick up, carry, place (G-P1).** Re-compiling at each step of a
 path either kept the old well while the target moved away (three steps) or
@@ -274,11 +408,14 @@ Each drive change is ramped linearly, then settles with the chamber's τ
   step keeps it depends on the swing's phase: lost at 10 and 40 ms per step,
   carried at 20 and 80. The static carry (G-P1) is not enough for a real bead.
 * **Loaded gently, with ramped steps, it rides.**
-  * At 2× the holding drive: carried at 20–80 ms per 0.25 mm step (escapes at
-    10 ms).
+  * At 2× the holding drive: carried at every step time from 10 to 80 ms per
+    0.25 mm step, ending 0.29–0.33 mm off the drop-off.
   * At 4×: carried at every step time down to 10 ms. The whole 10 mm path
-    takes 0.4 s, and the bead ends 0.21 mm off the drop-off, which is its sag.
-  * At 8×: carried, ending 0.10–0.13 mm off.
+    takes 0.4 s, and the bead ends 0.13–0.15 mm off the drop-off, which is its
+    sag.
+  * At 8×: carried, ending 0.07–0.08 mm off.
+  * (Re-run at 77df809, after the axis fix: before it, the 2× bead escaped at
+    10 ms and the 4× bead sagged 0.21 mm.)
 
 ![A PLA bead carried 5 mm up and 5 mm across](shots/fly_4x_40ms.svg)
 
@@ -344,7 +481,9 @@ differences, 1.5e-9); a chord starts from each tone compiled alone (equal,
 quality-weighted, and the best tone alone). Everything below uses it.
 
 **What the glass does to a trap, and what brings it back** (`fieldc forcetrap
-[--glass]`, `fieldc tonesweep`, `fieldc wallsweep`; receipts at 00bcc24).
+[--glass]`, `fieldc tonesweep`, `fieldc wallsweep`; receipts at 00bcc24; every
+glass row with its target on the axis re-run at 77df809, after the axis fix —
+see "The axis bug" below).
 Sibling ratio, force compiler (< 0.5 = one trap; siblings above half depth in
 brackets):
 
@@ -352,19 +491,20 @@ brackets):
 |---|---|---|---|---|---|
 | plates only, mid-plane | 0.91 | | **0.25** (0), G-F1 | | |
 | plates only, 100 mm above the lower face | 0.90 | | **0.31** (0) | | |
-| bare glass, mid-plane (30–70 kHz grid) | 0.88 | | **0.42** (0) | | |
-| bare glass, mid-plane (tonesweep spacing) | 1.06 | **0.44** (0) | 0.70 | **0.24** (0) | **0.16** (0) |
+| bare glass, mid-plane (30–70 kHz grid) | 1.19 | | **0.34** (0) | | |
+| bare glass, mid-plane (tonesweep spacing) | 1.01 | **0.41** (0) | 0.66 | **0.33** (0) | **0.14** (0) |
 | bare glass, 60 mm off-axis | | | **0.49** (0) | **0.22** (0) | **0.18** (0) |
-| bare glass, 100 mm above the lower face | | | **0.36** (0) | | |
-| GS-PAT chords only, mid-plane | 6.91 | 1.22 | 4.20 | 0.69 | 0.92 → 0.50 at 80 tones |
+| bare glass, 100 mm above the lower face | | | **0.33** (0) | | |
+| GS-PAT chords only, mid-plane | 6.91 | 1.22 | 4.35 | 0.65 | 0.83 → 0.45 at 80 tones |
 
 * **Glass turns the field into speckle**, and a pressure-objective chord needs
   ~80 tones to find its way back to one trap. **Force-compiled, 3–10 tones
   suffice**, on axis and off it — the time–bandwidth argument (I1 below) holds
   in the exact chamber. Tones are drives.
 * **A liner is not the lever.** With the force compiler the 5-tone chord reads
-  0.42 with bare glass, 0.42 / 0.48 / 0.53 / 0.64 behind liners of normal-
-  incidence R = 0.9 / 0.7 / 0.5 / 0.3, and 0.36 behind a ρc-matched one. A
+  0.34 with bare glass, 0.39 / 0.38 / 0.43 / 0.57 behind liners of normal-
+  incidence R = 0.9 / 0.7 / 0.5 / 0.3, and 0.34 behind a ρc-matched one
+  (re-run at 77df809; before the axis fix 0.42, 0.42–0.64 and 0.36). A
   locally reacting wall reflects grazing waves whatever its β —
   R(θ) = (cos θ − β)/(cos θ + β) → −1 — and a partial liner's reflection phase
   turns with angle, which scrambles the field further. (An absorber that

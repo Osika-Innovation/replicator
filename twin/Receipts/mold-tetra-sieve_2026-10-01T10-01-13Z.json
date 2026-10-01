@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T10:01:13Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 65.26561307907104,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "sieve objective, 40 tones, 1.39× holding, 1.1 re-sprinkles per grain: 100.0% of 3000 grains on the shape after 8 s, 10\/10 sites filled (58–525 each), 0.0% rogue, 0.0% lost; lift contrast 1.94",
+      "id" : "G-M1",
+      "measured" : 0.19333333333333333,
+      "name" : "acoustic mold (tetra): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : false,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "sieve objective, 40 tones, 1.39× holding, 1.1 re-sprinkles per grain: 100.0% of 3000 grains on the shape after 8 s, 10\/10 sites filled (58–525 each), 0.0% rogue, 0.0% lost; lift contrast 1.94",
+      "id" : "G-M2",
+      "measured" : 1,
+      "name" : "acoustic mold (tetra): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    }
+  ],
+  "gitSHA" : "77df809+dirty",
+  "name" : "mold-tetra-sieve"
+}

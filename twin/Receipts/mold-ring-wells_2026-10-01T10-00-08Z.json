@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T10:00:08Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 22.639623045921326,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "wells objective, 20 tones, 4.00× holding: 23.4% of 3000 grains on the shape after 8 s, 5\/16 sites filled (0–272 each), 61.3% rogue, 15.3% lost; lift contrast 0.84",
+      "id" : "G-M1",
+      "measured" : 0,
+      "name" : "acoustic mold (ring): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : false,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "wells objective, 20 tones, 4.00× holding: 23.4% of 3000 grains on the shape after 8 s, 5\/16 sites filled (0–272 each), 61.3% rogue, 15.3% lost; lift contrast 0.84",
+      "id" : "G-M2",
+      "measured" : 0.23366666666666666,
+      "name" : "acoustic mold (ring): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : false,
+      "threshold" : 0.95
+    }
+  ],
+  "gitSHA" : "77df809+dirty",
+  "name" : "mold-ring-wells"
+}

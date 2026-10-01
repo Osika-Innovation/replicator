@@ -1,0 +1,46 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T06:09:04Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 5751.568727970123,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "force 1.19 (101 siblings), GS-PAT 1.57 (60); depth 0.8×",
+      "id" : "F-1t-glass",
+      "measured" : 1.1922444829690713,
+      "name" : "1 tone, 40 kHz, mid-plane, glass: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.57 (23 siblings), GS-PAT 0.99 (14); depth 0.7×",
+      "id" : "F-1t-glass",
+      "measured" : 0.5689709571426375,
+      "name" : "1 tone, 40 kHz, 100 mm above the lower face, glass: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.34 (0 siblings), GS-PAT 1.18 (219); depth 1.4×",
+      "id" : "F-5t-glass",
+      "measured" : 0.3385134822471114,
+      "name" : "5-tone chord, 30–70 kHz, mid-plane, glass: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.33 (0 siblings), GS-PAT 0.93 (101); depth 1.4×",
+      "id" : "F-5t-glass",
+      "measured" : 0.32591506395126263,
+      "name" : "5-tone chord, 30–70 kHz, 100 mm above the lower face, glass: force vs GS-PAT sibling ratio",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "77df809",
+  "name" : "forcetrap-glass"
+}

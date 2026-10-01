@@ -1,0 +1,127 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T08:46:24Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 1145.4563400745392,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.95 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.0003344173967350053,
+      "name" : "2× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.83 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.00029320633687455056,
+      "name" : "2× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.78 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.0002967464501704793,
+      "name" : "2× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.80 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.0002962820707546013,
+      "name" : "2× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.61 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.00013276754358376814,
+      "name" : "4× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.61 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.00014258384877336626,
+      "name" : "4× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.50 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.00014626556684418286,
+      "name" : "4× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.51 mm, carried",
+      "id" : "FLY",
+      "measured" : 0.00014679831460914298,
+      "name" : "4× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.57 mm, carried",
+      "id" : "FLY",
+      "measured" : 7.790291264523087e-05,
+      "name" : "8× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.42 mm, carried",
+      "id" : "FLY",
+      "measured" : 7.645123443340051e-05,
+      "name" : "8× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.38 mm, carried",
+      "id" : "FLY",
+      "measured" : 7.436622466970252e-05,
+      "name" : "8× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.37 mm, carried",
+      "id" : "FLY",
+      "measured" : 7.444411188171912e-05,
+      "name" : "8× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : ">",
+      "detail" : "at least one drive level and step time carries it to within 0.5 mm of the drop-off",
+      "id" : "G-P2",
+      "measured" : 1,
+      "name" : "a 200 µm PLA bead, integrated through the fields, rides the carry 5 mm up and 5 mm across",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "77df809",
+  "name" : "fly"
+}

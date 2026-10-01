@@ -1,0 +1,118 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T10:18:49Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 349.9903789758682,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "force 1.19 (101 siblings), GS-PAT 1.57 (60)",
+      "id" : "W-1t",
+      "measured" : 1.1922444829690713,
+      "name" : "1 tone, 40 kHz, plates R 0.90, glass R 1.00",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 1.25 (94 siblings), GS-PAT 2.43 (101)",
+      "id" : "W-1t",
+      "measured" : 1.248810531330991,
+      "name" : "1 tone, 40 kHz, plates R 0.90, glass R 0.90",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 1.21 (50 siblings), GS-PAT inf (158)",
+      "id" : "W-1t",
+      "measured" : 1.2070631028425178,
+      "name" : "1 tone, 40 kHz, plates R 0.90, glass R 0.70",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 1.91 (46 siblings), GS-PAT 20.46 (46)",
+      "id" : "W-1t",
+      "measured" : 1.9063037192880115,
+      "name" : "1 tone, 40 kHz, plates R 0.90, glass R 0.50",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.72 (8 siblings), GS-PAT 2.24 (12)",
+      "id" : "W-1t",
+      "measured" : 0.7158610620838713,
+      "name" : "1 tone, 40 kHz, plates R 0.90, glass R 0.30",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 1.80 (38 siblings), GS-PAT inf (40)",
+      "id" : "W-1t",
+      "measured" : 1.799917149931798,
+      "name" : "1 tone, 40 kHz, plates R 0.90, glass R 0.00",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.34 (0 siblings), GS-PAT 1.18 (219)",
+      "id" : "W-5t",
+      "measured" : 0.3385134822471114,
+      "name" : "5-tone chord, 30–70 kHz, plates R 0.90, glass R 1.00",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.39 (0 siblings), GS-PAT 1.66 (331)",
+      "id" : "W-5t",
+      "measured" : 0.3928329798849129,
+      "name" : "5-tone chord, 30–70 kHz, plates R 0.90, glass R 0.90",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.38 (0 siblings), GS-PAT 2.29 (535)",
+      "id" : "W-5t",
+      "measured" : 0.3775798754046948,
+      "name" : "5-tone chord, 30–70 kHz, plates R 0.90, glass R 0.70",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.43 (0 siblings), GS-PAT 2.85 (468)",
+      "id" : "W-5t",
+      "measured" : 0.43345807602061015,
+      "name" : "5-tone chord, 30–70 kHz, plates R 0.90, glass R 0.50",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.57 (75 siblings), GS-PAT 1.40 (122)",
+      "id" : "W-5t",
+      "measured" : 0.5729081325994448,
+      "name" : "5-tone chord, 30–70 kHz, plates R 0.90, glass R 0.30",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "force 0.34 (0 siblings), GS-PAT 0.84 (22)",
+      "id" : "W-5t",
+      "measured" : 0.3439335505675233,
+      "name" : "5-tone chord, 30–70 kHz, plates R 0.90, glass R 0.00",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "77df809+dirty",
+  "name" : "wallsweep"
+}
