@@ -96,15 +96,21 @@ public final class MetalContext {
                                _ configure: (MTLComputeCommandEncoder) -> Void) throws {
         guard groups > 0 else { return }
         let pso = try pipeline(name)
-        guard let cb = queue.makeCommandBuffer(),
-              let enc = cb.makeComputeCommandEncoder() else { return }
-        enc.setComputePipelineState(pso)
-        configure(enc)
-        enc.dispatchThreadgroups(MTLSize(width: groups, height: 1, depth: 1),
-                                 threadsPerThreadgroup: MTLSize(width: threads, height: 1, depth: 1))
-        enc.endEncoding()
-        cb.commit()
-        cb.waitUntilCompleted()
+        // Command buffers and encoders are autoreleased, and they keep every
+        // buffer bound to them alive: a command-line loop that never drains a
+        // pool grows without bound (the array sweep reached 2.5 GB in 30 s and
+        // was killed). One pool per dispatch.
+        autoreleasepool {
+            guard let cb = queue.makeCommandBuffer(),
+                  let enc = cb.makeComputeCommandEncoder() else { return }
+            enc.setComputePipelineState(pso)
+            configure(enc)
+            enc.dispatchThreadgroups(MTLSize(width: groups, height: 1, depth: 1),
+                                     threadsPerThreadgroup: MTLSize(width: threads, height: 1, depth: 1))
+            enc.endEncoding()
+            cb.commit()
+            cb.waitUntilCompleted()
+        }
     }
 
     /// Dispatch a 1-D compute kernel over `count` threads.
@@ -112,15 +118,17 @@ public final class MetalContext {
                          _ configure: (MTLComputeCommandEncoder) -> Void) throws {
         guard count > 0 else { return }
         let pso = try pipeline(name)
-        guard let cb = queue.makeCommandBuffer(),
-              let enc = cb.makeComputeCommandEncoder() else { return }
-        enc.setComputePipelineState(pso)
-        configure(enc)
-        let w = min(pso.maxTotalThreadsPerThreadgroup, 256)
-        enc.dispatchThreads(MTLSize(width: count, height: 1, depth: 1),
-                            threadsPerThreadgroup: MTLSize(width: w, height: 1, depth: 1))
-        enc.endEncoding()
-        cb.commit()
-        cb.waitUntilCompleted()
+        autoreleasepool {                     // see dispatchGroups
+            guard let cb = queue.makeCommandBuffer(),
+                  let enc = cb.makeComputeCommandEncoder() else { return }
+            enc.setComputePipelineState(pso)
+            configure(enc)
+            let w = min(pso.maxTotalThreadsPerThreadgroup, 256)
+            enc.dispatchThreads(MTLSize(width: count, height: 1, depth: 1),
+                                threadsPerThreadgroup: MTLSize(width: w, height: 1, depth: 1))
+            enc.endEncoding()
+            cb.commit()
+            cb.waitUntilCompleted()
+        }
     }
 }

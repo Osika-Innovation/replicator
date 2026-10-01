@@ -49,6 +49,67 @@ func moldShape(_ shape: String, centre: Vec3) -> ([Vec3], [(Vec3, Vec3)]) {
     return (sites, segments)
 }
 
+/// The scan's test objects around a centre: scatterer points, the scatterer
+/// radius, and the image grid (half-width, spacing).
+func scanObject(_ name: String, centre: Vec3) -> ([Vec3], Double, Double, Double) {
+    func segment(_ a: Vec3, _ b: Vec3, _ step: Double) -> [Vec3] {
+        let m = max(1, Int(((b - a).length / step).rounded()))
+        return (0...m).map { a + (b - a) * (Double($0) / Double(m)) }
+    }
+    var object: [Vec3] = []
+    var subunit = 0.3e-3
+    var half = 24e-3, h = 1.25e-3
+    switch name {
+    case "R":
+        // An extruded letter R, 40 mm tall, strokes every 1.5 mm, 3 layers 3 mm apart.
+        let H = 40e-3, W = 24e-3
+        var strokes: [(Vec3, Vec3)] = [(Vec3(0, 0, 0), Vec3(0, 0, H))]
+        let bowlTop = H, bowlBottom = H * 0.5, r = (bowlTop - bowlBottom) / 2
+        strokes.append((Vec3(0, 0, bowlTop), Vec3(W - r, 0, bowlTop)))
+        strokes.append((Vec3(0, 0, bowlBottom), Vec3(W - r, 0, bowlBottom)))
+        strokes.append((Vec3(W * 0.35, 0, bowlBottom), Vec3(W, 0, 0)))
+        var pts: [Vec3] = []
+        for (a, b) in strokes { pts += segment(a, b, 1.5e-3) }
+        for q in 0...16 {                              // the bowl: a half circle
+            let th = -Double.pi / 2 + Double.pi * Double(q) / 16
+            pts.append(Vec3(W - r + r * cos(th), 0, bowlBottom + r + r * sin(th)))
+        }
+        for layer in [-3e-3, 0, 3e-3] {
+            for p0 in pts { object.append(centre + Vec3(p0.x - W / 2, layer, p0.z - H / 2)) }
+        }
+    case "bead-tetra":
+        // The twin's own 4-bead tetrahedron (Ø200 µm, touching): below the wavelength.
+        let a = 0.1e-3, d = 2 * a
+        let b0 = Vec3(0, 0, 0), b1 = Vec3(d, 0, 0), b2 = Vec3(d / 2, d * 3.0.squareRoot() / 2, 0)
+        let c = (b0 + b1 + b2) * (1.0 / 3)
+        let top = c + Vec3(0, 0, d * (2.0 / 3).squareRoot())
+        object = [b0, b1, b2, top].map { centre + $0 - c }
+        subunit = a; half = 8e-3; h = 0.4e-3
+    case "point":
+        // One small scatterer off the centre: the scan's point-spread.
+        object = [centre + Vec3(3e-3, 2e-3, 1e-3)]
+        half = 8e-3; h = 0.4e-3
+    case "ring":
+        // A wire ring, 8 mm radius, in the mid-plane, scatterers every 1 mm.
+        object = (0..<50).map { q in
+            let th = 2 * Double.pi * Double(q) / 50
+            return centre + Vec3(8e-3 * cos(th), 8e-3 * sin(th), 0)
+        }
+        half = 14e-3; h = 0.7e-3
+    default:
+        // A regular tetrahedron wireframe, 30 mm edges, sampled every 1.5 mm.
+        let e = 30e-3
+        let v = [Vec3(0, 0, 0), Vec3(e, 0, 0), Vec3(e / 2, e * 3.0.squareRoot() / 2, 0),
+                 Vec3(e / 2, e * 3.0.squareRoot() / 6, e * (2.0 / 3).squareRoot())]
+        let c = (v[0] + v[1] + v[2] + v[3]) * 0.25
+        for i in 0..<4 { for j in (i + 1)..<4 { object += segment(v[i], v[j], 1.5e-3).map { centre + $0 - c } } }
+        var seen: [Vec3] = []
+        for p0 in object where !seen.contains(where: { ($0 - p0).length < 1e-6 }) { seen.append(p0) }
+        object = seen
+    }
+    return (object, subunit, half, h)
+}
+
 func gitSHA() -> String {
     guard let sha = git(["rev-parse", "--short", "HEAD"]), !sha.isEmpty else { return "unknown" }
     let dirty = !(git(["status", "--porcelain", "--untracked-files=no", "--", "."]) ?? "").isEmpty
@@ -634,168 +695,47 @@ case "arraysweep":
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "scan3d":
-    // Scan a 3D object from the six gates, across the band, in the exact glass
-    // chamber. By reciprocity a small scatterer at x couples gate j to gate i
-    // through what each gate's field does there:
-    //     ΔT_ij(f) ∝ −(f1/3) k²a³ p_i(x) p_j(x) − (f2/2) a³ ∇p_i(x)·∇p_j(x)
-    // (the chamber-only transfer is calibrated away). An object is a cloud of
-    // such scatterers — the Born approximation for a cloud, the coupled solve
-    // for a few beads. The image is the matched field: at every grid point, the
-    // data correlated with what a point scatterer there would have produced,
-    //     I(x) = |Σ_f Σ_ij M_ij(x,f)* ΔT_ij(f)| / (Σ|M|²)^½,
-    // with the same exact cavity fields. Its point-spread width is the scan's
-    // real resolution; its overlap with the object says what it sees.
+    // Scan a 3D object (ScanCore.swift). Default: open air, the plate array
+    // (2 × 192 elements) lighting the object with random chords over
+    // 30–100 kHz, the echo sent back time-reversed — the matched filter.
+    // `--chamber glass`: the six gates of the glass chamber (Round 11).
+    // Objects are clouds of small rigid scatterers (Born; the coupled solve
+    // for a few beads in the glass path).
     do {
         let ctx = try MetalContext()
         let t0 = Date()
-        let air = RH1Freestanding.roomAir
-        let design = RH1Design()
-        let L = design.buildChamberHeight * 0.001
+        func arg(_ name: String) -> String? { args.firstIndex(of: name).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
+        let glass = arg("--chamber") == "glass"
+        let perPlate = arg("--per-plate").flatMap(Int.init) ?? 192
+        let L = glass ? RH1Design().buildChamberHeight * 0.001 : PlateArray(perPlate: perPlate).gap
         let centre = Vec3(0, 0, L / 2)
-        var objectName = "tetra"
-        if let i = args.firstIndex(of: "--object"), i + 1 < args.count { objectName = args[i + 1] }
-        var fHi = 100_000.0, nF = 90
-        if let i = args.firstIndex(of: "--fmax"), i + 1 < args.count, let v = Double(args[i + 1]) { fHi = v * 1000 }
-        if let i = args.firstIndex(of: "--nf"), i + 1 < args.count, let v = Int(args[i + 1]) { nF = v }
+        let objectName = arg("--object") ?? "tetra"
+        var fHi = 100_000.0, nF = glass ? 90 : 24
+        if let v = arg("--fmax").flatMap(Double.init) { fHi = v * 1000 }
+        if let v = arg("--nf").flatMap(Int.init) { nF = v }
         let fLo = 30_000.0
-        var snrDB = 40.0
-        if let i = args.firstIndex(of: "--snr"), i + 1 < args.count, let v = Double(args[i + 1]) { snrDB = v }
-        // --- the object: a cloud of small rigid scatterers ---
-        func segment(_ a: Vec3, _ b: Vec3, _ step: Double) -> [Vec3] {
-            let m = max(1, Int(((b - a).length / step).rounded()))
-            return (0...m).map { a + (b - a) * (Double($0) / Double(m)) }
-        }
-        var object: [Vec3] = []
-        var subunit = 0.3e-3                               // effective scatterer radius
-        var half = 24e-3, h = 1.25e-3                      // imaging grid: ±half at h
-        switch objectName {
-        case "R":
-            // An extruded letter R, 40 mm tall, strokes every 1.5 mm, 3 layers 3 mm apart.
-            let H = 40e-3, W = 24e-3
-            var strokes: [(Vec3, Vec3)] = [(Vec3(0, 0, 0), Vec3(0, 0, H))]
-            let bowlTop = H, bowlBottom = H * 0.5, r = (bowlTop - bowlBottom) / 2
-            strokes.append((Vec3(0, 0, bowlTop), Vec3(W - r, 0, bowlTop)))
-            strokes.append((Vec3(0, 0, bowlBottom), Vec3(W - r, 0, bowlBottom)))
-            strokes.append((Vec3(W * 0.35, 0, bowlBottom), Vec3(W, 0, 0)))
-            var pts: [Vec3] = []
-            for (a, b) in strokes { pts += segment(a, b, 1.5e-3) }
-            for q in 0...16 {                              // the bowl: a half circle
-                let th = -Double.pi / 2 + Double.pi * Double(q) / 16
-                pts.append(Vec3(W - r + r * cos(th), 0, bowlBottom + r + r * sin(th)))
-            }
-            for layer in [-3e-3, 0, 3e-3] {
-                for p0 in pts { object.append(centre + Vec3(p0.x - W / 2, layer, p0.z - H / 2)) }
-            }
-        case "bead-tetra":
-            // The twin's own 4-bead tetrahedron (Ø200 µm, touching): below the wavelength.
-            let a = 0.1e-3, d = 2 * a
-            let b0 = Vec3(0, 0, 0), b1 = Vec3(d, 0, 0), b2 = Vec3(d / 2, d * 3.0.squareRoot() / 2, 0)
-            let c = (b0 + b1 + b2) * (1.0 / 3)
-            let top = c + Vec3(0, 0, d * (2.0 / 3).squareRoot())
-            object = [b0, b1, b2, top].map { centre + $0 - c }
-            subunit = a; half = 8e-3; h = 0.4e-3
-        default:
-            // A regular tetrahedron wireframe, 30 mm edges, sampled every 1.5 mm.
-            let e = 30e-3
-            let v = [Vec3(0, 0, 0), Vec3(e, 0, 0), Vec3(e / 2, e * 3.0.squareRoot() / 2, 0),
-                     Vec3(e / 2, e * 3.0.squareRoot() / 6, e * (2.0 / 3).squareRoot())]
-            let c = (v[0] + v[1] + v[2] + v[3]) * 0.25
-            for i in 0..<4 { for j in (i + 1)..<4 { object += segment(v[i], v[j], 1.5e-3).map { centre + $0 - c } } }
-            // de-duplicate the shared vertices
-            var seen: [Vec3] = []
-            for p0 in object where !seen.contains(where: { ($0 - p0).length < 1e-6 }) { seen.append(p0) }
-            object = seen
-        }
+        let snrDB = arg("--snr").flatMap(Double.init) ?? 40.0
+        let chords = arg("--chords").flatMap(Int.init) ?? 16
+        let (object, subunit, half, h) = scanObject(objectName, centre: centre)
         let n = Int((2 * half / h).rounded()) + 1
         let grid = FieldLattice(origin: centre - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
-        let coupled = object.count <= 40
-        print(String(format: "scan of %@: %d scatterers (radius %.2f mm, %@), %d frequencies %.0f–%.0f kHz, SNR %.0f dB",
-                     objectName, object.count, subunit * 1000, coupled ? "coupled" : "Born", nF, fLo / 1000, fHi / 1000, snrDB))
-        print(String(format: "image grid ±%.0f mm at %.2f mm (%d³); glass chamber, plates R 0.9, room air", half * 1000, h * 1000, n))
-        let cav = RH1Freestanding.chamber(maxGamma: {
-            let k = air.wavenumber(at: fHi), e = log(1e4) / 0.1
-            return (k * k + e * e).squareRoot() }())
-        let zMin = max(0.1, min(grid.origin.z, L - (grid.origin.z + Double(n - 1) * h)))
-        var image = [Complex](repeating: .zero, count: grid.count)
-        var norm = [Double](repeating: 0, count: grid.count)
-        var rng = SplitMix64(seed: 17)
-        func gauss() -> Double {                            // Box–Muller
-            let u1 = max(rng.nextUnit(), 1e-300), u2 = rng.nextUnit()
-            return (-2 * log(u1)).squareRoot() * cos(2 * Double.pi * u2)
+        let I: [Double]
+        if glass {
+            print(String(format: "scan of %@: %d scatterers (radius %.2f mm), glass chamber, 6 gates, %d frequencies %.0f–%.0f kHz, SNR %.0f dB; grid ±%.0f mm at %.2f mm (%d³)",
+                         objectName, object.count, subunit * 1000, nF, fLo / 1000, fHi / 1000, snrDB, half * 1000, h * 1000, n))
+            var setup = ScanSetup()
+            setup.fHi = fHi; setup.frequencies = nF; setup.snrDB = snrDB
+            I = try scanImage(ctx: ctx, object: object, subunit: subunit, grid: grid, setup: setup)
+        } else {
+            print(String(format: "scan of %@: %d scatterers (radius %.2f mm), open air, 2 × %d elements, %d frequencies %.0f–%.0f kHz × %d random chords, SNR %.0f dB; grid ±%.0f mm at %.2f mm (%d³)",
+                         objectName, object.count, subunit * 1000, perPlate, nF, fLo / 1000, fHi / 1000, chords, snrDB, half * 1000, h * 1000, n))
+            var setup = ArrayScanSetup()
+            setup.fHi = fHi; setup.frequencies = nF; setup.chords = chords; setup.snrDB = snrDB
+            I = try scanImageArray(ctx: ctx, array: PlateArray(perPlate: perPlate), object: object, subunit: subunit,
+                                   grid: grid, setup: setup)
         }
-        let a3 = subunit * subunit * subunit
-        for q in 0..<nF {
-            let f = fLo + (fHi - fLo) * Double(q) / Double(max(1, nF - 1))
-            var op = RH1Freestanding.Options()
-            op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
-            let (p, c) = RH1Freestanding.preset(op)
-            let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount, frequency: f, medium: air, zMin: zMin)
-            let k = air.wavenumber(at: f)
-            let cM = -k * k * a3 / 3, cD = -a3 / 2              // f1 = f2 = 1: rigid, immovable
-            // Forward: the six gates' fields at the object, then ΔT.
-            let ro = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src, points: object, withGradient: true)
-            var dT = [[Complex]](repeating: [Complex](repeating: .zero, count: 6), count: 6)
-            if coupled {
-                let sc = Scatterers(centers: object, radius: subunit, f1: 1, f2: 1)
-                let inc = object.indices.map { m -> (p: [Complex], grad: [[Complex]]) in
-                    ((0..<6).map { ro[(m * 6 + $0) * 4] }, (0..<3).map { cc in (0..<6).map { ro[(m * 6 + $0) * 4 + 1 + cc] } })
-                }
-                let S = sc.solve(incident: inc, k: Complex(k, air.absorption(at: f)))
-                for i in 0..<6 {
-                    for j in 0..<6 {
-                        var acc = Complex.zero
-                        for m in object.indices {
-                            acc += S.A[m * 6 + j] * inc[m].p[i]
-                            for cc in 0..<3 { acc += S.B[cc][m * 6 + j] * inc[m].grad[cc][i] }
-                        }
-                        dT[i][j] = acc
-                    }
-                }
-            } else {
-                for m in object.indices {
-                    let b = m * 6 * 4
-                    for i in 0..<6 {
-                        for j in i..<6 {
-                            var v = ro[b + i * 4] * ro[b + j * 4] * cM
-                            for cc in 1...3 { v += ro[b + i * 4 + cc] * ro[b + j * 4 + cc] * cD }
-                            dT[i][j] += v
-                            if j != i { dT[j][i] += v }
-                        }
-                    }
-                }
-            }
-            // Measurement noise, SNR relative to this frequency's data.
-            let rms = (dT.flatMap { $0 }.reduce(0) { $0 + $1.magnitudeSquared } / 36).squareRoot()
-            let sigma = rms * pow(10, -snrDB / 20) / 2.0.squareRoot()
-            for i in 0..<6 { for j in 0..<6 { dT[i][j] += Complex(gauss() * sigma, gauss() * sigma) } }
-            // Image: correlate with a point scatterer's response at every grid point.
-            let rg = try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src, points: grid.positions, withGradient: true)
-            let chunks = 64
-            image.withUnsafeMutableBufferPointer { im in
-                norm.withUnsafeMutableBufferPointer { nb in
-                    DispatchQueue.concurrentPerform(iterations: chunks) { ch in
-                        for nn in (ch * grid.count / chunks)..<((ch + 1) * grid.count / chunks) {
-                            let b = nn * 6 * 4
-                            var acc = Complex.zero, w = 0.0
-                            for i in 0..<6 {
-                                for j in 0..<6 {
-                                    var M = rg[b + i * 4] * rg[b + j * 4] * cM
-                                    for cc in 1...3 { M += rg[b + i * 4 + cc] * rg[b + j * 4 + cc] * cD }
-                                    acc += M.conjugate * dT[i][j]
-                                    w += M.magnitudeSquared
-                                }
-                            }
-                            im[nn] += acc; nb[nn] += w
-                        }
-                    }
-                }
-            }
-            if q % 15 == 0 { print(String(format: "  %.1f kHz done (%.0f s)", f / 1000, Date().timeIntervalSince(t0))) }
-        }
-        let I = zip(image, norm).map { $0.0.magnitude / max($0.1, 1e-300).squareRoot() }
-        let peak = I.max() ?? 1
         // How the image sits on the object: voxels above half the peak, near an object point?
-        let hot = I.indices.filter { I[$0] >= 0.5 * peak }
+        let hot = I.indices.filter { I[$0] >= 0.5 }
         func nearObject(_ x: Vec3, _ r: Double) -> Bool { object.contains { ($0 - x).length <= r } }
         let tol = max(2e-3, 1.5 * h)
         let precision = Double(hot.filter { nearObject(grid.positions[$0], tol) }.count) / Double(max(1, hot.count))
@@ -803,31 +743,129 @@ case "scan3d":
         let recall = Double(object.filter { o in hotPts.contains { ($0 - o).length <= tol } }.count) / Double(object.count)
         print(String(format: "image: %d voxels above half the peak; %.0f%% of them within %.1f mm of the object; %.0f%% of the object has such a voxel within %.1f mm",
                      hot.count, 100 * precision, tol * 1000, 100 * recall, tol * 1000))
-        // Maximum-intensity projections, for the figure.
-        var csv = "view,i,j,value\n"
-        for (view, axes) in [("xy", (0, 1, 2)), ("xz", (0, 2, 1)), ("yz", (1, 2, 0))] {
-            var mip = [[Double]](repeating: [Double](repeating: 0, count: n), count: n)
-            for k2 in 0..<n { for j2 in 0..<n { for i2 in 0..<n {
-                let v = I[grid.index(i2, j2, k2)] / peak
-                let idx = [i2, j2, k2]
-                mip[idx[axes.0]][idx[axes.1]] = max(mip[idx[axes.0]][idx[axes.1]], v)
-            } } }
-            for u in 0..<n { for w in 0..<n { csv += "\(view),\(u),\(w),\(String(format: "%.4f", mip[u][w]))\n" } }
+        if let pk = I.indices.max(by: { I[$0] < I[$1] }) {
+            let x = grid.positions[pk]
+            let d = object.map { ($0 - x).length }.min() ?? 0
+            print(String(format: "image peak %.2f mm from the nearest object point", d * 1000))
         }
         var ocsv = "x_mm,y_mm,z_mm\n"
         for o in object { ocsv += String(format: "%.3f,%.3f,%.3f\n", (o.x - grid.origin.x) * 1000, (o.y - grid.origin.y) * 1000, (o.z - grid.origin.z) * 1000) }
-        let gate = GateResult(id: "SCAN", name: "scan of \(objectName): image overlap with the object",
+        let tag = glass ? "" : "-plates\(perPlate)"
+        let gate = GateResult(id: "SCAN", name: "scan of \(objectName)\(glass ? "" : " in open air"): image overlap with the object",
                               measured: precision, threshold: 0, comparison: .informational,
-                              detail: String(format: "%d scatterers, %d frequencies %.0f–%.0f kHz, SNR %.0f dB; precision %.0f%%, recall %.0f%% (within %.1f mm)",
-                                             object.count, nF, fLo / 1000, fHi / 1000, snrDB, 100 * precision, 100 * recall, tol * 1000))
+                              detail: String(format: "%d scatterers, %d frequencies %.0f–%.0f kHz%@, SNR %.0f dB; precision %.0f%%, recall %.0f%% (within %.1f mm)",
+                                             object.count, nF, fLo / 1000, fHi / 1000, glass ? "" : " × \(chords) chords, 2 × \(perPlate) elements",
+                                             snrDB, 100 * precision, 100 * recall, tol * 1000))
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
-            writeReceipt(Receipt(name: "scan3d-" + objectName, gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
+            writeReceipt(Receipt(name: "scan3d-" + objectName + tag, gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
                                  device: deviceName(), gitSHA: gitSHA()))
         }
-        try? csv.write(toFile: "Receipts/scan3d_\(objectName)_mip.csv", atomically: true, encoding: .utf8)
-        try? ocsv.write(toFile: "Receipts/scan3d_\(objectName)_object.csv", atomically: true, encoding: .utf8)
-        try? String(format: "%.4f,%d\n", h * 1000, n).write(toFile: "Receipts/scan3d_\(objectName)_grid.csv", atomically: true, encoding: .utf8)
+        let base = "Receipts/scan3d_" + (glass ? "" : "plates\(perPlate)_") + objectName
+        try? mipCSV(I, grid: grid).write(toFile: base + "_mip.csv", atomically: true, encoding: .utf8)
+        try? ocsv.write(toFile: base + "_object.csv", atomically: true, encoding: .utf8)
+        try? String(format: "%.4f,%d\n", h * 1000, n).write(toFile: base + "_grid.csv", atomically: true, encoding: .utf8)
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
+case "replicate":
+    // The replicator's loop, in the twin, in open air: scan an object with the
+    // plate array, read its shape off the image (sites at the bright peaks,
+    // joined where the image stays bright between them), mold a copy from
+    // powder with the sieve (the design point of study S1), scan the copy, and
+    // compare — the copy against the ORIGINAL object, and the copy's scan
+    // against the original's.
+    do {
+        let ctx = try MetalContext()
+        let t0 = Date()
+        func arg(_ name: String) -> String? { args.firstIndex(of: name).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
+        let objectName = arg("--object") ?? "ring"
+        let perPlate = arg("--per-plate").flatMap(Int.init) ?? 192
+        let arr = PlateArray(perPlate: perPlate)
+        let centre = arr.centre
+        var scan = ArrayScanSetup()
+        if let v = arg("--nf").flatMap(Int.init) { scan.frequencies = v }
+        if let v = arg("--chords").flatMap(Int.init) { scan.chords = v }
+        // --- the original: a wire object, as a cloud of 0.3 mm scatterers every 1 mm ---
+        var originalSegments: [(Vec3, Vec3)] = []
+        switch objectName {
+        case "tetra":
+            let e = 12e-3
+            let v = [Vec3(0, 0, 0), Vec3(e, 0, 0), Vec3(e / 2, e * 3.0.squareRoot() / 2, 0),
+                     Vec3(e / 2, e * 3.0.squareRoot() / 6, e * (2.0 / 3).squareRoot())]
+            let c = (v[0] + v[1] + v[2] + v[3]) * 0.25
+            for i in 0..<4 { for j in (i + 1)..<4 { originalSegments.append((centre + v[i] - c, centre + v[j] - c)) } }
+        default:
+            let ring = (0..<48).map { q -> Vec3 in
+                let th = 2 * Double.pi * Double(q) / 48
+                return centre + Vec3(8e-3 * cos(th), 8e-3 * sin(th), 0)
+            }
+            originalSegments = (0..<48).map { (ring[$0], ring[($0 + 1) % 48]) }
+        }
+        var object: [Vec3] = []
+        for (a, b) in originalSegments {
+            let m = max(1, Int(((b - a).length / 1e-3).rounded()))
+            for q in 0...m {
+                let p = a + (b - a) * (Double(q) / Double(m))
+                if !object.contains(where: { ($0 - p).length < 1e-6 }) { object.append(p) }
+            }
+        }
+        let half = 14e-3, h = 0.7e-3
+        let n = Int((2 * half / h).rounded()) + 1
+        let grid = FieldLattice(origin: centre - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+        print(String(format: "replicate %@ in open air: 2 × %d elements; %d scatterers; scans: %d frequencies %.0f–%.0f kHz × %d chords, SNR %.0f dB, grid ±%.0f mm at %.2f mm (%d³)",
+                     objectName, perPlate, object.count, scan.frequencies, scan.fLo / 1000, scan.fHi / 1000, scan.chords, scan.snrDB,
+                     half * 1000, h * 1000, n))
+        print("1. scan the original")
+        let I0 = try scanImageArray(ctx: ctx, array: arr, object: object, subunit: 0.3e-3, grid: grid, setup: scan)
+        let read = extractShape(image: I0, grid: grid, threshold: 0.5, spacing: 3e-3)
+        let siteOff = read.sites.map { shapeDistance($0, originalSegments) }
+        let onObject = Double(siteOff.filter { $0 <= 1.5e-3 }.count) / Double(max(1, read.sites.count))
+        let covered = Double(object.filter { o in read.sites.contains { ($0 - o).length <= 2.5e-3 } }.count) / Double(object.count)
+        print(String(format: "2. the shape read off the scan: %d sites, %d segments; %.0f%% of the sites within 1.5 mm of the object (worst %.2f mm); %.0f%% of the object within 2.5 mm of a site",
+                     read.sites.count, read.segments.count, 100 * onObject, 1000 * (siteOff.max() ?? 0), 100 * covered))
+        print("3. mold the copy (the sieve on the shape read off the scan)")
+        var ms = MoldSetup()
+        ms.debug = args.contains("--debug")
+        let mold = try runMold(ctx: ctx, label: "read \(objectName)", sites: read.sites, segments: read.segments,
+                               chamber: .plates(arr), setup: ms)
+        let copy = zip(mold.final, mold.onShape).filter { $0.1 }.map { $0.0 }
+        let copyOff = copy.map { shapeDistance($0, originalSegments) }
+        let onOriginal = Double(copyOff.filter { $0 <= 1.5e-3 }.count) / Double(max(1, ms.grains))
+        let sortedOff = copyOff.sorted()
+        let medianOff = sortedOff.isEmpty ? 0 : sortedOff[sortedOff.count / 2]
+        print(String(format: "   the copy: %d grains on the read shape; %.0f%% of the whole cloud within 1.5 mm of the ORIGINAL object (median %.2f mm)",
+                     copy.count, 100 * onOriginal, 1000 * medianOff))
+        print("4. scan the copy (each grain a Ø40 µm scatterer)")
+        var s1 = scan
+        s1.seed = scan.seed &+ 1
+        let I1 = try scanImageArray(ctx: ctx, array: arr, object: copy.isEmpty ? [centre] : copy, subunit: 20e-6, grid: grid, setup: s1)
+        let corr = pearson(I0, I1)
+        print(String(format: "5. the two scans correlate %.3f over the %d³ grid", corr, n))
+        let detail = String(format: "%@: %d sites read (%.0f%% on the object, %.0f%% of it covered); %@; copy: %.0f%% of the cloud within 1.5 mm of the original (median %.2f mm); scans correlate %.3f",
+                            objectName, read.sites.count, 100 * onObject, 100 * covered, mold.summary, 100 * onOriginal, 1000 * medianOff, corr)
+        var gates = [
+            GateResult(id: "G-R1", name: "replicate (\(objectName)): the shape read off the scan lies on the object (sites within 1.5 mm)",
+                       measured: onObject, threshold: 0.9, comparison: .greaterThan, detail: detail),
+            GateResult(id: "G-R2", name: "replicate (\(objectName)): ≥90% of the powder ends within 1.5 mm of the ORIGINAL object",
+                       measured: onOriginal, threshold: 0.9, comparison: .greaterThan, detail: detail),
+            GateResult(id: "G-R3", name: "replicate (\(objectName)): the copy's scan matches the original's (Pearson over the grid)",
+                       measured: corr, threshold: 0.7, comparison: .greaterThan, detail: detail)]
+        gates.append(contentsOf: mold.gates)
+        for g in gates { print(g.line) }
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "replicate-\(objectName)", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+                                 device: deviceName(), gitSHA: gitSHA()))
+        }
+        let base = "Receipts/replicate_\(objectName)"
+        try? mipCSV(I0, grid: grid).write(toFile: base + "_scan0_mip.csv", atomically: true, encoding: .utf8)
+        try? mipCSV(I1, grid: grid).write(toFile: base + "_scan1_mip.csv", atomically: true, encoding: .utf8)
+        try? String(format: "%.4f,%d\n", h * 1000, n).write(toFile: base + "_grid.csv", atomically: true, encoding: .utf8)
+        func rel(_ p: Vec3) -> String { String(format: "%.3f,%.3f,%.3f", (p.x - grid.origin.x) * 1000, (p.y - grid.origin.y) * 1000, (p.z - grid.origin.z) * 1000) }
+        try? ("x_mm,y_mm,z_mm\n" + object.map { rel($0) + "\n" }.joined()).write(toFile: base + "_object.csv", atomically: true, encoding: .utf8)
+        try? ("x_mm,y_mm,z_mm,grains\n" + mold.sites.enumerated().map { rel($0.element) + ",\(mold.perSite[$0.offset])\n" }.joined())
+            .write(toFile: base + "_sites.csv", atomically: true, encoding: .utf8)
+        try? ("x_mm,y_mm,z_mm\n" + copy.map { rel($0) + "\n" }.joined()).write(toFile: base + "_copy.csv", atomically: true, encoding: .utf8)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "build":

@@ -24,6 +24,9 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
     let latticePoints: [SIMD4<Float>]
     /// Points per GPU submission (keeps each command buffer short).
     static let chunk = 8_192
+    // Working buffers, allocated once and reused: per-call allocations were
+    // kept alive by the command buffers and grew ~0.4 GB/s in a compile loop.
+    let driveBuf: MTLBuffer, pointBuf: MTLBuffer, outBuf: MTLBuffer, aBuf: MTLBuffer, gradBuf: MTLBuffer
 
     public init(ctx: MetalContext, array: PlateArray, frequencies: [Double], medium: Medium,
                 lattice: FieldLattice) throws {
@@ -43,6 +46,14 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
                                              options: .storageModeShared) else { throw MetalContext.Error.noDevice }
         self.elementBuffer = eb
         self.latticePoints = lattice.positions.map { SIMD4(Float($0.x), Float($0.y), Float($0.z), 0) }
+        let dev = ctx.device, c = ArrayFieldGPU.chunk, f2 = MemoryLayout<SIMD2<Float>>.stride
+        guard let d = dev.makeBuffer(length: max(1, els.count) * f2, options: .storageModeShared),
+              let p = dev.makeBuffer(length: c * MemoryLayout<SIMD4<Float>>.stride, options: .storageModeShared),
+              let o = dev.makeBuffer(length: c * 4 * f2, options: .storageModeShared),
+              let a = dev.makeBuffer(length: c * 4 * f2, options: .storageModeShared),
+              let g = dev.makeBuffer(length: max(1, els.count) * f2, options: .storageModeShared)
+        else { throw MetalContext.Error.noDevice }
+        driveBuf = d; pointBuf = p; outBuf = o; aBuf = a; gradBuf = g
     }
 
     struct ArrParams {
@@ -68,27 +79,23 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
     /// p and ∇p for one tone's drive at points, layout [n·4 + c].
     public func fields(_ drive: [Complex], tone t: Int, points: [SIMD4<Float>]) throws -> [Complex] {
         precondition(drive.count == channels)
-        let dev = ctx.device
-        let dv = drive.map { SIMD2(Float($0.re), Float($0.im)) }
-        guard let db = dev.makeBuffer(bytes: dv, length: dv.count * MemoryLayout<SIMD2<Float>>.stride,
-                                      options: .storageModeShared) else { throw MetalContext.Error.noDevice }
+        let dp = driveBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: channels)
+        for e in 0..<channels { dp[e] = SIMD2(Float(drive[e].re), Float(drive[e].im)) }
         var out = [Complex](repeating: .zero, count: points.count * 4)
         var start = 0
         while start < points.count {
             let n = min(ArrayFieldGPU.chunk, points.count - start)
-            let pts = Array(points[start..<(start + n)])
-            guard let pb = dev.makeBuffer(bytes: pts, length: n * MemoryLayout<SIMD4<Float>>.stride, options: .storageModeShared),
-                  let sb = dev.makeBuffer(length: n * 4 * MemoryLayout<SIMD2<Float>>.stride, options: .storageModeShared)
-            else { throw MetalContext.Error.noDevice }
+            let pp = pointBuf.contents().bindMemory(to: SIMD4<Float>.self, capacity: n)
+            for i in 0..<n { pp[i] = points[start + i] }
             var P = params(tone: t, points: n)
             try ctx.dispatch("arrayForward", count: n) { enc in
-                enc.setBuffer(sb, offset: 0, index: 0)
+                enc.setBuffer(outBuf, offset: 0, index: 0)
                 enc.setBuffer(elementBuffer, offset: 0, index: 1)
-                enc.setBuffer(db, offset: 0, index: 2)
-                enc.setBuffer(pb, offset: 0, index: 3)
+                enc.setBuffer(driveBuf, offset: 0, index: 2)
+                enc.setBuffer(pointBuf, offset: 0, index: 3)
                 enc.setBytes(&P, length: MemoryLayout<ArrParams>.stride, index: 4)
             }
-            let h = sb.contents().bindMemory(to: SIMD2<Float>.self, capacity: n * 4)
+            let h = outBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: n * 4)
             for i in 0..<(n * 4) { out[start * 4 + i] = Complex(Double(h[i].x), Double(h[i].y)) }
             start += n
         }
@@ -134,28 +141,47 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
         }
     }
 
+    /// What every element receives when one tone's drive lights small rigid
+    /// scatterers at `points` (Born, by reciprocity): monopole strength cM ×
+    /// the incident p, dipole cD × the incident ∇p (cM = −k²a³/3, cD = −a³/2 for
+    /// a rigid, immovable sphere of radius a):
+    ///     r_e = Σ_m cM G_e(x_m) p(x_m) + cD ∇G_e(x_m)·∇p(x_m).
+    /// One forward pass at the scatterers, one adjoint pass over them.
+    public func scattered(by points: [Vec3], monopole cM: Double, dipole cD: Double,
+                          drive: [Complex], tone t: Int) throws -> [Complex] {
+        let pts = points.map { SIMD4(Float($0.x), Float($0.y), Float($0.z), 0) }
+        let S = try fields(drive, tone: t, points: pts)
+        var A = [SIMD2<Float>](repeating: .zero, count: pts.count * 4)
+        for m in 0..<pts.count {
+            let a0 = (S[m * 4] * cM).conjugate
+            A[m * 4] = SIMD2(Float(a0.re), Float(a0.im))
+            for c in 1...3 {
+                let ac = (S[m * 4 + c] * cD).conjugate * -1.0
+                A[m * 4 + c] = SIMD2(Float(ac.re), Float(ac.im))
+            }
+        }
+        return try adjointPass(A: A, points: pts, tone: t).map { $0.conjugate }
+    }
+
     /// Σ over points of conj(G_e)·A per element (see `arrayAdjoint`).
     func adjointPass(A: [SIMD2<Float>], points: [SIMD4<Float>], tone t: Int) throws -> [Complex] {
-        let dev = ctx.device
         var grad = [Complex](repeating: .zero, count: channels)
-        guard let gb = dev.makeBuffer(length: channels * MemoryLayout<SIMD2<Float>>.stride, options: .storageModeShared)
-        else { throw MetalContext.Error.noDevice }
         var start = 0
         while start < points.count {
             let n = min(ArrayFieldGPU.chunk, points.count - start)
-            let pts = Array(points[start..<(start + n)]), a = Array(A[(start * 4)..<((start + n) * 4)])
-            guard let pb = dev.makeBuffer(bytes: pts, length: n * MemoryLayout<SIMD4<Float>>.stride, options: .storageModeShared),
-                  let ab = dev.makeBuffer(bytes: a, length: a.count * MemoryLayout<SIMD2<Float>>.stride, options: .storageModeShared)
-            else { throw MetalContext.Error.noDevice }
+            let pp = pointBuf.contents().bindMemory(to: SIMD4<Float>.self, capacity: n)
+            for i in 0..<n { pp[i] = points[start + i] }
+            let ap = aBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: n * 4)
+            for i in 0..<(n * 4) { ap[i] = A[start * 4 + i] }
             var P = params(tone: t, points: n)
             try ctx.dispatchGroups("arrayAdjoint", groups: channels, threads: 256) { enc in
-                enc.setBuffer(gb, offset: 0, index: 0)
+                enc.setBuffer(gradBuf, offset: 0, index: 0)
                 enc.setBuffer(elementBuffer, offset: 0, index: 1)
-                enc.setBuffer(ab, offset: 0, index: 2)
-                enc.setBuffer(pb, offset: 0, index: 3)
+                enc.setBuffer(aBuf, offset: 0, index: 2)
+                enc.setBuffer(pointBuf, offset: 0, index: 3)
                 enc.setBytes(&P, length: MemoryLayout<ArrParams>.stride, index: 4)
             }
-            let h = gb.contents().bindMemory(to: SIMD2<Float>.self, capacity: channels)
+            let h = gradBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: channels)
             for e in 0..<channels { grad[e] += Complex(Double(h[e].x), Double(h[e].y)) }
             start += n
         }
