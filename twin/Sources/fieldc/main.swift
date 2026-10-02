@@ -758,6 +758,7 @@ case "scan3d":
             var setup = ArrayScanSetup()
             setup.fHi = fHi; setup.frequencies = nF; setup.chords = chords; setup.snrDB = snrDB
             setup.gate = !args.contains("--no-gate")
+            setup.listenBoth = args.contains("--listen-both")
             I = try scanImageArray(ctx: ctx, array: PlateArray(perPlate: perPlate), object: object, subunit: subunit,
                                    grid: grid, setup: setup)
         }

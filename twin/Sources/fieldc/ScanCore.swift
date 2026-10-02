@@ -207,6 +207,11 @@ struct ArrayScanSetup {
     var seed: UInt64 = 17
     /// Keep only the direct echoes (time gate); false = the whole response.
     var gate = true
+    /// Listen on both plates (the direct path through the volume to the far
+    /// plate arrives in the same window as the direct echo, and carries the
+    /// forward scattering of surfaces that do not face the firing plate);
+    /// false = the firing plate only.
+    var listenBoth = false
 }
 
 /// The matched-field image of `object` (small rigid scatterers of radius
@@ -269,15 +274,17 @@ func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subuni
         for (t, f) in freqs.enumerated() {
             let k = air.wavenumber(at: f)
             var r = try field.scattered(by: object, monopole: -k * k * a3 / 3, dipole: -a3 / 2, drive: d, tone: t)
-            for e in 0..<C where !mine.contains(e) { r[e] = .zero }
-            let rms = (mine.reduce(0.0) { $0 + r[$1].magnitudeSquared } / Double(half)).squareRoot()
+            let ears: [Int] = setup.listenBoth ? Array(0..<C) : Array(mine)
+            if !setup.listenBoth { for e in 0..<C where !mine.contains(e) { r[e] = .zero } }
+            let rms = (ears.reduce(0.0) { $0 + r[$1].magnitudeSquared } / Double(ears.count)).squareRoot()
             let sigma = rms * pow(10, -setup.snrDB / 20) / 2.0.squareRoot()
-            for e in mine { r[e] += Complex(gauss() * sigma, gauss() * sigma) }
+            for e in ears { r[e] += Complex(gauss() * sigma, gauss() * sigma) }
             R[t] = r
         }
         // 2. Time gate per element: to the time domain over the band, keep the
         //    direct-echo window (raised-cosine edges), and back.
         if setup.gate {
+            let earsG: [Int] = setup.listenBoth ? Array(0..<C) : Array(mine)
             let gate: [Double] = (0..<nF).map { m in
                 let tm = Double(m) * W / Double(nF)
                 let edge = 30e-6
@@ -287,7 +294,7 @@ func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subuni
                 return 1
             }
             let tw = (0..<nF).map { Complex.expi(-2 * Double.pi * Double($0) / Double(nF)) }
-            for e in mine {
+            for e in earsG {
                 var sig = [Complex](repeating: .zero, count: nF)
                 for m in 0..<nF where gate[m] > 0 {
                     var v = Complex.zero
