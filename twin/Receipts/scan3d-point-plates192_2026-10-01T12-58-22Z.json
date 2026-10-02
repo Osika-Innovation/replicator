@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T12:58:22Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 9.441282033920288,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "1 scatterers, 24 frequencies 30–100 kHz × 16 chords, 2 × 192 elements, SNR 40 dB; precision 19%, recall 100% (within 2.0 mm)",
+      "id" : "SCAN",
+      "measured" : 0.19197707736389685,
+      "name" : "scan of point in open air: image overlap with the object",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "9e5b63d",
+  "name" : "scan3d-point-plates192"
+}

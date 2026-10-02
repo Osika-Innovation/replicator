@@ -55,7 +55,7 @@ out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBo
        f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
        f'<text x="{pad}" y="28" font-size="15" font-weight="600" fill="{ink}">{title}</text>',
        f'<text x="{pad}" y="48" font-size="11.5" fill="{mute}">left: the scan of the original (white dots: the object). '
-       f'middle: sites read off that scan (red) and the powder molded on them (gold).</text>',
+       f'middle: sites read off that scan (red) and the powder molded on them (gold, area ∝ grains).</text>',
        f'<text x="{pad}" y="64" font-size="11.5" fill="{mute}">right: the scan of the copy. Images are maximum-intensity '
        f'projections of the matched field, 30–100 kHz, the plate array in open air.</text>']
 views = [("xy", 0, 1, "x–y"), ("xz", 0, 2, "x–z")]
@@ -77,6 +77,13 @@ for row, (view, a, b, label) in enumerate(views):
             out.append('<g fill="#e3b341" fill-opacity="0.6">')
             for g in copy:
                 out.append(f'<circle cx="{x0 + (g[a] / h + 0.5) * cell:.1f}" cy="{y0 + (n - 1 - g[b] / h + 0.5) * cell:.1f}" r="0.8"/>')
+            out.append('</g>')
+            most = max([st[3] for st in sites] + [1])
+            out.append('<g fill="#e3b341" fill-opacity="0.6">')
+            for st in sites:
+                if st[3] > 0:
+                    out.append(f'<circle cx="{x0 + (st[a] / h + 0.5) * cell:.1f}" cy="{y0 + (n - 1 - st[b] / h + 0.5) * cell:.1f}" '
+                               f'r="{1.5 + 6 * (st[3] / most) ** 0.5:.1f}"/>')
             out.append('</g><g fill="none" stroke="#ff5555" stroke-width="1.1">')
             for s in sites:
                 out.append(f'<circle cx="{x0 + (s[a] / h + 0.5) * cell:.1f}" cy="{y0 + (n - 1 - s[b] / h + 0.5) * cell:.1f}" r="4"/>')

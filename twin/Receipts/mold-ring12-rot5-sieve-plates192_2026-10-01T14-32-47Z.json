@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T14:32:47Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 205.42481303215027,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.37× holding, 2.82 m\/s rms per channel; basin map: 100.0% on the shape, sites 6.4–10.3% (fair 8.3%), 0.0% rogue; lift contrast 1.88",
+      "id" : "G-M1",
+      "measured" : 0.7737217724729109,
+      "name" : "acoustic mold (ring12-rot5): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.37× holding, 2.82 m\/s rms per channel; basin map: 100.0% on the shape, sites 6.4–10.3% (fair 8.3%), 0.0% rogue; lift contrast 1.88",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999749,
+      "name" : "acoustic mold (ring12-rot5): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    }
+  ],
+  "gitSHA" : "9af9c1f",
+  "name" : "mold-ring12-rot5-sieve-plates192"
+}

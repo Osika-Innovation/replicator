@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T12:58:35Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 12.341464042663574,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "50 scatterers, 24 frequencies 30–100 kHz × 16 chords, 2 × 192 elements, SNR 40 dB; precision 13%, recall 100% (within 2.0 mm)",
+      "id" : "SCAN",
+      "measured" : 0.12815415201101085,
+      "name" : "scan of ring in open air: image overlap with the object",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "9e5b63d",
+  "name" : "scan3d-ring-plates192"
+}

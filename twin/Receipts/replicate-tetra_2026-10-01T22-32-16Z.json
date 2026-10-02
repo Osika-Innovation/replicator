@@ -1,0 +1,64 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T22:32:16Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 11623.487215995789,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "tetra: 16 sites read (88% on the object, 69% of it covered); open air, 2 × 192 elements; sieve objective, 9 tones, 1.00× holding, 3.49 m\/s rms per channel; basin map: 76.1% on the shape, sites 0.0–21.5% (fair 6.2%), 23.9% rogue; lift contrast 1.00; particles: 100.0% on the shape after 8 s, 9\/16 sites filled (0–1184); copy: 59% of the cloud within 1.5 mm of the original (median 1.18 mm); scans correlate 0.667",
+      "id" : "G-R1",
+      "measured" : 0.875,
+      "name" : "replicate (tetra): the shape read off the scan lies on the object (sites within 1.5 mm)",
+      "passed" : false,
+      "threshold" : 0.9
+    },
+    {
+      "comparison" : ">",
+      "detail" : "tetra: 16 sites read (88% on the object, 69% of it covered); open air, 2 × 192 elements; sieve objective, 9 tones, 1.00× holding, 3.49 m\/s rms per channel; basin map: 76.1% on the shape, sites 0.0–21.5% (fair 6.2%), 23.9% rogue; lift contrast 1.00; particles: 100.0% on the shape after 8 s, 9\/16 sites filled (0–1184); copy: 59% of the cloud within 1.5 mm of the original (median 1.18 mm); scans correlate 0.667",
+      "id" : "G-R2",
+      "measured" : 0.589,
+      "name" : "replicate (tetra): ≥90% of the powder ends within 1.5 mm of the ORIGINAL object",
+      "passed" : false,
+      "threshold" : 0.9
+    },
+    {
+      "comparison" : ">",
+      "detail" : "tetra: 16 sites read (88% on the object, 69% of it covered); open air, 2 × 192 elements; sieve objective, 9 tones, 1.00× holding, 3.49 m\/s rms per channel; basin map: 76.1% on the shape, sites 0.0–21.5% (fair 6.2%), 23.9% rogue; lift contrast 1.00; particles: 100.0% on the shape after 8 s, 9\/16 sites filled (0–1184); copy: 59% of the cloud within 1.5 mm of the original (median 1.18 mm); scans correlate 0.667",
+      "id" : "G-R3",
+      "measured" : 0.6672702188698697,
+      "name" : "replicate (tetra): the copy's scan matches the original's (Pearson over the grid)",
+      "passed" : false,
+      "threshold" : 0.7
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.00× holding, 3.49 m\/s rms per channel; basin map: 76.1% on the shape, sites 0.0–21.5% (fair 6.2%), 23.9% rogue; lift contrast 1.00; particles: 100.0% on the shape after 8 s, 9\/16 sites filled (0–1184)",
+      "id" : "G-M1",
+      "measured" : 0,
+      "name" : "acoustic mold (read tetra): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : false,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.00× holding, 3.49 m\/s rms per channel; basin map: 76.1% on the shape, sites 0.0–21.5% (fair 6.2%), 23.9% rogue; lift contrast 1.00; particles: 100.0% on the shape after 8 s, 9\/16 sites filled (0–1184)",
+      "id" : "G-M2",
+      "measured" : 0.7611008037365622,
+      "name" : "acoustic mold (read tetra): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : false,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.00× holding, 3.49 m\/s rms per channel; basin map: 76.1% on the shape, sites 0.0–21.5% (fair 6.2%), 23.9% rogue; lift contrast 1.00; particles: 100.0% on the shape after 8 s, 9\/16 sites filled (0–1184)",
+      "id" : "G-B0",
+      "measured" : 0.2388991962634378,
+      "name" : "basin map vs stepped grains: the share on the shape agrees",
+      "passed" : false,
+      "threshold" : 0.05
+    }
+  ],
+  "gitSHA" : "9af9c1f",
+  "name" : "replicate-tetra"
+}

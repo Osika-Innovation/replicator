@@ -1,0 +1,37 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T12:58:12Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 176.36695992946625,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.12× holding, 2.18 m\/s rms per channel; basin map: 100.0% on the shape, sites 7.2–12.8% (fair 10.0%), 0.0% rogue; lift contrast 1.25; particles: 100.0% on the shape after 8 s, 10\/10 sites filled (135–384)",
+      "id" : "G-M1",
+      "measured" : 0.7210977215341149,
+      "name" : "acoustic mold (tetra): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.12× holding, 2.18 m\/s rms per channel; basin map: 100.0% on the shape, sites 7.2–12.8% (fair 10.0%), 0.0% rogue; lift contrast 1.25; particles: 100.0% on the shape after 8 s, 10\/10 sites filled (135–384)",
+      "id" : "G-M2",
+      "measured" : 1.00000000000002,
+      "name" : "acoustic mold (tetra): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.12× holding, 2.18 m\/s rms per channel; basin map: 100.0% on the shape, sites 7.2–12.8% (fair 10.0%), 0.0% rogue; lift contrast 1.25; particles: 100.0% on the shape after 8 s, 10\/10 sites filled (135–384)",
+      "id" : "G-B0",
+      "measured" : 0.00033333333335328064,
+      "name" : "basin map vs stepped grains: the share on the shape agrees",
+      "passed" : true,
+      "threshold" : 0.05
+    }
+  ],
+  "gitSHA" : "9e5b63d",
+  "name" : "mold-tetra-sieve-plates192"
+}

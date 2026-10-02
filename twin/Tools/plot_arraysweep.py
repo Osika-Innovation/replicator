@@ -37,7 +37,7 @@ def xpos(x0, n):
 
 
 panels = [
-    ("trap_ratio", "centre trap: rival ÷ target well (< 0.5 = unique)", 0, 1.0, False, 0.5),
+    ("trap_ratio", "centre trap: rival ÷ target well (&lt; 0.5 = unique)", 0, 1.0, False, 0.5),
     ("on_shape", "ring sieve: powder on the ring (basin map)", 0, 1.0, False, 0.95),
     ("acoustic_W", "acoustic power to hold the powder (W)", 1, 10000, True, None),
 ]

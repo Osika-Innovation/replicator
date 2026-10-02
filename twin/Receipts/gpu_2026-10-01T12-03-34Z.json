@@ -1,0 +1,91 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T12:03:34Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "512 points x 64 gates; float32 GPU vs float64 CPU; build 0.004s",
+      "id" : "G-GPU",
+      "measured" : 3.7922459338747084e-06,
+      "name" : "Metal propagator vs CPU reference",
+      "passed" : true,
+      "threshold" : 1e-05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "192 points x 6 gates, 17184 elements, walls order 3, air 1.32 dB\/m; 793 M terms\/s",
+      "id" : "G-GPU-FS",
+      "measured" : 1.349816256944742e-05,
+      "name" : "port fields, RH-1 FS at 40 kHz, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "64 points x 6 gates x (p, ∂p\/∂x, ∂p\/∂y, ∂p\/∂z)",
+      "id" : "G-GPU-FS-grad",
+      "measured" : 1.4210581313677934e-05,
+      "name" : "port fields + analytic gradient, RH-1 FS at 40 kHz, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "192 points x 6 gates, 18048 elements, walls order 3, air 3.28 dB\/m; 1565 M terms\/s",
+      "id" : "G-GPU-FS",
+      "measured" : 5.5765899625806764e-05,
+      "name" : "port fields, RH-1 FS at 100 kHz, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "64 points x 6 gates x 4; 8960 modes (a = 218 mm), 0.04s",
+      "id" : "G-GPU-CYL",
+      "measured" : 8.310297521033092e-06,
+      "name" : "cavity modal sum (glass + plates) with gradient, 40 kHz, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "8960 modes, terms mean 15.7 max 29; zeros + projection 2.27s, GPU 0.07s",
+      "id" : "G-GPU-CYL-lined",
+      "measured" : 8.564525145541791e-06,
+      "name" : "cavity modal sum, glass lined (β = 0.5), with gradient, 40 kHz, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "24 points; |GPU| 9.867e+05, |CPU| 9.867e+05",
+      "id" : "G-GPU-CYL-axis",
+      "measured" : 6.341814857578745e-06,
+      "name" : "cavity modal sum with gradient ON the axis and 1 µm off it, vs CPU",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "343 lattice points, 48 channels, images to order 3; GPU forward + adjoint 0.001s",
+      "id" : "G-A1",
+      "measured" : 3.37282118672588e-05,
+      "name" : "open-air plate array, matrix-free GPU potential vs CPU reference (2 × 24 elements, R 0.9, 70 kHz)",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "102 weighted points of 343",
+      "id" : "G-A3",
+      "measured" : 5.5997326572670097e-05,
+      "name" : "open-air plate array, matrix-free GPU adjoint vs CPU adjoint from reference rows",
+      "passed" : true,
+      "threshold" : 0.0001
+    }
+  ],
+  "gitSHA" : "55f9e6b",
+  "name" : "gpu"
+}

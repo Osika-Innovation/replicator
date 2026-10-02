@@ -10,7 +10,7 @@ No Xcode required — Command Line Tools only.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test              # unit suite (60 tests; FIELDC_VERBOSE=1 prints every measured value)
+./.build/release/fieldc test              # unit suite (62 tests; FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gate --receipt    # physics acceptance gates, writes Receipts/
 ./.build/release/fieldc machine           # the simulated machine: RH-1 free-standing, room air (--desktop: frozen v0.3)
 ./.build/release/fieldc focus             # compile a centre trap on the full chamber (GPU port fields)
@@ -24,9 +24,11 @@ swift build -c release
 ./.build/release/fieldc fly --receipt         # integrate a PLA bead through the carry: drive level × step time (G-P2)
 ./.build/release/fieldc build --receipt       # the first build: N beads laid in a row on a support (G-B1; --beads N)
 ./.build/release/fieldc build --shape tetra --row-dir y --receipt   # four beads: a triangle and one in its pocket (G-B2)
-./.build/release/fieldc scan3d --object tetra --receipt   # image a 3D object from the six gates, 30–100 kHz (tetra | R | bead-tetra)
-./.build/release/fieldc mold --receipt        # the acoustic sieve: a random powder cloud onto a 16-site ring (G-M1, G-M2)
-./.build/release/fieldc mold --objective wells --receipt   # the same with a mold of wells alone (the λ/4 limit)
+./.build/release/fieldc arraysweep --receipt  # open air: what N elements per plate and the tones buy (study S1)
+./.build/release/fieldc mold --receipt        # the sieve in open air, 2 × 192 elements (--shape tetra, --rotate, --sites, --light)
+./.build/release/fieldc mold --chamber glass --receipt   # the glass chamber of Rounds 7–11 (--objective wells: the λ/4 limit)
+./.build/release/fieldc scan3d --object ring --receipt   # gated pulse-echo scan in open air (point | ring | tetra | R; --chamber glass)
+./.build/release/fieldc replicate --receipt   # scan → read the shape → mold a copy → scan the copy (--object tetra)
 ./.build/release/fieldc render iso a.png  # offscreen machine render, no window server
 ./.build/release/fieldc shot --all        # every UI scene, both themes + contact sheet
 ./.build/release/fieldc broadband         # channel-count study: free field vs cavity+chord
@@ -88,6 +90,17 @@ chamber axis, where every mid-plane target sits. Fixed and gated
 (G-GPU-CYL-axis); every affected receipt was re-run at 77df809, and the
 conclusions of Rounds 7–11 hold with corrected numbers. See "Round 11".
 
+**2026-10-01, later — open air, and the loop closes.** Per
+[`ENGINE.md`](ENGINE.md) the glass is gone: two Ø410 mm plates in open air,
+each a surface of N independently driven elements. The engine is
+matrix-free on the GPU (a mold compile takes minutes of GPU and seconds of
+CPU) with basin maps instead of particle stepping. Channels buy power; tones
+buy confinement (2 × 192 elements, 9 tones over 30–70 kHz). The scan is
+time-gated pulse-echo. The replicator's loop — scan a wire ring, read it,
+mold it from powder, scan the copy — closes with every gate passing. Open:
+reading small 3D wireframes; evenness that does not depend on orientation.
+See "Round 12".
+
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
 propagator with exact adjoint, T1 acoustic FDTD, T2 Gor'kov radiation force,
@@ -136,6 +149,186 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 12 — open air, physics-limited plates, an engine built on linearity (2026-10-01)
+
+Built to [`ENGINE.md`](ENGINE.md), after the operator's decisions of 1 October:
+
+* keep the cylinder but drop the glass (two Ø410 mm plates, 460 mm apart,
+  open air between them);
+* make each plate a holographic surface limited by physics, not by "three
+  horns per face";
+* make the engine efficient before spending compute on it.
+
+### The engine
+
+* **Plates of independently driven elements** (`PlateArray`). Each plate
+  carries N Ø5 mm pistons on a Vogel spiral, so every element sits at its
+  own radius and there are no grating lobes. Each element has its own drive
+  channel. The plates reflect with R = 0.9, imaged to order 3.
+* **Matrix-free on the GPU** (`ArrayFieldGPU`, `Shaders/array.metal`).
+  * One pass gives p and ∇p at any points for a drive.
+  * A second gives, for every element, the gradient of any weighted sum of
+    the Gor'kov potential.
+  * Nothing is stored, so N can be thousands.
+
+  Gates: G-A1 (potential vs the CPU reference) 3.4e-5; G-A3 (adjoint)
+  5.6e-5; G-A2 (one element vs the Rayleigh integral over its face, at
+  230 mm and 0–42°) 0.87 %.
+* **One compiler for any field** (`ForceCompiler.ForceField`). The mold,
+  funnel and sieve compilers run on the glass chamber's stored rows or on
+  the plate array.
+* **Basin maps instead of trajectories** (`BasinMap`). Overdamped powder
+  slides down U_eff = P·U + mgz and stops in a minimum. So every lattice cell
+  points to its steepest descent, and following the pointers gives the end
+  of every start at once. Recirculation closes in one line. G-B0: the basin
+  map and 3,000 stepped grains agree on the share that ends on the shape.
+* **Basin-map feedback.** Sites that get less than their fair share are
+  weighted up and the drive is recompiled from the last one. This is what
+  the machine would do with a scan.
+* **Cost.** A mold compile at the design point takes 2–3 minutes of GPU
+  time with a few seconds of CPU; a scan takes ~45 s; peak memory is
+  ~50 MB.
+  * Per-call GPU buffers were first kept alive by their command buffers and
+    grew 0.4 GB/s. That killed the first sweep silently. Buffers are now
+    allocated once per field.
+
+### What the channel count and the tones buy (`fieldc arraysweep`, study S1; receipt at 9e5b63d)
+
+Centre-trap ratio (< 0.5 = unique), and the 16-site ring sieve by the basin map:
+
+| per plate | tones (30–70 kHz) | trap ratio | powder on the ring | sites (fair 6.25 %) | drive per element | acoustic power |
+|---|---|---|---|---|---|---|
+| 3 | 1 | 0.78 | 4 % | — | 476 m/s | 5,512 W |
+| 12 | 3 | 0.18 | 97 % | 0–25 % | 51 m/s | 745 W |
+| 48 | 9 | 0.10 | 100 % | 0–16.5 % | 10 m/s | 349 W |
+| 192 | 1 | 0.67 | 15 % | — | 9.2 m/s | 131 W |
+| 192 | 9 | 0.11 | 100 % | 3.3–8.6 % | 2.2 m/s | 67 W |
+| 768 | 9 | 0.08 | 100 % | 4.0–9.3 % | 0.62 m/s | 21 W |
+
+![What the channel count and the tones buy](shots/arraysweep.svg)
+
+* **Tones buy confinement along the axis.** Two plates make standing waves
+  every λ/2 all the way between them, so lift exists at every node plane.
+  Only frequency diversity localises it. One tone never makes a unique trap
+  (~0.7 at any N). Nine tones over 30–70 kHz make the centre trap unique
+  (~0.1), and the sieve puts all the powder on the ring. This is Round 7's
+  "tones are drives", now separated from the channel count.
+* **Channels buy power and evenness.** Going from 3 to 768 elements per
+  plate cuts the acoustic power ~100–170×. Every site getting its share needs
+  192 or more.
+* **Design point:** 2 × 192 elements, 9 tones over 30–70 kHz. That is
+  ~2.2 m/s rms per element and ~67 W acoustic to hold the whole powder
+  cloud. At 2 × 768 it drops to 0.6 m/s and 21 W.
+
+### Molds in open air (receipts at 9af9c1f)
+
+At the design point (2 × 192 elements, 9 tones), with the basin map and
+3,000 stepped grains:
+
+* **The 16-site ring:** 100 % of the powder ends on the ring. All 16 sites
+  hold powder (3.3–8.6 % each against a fair 6.25 %; grains 21–348 each).
+  Nothing is left in a rogue well; 1.2 re-sprinkles per grain (G-M1, G-M2,
+  G-B0 pass).
+
+  ![Open air: the ring](shots/mold_plates192_ring.svg)
+* **The 12 mm tetrahedron frame, in 3D:** 98.5 % on the frame by the basin
+  map, 100 % by the grains. All 10 sites hold powder (7.7–13.1 % against a
+  fair 10 %) (G-M1, G-M2, G-B0 pass).
+
+  ![Open air: the tetrahedron frame](shots/mold_plates192_tetra.svg)
+* **Evenness depends on orientation (found by turning the shape).**
+  * Capture onto the shape is robust: 100 % at every rotation tried.
+  * Even filling is not. The 16-site ring (sites 3.1 mm apart) leaves sites
+    empty when turned 5° or 11.25°.
+  * With 12 sites (4.2 mm apart) every site fills at 0° and 5° (7.4–9.1 %,
+    6.4–10.3 %) but one stays empty at 11.25°.
+
+  The plates' Vogel spirals are not rotationally symmetric, and 3.1 mm is
+  only ~1.3 half-wavelengths at 70 kHz. Feedback rounds (weight starved
+  sites up, recompile) have not recovered a site the powder never reaches.
+
+### Scans in open air: pulse-echo, time-gated
+
+A first version lit the object with random chords on both plates and listened
+on both. That is mostly transmission (plate → object → other plate), whose
+path barely changes with height, so the image smeared ~10 mm along z. The
+reflecting plates add plate → object → far plate → home paths of 2L whatever
+the height. The scan is now pulse-echo, one plate at a time:
+
+* coded pulses (one random phase pattern per plate, the same at every
+  frequency);
+* 320 frequencies over 30–100 kHz (a 4.6 ms window);
+* a time gate on the direct echoes (1.2–1.9 ms; the first plate bounce
+  arrives at 2.7 ms).
+
+A point's half-peak volume fell from 3,726 voxels to 320.
+
+| object | bright voxels on the object | object recalled | peak offset | time |
+|---|---|---|---|---|
+| a point | 77 % | 100 % | 1.0 mm | 35 s |
+| a wire ring, 8 mm radius | 92 % | 100 % | 0.3 mm | 35 s |
+| a 30 mm tetrahedron frame | 67 % | 56 % | 1.0 mm | 31 s |
+| the letter R, 40 mm | 73 % | 54 % | 1.5 mm | 31 s |
+
+![Open air: a wire ring](shots/scan_plates192_ring.svg)
+
+The glass chamber's scan took ~5 minutes; these take ~30 s and are cleaner
+(higher precision). They recall less of the big objects above half the peak,
+because faces turned to the plates echo much more strongly than edges.
+
+### The replicator loop (`fieldc replicate`)
+
+Scan an object, read its shape off the image, mold a copy from powder with
+the sieve, scan the copy, and compare. Reading the shape:
+
+* peaks at least 3 mm apart above half the image's maximum;
+* each peak moved to the brightness-weighted centroid of its patch
+  (sub-voxel);
+* sites resampled at equal arc length along every chain and loop, ~4 mm
+  apart.
+
+**A wire ring (8 mm radius): the loop closes.** All six gates pass:
+
+* G-R1: 12 sites read, all on the ring (worst 0.39 mm).
+* G-M1, G-M2: 100 % of the powder ends on the read shape, every site filled.
+* G-R2: the copy lies on the ORIGINAL ring: 100 % of the cloud within
+  1.5 mm of it, median 0.45 mm.
+* G-R3: the copy's scan correlates 0.72 with the original's (bar 0.7).
+* G-B0: the basin map and the stepped grains agree.
+
+![The replicator's loop on a wire ring](shots/replicate_ring.svg)
+
+**A 12 mm tetrahedron frame: the reading step fails.** At the scan's ~2 mm
+resolution a frame this small images as a blurred cage. Joining nearby peaks
+built a 39-segment mesh instead of six edges: 88 % of its sites lie on the
+frame (worst 4.0 mm), and it covers 69 % of it. The mold on that mesh puts
+76 % of the cloud on it, but only 59 % within 1.5 mm of the original frame
+(G-R1, G-R2, G-R3 fail). Reading a graph off an image needs a skeleton (or a
+model fit), not proximity. That is the next step.
+
+![The loop on a tetrahedron frame](shots/replicate_tetra.svg)
+
+### Reading with light
+
+Sound changes the air's refractive index, so a laser across the chamber
+picks up a phase k_L (n₀ − 1)/(γ P₀) ∫ p dx. Strobed at each tone, a camera
+behind a schlieren or interferometer reads the field's line integral
+(`fieldc mold --light`). Through the compiled ring mold, a 633 nm beam picks
+up up to 0.95 rad (rms over tones). That is easily measured, so light can
+calibrate the twin against the real plates and render the field on screen.
+
+![What light reads](shots/mold_plates192_ring_light.svg)
+
+**Open / next:**
+
+* The eigen-solve compile (seconds instead of minutes).
+* Even filling that does not depend on orientation (more channels, more
+  tones, or an objective on the catchments themselves).
+* Streaming (the flows around foci).
+* Grain–grain cohesion and the clump's own scattering.
+* The plate element's real transfer, measured on the bench and then read
+  with light.
 
 ## Round 11 — scan an object, then mold from powder (2026-09-30)
 

@@ -1,0 +1,64 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T19:18:32Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 16809.33239197731,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "ring: 12 sites read (100% on the object, 100% of it covered); open air, 2 × 192 elements; sieve objective, 9 tones, 1.38× holding, 2.73 m\/s rms per channel; basin map: 100.0% on the shape, sites 3.5–14.3% (fair 8.3%), 0.0% rogue; lift contrast 1.90; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (1–482); copy: 100% of the cloud within 1.5 mm of the original (median 0.45 mm); scans correlate 0.719",
+      "id" : "G-R1",
+      "measured" : 1,
+      "name" : "replicate (ring): the shape read off the scan lies on the object (sites within 1.5 mm)",
+      "passed" : true,
+      "threshold" : 0.9
+    },
+    {
+      "comparison" : ">",
+      "detail" : "ring: 12 sites read (100% on the object, 100% of it covered); open air, 2 × 192 elements; sieve objective, 9 tones, 1.38× holding, 2.73 m\/s rms per channel; basin map: 100.0% on the shape, sites 3.5–14.3% (fair 8.3%), 0.0% rogue; lift contrast 1.90; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (1–482); copy: 100% of the cloud within 1.5 mm of the original (median 0.45 mm); scans correlate 0.719",
+      "id" : "G-R2",
+      "measured" : 1,
+      "name" : "replicate (ring): ≥90% of the powder ends within 1.5 mm of the ORIGINAL object",
+      "passed" : true,
+      "threshold" : 0.9
+    },
+    {
+      "comparison" : ">",
+      "detail" : "ring: 12 sites read (100% on the object, 100% of it covered); open air, 2 × 192 elements; sieve objective, 9 tones, 1.38× holding, 2.73 m\/s rms per channel; basin map: 100.0% on the shape, sites 3.5–14.3% (fair 8.3%), 0.0% rogue; lift contrast 1.90; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (1–482); copy: 100% of the cloud within 1.5 mm of the original (median 0.45 mm); scans correlate 0.719",
+      "id" : "G-R3",
+      "measured" : 0.7188722368177922,
+      "name" : "replicate (ring): the copy's scan matches the original's (Pearson over the grid)",
+      "passed" : true,
+      "threshold" : 0.7
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.38× holding, 2.73 m\/s rms per channel; basin map: 100.0% on the shape, sites 3.5–14.3% (fair 8.3%), 0.0% rogue; lift contrast 1.90; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (1–482)",
+      "id" : "G-M1",
+      "measured" : 0.4218965899592204,
+      "name" : "acoustic mold (read ring): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.38× holding, 2.73 m\/s rms per channel; basin map: 100.0% on the shape, sites 3.5–14.3% (fair 8.3%), 0.0% rogue; lift contrast 1.90; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (1–482)",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999671,
+      "name" : "acoustic mold (read ring): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.38× holding, 2.73 m\/s rms per channel; basin map: 100.0% on the shape, sites 3.5–14.3% (fair 8.3%), 0.0% rogue; lift contrast 1.90; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (1–482)",
+      "id" : "G-B0",
+      "measured" : 3.2862601528904634e-14,
+      "name" : "basin map vs stepped grains: the share on the shape agrees",
+      "passed" : true,
+      "threshold" : 0.05
+    }
+  ],
+  "gitSHA" : "9af9c1f",
+  "name" : "replicate-ring"
+}

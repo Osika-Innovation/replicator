@@ -12,6 +12,8 @@ import sys
 
 name = sys.argv[1] if len(sys.argv) > 1 else "tetra"
 title = sys.argv[2] if len(sys.argv) > 2 else f"The twin scans a 3D object ({name}) from the six gates, 30–100 kHz"
+note = sys.argv[3] if len(sys.argv) > 3 else ("Exact glass-chamber fields, six gates, every gate pair, point scatterers (Born); "
+                                              "the chamber-only transfer is calibrated away; measurement noise added.")
 h, n = [float(v) for v in open(f"Receipts/scan3d_{name}_grid.csv").read().split(",")]
 n = int(n)
 mips = {}
@@ -54,8 +56,7 @@ for p, (view, ax, ay, lx, ly) in enumerate(views):
                    f'fill="#ffffff" fill-opacity="0.9" stroke="#000000" stroke-width="0.4"/>')
     out.append(f'<text x="{x0 + size / 2:.0f}" y="{top + size + 18:.0f}" font-size="12" text-anchor="middle" fill="#1f2328">'
                f'{lx}–{ly} ({(n - 1) * h:.0f} mm square)</text>')
-out.append(f'<text x="{pad}" y="{H - 16}" font-size="11" fill="#57606a">Exact glass-chamber fields, six gates, every '
-           f'gate pair, point scatterers (Born); the chamber-only transfer is calibrated away; measurement noise added.</text>')
+out.append(f'<text x="{pad}" y="{H - 16}" font-size="11" fill="#57606a">{note}</text>')
 out.append('</svg>')
 open(f"shots/scan_{name}.svg", "w").write("\n".join(out))
 print(f"wrote shots/scan_{name}.svg ({n}³ grid, {len(obj)} object points)")

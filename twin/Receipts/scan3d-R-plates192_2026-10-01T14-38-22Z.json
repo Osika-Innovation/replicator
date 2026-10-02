@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-10-01T14:38:22Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 31.13031506538391,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "249 scatterers, 320 frequencies 30–100 kHz × 8 chords, 2 × 192 elements, SNR 40 dB; precision 73%, recall 54% (within 2.0 mm)",
+      "id" : "SCAN",
+      "measured" : 0.7264367816091954,
+      "name" : "scan of R in open air: image overlap with the object",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "9af9c1f",
+  "name" : "scan3d-R-plates192"
+}

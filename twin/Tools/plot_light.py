@@ -36,15 +36,15 @@ def colour(v):
 
 cell = max(2.0, 420.0 / n)
 size = cell * n
-pad, top = 50, 78
-W, H = int(size + 2 * pad + 90), int(top + size + 70)
+pad, top = 50, 90
+W, H = int(size + 2 * pad + 90), int(top + size + 84)
 out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
        f'font-family="-apple-system, Helvetica, Arial, sans-serif">',
        f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
        f'<text x="{pad}" y="28" font-size="15" font-weight="600" fill="#1f2328">{title}</text>',
-       f'<text x="{pad}" y="47" font-size="11.5" fill="#57606a">a 633 nm laser along x through the chamber, '
-       f'strobed at each tone: the phase each ray picks up (rms over tones)</text>',
-       f'<text x="{pad}" y="63" font-size="11.5" fill="#57606a">peak {peak * 1000:.1f} mrad; '
+       f'<text x="{pad}" y="47" font-size="11.5" fill="#57606a">a 633 nm laser along x through the chamber, strobed at</text>',
+       f'<text x="{pad}" y="61" font-size="11.5" fill="#57606a">each tone: the phase each ray picks up (rms over tones)</text>',
+       f'<text x="{pad}" y="75" font-size="11.5" fill="#57606a">peak {peak * 1000:.1f} mrad; '
        f'red circles: the mold\'s sites (y–z projection)</text>']
 for (j, k), v in vals.items():
     out.append(f'<rect x="{pad + j * cell:.1f}" y="{top + (n - 1 - k) * cell:.1f}" width="{cell + 0.3:.1f}" '
@@ -62,8 +62,8 @@ for i in range(100):
                f'height="{size / 100 + 0.5:.1f}" fill="{colour(i / 99)}"/>')
 out.append(f'<text x="{pad + size + 40}" y="{top + 10}" font-size="10" fill="#1f2328">{peak * 1000:.1f} mrad</text>')
 out.append(f'<text x="{pad + size + 40}" y="{top + size}" font-size="10" fill="#1f2328">0</text>')
-out.append(f'<text x="{pad}" y="{H - 14}" font-size="11" fill="#57606a">Δφ = k_L (n₀ − 1)/(γ P₀) ∫ p dx: '
-           f'the measurement that calibrates the twin against the real plates, and a rendering of the field.</text>')
+out.append(f'<text x="{pad}" y="{H - 28}" font-size="11" fill="#57606a">Δφ = k_L (n₀ − 1)/(γ P₀) ∫ p dx: the measurement that calibrates</text>')
+out.append(f'<text x="{pad}" y="{H - 14}" font-size="11" fill="#57606a">the twin against the real plates, and a rendering of the field.</text>')
 out.append('</svg>')
 open(f"shots/{base}_light.svg", "w").write("\n".join(out))
 print(f"wrote shots/{base}_light.svg ({n}×{n} rays, peak {peak * 1000:.2f} mrad)")
