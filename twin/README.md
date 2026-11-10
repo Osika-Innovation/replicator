@@ -517,8 +517,11 @@ the 16-site ring sieve:
   ("every site getting its share needs 192 or more") came from the lattice
   map and the 30–70 kHz band; it does not survive the traced flow. What 4×
   the channels buys is ~3.5× less drive per element and 3–4× less acoustic
-  power. This is ONE shape; the turned rings and the tetrahedron have only
-  been run at 2 × 192.
+  power. It holds for the other shapes too: at 2 × 48 (full-disc spiral,
+  `--per-plate 48`, receipts `mold-*-plates48_2026-11-10T14-2*`) the ring
+  turned 5° and 11.25° and the tetrahedron all pass G-M1, G-M2, G-B0 and
+  G-B1 with stepped grains — ring 5.7–6.9 %, 5° 5.5–7.1 %, 11.25° 5.6–7.1 %
+  (fair 6.25 %), tetrahedron 6.9–12.6 % (fair 10 %; 7.5–12.7 % at 2 × 192).
 * **Nine tones cost more power than three** at the same N (126 W against
   49 W at 2 × 192): the sieve holds every site against the others, and that
   is what the extra tones are spent on.
