@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-10T13:42:29Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 38.99112594127655,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "50 scatterers, 320 frequencies 30–100 kHz × 8 chords, 2 × 192 elements, SNR 40 dB; precision 69%, recall 100% (within 2.0 mm); AUC 0.990, contrast 8.2×",
+      "id" : "SCAN",
+      "measured" : 0.6912751677852349,
+      "name" : "scan of ring in open air: image overlap with the object",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "AUC 0.990; mean image on the object 8.2× the background; 85% of the image energy beyond 2.0 mm, mean reach 5.4 mm",
+      "id" : "SCAN-AUC",
+      "measured" : 0.9897636800919133,
+      "name" : "scan of ring: object voxels outrank background voxels (threshold-free)",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "bf514d6+dirty",
+  "name" : "scan3d-ring-rh1x192"
+}

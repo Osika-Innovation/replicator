@@ -689,11 +689,12 @@ case "mold":
 
 case "arraysweep":
     // Study S1 (ENGINE.md): how many independently driven elements a plate is
-    // worth. Two Ø410 mm plates in open air, N elements each on a Vogel
-    // spiral, N = 3 … 768; 1, 3 and 9 tones over 30–70 kHz. For each:
+    // worth. The RH-1 plate pair in open air (`PlateArray.rh1`: elements on
+    // the face's Vogel annulus), N = 3 … 768 per plate; 1, 3 and 9 tones
+    // over the mold band, 50–100 kHz (`--band lo-hi` in kHz). For each:
     // a single trap at the centre (the mold compiler with one site: rival
     // well ÷ target well, < 0.5 = unique), and the 16-site ring sieve (lift
-    // contrast; where a random powder cloud ends, by the basin map; the drive
+    // contrast; where a random powder cloud ends, by the traced flow; the drive
     // per channel and the acoustic power it radiates).
     do {
         let ctx = try MetalContext()
@@ -702,7 +703,7 @@ case "arraysweep":
         let counts = arg("--counts")?.split(separator: ",").compactMap { Int($0) } ?? [3, 12, 48, 192, 768]
         let toneSets = arg("--tones")?.split(separator: ",").compactMap { Int($0) } ?? [1, 3, 9]
         let reflection = arg("--reflection").flatMap(Double.init) ?? 0.9
-        var band: (lo: Double, hi: Double)? = (30_000, 70_000)
+        var band: (lo: Double, hi: Double)? = (50_000, 100_000)
         if let v = arg("--band") {
             let parts = v.split(separator: "-").compactMap { Double($0) }
             if parts.count == 2 { band = (parts[0] * 1000, parts[1] * 1000) }
@@ -710,12 +711,13 @@ case "arraysweep":
         let air = RH1Freestanding.roomAir
         var gates: [GateResult] = []
         var csv = "per_plate,tones,trap_ratio,sieve_contrast,on_shape,site_min,site_max,rogue,drive_rms,acoustic_W,compile_s\n"
-        print(String(format: "open air: two Ø410 mm plates 460 mm apart, R %.1f, Ø5 mm elements on Vogel spirals; band %.0f–%.0f kHz",
-                     reflection, (band?.lo ?? 50_000) / 1000, (band?.hi ?? 70_000) / 1000))
+        print(String(format: "open air: the RH-1 plate pair, R %.1f, Ø5 mm elements on the face's Vogel annulus; band %.0f–%.0f kHz",
+                     reflection, (band?.lo ?? 50_000) / 1000, (band?.hi ?? 100_000) / 1000))
         print("per plate  tones  trap ratio  ring sieve: contrast  on shape  sites (fair 6.3%)  rogue   drive (m/s rms)  acoustic W   compile")
         for N in counts {
             for T in toneSets {
-                let arr = PlateArray(perPlate: N, reflection: reflection)
+                var design = RH1Design(); design.elementCount = N
+                let arr = PlateArray.rh1(design, reflection: reflection)
                 let centre = arr.centre
                 var trap = MoldSetup()
                 trap.objective = "wells"; trap.tones = T; trap.particles = false; trap.iterations = 300; trap.band = band
@@ -806,17 +808,44 @@ case "scan3d":
             let d = object.map { ($0 - x).length }.min() ?? 0
             print(String(format: "image peak %.2f mm from the nearest object point", d * 1000))
         }
+        // Threshold-free scores. Precision above hangs on one number (half the
+        // PEAK voxel), so one bright scatterer moves it by tens of percent
+        // (2026-11-10: 62–91 % as the array's fill radius changes, the image
+        // itself hardly changing). These do not:
+        //   AUC — the chance a voxel on the object (within tol) is brighter
+        //         than a voxel off it (beyond 2·tol); 0.5 = no image, 1 = perfect.
+        //   contrast — mean image on the object ÷ mean image off it.
+        //   spill — of the image's energy, the share beyond tol of the object,
+        //         and how far that share sits from it (energy-weighted mean).
+        let dist = grid.positions.map { x in object.map { ($0 - x).length }.min() ?? 0 }
+        let onIdx = I.indices.filter { dist[$0] <= tol }, offIdx = I.indices.filter { dist[$0] > 2 * tol }
+        let order = (onIdx + offIdx).sorted { I[$0] < I[$1] }
+        var rankSum = 0.0
+        for (r, i) in order.enumerated() where dist[i] <= tol { rankSum += Double(r + 1) }
+        let nOn = Double(onIdx.count), nOff = Double(offIdx.count)
+        let auc = nOn > 0 && nOff > 0 ? (rankSum - nOn * (nOn + 1) / 2) / (nOn * nOff) : 0
+        let meanOn = onIdx.reduce(0) { $0 + I[$1] } / max(1, nOn), meanOff = offIdx.reduce(0) { $0 + I[$1] } / max(1, nOff)
+        let imageContrast = meanOff > 0 ? meanOn / meanOff : 0
+        var eAll = 0.0, eOut = 0.0, dOut = 0.0
+        for i in I.indices { eAll += I[i]; if dist[i] > tol { eOut += I[i]; dOut += I[i] * (dist[i] - tol) } }
+        let spill = eAll > 0 ? eOut / eAll : 0, spillReach = eOut > 0 ? dOut / eOut : 0
+        print(String(format: "threshold-free: AUC %.3f (object voxel brighter than background voxel); contrast %.1f×; %.0f%% of the image energy lies beyond %.1f mm of the object, on average %.1f mm further out (object fills %.1f%% of the grid)",
+                     auc, imageContrast, 100 * spill, tol * 1000, spillReach * 1000, 100 * nOn / Double(I.count)))
         var ocsv = "x_mm,y_mm,z_mm\n"
         for o in object { ocsv += String(format: "%.3f,%.3f,%.3f\n", (o.x - grid.origin.x) * 1000, (o.y - grid.origin.y) * 1000, (o.z - grid.origin.z) * 1000) }
         let tag = glass ? "" : "-\(scanArray.tag)"
         let gate = GateResult(id: "SCAN", name: "scan of \(objectName)\(glass ? "" : " in open air"): image overlap with the object",
                               measured: precision, threshold: 0, comparison: .informational,
-                              detail: String(format: "%d scatterers, %d frequencies %.0f–%.0f kHz%@, SNR %.0f dB; precision %.0f%%, recall %.0f%% (within %.1f mm)",
+                              detail: String(format: "%d scatterers, %d frequencies %.0f–%.0f kHz%@, SNR %.0f dB; precision %.0f%%, recall %.0f%% (within %.1f mm); AUC %.3f, contrast %.1f×",
                                              object.count, nF, fLo / 1000, fHi / 1000, glass ? "" : " × \(chords) chords, 2 × \(perPlate) elements",
-                                             snrDB, 100 * precision, 100 * recall, tol * 1000))
+                                             snrDB, 100 * precision, 100 * recall, tol * 1000, auc, imageContrast))
+        let aucGate = GateResult(id: "SCAN-AUC", name: "scan of \(objectName): object voxels outrank background voxels (threshold-free)",
+                                 measured: auc, threshold: 0, comparison: .informational,
+                                 detail: String(format: "AUC %.3f; mean image on the object %.1f× the background; %.0f%% of the image energy beyond %.1f mm, mean reach %.1f mm",
+                                                auc, imageContrast, 100 * spill, tol * 1000, spillReach * 1000))
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
-            writeReceipt(Receipt(name: "scan3d-" + objectName + tag, gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
+            writeReceipt(Receipt(name: "scan3d-" + objectName + tag, gates: [gate, aucGate], durationSeconds: Date().timeIntervalSince(t0),
                                  device: deviceName(), gitSHA: gitSHA()))
         }
         let base = "Receipts/scan3d_" + (glass ? "" : "\(scanArray.tag)_") + objectName

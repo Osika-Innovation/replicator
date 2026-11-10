@@ -276,7 +276,26 @@ not a trend. The hole in the middle changes nothing (64–69 % with it at 0, 6
 or 12 mm), nor do 16 pulses instead of 8 (63 %). Recall is 100 % and the peak
 within 0.35 mm throughout. So "fraction of half-peak voxels within 2 mm" moves
 by ±15 % with the layout's sidelobes, and 205 mm happened to be a good one. It
-is a poor figure of merit; a better one is open.
+is a poor figure of merit.
+
+**A threshold-free score replaces it** (`scan3d` now prints both; receipt
+`scan3d-ring-rh1x192_2026-11-10T13-42-29Z`, gate SCAN-AUC). AUC is the chance
+that a voxel within 2 mm of the object is brighter than one more than 4 mm
+from it; contrast is the mean image on the object over the mean off it.
+
+| ring scan | precision (half-peak) | AUC | contrast |
+|---|---|---|---|
+| redrawn plate, 2 × 192, 8 chords | 69 % | 0.990 | 8.2× |
+| ideal plate (r 205, no hole) | 92 % | 0.994 | 8.6× |
+| redrawn, 4 chords | 79 % | 0.979 | 6.9× |
+| redrawn, 2 × 96 elements | 72 % | 0.988 | 6.4× |
+| redrawn, SNR 20 dB | 69 % | 0.990 | 8.2× |
+
+By these the redraw cost the scan almost nothing (0.994 → 0.990), and fewer
+chords or fewer elements cost what one expects; precision ranks the 4-chord
+scan ABOVE the 8-chord one. 85 % of the image's summed intensity still lies
+more than 2 mm from the object, as a low haze over the other 97.5 % of the
+grid: the matched filter's background, not a second object.
 
 **What this costs and leaves open.** The elements must be good to 100 kHz
 (Ø5 mm is 1.5 wavelengths there; the engine models the piston's directivity,
