@@ -530,6 +530,7 @@ the 16-site ring sieve:
   2.2 m/s and 67 W; that band does not resolve the sites.) 2 × 48 is a
   candidate for a first bench plate at 10.6 m/s per element, which a Ø5 mm
   piezo in air cannot be assumed to reach: OPEN.
+  **Operator ruling 2026-11-11: keep 192.** No 48-element face is drawn.
 
 ### Molds in open air (receipts at 9af9c1f)
 
