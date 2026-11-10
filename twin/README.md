@@ -300,7 +300,7 @@ grid: the matched filter's background, not a second object.
 **What this costs and leaves open.** The elements must be good to 100 kHz
 (Ø5 mm is 1.5 wavelengths there; the engine models the piston's directivity,
 not its electrical response). Air absorbs more at 100 kHz; the model includes
-it. Not re-run at the new band: study S1. A quiet-column
+it. Study S1 has been re-run at the new band (table below, under Round 12). A quiet-column
 term (push the sideways force above the shape down) and a worst-site-first
 sideways term were tried and removed: neither was the lever. `Samples/ring_rh1.fcode`
 is the validated ring mold as a stream.
@@ -486,33 +486,47 @@ Built to [`ENGINE.md`](ENGINE.md), after the operator's decisions of 1 October:
     grew 0.4 GB/s. That killed the first sweep silently. Buffers are now
     allocated once per field.
 
-### What the channel count and the tones buy (`fieldc arraysweep`, study S1; receipt at 9e5b63d)
+### What the channel count and the tones buy (`fieldc arraysweep`, study S1; receipt `arraysweep_2026-11-10T14-21-38Z`)
 
-Centre-trap ratio (< 0.5 = unique), and the 16-site ring sieve by the basin map:
+Re-run 2026-11-10 on the redrawn plate (`PlateArray.rh1`, N elements on the
+face's annulus) at the mold band, 50–100 kHz, the powder judged by the traced
+flow (`FlowMap`), not the lattice map. Centre-trap ratio (< 0.5 = unique), and
+the 16-site ring sieve:
 
-| per plate | tones (30–70 kHz) | trap ratio | powder on the ring | sites (fair 6.25 %) | drive per element | acoustic power |
-|---|---|---|---|---|---|---|
-| 3 | 1 | 0.78 | 4 % | — | 476 m/s | 5,512 W |
-| 12 | 3 | 0.18 | 97 % | 0–25 % | 51 m/s | 745 W |
-| 48 | 9 | 0.10 | 100 % | 0–16.5 % | 10 m/s | 349 W |
-| 192 | 1 | 0.67 | 15 % | — | 9.2 m/s | 131 W |
-| 192 | 9 | 0.11 | 100 % | 3.3–8.6 % | 2.2 m/s | 67 W |
-| 768 | 9 | 0.08 | 100 % | 4.0–9.3 % | 0.62 m/s | 21 W |
+| per plate | tones | trap ratio | lift contrast | powder on the ring | sites (fair 6.25 %) | drive per element | acoustic power |
+|---|---|---|---|---|---|---|---|
+| 3 | 9 | 0.30 | 0.49 | 20 % | 0–6.4 % | 78 m/s | 1,313 W |
+| 12 | 9 | 0.16 | 1.28 | 100 % | 0–15.2 % | 22 m/s | 424 W |
+| 48 | 3 | 0.19 | 1.26 | 100 % | 0–28.7 % | 12.7 m/s | 188 W |
+| 48 | 9 | 0.12 | 2.78 | 100 % | 5.6–7.0 % | 10.6 m/s | 390 W |
+| 192 | 1 | 0.66 | 0.82 | 74 % | 0–30.1 % | 7.9 m/s | 96 W |
+| 192 | 3 | 0.17 | 1.47 | 100 % | 0–24.6 % | 3.2 m/s | 49 W |
+| 192 | 9 | 0.14 | 3.23 | 100 % | 5.9–6.7 % | 3.0 m/s | 126 W |
+| 768 | 9 | 0.12 | 3.27 | 100 % | 5.6–6.8 % | 0.73 m/s | 29 W |
+
+(All 15 rows: `Receipts/arraysweep.csv`.)
 
 ![What the channel count and the tones buy](shots/arraysweep.svg)
 
-* **Tones buy confinement along the axis.** Two plates make standing waves
-  every λ/2 all the way between them, so lift exists at every node plane.
-  Only frequency diversity localises it. One tone never makes a unique trap
-  (~0.7 at any N). Nine tones over 30–70 kHz make the centre trap unique
-  (~0.1), and the sieve puts all the powder on the ring. This is Round 7's
-  "tones are drives", now separated from the channel count.
-* **Channels buy power and evenness.** Going from 3 to 768 elements per
-  plate cuts the acoustic power ~100–170×. Every site getting its share needs
-  192 or more.
-* **Design point:** 2 × 192 elements, 9 tones over 30–70 kHz. That is
-  ~2.2 m/s rms per element and ~67 W acoustic to hold the whole powder
-  cloud. At 2 × 768 it drops to 0.6 m/s and 21 W.
+* **Tones buy confinement and evenness.** One tone never makes a unique trap
+  (~0.67 at any N). Three tones make it unique and put all the powder on the
+  ring, but leave sites empty (0–25 %) at every N up to 768. Nine tones fill
+  every site.
+* **Channels buy power, not evenness, above 48.** With nine tones the ring is
+  even at 2 × 48 (5.6–7.0 %) as at 2 × 192 and 2 × 768. The earlier reading
+  ("every site getting its share needs 192 or more") came from the lattice
+  map and the 30–70 kHz band; it does not survive the traced flow. What 4×
+  the channels buys is ~3.5× less drive per element and 3–4× less acoustic
+  power. This is ONE shape; the turned rings and the tetrahedron have only
+  been run at 2 × 192.
+* **Nine tones cost more power than three** at the same N (126 W against
+  49 W at 2 × 192): the sieve holds every site against the others, and that
+  is what the extra tones are spent on.
+* **Design point unchanged:** 2 × 192 elements, 9 tones over 50–100 kHz:
+  3.0 m/s rms per element, ~126 W acoustic. (At 30–70 kHz the old table said
+  2.2 m/s and 67 W; that band does not resolve the sites.) 2 × 48 is a
+  candidate for a first bench plate at 10.6 m/s per element, which a Ø5 mm
+  piezo in air cannot be assumed to reach: OPEN.
 
 ### Molds in open air (receipts at 9af9c1f)
 
