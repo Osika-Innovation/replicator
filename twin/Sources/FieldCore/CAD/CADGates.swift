@@ -79,7 +79,67 @@ public enum CADGates {
         out.append(parastichies(model))
         out.append(horn(model))
         out.append(contentsOf: massAndAreas(model))
+        out.append(engineArray(model))
         return out
+    }
+
+    /// What the engine's idealised plate array (ENGINE.md: N × Ø5 mm elements
+    /// on a Vogel spiral filling the whole Ø410 disc) hits on the face plate
+    /// the CAD draws. Each site is tested against the bore collar, the rim,
+    /// the twelve slots and the drilled micro-horns.
+    public static func engineArrayConflicts(_ model: RH1Model, perPlate: Int = 192)
+        -> (bore: Int, rim: Int, slot: Int, horn: Int, clear: Int) {
+        let d = model.design
+        let arr = PlateArray(perPlate: perPlate)
+        let er = arr.elementRadius * 1e3
+        let fine = FacePattern.centerlines(d, samples: 2400)
+        var bore = 0, rim = 0, slot = 0, horn = 0, clear = 0
+        for v in PlateArray.vogel(perPlate, radius: arr.plateRadius) {
+            let c = P2(v.x * 1e3, v.y * 1e3)
+            let r = (c.x * c.x + c.y * c.y).squareRoot()
+            if r - er < d.boreHoleRadius { bore += 1; continue }
+            if r + er > d.plateRadius { rim += 1; continue }
+            var hit = false
+            for (line, w) in fine {
+                let (dist, j) = FacePattern.distance(c, to: line)
+                if dist < w[j] / 2 + er { hit = true; break }
+            }
+            if hit { slot += 1; continue }
+            if model.pattern.drilled.contains(where: { ($0.center - c).length < $0.faceRadius + er }) { horn += 1; continue }
+            clear += 1
+        }
+        return (bore, rim, slot, horn, clear)
+    }
+
+    // G-CAD9 — informational: the engine's plate array against the CAD's face
+    public static func engineArray(_ model: RH1Model) -> GateResult {
+        if model.design.faceStyle == .elementArray {
+            // The face is drawn round the engine's array: the two must be the
+            // same sites, and every hole must clear the collar, the slots,
+            // its neighbours and the liner (the element design rules).
+            let d = model.design
+            let els = PlateArray.rh1(d).elements()
+            var worst = 0.0
+            for (pat, offset) in [(model.pattern, 0), (model.patternDown, d.elementCount)] {
+                for e in pat.elements {
+                    let p = els[offset + e.index].position
+                    worst = max(worst, abs(p.x * 1e3 - e.center.x), abs(p.y * 1e3 - e.center.y))
+                }
+            }
+            let broken = designRules(model).filter { ["DR10", "DR11", "DR12", "DR26"].contains($0.id) && !$0.passed }
+            let dashes = model.pattern.slotCenterlines.count
+            return GateResult(id: "G-CAD9", name: "the engine's plate array is the CAD's (mm; +1 per broken element rule)",
+                              measured: worst + Double(broken.count), threshold: 1e-6,
+                              detail: String(format: "2 × %d elements, same sites; slots cut into %d dashes on the up faces, %d on the down faces; %.0f %% of the slot area kept",
+                                             d.elementCount, dashes, model.patternDown.slotCenterlines.count,
+                                             100 * model.pattern.slotOpenArea / max(FacePattern(RH1Design.microHornFace).slotOpenArea, 1e-9)))
+        }
+        let c = engineArrayConflicts(model)
+        let n = c.bore + c.rim + c.slot + c.horn + c.clear
+        return GateResult(id: "G-CAD9", name: "engine plate array (\(n) × Ø5, ENGINE.md) vs the face plate: sites that hit a feature",
+                          measured: Double(n - c.clear), threshold: 0, comparison: .informational,
+                          detail: "bore \(c.bore), rim \(c.rim), slots \(c.slot), micro-horns \(c.horn); \(c.clear) clear. "
+                              + "Buildable today: \(model.pattern.drilled.count) elements per face, one behind each drilled micro-horn (PlateArray.fromCAD)")
     }
 
     static func fmt(_ v: Double) -> String { String(format: "%.3g", v) }
@@ -145,6 +205,28 @@ public enum CADGates {
         rule("DR9", "inner winding ↔ torus former",
              d.windingInnerLayerGap - wireR, 0.3)
         // face pattern
+        if d.faceStyle == .elementArray {
+            var web = Double.infinity, holeWeb = Double.infinity, outer = 0.0, inner = Double.infinity
+            for pat in [model.pattern, model.patternDown] {
+                for e in pat.elements {
+                    for (li, line) in pat.slotCenterlines.enumerated() {
+                        let (dist, j) = FacePattern.distance(e.center, to: line)
+                        web = min(web, dist - pat.slotWidths[li][j] / 2 - e.holeRadius)
+                    }
+                    outer = max(outer, e.radius + e.holeRadius); inner = min(inner, e.radius - e.holeRadius)
+                }
+                for i in 0..<pat.elements.count { for j in (i + 1)..<pat.elements.count {
+                    holeWeb = min(holeWeb, (pat.elements[i].center - pat.elements[j].center).length
+                                  - pat.elements[i].holeRadius - pat.elements[j].holeRadius)
+                } }
+            }
+            // Dashes are cut on a fine centreline and drawn on a coarser one:
+            // allow the chord's sagitta against the design web.
+            rule("DR10", "element hole ↔ slot dash web", web, d.elementSlotWeb - 0.1)
+            rule("DR11", "element hole ↔ element hole web", holeWeb, 2.0)
+            rule("DR12", "outermost element hole ↔ storage liner", d.storageLinerID / 2 - outer, 0.5)
+            rule("DR26", "innermost element hole ↔ bore collar hole", inner - d.boreHoleRadius, 2.0)
+        } else {
         var web = Double.infinity
         for s in model.pattern.drilled {
             for (li, line) in model.pattern.slotCenterlines.enumerated() {
@@ -164,6 +246,7 @@ public enum CADGates {
         rule("DR11", "micro-horn ↔ micro-horn web", holeWeb, 2.0)
         let siteMax = model.pattern.sites.map { $0.radius + $0.faceRadius }.max() ?? 0
         rule("DR12", "outermost micro-horn ↔ storage liner", d.storageLinerID / 2 - siteMax, 0.5)
+        }
         rule("DR13", "slot end ↔ storage liner",
              d.storageLinerID / 2 - (d.slotOuterRadius + d.slotWidthOuter / 2), 1.0)
         // slot arm spacing at the inner end, perpendicular to the arms
@@ -344,6 +427,13 @@ public enum CADGates {
     }
 
     public static func parastichies(_ model: RH1Model) -> GateResult {
+        if model.design.faceStyle == .elementArray {
+            // The 21 × 34 claim is about the v0.4 micro-horn sunflower; check
+            // it there, so the claim stays tested while that face exists.
+            var g = parastichies(RH1Model(design: .microHornFace, detail: .preview))
+            g.name += " — on the v0.4 face; the element face has no micro-horns"
+            return g
+        }
         let bands = parastichyBands(model)
         let pairs = bands.map { b -> String in
             let t = b.prefix(2).map(\.0).sorted()
@@ -378,7 +468,21 @@ public enum CADGates {
         let glass = mass { $0.material == .glass }
         let total = mass { _ in true }
         let pat = model.pattern
-        let slotA = Double(model.design.slotArms) * pat.slotArea
+        let slotA = pat.slotOpenArea
+        if model.design.faceStyle == .elementArray {
+            return [
+                GateResult(id: "G-CAD7", name: "mass budget (spec §3: ≈50 kg class)",
+                           measured: total, threshold: 0, comparison: .informational,
+                           detail: String(format: "shells %.1f kg (spec ~20), plates+carriers %.1f (spec ~15, 3 plates), glass %.1f (spec ~6.5); placeholders not counted",
+                                          shells, plates, glass)),
+                GateResult(id: "G-CAD8", name: "radiating area per face, light slots vs driven elements",
+                           measured: slotA / max(pat.elementArea, 1e-9), threshold: 0, comparison: .informational,
+                           detail: String(format: "%d elements %.0f mm² (%.1f %% of the face); %d slot dashes %.0f mm²",
+                                          pat.elements.count, pat.elementArea,
+                                          100 * pat.elementArea / (Double.pi * model.design.plateRadius * model.design.plateRadius),
+                                          pat.slotCenterlines.count, slotA)),
+            ]
+        }
         return [
             GateResult(id: "G-CAD7", name: "mass budget (spec §3: ≈50 kg class)",
                        measured: total, threshold: 0, comparison: .informational,

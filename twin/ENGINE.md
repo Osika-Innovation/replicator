@@ -133,3 +133,64 @@ change, the numbers above change with them.
 * "Golden ratio": the aperiodic golden-angle layout suppresses grating lobes
   (established, adopted); golden-ratio tone spacing is testable in S1.
 * "Embedding in the array": no handle the twin can test.
+
+## The plate against the CAD — 2026-11-10
+
+"What the CAD session needs from this" was never closed. Measured now
+(G-CAD9): of the 192 sites this plan assumes, 120 collide with the face plate
+the CAD draws (slots 101, micro-horns 14, rim 5). `PlateArray.fromCAD` is the
+array that face can carry today — 128 elements, one behind each drilled
+micro-horn — and every open-air command takes `--array cad`. On it the ring
+scan holds and the ring mold loses evenness (G-M1 fails, 12 of 16 sites). The
+S1 knee was measured on the ideal layout; it has not been re-measured on a
+buildable one.
+
+## Ruling 2026-11-10: the face is redrawn round the elements
+
+The operator chose to redraw the face rather than keep the v0.4 slots and
+micro-horns. The plate this plan is built on is now `PlateArray.rh1`, the
+default of every open-air command, and the CAD draws the same sites:
+
+* 192 elements of Ø5 mm per plate on the golden-angle spiral, over the annulus
+  r 12 → 196.5 mm (not the whole Ø410 disc: the outermost hole must clear the
+  Ø400 storage liner, the innermost the Ø14 collar hole), 460 mm apart, the
+  upper plate turned half a golden angle.
+* Study S1 and the Round 12 receipts were run on the idealised layout
+  (r 0 → 205). It stays available as `--array ideal` / `--per-plate N`. S1's
+  knee has not been re-measured on the annulus; the ring and tetrahedron molds
+  and the ring scan have (README, Round 15).
+* What the CAD session still owes: the wiring layer for 192 channels per face,
+  and a use for the horn stack behind the plate.
+
+## Corrections to this plan — 2026-11-10
+
+* **Matter (item 3).** "Following the pointers gives the destination of every
+  start at once" holds for the share on the shape, not for the share per
+  site: a 26-neighbour pointer cannot follow a streamline, and a falling
+  grain drifts sideways by millimetres. Per-site shares come from the traced
+  flow (`FlowMap`), gated against the stepped grains (G-B1). `BasinMap` stays
+  as the fast map of where anything can rest at all.
+* **The band.** S1 ran 30–70 kHz. Sites closer than about half a wavelength
+  are not filled separately; the mold now plays 50–100 kHz (README, Round 16).
+  "Tones buy confinement" needs the rider: only shorter wavelengths buy
+  resolution.
+
+## Candidate referents (from the St. Clair filings), graded — 2026-11-10
+
+Source: the nineteen published applications of J. Q. St. Clair (2002–2006),
+read through st-clair-inventions.lovable.app. Same rule as above: a claim gets
+a study where the twin has a handle on it, and is named as having none where
+it does not. Receipt: `windings` (`fieldc windings --receipt`).
+
+| claim | handle in the twin | result |
+|---|---|---|
+| Counter-wound toroidal coils make "bucking fields" (US 2003/0197093) | yes: the RH-1 pair is that coil; G-EM3 | Established as ordinary magnetostatics. Wound alike the pair is a ring dipole, wound opposed a confined toroid. No field outside what Biot–Savart gives. |
+| The pair must be one common wire | yes: S-EM2 | One wire fixes the pair to one mode at build time. The canon's two independent feeds (R5) contain it as a special case. Not adopted. |
+| Radius ratio 1:3 is special (k = −8/9) | yes: S-SC3, ratio swept 1:1.5 … 1:5 | Centre field, on-axis null and peak gradient all run monotonically through 1:3. A dial, not a resonance. Not adopted. |
+| Magnetic vortex levitates stone | yes: S-SC1 | Limestone needs −∂(B²)/∂z = 5,100 T²/m; the windings offer 5.6e-6 at their continuous limit. Short by 9e8× in force. Size does not help: force and weight both scale with volume. |
+| …and softens it "like putty" | yes, as an energy scale: S-SC2 | The chamber's largest field gives an electron spin 1e-6 kT, 6e-9 of a Si–O bond. No mechanism. |
+| Drive at 2.78 MHz | partly: it is the top column of the induction table, at the model's quasi-static limit | No feature at that frequency; skin-depth scaling only. |
+| Drive at 15 GHz; kV spikes through a saturable reactor | no: outside the quasi-static model | Untested here. Spike drive is an electrical-safety and EMC cost with no predicted benefit. |
+| Panels at 19.47° | not yet: side panels are not in the open-air engine | Testable as an array-geometry sweep when panels enter (compare against neighbouring angles, pre-registered). |
+| Negative mass, wormholes, hyperspace light at 1 m/s, the smoke test | no handle the twin can test | The smoke test is a bench experiment with an unpowered control; nothing in the twin predicts an effect. |
+

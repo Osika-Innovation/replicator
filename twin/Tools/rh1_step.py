@@ -63,8 +63,9 @@ def cylinder_axis(base, axis, radius, length):
     return cq.Solid.makeCylinder(radius, length, V(*base), V(*axis))
 
 
-def build_plate(d, sites, slot_lines):
-    """Ø410 × 12 face plate: collar hole, 12 slots, drilled biconical horns."""
+def build_plate(d, sites, slot_lines, elements=()):
+    """Ø410 × 12 face plate: collar hole, slots (or slot dashes), and either the
+    v0.4 biconical micro-horns or the element array's through-holes."""
     R, t = d["plateDiameter"] / 2, d["plateThickness"]
     plate = cq.Solid.makeCylinder(R, t, V(0, 0, 0), V(0, 0, 1))
     tools = [cq.Solid.makeCylinder(d["boreTubeOD"] / 2, t + 2, V(0, 0, -1), V(0, 0, 1))]
@@ -75,6 +76,8 @@ def build_plate(d, sites, slot_lines):
             continue
         prof = [(0, -0.5), (fr, -0.5), (fr, 0), (tr, t / 2), (fr, t), (fr, t + 0.5), (0, t + 0.5)]
         tools.append(revolve_rz(prof).translate(V(x, y, 0)))
+    for x, y, _, hole_r, _ in elements:
+        tools.append(cq.Solid.makeCylinder(hole_r, t + 2, V(x, y, -1), V(0, 0, 1)))
     return plate.cut(cq.Compound.makeCompound(tools)), len(tools)
 
 
@@ -164,8 +167,14 @@ def main():
         tube(l0, l0 + d["storageLinerWall"], d["storageFloor"], storage_ceiling))
 
     tp = time.time()
-    plate0, ntools = build_plate(d, P["sites"], P["slotCenterlines"])
+    plate0, ntools = build_plate(d, P["sites"], P["slotCenterlines"], P.get("elements", []))
+    plate_down = plate0
+    if P.get("elementsDown"):
+        plate_down, _ = build_plate(d, [], P["slotCenterlinesDown"], P["elementsDown"])
     print(f"  face plate: {ntools} cutting tools, {time.time() - tp:.1f}s")
+    er, et = d.get("elementDiameter", 0) / 2, d.get("elementPZTThickness", 0)
+    el_disc = cq.Solid.makeCylinder(er, et, V(0, 0, 0), V(0, 0, 1)) if er else None
+    el_back = cq.Solid.makeCylinder(er, d["plateThickness"] - et, V(0, 0, 0), V(0, 0, 1)) if er else None
     pzt0 = cq.Solid.makeCylinder(d["pztDiameter"] / 2, d["pztThickness"], V(0, 0, 0), V(0, 0, 1))
     horn = [(r, dd) for r, dd in P["hornProfileRD"]]
     cone = [(r, dd) for r, dd in P["coneProfileRD"]]
@@ -174,7 +183,18 @@ def main():
         zlo, zhi = min(f["faceZ"], f["backZ"]), max(f["faceZ"], f["backZ"])
         behind = 1.0 if f["facing"] == "down" else -1.0
         zb = lambda dd: f["backZ"] + behind * dd
-        add(asm, f"face plate {f['id']}", "plateMetal", plate0, cq.Location(V(0, 0, zlo)))
+        down = f["facing"] == "down"
+        add(asm, f"face plate {f['id']}", "plateMetal", plate_down if down else plate0, cq.Location(V(0, 0, zlo)))
+        els = P.get("elementsDown" if down else "elements", [])
+        if els:
+            # piezo disc flush with the radiating surface, damping backing to the plate's back
+            to_back = 1.0 if f["backZ"] > f["faceZ"] else -1.0
+            z_disc = min(f["faceZ"], f["faceZ"] + to_back * et)
+            z_back = min(f["faceZ"] + to_back * et, f["backZ"])
+            add(asm, f"elements {f['id']}", "pzt",
+                cq.Compound.makeCompound([el_disc.translate(V(x, y, z_disc)) for x, y, *_ in els]))
+            add(asm, f"element backings {f['id']}", "polymer",
+                cq.Compound.makeCompound([el_back.translate(V(x, y, z_back)) for x, y, *_ in els]))
         add(asm, f"carrier ring {f['id']}", "anodized",
             tube(d["plateDiameter"] / 2, d["carrierOD"] / 2, zlo, zhi))
         add(asm, f"gyroid horn {f['id']}", "ceramic", revolve_rz([(r, zb(dd)) for r, dd in horn]))

@@ -1133,6 +1133,14 @@ public enum ForceCompiler {
     public static func moveWell(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
                                 particle: ParticleMaterial, drives start: [[Complex]], to x: Vec3,
                                 iterations: Int = 8, balance: Vec3 = Vec3(0, 0, 0)) -> (drives: [[Complex]], residual: Double) {
+        moveWell(field: StoredRows(tones: tones, lattice: lat, channels: G), particle: particle, drives: start, to: x, iterations: iterations, balance: balance)
+    }
+
+    /// The same on any field the compiler can work on (the plate array, matrix-free).
+    public static func moveWell(field: some ForceField,
+                                particle: ParticleMaterial, drives start: [[Complex]], to x: Vec3,
+                                iterations: Int = 8, balance: Vec3 = Vec3(0, 0, 0)) -> (drives: [[Complex]], residual: Double) {
+        let lat = field.lattice, G = field.channels
         var g = normalize(start)
         let h = lat.spacing
         let axes = [1, lat.nx, lat.nx * lat.ny]
@@ -1148,7 +1156,7 @@ public enum ForceCompiler {
         var residual = 0.0
         let bal = [balance.x, balance.y, balance.z]
         for _ in 0..<iterations {
-            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let U = field.potential(g, particle: particle)
             let grad = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } - bal[j] }
             // Scale: the well's curvature × one lattice step.
             var curv = 0.0
@@ -1158,7 +1166,7 @@ public enum ForceCompiler {
             residual = (grad.reduce(0) { $0 + $1 * $1 }).squareRoot() / max(abs(curv) / 3, 1e-300)
             if residual < 1e-6 { break }                     // well within a micrometre of x
             // Real Jacobian rows: ∂G_j/∂Re g = 2 Re w, ∂G_j/∂Im g = 2 Im w, w = ∂G_j/∂g*.
-            let W = (0..<3).map { adjoint(tones, drives: g, weights: cj[$0], gates: G, particle: particle) }
+            let W = (0..<3).map { field.adjoint(g, weights: cj[$0], particle: particle) }
             let A: [[Double]] = W.map { w in w.flatMap { $0.flatMap { [2 * $0.re, 2 * $0.im] } } }
             // Minimal-norm step: Δθ = −Aᵀ (A Aᵀ)⁻¹ G.
             var M = [[Double]](repeating: [0, 0, 0], count: 3)
@@ -1190,6 +1198,24 @@ public enum ForceCompiler {
                                  particle: ParticleMaterial, wavelength: Double, options o: Options,
                                  drives start: [[Complex]], to x: Vec3,
                                  iterations: Int = 60, balance: Vec3 = Vec3(0, 0, 0)) -> [[Complex]] {
+        carryStep(field: StoredRows(tones: tones, lattice: lat, channels: G), particle: particle, wavelength: wavelength, options: o, drives: start, to: x, iterations: iterations, balance: balance)
+    }
+
+    /// The same on any field the compiler can work on (the plate array, matrix-free).
+    ///
+    /// - Parameter rivalsBelow: if the well, simply moved onto x (`moveWell`), is
+    ///   already this unique (deepest rival / target), that drive is returned and
+    ///   the rival descent is skipped. With hundreds of channels and no rival to
+    ///   push down, the descent's fixed-length steps only spread the drive over
+    ///   directions that do not focus: the trap kept its place and lost 8× its
+    ///   depth in one step (`fieldc carry`, open air, 2026-11-10). 0 (the default,
+    ///   the six-gate glass chamber): always descend.
+    public static func carryStep(field: some ForceField,
+                                 particle: ParticleMaterial, wavelength: Double, options o: Options,
+                                 drives start: [[Complex]], to x: Vec3,
+                                 iterations: Int = 60, balance: Vec3 = Vec3(0, 0, 0),
+                                 rivalsBelow: Double = 0) -> [[Complex]] {
+        let lat = field.lattice, G = field.channels
         var g = normalize(start)
         let h = lat.spacing, s = o.shellSteps
         let axes = [1, lat.nx, lat.nx * lat.ny]
@@ -1209,13 +1235,21 @@ public enum ForceCompiler {
             c[n] -= w
             for st in axes { c[n - s * st] += w / 6; c[n + s * st] += w / 6 }
         }
+        if rivalsBelow > 0 {
+            let moved = moveWell(field: field, particle: particle, drives: start, to: x, iterations: 8, balance: balance).drives
+            let U = field.potential(moved, particle: particle)
+            let d0 = depth(U, ci)
+            let top = wells(U, lattice: lat, steps: s).filter { ($0.position - x).length > wavelength / 4 }
+                .map { depth(U, lat.index($0.ijk.0, $0.ijk.1, $0.ijk.2)) }.max() ?? 0
+            if d0 > 0, top / d0 < rivalsBelow { return moved }
+        }
         func real(_ w: [[Complex]]) -> [Double] { w.flatMap { $0.flatMap { [2 * $0.re, 2 * $0.im] } } }
         var best: (g: [[Complex]], ratio: Double)? = nil
         let bal = [balance.x, balance.y, balance.z]
         for it in 0..<iterations {
-            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let U = field.potential(g, particle: particle)
             let G3 = (0..<3).map { j in cj[j].indices.reduce(0.0) { $0 + (cj[j][$1] == 0 ? 0 : cj[j][$1] * U[$1]) } - bal[j] }
-            let A = (0..<3).map { real(adjoint(tones, drives: g, weights: cj[$0], gates: G, particle: particle)) }
+            let A = (0..<3).map { real(field.adjoint(g, weights: cj[$0], particle: particle)) }
             var M = [[Double]](repeating: [0, 0, 0], count: 3)
             for a in 0..<3 { for b in 0..<3 { M[a][b] = zip(A[a], A[b]).reduce(0) { $0 + $1.0 * $1.1 } } }
             // Newton on the constraint.
@@ -1243,7 +1277,7 @@ public enum ForceCompiler {
                 var cw = [Double](repeating: 0, count: lat.count)
                 for (q, n) in rivals.enumerated() where w[q] > 1e-12 { spread(&cw, n, w[q] * (1 + (D[q] - sm) / T) / d0) }
                 spread(&cw, ci, -sm / (d0 * d0))
-                var v = real(adjoint(tones, drives: g, weights: cw, gates: G, particle: particle))
+                var v = real(field.adjoint(g, weights: cw, particle: particle))
                 if let y = solve3(M, (0..<3).map { a in zip(A[a], v).reduce(0) { $0 + $1.0 * $1.1 } }) {
                     for a in 0..<3 { for q in v.indices { v[q] -= A[a][q] * y[a] } }
                 }
@@ -1258,7 +1292,7 @@ public enum ForceCompiler {
         }
         // Finish on the constraint from the best rival state seen.
         let from = best?.g ?? g
-        return moveWell(tones, lattice: lat, gates: G, particle: particle, drives: from, to: x, iterations: 4,
+        return moveWell(field: field, particle: particle, drives: from, to: x, iterations: 4,
                         balance: balance).drives
     }
 
@@ -1272,6 +1306,14 @@ public enum ForceCompiler {
     public static func stiffen(_ tones: [Tone], lattice lat: FieldLattice, gates G: Int,
                                particle: ParticleMaterial, drives start: [[Complex]], at x: Vec3,
                                balance: Vec3, step h: Double, iterations: Int = 24) -> [[Complex]] {
+        stiffen(field: StoredRows(tones: tones, lattice: lat, channels: G), particle: particle, drives: start, at: x, balance: balance, step: h, iterations: iterations)
+    }
+
+    /// The same on any field the compiler can work on (the plate array, matrix-free).
+    public static func stiffen(field: some ForceField,
+                               particle: ParticleMaterial, drives start: [[Complex]], at x: Vec3,
+                               balance: Vec3, step h: Double, iterations: Int = 24) -> [[Complex]] {
+        let lat = field.lattice, G = field.channels
         var g = normalize(start)
         let hs = lat.spacing
         let axes = [1, lat.nx, lat.nx * lat.ny]
@@ -1290,10 +1332,10 @@ public enum ForceCompiler {
             return acc.map { ($0.key, $0.value) }
         }
         func real(_ w: [[Complex]]) -> [Double] { w.flatMap { $0.flatMap { [2 * $0.re, 2 * $0.im] } } }
-        let n = 2 * G * tones.count
+        let n = 2 * G * field.toneCount
         let lr0 = 0.05 / Double(n).squareRoot()
         for it in 0..<iterations {
-            let U = potential(tones, drives: g, gates: G, particle: particle, count: lat.count)
+            let U = field.potential(g, particle: particle)
             let C = cw.map { $0.reduce(0.0) { $0 + U[$1.0] * $1.1 } }
             // Soft minimum of the three curvatures.
             let scale = max(C.map(abs).max() ?? 1, 1e-300)
@@ -1307,9 +1349,9 @@ public enum ForceCompiler {
                 let dq = wsm[q] * (1 - (C[q] - sm) / T)          // ∂(soft min)/∂C_q
                 for (n, w) in list { weights[n] += dq * w }
             }
-            var v = real(adjoint(tones, drives: g, weights: weights, gates: G, particle: particle))
+            var v = real(field.adjoint(g, weights: weights, particle: particle))
             // Keep the balance to first order: project out the constraint's rows.
-            let A = (0..<3).map { real(adjoint(tones, drives: g, weights: cj[$0], gates: G, particle: particle)) }
+            let A = (0..<3).map { real(field.adjoint(g, weights: cj[$0], particle: particle)) }
             var M = [[Double]](repeating: [0, 0, 0], count: 3)
             for a in 0..<3 { for b in 0..<3 { M[a][b] = zip(A[a], A[b]).reduce(0) { $0 + $1.0 * $1.1 } } }
             if let y = solve3(M, (0..<3).map { a in zip(A[a], v).reduce(0) { $0 + $1.0 * $1.1 } }) {
@@ -1322,11 +1364,11 @@ public enum ForceCompiler {
             for f in g.indices { for i in 0..<G { g[f][i] += Complex(v[q], v[q + 1]) * (lr / vn); q += 2 } }
             g = normalize(g)
             if it % 6 == 5 {
-                g = moveWell(tones, lattice: lat, gates: G, particle: particle, drives: g, to: x, iterations: 3,
+                g = moveWell(field: field, particle: particle, drives: g, to: x, iterations: 3,
                              balance: balance).drives
             }
         }
-        return moveWell(tones, lattice: lat, gates: G, particle: particle, drives: g, to: x, iterations: 4,
+        return moveWell(field: field, particle: particle, drives: g, to: x, iterations: 4,
                         balance: balance).drives
     }
 

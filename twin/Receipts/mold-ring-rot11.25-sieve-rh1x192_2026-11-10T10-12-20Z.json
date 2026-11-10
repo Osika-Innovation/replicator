@@ -1,0 +1,46 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-10T10:12:20Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 290.73296296596527,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.77× holding, 2.84 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.3–7.0% (fair 6.2%), 0.0% rogue; lift contrast 3.13; particles: 100.0% on the shape after 8 s, 16\/16 sites filled (162–222)",
+      "id" : "G-M1",
+      "measured" : 0.8506316943625608,
+      "name" : "acoustic mold (ring-rot11.25): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.77× holding, 2.84 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.3–7.0% (fair 6.2%), 0.0% rogue; lift contrast 3.13; particles: 100.0% on the shape after 8 s, 16\/16 sites filled (162–222)",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999815,
+      "name" : "acoustic mold (ring-rot11.25): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "open air, 2 × 192 elements; sieve objective, 9 tones, 1.77× holding, 2.84 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.3–7.0% (fair 6.2%), 0.0% rogue; lift contrast 3.13; particles: 100.0% on the shape after 8 s, 16\/16 sites filled (162–222)",
+      "id" : "G-B0",
+      "measured" : 1.8540724511240114e-14,
+      "name" : "traced flow vs stepped grains: the share on the shape agrees",
+      "passed" : true,
+      "threshold" : 0.05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "3000 grains, fair share 6.2%; the 26-neighbour lattice map differs by up to 1.2%",
+      "id" : "G-B1",
+      "measured" : 0.007736611274865683,
+      "name" : "traced flow vs stepped grains, site by site (largest difference in share)",
+      "passed" : true,
+      "threshold" : 0.03
+    }
+  ],
+  "gitSHA" : "1b708a2+dirty",
+  "name" : "mold-ring-rot11.25-sieve-rh1x192"
+}

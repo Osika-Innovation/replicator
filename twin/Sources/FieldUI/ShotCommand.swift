@@ -21,7 +21,19 @@ public enum ShotCommand {
         if args.contains("--light") { themes = [("light", Theme.light)] }
         if all { themes = [("dark", Theme.dark), ("light", Theme.light)] }
 
-        var skip = Set<String>(["--out", outDir])
+        // --compare: render every scene and compare it with its golden
+        // (the committed set in shots/, or --golden DIR) instead of writing
+        // it. Failures go to .build/snapshot-failures/ as <scene>.actual.png
+        // and a red-highlighted <scene>.diff.png. Goldens are only ever
+        // rewritten by an explicit `shot --all` (§21: never automatic).
+        let comparing = args.contains("--compare")
+        var goldenDir = "shots"
+        if let i = args.firstIndex(of: "--golden"), i + 1 < args.count { goldenDir = args[i + 1] }
+        var maxChanged = 0.005
+        if let i = args.firstIndex(of: "--max-changed"), i + 1 < args.count, let v = Double(args[i + 1]) { maxChanged = v }
+        let failDir = URL(fileURLWithPath: ".build/snapshot-failures")
+        var compared = 0, failed: [String] = []
+        let skip = Set<String>(["--out", outDir, "--golden", goldenDir, "--max-changed", String(maxChanged)])
         let wanted = args.dropFirst().first {
             !$0.hasPrefix("--") && !skip.contains($0)
         }
@@ -32,7 +44,8 @@ public enum ShotCommand {
         var made: [(String, Theme, CGImage)] = []
         for (tname, theme) in themes {
             for scene in SceneRegistry.all {
-                if let w = wanted, !all, scene.id != w { continue }
+                if let w = wanted, !all, !comparing, scene.id != w { continue }
+                if let w = wanted, comparing, scene.id != w { continue }
                 var st = scene.make(theme)
                 if let ctx, let preset = scene.solid {
                     do {
@@ -70,6 +83,28 @@ public enum ShotCommand {
                     continue
                 }
                 let name = "\(scene.id).\(tname).png"
+                if comparing {
+                    compared += 1
+                    let label = name.padding(toLength: 30, withPad: " ", startingAt: 0)
+                    guard let golden = Screenshot.loadPNG(URL(fileURLWithPath: goldenDir).appendingPathComponent(name)) else {
+                        print("  \(label)NO GOLDEN in \(goldenDir)/"); failed.append(name); continue
+                    }
+                    let c = Screenshot.compare(img, golden: golden)
+                    if c.passes(maxChanged: maxChanged) {
+                        print(String(format: "  %@ok      %.4f %% of pixels changed (max Δ %d)", label as NSString, c.changedFraction * 100, c.maxDelta))
+                    } else {
+                        failed.append(name)
+                        let base = "\(scene.id).\(tname)"
+                        try? Screenshot.writePNG(img, to: failDir.appendingPathComponent(base + ".actual.png"))
+                        if let d = c.diff { try? Screenshot.writePNG(d, to: failDir.appendingPathComponent(base + ".diff.png")) }
+                        print(c.sizeMatches
+                              ? String(format: "  %@CHANGED %.3f %% of pixels (max Δ %d) → %@/%@.diff.png", label as NSString,
+                                       c.changedFraction * 100, c.maxDelta, failDir.path as NSString, base as NSString)
+                              : "  \(label)SIZE differs from the golden (\(img.width)×\(img.height) vs \(golden.width)×\(golden.height))")
+                    }
+                    made.append((scene.id, theme, img))
+                    continue
+                }
                 do {
                     try Screenshot.writePNG(img, to: dir.appendingPathComponent(name))
                     print("  \(name.padding(toLength: 30, withPad: " ", startingAt: 0))"
@@ -81,6 +116,11 @@ public enum ShotCommand {
             }
         }
 
+        if comparing {
+            print("\(compared - failed.count)/\(compared) scenes match their goldens in \(goldenDir)/"
+                + (failed.isEmpty ? "" : "; changed: " + failed.joined(separator: ", ")))
+            return failed.isEmpty && compared > 0 ? 0 : 1
+        }
         if all || args.contains("--contact-sheet") {
             for (tname, theme) in themes {
                 let subset = made.filter { $0.1.isDark == theme.isDark }.map { ($0.0, $0.2) }

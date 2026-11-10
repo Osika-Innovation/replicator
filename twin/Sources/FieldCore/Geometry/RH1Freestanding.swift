@@ -61,7 +61,7 @@ public enum RH1Freestanding {
         public var frequency = 40_000.0
         public var medium = Medium.air
         public var horn = HornModel()
-        public var design = RH1Design()
+        public var design = RH1Design.microHornFace
         /// Slot discretization (m); nil = λ/4 at `frequency`. Studies that
         /// compare tones fix it so every tone sees the same aperture set.
         public var slotSegment: Double? = nil

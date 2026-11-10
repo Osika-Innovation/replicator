@@ -1,0 +1,100 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-10T08:25:36Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0.31140899658203125,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "100 parts, 562468 triangles",
+      "id" : "G-CAD1",
+      "measured" : 0,
+      "name" : "every part a closed, outward-oriented solid",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "worst: inner cone deck",
+      "id" : "G-CAD2",
+      "measured" : 0.003909586142288001,
+      "name" : "mesh volume vs closed form (85 parts)",
+      "passed" : true,
+      "threshold" : 0.01
+    },
+    {
+      "comparison" : "<",
+      "detail" : "min margin 0.118 mm",
+      "id" : "G-CAD3",
+      "measured" : 0,
+      "name" : "design-rule clearances (26 rules)",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "no part penetrates another",
+      "id" : "G-CAD3b",
+      "measured" : 0,
+      "name" : "sampled solid interference, neighbouring parts",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "worst: plate diameter 409.97 vs 410.0",
+      "id" : "G-CAD4",
+      "measured" : 0.03459546516882028,
+      "name" : "dimension audit vs spec\/site (14 checks)",
+      "passed" : true,
+      "threshold" : 0.1
+    },
+    {
+      "comparison" : "<",
+      "detail" : "dominant pair by band, inner → outer: 13×21, 21×34, 34×55 — the rim reads the next Fibonacci pair",
+      "id" : "G-CAD5",
+      "measured" : 0,
+      "name" : "21 × 34 parastichies present (mech §3c claim) — on the v0.4 face; the element face has no micro-horns",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "arc 187.39 mm, mouth:throat 11.2:1, fold 9.4:1",
+      "id" : "G-CAD6",
+      "measured" : 0.3877724229797366,
+      "name" : "horn meridian arc length (mech §3c: ≈187 mm)",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "shells 28.9 kg (spec ~20), plates+carriers 16.7 (spec ~15, 3 plates), glass 6.4 (spec ~6.5); placeholders not counted",
+      "id" : "G-CAD7",
+      "measured" : 69.8690619531481,
+      "name" : "mass budget (spec §3: ≈50 kg class)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "192 elements 3770 mm² (2.9 % of the face); 151 slot dashes 27011 mm²",
+      "id" : "G-CAD8",
+      "measured" : 7.164981385899178,
+      "name" : "radiating area per face, light slots vs driven elements",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "<",
+      "detail" : "2 × 192 elements, same sites; slots cut into 151 dashes on the up faces, 142 on the down faces; 78 % of the slot area kept",
+      "id" : "G-CAD9",
+      "measured" : 5.684341886080802e-14,
+      "name" : "the engine's plate array is the CAD's (mm; +1 per broken element rule)",
+      "passed" : true,
+      "threshold" : 1e-06
+    }
+  ],
+  "gitSHA" : "1b708a2+dirty",
+  "name" : "cad"
+}

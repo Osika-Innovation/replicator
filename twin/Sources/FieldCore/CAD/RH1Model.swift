@@ -116,6 +116,16 @@ public struct FacePattern: Sendable {
         public var throatRadius: Double
         public var subsumed: Bool          // falls inside a slot's clearance
     }
+    /// One driven element (element-array face): its hole through the plate.
+    public struct ElementSite: Sendable {
+        public var index: Int              // 0-based: the engine's channel on its plate
+        public var center: P2
+        public var radius: Double          // distance from the axis
+        public var pistonRadius: Double
+        public var holeRadius: Double
+    }
+    /// The driven elements (empty on the v0.4 micro-horn face).
+    public var elements: [ElementSite] = []
     public var sites: [Site]
     public var slotCenterlines: [[P2]]
     public var slotWidths: [[Double]]
@@ -126,7 +136,16 @@ public struct FacePattern: Sendable {
 
     public static let goldenAngle = Double.pi * (3 - 5.0.squareRoot())   // 137.508°
 
-    public init(_ d: RH1Design, slotSamples: Int = 200, capSegments: Int = 8) {
+    /// `rotation` turns the element spiral (radians): 0 on up-facing faces,
+    /// half a golden angle on down-facing ones, as the engine's two plates.
+    public init(_ d: RH1Design, rotation: Double = 0, slotSamples: Int = 200, capSegments: Int = 8) {
+        self = d.faceStyle == .elementArray
+            ? FacePattern(elementFace: d, rotation: rotation, slotSamples: slotSamples, capSegments: capSegments)
+            : FacePattern(microHornFace: d, slotSamples: slotSamples, capSegments: capSegments)
+    }
+
+    /// The v0.4 face: 380-site micro-horn sunflower and twelve unbroken slots.
+    init(microHornFace d: RH1Design, slotSamples: Int, capSegments: Int) {
         // Slots. World frame seen from +z: arms wind clockwise outward, which
         // is how site FIG. 2 draws an up-facing face seen from its front.
         var lines: [[P2]] = [], widths: [[Double]] = [], outlines: [[P2]] = []
@@ -237,13 +256,84 @@ public struct FacePattern: Sendable {
         return (best, bi)
     }
 
-    /// Arc length of one slot centreline.
-    public var slotLength: Double {
-        guard let c = slotCenterlines.first else { return 0 }
-        var s = 0.0
-        for i in 1..<c.count { s += (c[i] - c[i - 1]).length }
-        return s
+    /// The element-array face: the engine's Vogel spiral, and each slot arm
+    /// cut into the dashes that keep `elementSlotWeb` of metal round every
+    /// element hole. Where a dash starts and stops is decided on a fixed fine
+    /// centreline, so it does not depend on the display tessellation.
+    init(elementFace d: RH1Design, rotation: Double, slotSamples: Int, capSegments: Int) {
+        elements = PlateArray.vogel(d.elementCount, radius: d.elementFillRadius, rotation: rotation,
+                                    inner: d.elementInnerRadius).enumerated().map { i, p in
+            ElementSite(index: i, center: P2(p.x, p.y), radius: (p.x * p.x + p.y * p.y).squareRoot(),
+                        pistonRadius: d.elementDiameter / 2, holeRadius: d.elementHoleRadius)
+        }
+        sites = []
+        var lines: [[P2]] = [], widths: [[Double]] = [], outlines: [[P2]] = []
+        let fineN = 2400
+        let step = max(1, fineN / max(1, slotSamples))
+        for (line, w) in FacePattern.centerlines(d, samples: fineN) {
+            var blocked = [Bool](repeating: false, count: line.count)
+            for i in 0..<line.count {
+                let keep = w[i] / 2 + d.elementHoleRadius + d.elementSlotWeb
+                for e in elements where (e.center - line[i]).length < keep { blocked[i] = true; break }
+            }
+            // A dash ends in a round cap of radius w/2 beyond its last sample.
+            // Pull every dash end back by w/2 + half a web from the blocked
+            // stretch, so the cap stays where the straight slot was allowed
+            // and two dashes either side of one element never touch.
+            var arc = [Double](repeating: 0, count: line.count)
+            for k in 1..<line.count { arc[k] = arc[k - 1] + (line[k] - line[k - 1]).length }
+            let near = blocked
+            var last = -Double.infinity
+            for k in 0..<line.count {
+                if near[k] { last = arc[k] }
+                if arc[k] - last <= w[k] / 2 + d.elementSlotWeb / 2 { blocked[k] = true }
+            }
+            last = Double.infinity
+            for k in stride(from: line.count - 1, through: 0, by: -1) {
+                if near[k] { last = arc[k] }
+                if last - arc[k] <= w[k] / 2 + d.elementSlotWeb / 2 { blocked[k] = true }
+            }
+            var i = 0
+            while i < line.count {
+                guard !blocked[i] else { i += 1; continue }
+                var j = i
+                while j + 1 < line.count, !blocked[j + 1] { j += 1 }
+                var length = 0.0
+                for k in i..<j { length += (line[k + 1] - line[k]).length }
+                if length >= d.slotMinDash {
+                    var idx = Array(stride(from: i, to: j, by: step))
+                    idx.append(j)
+                    let c = idx.map { line[$0] }, ww = idx.map { w[$0] }
+                    lines.append(c); widths.append(ww)
+                    outlines.append(FacePattern.slotOutline(c, ww, capSegments: capSegments))
+                }
+                i = j + 1
+            }
+        }
+        slotCenterlines = lines; slotWidths = widths; slotOutlines = outlines
     }
+
+    /// Arc length of the slots: one arm on the v0.4 face, every dash summed
+    /// and divided by the arm count on the element face (mean cut per arm).
+    public var slotLength: Double {
+        var s = 0.0
+        for c in slotCenterlines { for i in 1..<c.count { s += (c[i] - c[i - 1]).length } }
+        return s / Double(max(1, slotArmCount))
+    }
+    var slotArmCount: Int { elements.isEmpty ? slotCenterlines.count : 12 }
+
+    /// Open area of every slot piece on the face, by quadrature along the
+    /// centrelines plus the round ends.
+    public var slotOpenArea: Double {
+        var a = 0.0
+        for (c, w) in zip(slotCenterlines, slotWidths) {
+            for i in 1..<c.count { a += (c[i] - c[i - 1]).length * (w[i] + w[i - 1]) / 2 }
+            a += Double.pi / 8 * (w[0] * w[0] + w[w.count - 1] * w[w.count - 1])
+        }
+        return a
+    }
+    /// Radiating area of the driven elements.
+    public var elementArea: Double { elements.reduce(0) { $0 + Double.pi * $1.pistonRadius * $1.pistonRadius } }
 
     /// Open area of one slot by quadrature along the centreline (independent
     /// of the outline polygon): ∫ w ds + the two half-disc ends.
@@ -271,7 +361,12 @@ public struct RH1Model: Sendable {
     public enum Detail: String, Sendable { case preview, standard, fine }
 
     public var design: RH1Design
+    /// The face pattern of up-facing faces (and of every face on the v0.4
+    /// micro-horn design, where all four share one world-frame pattern).
     public var pattern: FacePattern
+    /// Down-facing faces: the element spiral turned half a golden angle.
+    public var patternDown: FacePattern
+    public func pattern(for face: RH1Design.Face) -> FacePattern { face.facing == .down ? patternDown : pattern }
     public var parts: [CADPart]
     public var detail: Detail
 
@@ -280,7 +375,9 @@ public struct RH1Model: Sendable {
         self.detail = detail
         let slotSamples = detail == .preview ? 90 : (detail == .fine ? 320 : 200)
         pattern = FacePattern(d, slotSamples: slotSamples)
-        parts = RH1Model.build(d, pattern, detail)
+        patternDown = d.faceStyle == .elementArray
+            ? FacePattern(d, rotation: PlateArray.goldenAngle / 2, slotSamples: slotSamples) : pattern
+        parts = RH1Model.build(d, pattern, patternDown, detail)
     }
 
     public var assemblies: [String] {
@@ -297,7 +394,7 @@ public struct RH1Model: Sendable {
 
     // MARK: build
 
-    static func build(_ d: RH1Design, _ pat: FacePattern, _ detail: Detail) -> [CADPart] {
+    static func build(_ d: RH1Design, _ pat: FacePattern, _ patDown: FacePattern, _ detail: Detail) -> [CADPart] {
         var parts: [CADPart] = []
         let tol = detail == .preview ? 0.25 : (detail == .fine ? 0.02 : 0.06)
         func seg(_ r: Double, _ sweep: Double = 360) -> Int {
@@ -341,8 +438,9 @@ public struct RH1Model: Sendable {
             tubeV(liR0, liR1, d.storageFloor, d.storageCeiling))
 
         // ---- the four radiating faces ----------------------------------
-        let plateMesh0 = RH1Model.plateSolid(d, pat, detail: detail, z0: 0, z1: d.plateThickness)
-        let plateVol = RH1Model.plateAnalyticVolume(d, pat)
+        let plateUp = RH1Model.plateSolid(d, pat, detail: detail, z0: 0, z1: d.plateThickness)
+        let plateDown = d.faceStyle == .elementArray
+            ? RH1Model.plateSolid(d, patDown, detail: detail, z0: 0, z1: d.plateThickness) : plateUp
         let hornProfile = RH1Model.hornProfile(d)
         let hornVol = RH1Model.profileRevolvedVolume(hornProfile)
         let coneProfile = RH1Model.coneProfile(d)
@@ -350,10 +448,36 @@ public struct RH1Model: Sendable {
         for f in d.faces {
             let asm = "plate.\(f.id)"
             let zlo = min(f.faceZ, f.backZ), zhi = max(f.faceZ, f.backZ)
-            add("face plate \(f.id)", asm, .plateMetal, plateMesh0.translated(Vec3(0, 0, zlo)),
-                .committed,
-                "Ø\(Int(d.plateDiameter))×\(Int(d.plateThickness)), \(pat.drilled.count) micro-horns + \(d.slotArms) slots, faces \(f.facing.rawValue), \(f.handedness) from its front",
-                plateVol)
+            let fp = f.facing == .down ? patDown : pat
+            add("face plate \(f.id)", asm, .plateMetal, (f.facing == .down ? plateDown : plateUp).translated(Vec3(0, 0, zlo)),
+                d.faceStyle == .elementArray ? .resolved : .committed,
+                d.faceStyle == .elementArray
+                    ? "Ø\(Int(d.plateDiameter))×\(Int(d.plateThickness)), \(fp.elements.count) element holes Ø\(String(format: "%.1f", 2 * d.elementHoleRadius)) + \(fp.slotCenterlines.count) slot dashes on \(d.slotArms) arms, faces \(f.facing.rawValue)"
+                    : "Ø\(Int(d.plateDiameter))×\(Int(d.plateThickness)), \(pat.drilled.count) micro-horns + \(d.slotArms) slots, faces \(f.facing.rawValue), \(f.handedness) from its front",
+                RH1Model.plateAnalyticVolume(d, fp))
+            if !fp.elements.isEmpty {
+                // The driven elements: a piezo disc flush with the radiating
+                // surface and a damping backing behind it, to the plate's back.
+                let toBack = f.backZ > f.faceZ ? 1.0 : -1.0
+                let zPZT = f.faceZ + toBack * d.elementPZTThickness
+                let r = d.elementDiameter / 2
+                let nSeg = detail == .preview ? 8 : 12
+                // An n-gon of the disc's area, so the mesh volume is the cylinder's.
+                let rPoly = r * (2 * Double.pi / (Double(nSeg) * sin(2 * Double.pi / Double(nSeg)))).squareRoot()
+                var discs = IndexedMesh(), backs = IndexedMesh()
+                for e in fp.elements {
+                    let ring = Solid.circle(e.center, rPoly, segments: nSeg)
+                    discs.append(Solid.extrude(outer: ring, z0: min(f.faceZ, zPZT), z1: max(f.faceZ, zPZT)))
+                    backs.append(Solid.extrude(outer: ring, z0: min(zPZT, f.backZ), z1: max(zPZT, f.backZ)))
+                }
+                let n = Double(fp.elements.count)
+                add("elements \(f.id)", asm, .pzt, discs, .derived,
+                    "\(fp.elements.count) × Ø\(Int(d.elementDiameter)) × \(Int(d.elementPZTThickness)) piezo discs, one drive channel each (ENGINE.md S1)",
+                    n * Double.pi * r * r * d.elementPZTThickness)
+                add("element backings \(f.id)", asm, .polymer, backs, .assumed,
+                    "damping backing behind each disc, to the plate's back; material and wiring not specified",
+                    n * Double.pi * r * r * (d.plateThickness - d.elementPZTThickness))
+            }
             add("carrier ring \(f.id)", asm, .anodized,
                 Solid.tube(r0: d.plateRadius, r1: d.carrierOuterRadius, z0: zlo, z1: zhi,
                            segments: seg(d.carrierOuterRadius)),
@@ -407,17 +531,10 @@ public struct RH1Model: Sendable {
             // cross-section of the round wire it stands for.
             let wr = d.windingWireDiameter / 2
                 * (2 * Double.pi / (Double(sides) * sin(2 * Double.pi / Double(sides)))).squareRoot()
-            for (hand, gap, mat) in [(1.0, d.windingInnerLayerGap, CADMaterial.copper),
-                                     (-1.0, d.windingOuterLayerGap, CADMaterial.bronze)] {
-                let aw = at + gap
-                let n = d.windingTurns * perTurn
-                var path: [Vec3] = []
-                for i in 0..<n {
-                    let t = 2 * Double.pi * Double(i) / Double(n)
-                    let q = Double(d.windingTurns) * t
-                    let rr = Rt + aw * cos(q)
-                    path.append(Vec3(rr * cos(t), rr * sin(t), a.torusZ + hand * aw * sin(q)))
-                }
+            for (hand, mat) in [(1.0, CADMaterial.copper), (-1.0, CADMaterial.bronze)] {
+                // One centreline for the solid and for the field solver
+                // (`WindingSet`): the physics reads the CAD.
+                let path = d.windingCenterline(torusZ: a.torusZ, hand: hand, samplesPerTurn: perTurn)
                 let name = hand > 0 ? "winding \(a.id) CW (feed A)" : "winding \(a.id) CCW (feed B)"
                 add(name, asm, mat, Solid.sweepClosed(path: path, radius: wr, sides: sides),
                     .assumed, "contrawound enantiomer, two independent feeds (R5); \(d.windingTurns) turns",
@@ -595,6 +712,13 @@ public struct RH1Model: Sendable {
             holes.append(Solid.circle(s.center, s.faceRadius, segments: n).reversed())
             hourglass.append((s.center, d.holeThroatRatio))
         }
+        for e in pat.elements {
+            // An n-gon of the hole's area (as the wires): the mesh volume is the drilled hole's.
+            let n = detail == .preview ? 10 : 16
+            let rp = e.holeRadius * (2 * Double.pi / (Double(n) * sin(2 * Double.pi / Double(n)))).squareRoot()
+            holes.append(Solid.circle(e.center, rp, segments: n).reversed())
+            hourglass.append(nil)
+        }
         var m = IndexedMesh()
         var bot: [Int32] = [], top: [Int32] = []
         for ring in [outer] + holes {
@@ -642,7 +766,8 @@ public struct RH1Model: Sendable {
     static func plateAnalyticVolume(_ d: RH1Design, _ pat: FacePattern) -> Double {
         let t = d.plateThickness
         var v = Double.pi * (d.plateRadius * d.plateRadius - d.boreHoleRadius * d.boreHoleRadius) * t
-        v -= Double(d.slotArms) * pat.slotArea * t
+        v -= pat.slotOpenArea * t
+        for e in pat.elements { v -= Double.pi * e.holeRadius * e.holeRadius * t }
         for s in pat.drilled {
             let R = s.faceRadius, r = s.throatRadius
             v -= 2 * Double.pi * (t / 2) / 3 * (R * R + R * r + r * r)

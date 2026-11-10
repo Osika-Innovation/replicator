@@ -15,7 +15,7 @@ Source files: `Sources/FieldCore/CAD/` (kernel, design, model, gates, exports),
 ```sh
 swift build -c release
 ./.build/release/fieldc cad info --reconciliation   # stack, provenance of every number, conflicts
-./.build/release/fieldc cad check --rules --receipt # CAD gates + 25 design rules
+./.build/release/fieldc cad check --rules --receipt # CAD gates + 26 design rules
 ./.build/release/fieldc cad render --all --out renders/    # iso, front, section, section-iso, detail, plate, storage, top
 ./.build/release/fieldc cad render detail --light --door open detail.png
 ./.build/release/fieldc cad export --out cad-out    # STL per part, rh1.obj+mtl, params, BOM, drawing
@@ -26,7 +26,7 @@ swift build -c release
 Options: `--preview | --fine` (tessellation only — the design is identical at
 every detail level), `--door open|closed|<deg>`.
 
-## What is modelled — 92 parts
+## What is modelled — 100 parts
 
 | assembly | parts | notes |
 |---|---|---|
@@ -40,12 +40,30 @@ every detail level), `--door open|closed|<deg>`.
 | photonic | 6 optically-addressed bay tiles | between the columns |
 | base / crown | intake filter, reservoir, graphite bay, PSU, compute, pump, cartridge circle, optical-stem head, touch UI | **envelopes only** — dimensioned nowhere |
 
-The face plate is the part that carries the design: a Ø410 × 12 disc with a
-Ø14 collar hole, twelve equiangular spiral slots (α = 76.05°, r 32.6 → 189.7,
-width 2.8 → 6.0 mm, round ends), and the drilled sites of a 380-site
-golden-angle sunflower as biconical micro-horns (face radius 1.054 + 0.00981·r
-mm, throat half of it). All four faces share one world-frame pattern, so facing
-plates are mirror parts with opposite intrinsic handedness (spec §6.0).
+The face plate is the part that carries the design, and since the ruling of
+2026-11-10 it is drawn round the engine's plate (`faceStyle = .elementArray`):
+a Ø410 × 12 disc with a Ø14 collar hole and **192 driven elements** — Ø5 × 2
+piezo discs flush with the radiating surface, a damping backing behind each,
+in Ø5.2 through-holes on a golden-angle spiral over r 12 → 196.5 (innermost
+element at 15.6, outermost at 196.2). Up-facing faces carry the spiral as is,
+down-facing faces turned half a golden angle, exactly as `PlateArray.rh1`
+places the engine's two plates; gate G-CAD9 holds the CAD and the engine to
+the same sites. The twelve equiangular slot arms (α = 76.05°, r 32.6 → 189.7,
+width 2.8 → 6.0 mm) keep their spirals but are cut into dashes that leave
+1 mm of metal round every element hole: 151 dashes on the up faces, 142 on
+the down faces, 78 % of the unbroken slots' area. There are no micro-horns.
+
+**Open on this face:** how the 192 elements are wired (no flex or PCB layer is
+modelled, and the gyroid horn sits directly behind the plate); what the horn,
+cone and three throat piezos are for now that they no longer drive the sound
+(they remain as the slots' dielectric and feed); what dashing does to the
+slots as GHz radiators (not simulated).
+
+The v0.4 face — a 380-site sunflower of biconical micro-horns (face radius
+1.054 + 0.00981·r mm) behind one horn, crossed by twelve unbroken slots — is
+kept as `RH1Design.microHornFace`. The six-throat-gate preset
+`RH1Freestanding` and its receipts are built on it, and its claims (G-CAD5's
+21 × 34 parastichies) are still gated there.
 
 ## Where every number comes from
 
@@ -115,12 +133,13 @@ These came out of building the geometry, not out of reading it:
 |---|---|---|
 | G-CAD1 | every part a closed, outward-oriented solid (edge census on shared vertices) | 0 failures |
 | G-CAD2 | mesh volume vs closed form, 77 parts | < 1 % |
-| G-CAD3 | 25 design-rule clearances (piezo/bore, winding layers, horn, slots, glass, rollers, columns, tiles, …) | all ≥ minimum |
+| G-CAD3 | 26 design-rule clearances (piezo/bore, winding layers, horn, elements, slots, glass, rollers, columns, tiles, …) | all ≥ minimum |
 | G-CAD3b | sampled interference between every pair of neighbouring parts | none |
 | G-CAD4 | dimension audit vs spec/site (14 checks) | < 0.1 mm |
 | G-CAD5 | 21 × 34 parastichies present | present |
 | G-CAD6 | horn arc length vs mech §3c | < 1 mm |
 | G-CAD7/8 | mass budget; open area slots vs micro-horns | informational |
+| G-CAD9 | the engine's plate array (`PlateArray.rh1`) is the CAD's: same sites on all four faces, no element rule broken | < 1e-6 mm |
 
 `fieldc cad step` adds **G-STEP**: every B-rep part's exact OpenCascade volume
 against the Swift mesh volume — two independent geometry kernels (1.5 % solids,

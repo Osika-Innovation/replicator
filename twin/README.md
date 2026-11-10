@@ -10,7 +10,7 @@ No Xcode required — Command Line Tools only.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test              # unit suite (62 tests; FIELDC_VERBOSE=1 prints every measured value)
+./.build/release/fieldc test              # unit suite (79 tests; FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gate --receipt    # physics acceptance gates, writes Receipts/
 ./.build/release/fieldc machine           # the simulated machine: RH-1 free-standing, room air (--desktop: frozen v0.3)
 ./.build/release/fieldc focus             # compile a centre trap on the full chamber (GPU port fields)
@@ -25,7 +25,7 @@ swift build -c release
 ./.build/release/fieldc build --receipt       # the first build: N beads laid in a row on a support (G-B1; --beads N)
 ./.build/release/fieldc build --shape tetra --row-dir y --receipt   # four beads: a triangle and one in its pocket (G-B2)
 ./.build/release/fieldc arraysweep --receipt  # open air: what N elements per plate and the tones buy (study S1)
-./.build/release/fieldc mold --receipt        # the sieve in open air, 2 × 192 elements (--shape tetra, --rotate, --sites, --light)
+./.build/release/fieldc mold --receipt        # the sieve in open air on the machine's plates, 2 × 192 elements, 50–100 kHz (--shape tetra, --rotate, --sites, --band, --light)
 ./.build/release/fieldc mold --chamber glass --receipt   # the glass chamber of Rounds 7–11 (--objective wells: the λ/4 limit)
 ./.build/release/fieldc scan3d --object ring --receipt   # gated pulse-echo scan in open air (point | ring | tetra | R; --chamber glass)
 ./.build/release/fieldc replicate --receipt   # scan → read the shape → mold a copy → scan the copy (--object tetra)
@@ -37,6 +37,12 @@ swift build -c release
 ./.build/release/fieldc cad export         # STL per part, OBJ+MTL, params, BOM, GA drawing
 ./.build/release/fieldc cad step           # B-rep STEP assembly via CadQuery, volume-gated
 ./.build/release/fieldc plates             # can 6 throat gates hold a trap? (model study)
+./.build/release/fieldc windings --receipt # the contrawound windings' fields: modes, channels, lift (Round 13)
+./.build/release/fieldc backend --receipt  # the machine program layer: .fcode, frame log, emulated backend (G-FC1–5)
+./.build/release/fieldc fcode demo --out demo.fcode   # write a stream for the machine's plates (PlateArray.rh1)
+./.build/release/fieldc play demo.fcode --object ring # play it through the emulated machine, keep the frame log
+./.build/release/fieldc mold --fcode ring.fcode      # the mold as a stream; --array ideal | microhorn: the earlier plates
+./.build/release/fieldc shot --all --compare          # every scene against its committed golden in shots/
 ```
 
 ## Status — honest
@@ -47,7 +53,7 @@ four radiating faces, two chambers, rotating glass, arcade, six photonic bays)
 as a parametric solid model built from the newest sources — etherworks.io
 (2026-08-10), mech §3c (2026-08-03), spec v0.4 — with every number's
 provenance and nine documented conflicts resolved in code (see
-[`CAD.md`](CAD.md)). 92 closed solids, 9 CAD gates + 25 design rules, a shaded
+[`CAD.md`](CAD.md)). 92 closed solids (100 since Round 15), 9 CAD gates + 25 design rules, a shaded
 section-cut Machine tab, STL/OBJ/STEP exports with a cross-kernel volume gate.
 A new preset, `RH1Freestanding`, takes its acoustic apertures from the CAD's
 plate faces and its gates from the throat piezos; the desktop preset (`RH1`,
@@ -101,6 +107,46 @@ mold it from powder, scan the copy — closes with every gate passing. Open:
 reading small 3D wireframes; evenness that does not depend on orientation.
 See "Round 12".
 
+**2026-11-10 — the windings get a field, and it is small.** The three
+contrawound winding pairs were solids in the CAD and words in the papers; the
+twin now integrates Biot–Savart along the same centrelines the CAD sweeps
+(`fieldc windings`, G-EM1–3). Result: the 44 poloidal turns of each winding
+are confined to the tube, so the chambers and the bore see one ring turn per
+winding — 0.48 mT at 63 A. That is 100× too little current (10⁴× too little
+force) to induction-levitate even a Ø2 mm aluminium grain, which leaves the
+bore lift of R10 and "induction levitation" OPEN as dimensioned. See
+"Round 13".
+
+**2026-11-10, later — a line to the machine, and the plate the CAD can
+build.** `.fcode` exists, with a binary frame log and a `MachineBackend`
+protocol the emulated machine sits behind (G-FC1–5, M9's replay gate). The
+engine's idealised plate does not fit the CAD's face: 120 of its 192 sites hit
+a slot, a micro-horn or the rim (G-CAD9). On the plate the CAD can build today
+(128 elements, one per drilled micro-horn) the scan still reads the ring, and
+the mold puts 100 % of the powder on it but fills only 12 of 16 sites (G-M1
+FAILS). Screenshots are compared with their goldens. See "Round 14".
+
+**2026-11-10, ruling — the face is redrawn round the elements.** The CAD's
+face plate now carries the engine's plate: 192 driven Ø5 elements per face on
+the golden-angle spiral, the twelve light slots cut into dashes round them
+(78 % of their area kept), no micro-horns. `PlateArray.rh1` is the default
+plate of every open-air command and G-CAD9 holds it to the CAD's sites. On it
+the tetrahedron mold passes every gate; the ring mold puts 100 % on the shape
+with 15 of 16 sites filled (G-M1 FAILS on one empty site); the ring scan keeps
+100 % recall with 69 % precision. 100 parts, 10 CAD gates, 26 rules, STEP
+export passing. See "Round 15".
+
+**2026-11-10, evening — evenness was being measured wrong, and is now
+fixed.** The per-site gate (G-M1) was judged on a 26-neighbour lattice map
+that cannot follow a falling grain's sideways drift; it reported 3–9 % per
+ring site where the stepped grains had 0–15 %. The mold is now judged on the
+traced flow (`FlowMap`), which agrees with the stepped grains to within 1 %
+of the powder per site (new gate G-B1). Measured honestly, the cause of the
+unevenness was resolution: sites 3.1 mm apart cannot be told apart at
+32–68 kHz. At 50–100 kHz, now the mold's band, the ring fills 16 of 16 sites
+at 0°, 5° and 11.25° and the tetrahedron 10 of 10, with every gate passing.
+See "Round 16".
+
 **Implemented and gated:** FieldCore (pure Swift, zero dependencies) —
 complex/vector math, RH-1 geometry, mesh + voxelizer, T0 Rayleigh–Sommerfeld
 propagator with exact adjoint, T1 acoustic FDTD, T2 Gor'kov radiation force,
@@ -130,8 +176,9 @@ Chord extraction recovers a pole at **10.68 kHz against a 10.72 kHz drive**,
 which says the pencil is finding real physics.
 
 **Not yet built / not yet working:** T0.5 BEM, T1f CBS, T3 consolidation,
-`.fcode` I/O, Machine View L2–L3, golden-image *diffing* (screenshots generate
-but are not compared against committed goldens), live MTKView interaction.
+Machine View L2–L3, live MTKView interaction, a serial backend (no firmware
+in this repo; the frame log is what it would carry), and the commands
+themselves running through `MachineBackend` — today only `play` does.
 
 So: **M0–M2 and M4 done and gated; M1 done for geometry and viewport; M7 wired
 with two known defects (below); M3, M5, M6, M8, M9 not.**
@@ -149,6 +196,233 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G7 | Gor'kov numeric vs closed form | 3.6e-7 (bar 2%) |
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
+
+## Round 16 — evenness, measured on the flow and fixed with the band (2026-11-10)
+
+**The gate was reading a shortcut.** G-M1 ("every site holds a quarter of its
+fair share") was computed on `BasinMap`: each lattice cell points to its
+steepest-descent neighbour among 26. A grain falling under gravity with a
+sideways push of a fifth of its weight drifts 2 mm in a 10 mm fall; the
+26-neighbour pointer goes straight down until the push exceeds tan 22.5° of
+the weight. The lattice map gets the share ON THE SHAPE right (G-B0 always
+passed) and the share PER SITE wrong:
+
+| ring, 9 tones 32–68 kHz, redrawn plate | per-site share (fair 6.2 %) |
+|---|---|
+| lattice map (what G-M1 read) | 0.0–8.9 %, 15 of 16 sites |
+| stepped grains, 3000 | 0–15 %, sites with 0, 8, 13, 26 grains |
+| traced flow (`FlowMap`) | 0.0–17.1 %, 10 of 16 sites |
+
+`FlowMap` follows the streamlines of F = −(P∇U + mg ẑ) through the same
+trilinear field the stepped grains see, for the same 8 s of grain motion, from
+every release cell: the particle check without the clock, ~1 s per landscape.
+G-M1 and G-M2 are judged on it, and a new gate holds it to the grains:
+
+* **G-B1:** traced flow vs stepped grains, site by site, largest difference
+  in share < 3 %. Measured 0.6–1.0 % on every run below. (The lattice map
+  differs from the grains by up to 13 %.)
+
+This reaches back: Round 12's "ring, every site ≥ ¼ of its share" (0.53) was
+the lattice map's number. Its own stepped grains had 21–348 per site, a
+minimum of 0.11 of the fair share. Rounds 11–15's evenness numbers should be
+read as upper bounds, and the basin-map feedback loop was optimising the
+shortcut: under the traced flow every feedback round made the ring worse
+(10 of 16 sites → 6–7). It is now off by default (`--feedback N` keeps it).
+
+**The cause was resolution.** With the honest measure, on the redrawn plate,
+no feedback:
+
+| run | sites filled | per-site share | lift contrast |
+|---|---|---|---|
+| ring of 8 sites (6.3 mm apart), 32–68 kHz | 8/8 | 11.0–13.7 % (fair 12.5) | 1.62 |
+| ring of 12 (4.2 mm), 32–68 kHz | 12/12 | 7.6–9.6 % (fair 8.3) | 1.79 |
+| ring of 16 (3.1 mm), 32–68 kHz | 10/16 | 0.0–17.1 % | 1.64 |
+| ring of 16, 18 tones 31–69 kHz | not even (one site empty on the lattice map) | — | — |
+| ring of 16, 51–95 kHz | 14/16: two pairs of sites merged | 0.0–12.4 % | 2.97 |
+| ring of 16, 53–97 kHz (band 50–100) | 16/16 | 5.9–6.7 % (fair 6.2) | 3.23 |
+| ring of 16, 62–98 kHz (band 60–100) | 16/16 | 5.7–6.6 % | 1.84 |
+| ring of 16, 72–98 kHz (band 70–100) | 16/16 | 3.7–8.3 % | 1.25 |
+
+At 32–68 kHz the powder gathers in every other site: half a wavelength is
+2.5–5.4 mm, and the sites are 3.1 mm apart. More tones in the same band do
+not help; shorter wavelengths do, and the top of the band matters (51–95 kHz
+still merges two pairs of neighbours). So the mold's band is now 50–100 kHz,
+the top of what the elements are specified to play.
+
+**Validation at 50–100 kHz** (redrawn plate, 9 tones, stepped grains on):
+
+| run | G-M1 (≥ 0.25) | per-site share | grains per site | lift contrast | G-B1 |
+|---|---|---|---|---|---|
+| ring | 0.95 | 5.9–6.7 % | 165–224 | 3.23 | 1.0 % |
+| ring turned 5° | 0.93 | 5.8–6.6 % | 161–213 | 3.10 | 0.7 % |
+| ring turned 11.25° | 0.85 | 5.3–7.0 % | 162–222 | 3.13 | 0.8 % |
+| tetrahedron | 0.75 | 7.5–12.7 % (fair 10) | 233–370 | 2.46 | 0.6 % |
+
+All four pass G-M1, G-M2, G-B0 and G-B1. Round 12's open item — "evenness that
+does not depend on orientation" — is closed for these shapes. The drive is
+2.6–3.0 m/s rms per channel (1.6–1.8× holding), against 2.2 at 32–68 kHz.
+
+**The loop closes on the redrawn plate** (`fieldc replicate`, receipt
+`replicate-ring_2026-11-10T10-36-30Z`, 355 s): the scan reads the ring as 12
+sites, all within 0.56 mm of the object; the mold fills 12 of 12 (7.6–8.7 %
+each, fair 8.3 %; 225–281 grains); 100 % of the powder ends within 1.5 mm of
+the ORIGINAL, median 0.35 mm; the copy's scan correlates 0.751 with the
+original's. G-R1–3, G-M1–2, G-B0–1 all pass.
+
+**The scan's precision (Round 15: 92 % → 69 %) is not an aperture effect.**
+Sweeping only the spiral's fill radius gives 62 % (170 mm), 71 % (185), 67 %
+(192), 69 % (196.5), 80 % (200), 90 % (203), 91 % (205), 82 % (210): erratic,
+not a trend. The hole in the middle changes nothing (64–69 % with it at 0, 6
+or 12 mm), nor do 16 pulses instead of 8 (63 %). Recall is 100 % and the peak
+within 0.35 mm throughout. So "fraction of half-peak voxels within 2 mm" moves
+by ±15 % with the layout's sidelobes, and 205 mm happened to be a good one. It
+is a poor figure of merit; a better one is open.
+
+**What this costs and leaves open.** The elements must be good to 100 kHz
+(Ø5 mm is 1.5 wavelengths there; the engine models the piston's directivity,
+not its electrical response). Air absorbs more at 100 kHz; the model includes
+it. Not re-run at the new band: study S1. A quiet-column
+term (push the sideways force above the shape down) and a worst-site-first
+sideways term were tried and removed: neither was the lever. `Samples/ring_rh1.fcode`
+is the validated ring mold as a stream.
+
+## Round 15 — the face redrawn round the elements (2026-11-10)
+
+**Ruling (operator, 2026-11-10): redraw the face for the elements.** Round 14
+found that the engine's plate did not fit the v0.4 face. The face is now
+drawn from the engine's own spiral ([`CAD.md`](CAD.md)):
+
+* 192 elements per face: Ø5 × 2 piezo discs flush with the radiating surface,
+  a backing behind each, in Ø5.2 through-holes. Golden-angle spiral over the
+  annulus r 12 → 196.5 mm, so the holes clear the Ø14 collar hole by 6.0 mm
+  and the Ø400 storage liner by 1.2 mm. Down-facing faces are turned half a
+  golden angle, as the engine's upper plate is.
+* The twelve slot arms keep their spirals and are cut into dashes with 1 mm of
+  metal round every element: 151 dashes (up faces), 142 (down faces), 78 % of
+  the unbroken area. No micro-horns.
+* `PlateArray.rh1` — the same `vogel` call the CAD uses — is the default plate.
+  G-CAD9 is now a hard gate: the engine's sites are the CAD's to 6e-14 mm and
+  no element rule is broken. 100 parts, 26 design rules, G-CAD1–9 pass; the
+  STEP assembly builds and passes its volume gate.
+* The v0.4 face is kept as `RH1Design.microHornFace` for the six-throat-gate
+  preset `RH1Freestanding` (Rounds 6–11, the app's Compile/Build tabs).
+
+**The engine on the redrawn plate** (open air, 9 tones 32–68 kHz):
+
+| run | ideal plate, r 0–205 (Round 12) | v0.4 micro-horns as elements (Round 14) | redrawn plate |
+|---|---|---|---|
+| ring mold: on the shape | 100 % | 100 % | 100 % |
+| ring mold: sites filled, lift contrast | 16/16, 1.62 | 12/16, 1.20 | 15/16, 1.64 |
+| ring mold: G-M1 (evenness) | pass (0.53) | **fail** | **fail** (one site empty) |
+| tetrahedron mold: G-M1 / G-M2 | 0.77 / 98.5 % | not run | 0.71 / 99.4 % — pass |
+| ring scan: recall / precision within 2 mm | 100 % / 92 % | 100 % / 83 % | 100 % / 69 % |
+
+(These per-site numbers were read off the lattice map; Round 16 replaces them.)
+Receipts: `mold-ring-sieve-rh1x192`, `mold-tetra-sieve-rh1x192`,
+`scan3d-ring-rh1x192`. The ring's lift contrast is back to the ideal plate's;
+its evenness is not. That is the open item Round 12 already named: on the
+ideal plate the same ring fails G-M1 when turned 5° or 11.25°
+(`mold-ring-rot5…`, `mold-ring-rot11.25…`). The scan's precision fell from
+92 % to 69 % with the smaller aperture; why has not been looked into.
+
+**Not done:** `replicate` and study S1 on the redrawn plate (hours of GPU);
+the element wiring layer; a decision on the horn, cone and throat piezos that
+no longer drive the sound; the dashed slots as GHz radiators. The app's left
+rail and Compile/Build tabs still describe the six-gate machine. The published
+`cad/rh1-freestanding/` folder (STEP, drawing, Blender model) still shows the
+v0.4 face; `twin/cad-out/` is regenerated.
+
+## Round 14 — the line to the machine; the plate the CAD can build (2026-11-10)
+
+**`.fcode` and the backend (`FCode.swift`, `Machine/`).** A stream is frames of
+chords (verb ADD / REMOVE / LISTEN, per tone one complex drive per channel, rx
+gates). The frame log is the same stream as bytes for a serial link: 16-bit
+drives per tone full scale, a CRC-32 per frame. `MachineBackend` is the spec's
+four calls (describe, calibrate, play, listen). `EmulatedBackend` plays the
+decoded log, not the file, so it radiates the quantised drive hardware would
+get; what is in the chamber is a set of small rigid scatterers.
+
+| gate | what | measured |
+|---|---|---|
+| G-FC1 | `.fcode` JSON round trip, value and bytes | exact |
+| G-FC2 / 2b | frame log re-encodes byte for byte; a flipped bit is rejected; 16-bit drive vs file | 0 bytes; 1.5e-5 of full scale |
+| G-FC3 | replay through the emulator: same records, same log (M9) | identical |
+| G-FC4 / 4b | calibration matrix reciprocity, 48 and 256 channels | ≤ 4e-16 |
+| G-FC5 | find a scatterer using play + calibrate alone | on the truth (noiseless) |
+
+`fieldc play` reports a number the electronics need: the echo of a 48-point
+wire ring is ~51 dB below the plates' own crosstalk, so the receive chain needs
+that dynamic range or the time gate. Not modelled: transducer electrical
+response, self-impedance, a serial backend.
+
+**The plate (G-CAD9 as it then was, `PlateArray.fromCAD`, now `--array microhorn`).** ENGINE.md's plate
+is 192 Ø5 mm elements on a Vogel spiral over the whole Ø410 disc. On the CAD's
+face plate 101 of those sites land in a slot, 14 on a micro-horn and 5 over the
+rim; 72 are clear. The CAD-native reading is one element behind each of the
+128 drilled micro-horns. On that array, in open air:
+
+* scan of the wire ring: 100 % of the object imaged, 83 % of bright voxels
+  within 2 mm, peak 0.35 mm off (receipt `scan3d-ring-platesCAD128`);
+* ring mold: 100 % of the powder on the shape, but 12 of 16 sites filled and
+  lift contrast 1.20 against 1.62 for the ideal array — G-M2 passes, **G-M1
+  fails** (receipt `mold-ring-sieve-platesCAD128`).
+
+So the plate is an open ruling, not a detail: either the face keeps slots and
+micro-horns and the mold's evenness is paid for (more tones, or elements in
+the slot webs), or the face is redrawn round the element array. `replicate` on
+the CAD plate was not run (the ideal-array run took 4.7 h).
+
+**The bore lift (S-EM5).** A coil wound round the bore makes every turn a ring
+turn: 376 amp-turns rms on a Ø20 mm coil hold Ø2 mm aluminium shot at 100 kHz
+(20 turns at 19 A). Ø40 µm powder needs 33,000 amp-turns at 1 MHz. Induction
+lifts shot, not powder; powder is the acoustic conveyor's job.
+
+**Golden screenshots.** `fieldc shot --all --compare` renders every scene and
+compares it with the committed image in `shots/` (a pixel changes when a
+channel moves by more than 12/255; at most 0.5 % may). 22 of 22 match;
+failures write `.actual.png` and a red `.diff.png` to
+`.build/snapshot-failures/`.
+
+## Round 13 — the second carrier, quasi-static (2026-11-10)
+
+**The windings are in the physics (`Magnetostatics`, `WindingSet`).** Each of
+the six windings is a closed (44, 1) torus knot; `RH1Design.windingCenterline`
+is the one path both the solid model and the field solver use. The field is
+the exact finite-segment Biot–Savart sum, so the only error is the polygon.
+Free space, no capacitance, no skin effect: valid below ~2.8 MHz (wire < λ/10).
+
+| gate | what | measured |
+|---|---|---|
+| G-EM1 | loop on-axis field vs closed form | 1.2e-5 |
+| G-EM2 | toroid interior field vs μ0NI/2πr | 3e-15 |
+| G-EM3 | Ampère on the CAD pair: toroid mode links 88 amp-turns through the tube and 0 round it; ring mode 0 and 2 | 3.5e-5 amp-turns |
+
+**What it found** (receipt `windings_2026-11-10…`):
+
+* **Two modes, as R5 says — and only one reaches the chambers.** Fed alike, a
+  pair is a 2-turn ring (4 µT/A in the tube, 0.8 µT/A at the build-chamber
+  centre). Fed opposite, it is an 88-turn toroid (121 µT/A in the tube) that
+  leaks 0.4 % of the ring mode's field into the chamber. The toroid mode is an
+  induction / potential port for what threads the tube; it is not a chamber
+  actuator.
+* **Six circuits give two field patterns in the build chamber** above 1 % (a
+  uniform field and a gradient, from the top and middle ring modes). The
+  independent feeds buy the mode choice, not channels in the chamber.
+* **The lift is small.** At 63 A per circuit (5 A/mm², assumed) the largest
+  field in the build chamber is 0.48 mT and the best −∂(B²)/∂z is 5.6e-6 T²/m.
+  Induction levitation of a Ø2 mm aluminium grain needs ~5,800 A rms per
+  circuit at 1–2.8 MHz; Ø200 µm needs 12,000 A and up; Ø40 µm powder 230,000 A
+  and up. Static diamagnetic levitation is short by 2e7× (pyrolytic graphite)
+  to 9e8× (limestone).
+* **Consequence for the canon.** The bore lift of R10 (a "linear-induction
+  elevator") and the spec's "induction levitation" are OPEN as dimensioned:
+  the winding puts its turns where the field is confined. Ring turns round the
+  bore (a solenoid stack) would be the geometry for that job. Not changed
+  here — it is a ruling, not a refactor.
+
+**Not modelled:** eddy currents in the aluminium plates and shells (they will
+screen AC fields further), winding capacitance and self-resonance, radiation,
+the GHz slot antennas (the photonic carrier proper).
 
 ## Round 12 — open air, physics-limited plates, an engine built on linearity (2026-10-01)
 

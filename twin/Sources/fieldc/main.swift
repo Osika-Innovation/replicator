@@ -142,6 +142,21 @@ func standardPropagator(frequency f: Double, lattice: FieldLattice) -> (Propagat
     return (p, preset, String(format: "CPU %.2fs", Date().timeIntervalSince(t0)))
 }
 
+/// The plate array a command runs on. Default: the machine's own plates, the
+/// array the CAD's face is drawn round (`PlateArray.rh1`). `--array ideal` or
+/// `--per-plate N`: study S1's idealised spiral over the whole Ø410 disc (the
+/// Round 12 receipts). `--array microhorn`: the v0.4 face's drilled
+/// micro-horns as elements (Round 14's comparison).
+func plateArray(_ args: [String], reflection: Double = 0.9) -> PlateArray {
+    func arg(_ name: String) -> String? { args.firstIndex(of: name).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
+    if let n = arg("--per-plate").flatMap(Int.init) { return PlateArray(perPlate: n, reflection: reflection) }
+    switch arg("--array") {
+    case "ideal": return PlateArray(perPlate: 192, reflection: reflection)
+    case "microhorn", "cad": return PlateArray.fromCAD(reflection: reflection)
+    default: return PlateArray.rh1(reflection: reflection)
+    }
+}
+
 func writeReceipt(_ r: Receipt) {
     let dir = URL(fileURLWithPath: "Receipts")
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -610,11 +625,13 @@ case "mold":
         setup.gravity = !args.contains("--no-gravity")
         setup.particles = !args.contains("--no-particles")
         setup.debug = args.contains("--debug")
+        if let v = arg("--feedback").flatMap(Int.init) { setup.feedback = v }
         let perPlate = arg("--per-plate").flatMap(Int.init) ?? 192
         let reflection = arg("--reflection").flatMap(Double.init) ?? 0.9
         let glass = arg("--chamber") == "glass"
-        let chamber: MoldChamber = glass ? .glass : .plates(PlateArray(perPlate: perPlate, reflection: reflection))
-        let L = glass ? RH1Design().buildChamberHeight * 0.001 : PlateArray(perPlate: perPlate).gap
+        let moldArray = plateArray(args, reflection: reflection)
+        let chamber: MoldChamber = glass ? .glass : .plates(moldArray)
+        let L = glass ? RH1Design().buildChamberHeight * 0.001 : moldArray.gap
         let centre = Vec3(0, 0, L / 2)
         var (sites, segments) = moldShape(shape, centre: centre, ringSites: arg("--sites").flatMap(Int.init) ?? 16)
         if let deg = arg("--rotate").flatMap(Double.init) {
@@ -633,15 +650,15 @@ case "mold":
         let out = try runMold(ctx: ctx, label: label, sites: sites, segments: segments, chamber: chamber, setup: setup)
         for g in out.gates { print(g.line) }
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
-        let tag = glass ? "" : "-plates\(perPlate)"
+        let tag = glass ? "" : "-\(moldArray.tag)"
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "mold-\(label)-\(setup.objective)\(tag)", gates: out.gates,
                                  durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
         }
-        let base = "Receipts/mold_" + (glass ? "" : "plates\(perPlate)_") + label + (setup.objective == "sieve" ? "" : "_\(setup.objective)")
+        let base = "Receipts/mold_" + (glass ? "" : "\(moldArray.tag)_") + label + (setup.objective == "sieve" ? "" : "_\(setup.objective)")
         if args.contains("--light"), !glass {
             // What a 633 nm laser along x reads of the compiled field (LightRead.swift).
-            let arr = PlateArray(perPlate: perPlate, reflection: reflection)
+            let arr = moldArray
             let lf = try ArrayFieldGPU(ctx: ctx, array: arr, frequencies: out.frequencies, medium: RH1Freestanding.roomAir,
                                        lattice: FieldLattice(origin: centre, spacing: 1e-3, nx: 1, ny: 1, nz: 1))
             let view = try lightView(field: lf, drives: out.drives, power: out.power, centre: centre,
@@ -656,6 +673,18 @@ case "mold":
             try? out.captureCSV.write(toFile: base + "_capture.csv", atomically: true, encoding: .utf8)
         }
         try? out.sitesCSV.write(toFile: base + "_targets.csv", atomically: true, encoding: .utf8)
+        try? out.sinksCSV.write(toFile: base + "_sinks.csv", atomically: true, encoding: .utf8)
+        if let path = arg("--fcode"), !glass {
+            // The compiled mold as a stream a machine plays: one ADD frame,
+            // held for the simulated time, at the drive power the run used.
+            let b = EmulatedBackend(array: moldArray, band: [setup.band?.lo ?? 30_000, setup.band?.hi ?? 70_000])
+            let scale = out.power.squareRoot()
+            var f = FCodeFile(machine: b.name, calibrationRef: b.calibrationRef, band: b.band, channels: moldArray.channels)
+            f.frames = [FCodeFile.Frame(t: 0, duration: setup.seconds, verb: .add,
+                                        tones: zip(out.frequencies, out.drives).map { fq, d in FCodeFile.Tone(frequency: fq, drive: d.map { $0 * scale }) })]
+            do { try f.json().write(to: URL(fileURLWithPath: path)); print("fcode written: \(path) (\(f.frames[0].tones.count) tones × \(f.channels) channels)") }
+            catch { print("FCODE NOT WRITTEN: \(error)") }
+        }
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "arraysweep":
@@ -732,8 +761,9 @@ case "scan3d":
         let t0 = Date()
         func arg(_ name: String) -> String? { args.firstIndex(of: name).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
         let glass = arg("--chamber") == "glass"
-        let perPlate = arg("--per-plate").flatMap(Int.init) ?? 192
-        let L = glass ? RH1Design().buildChamberHeight * 0.001 : PlateArray(perPlate: perPlate).gap
+        let scanArray = plateArray(args)
+        let perPlate = scanArray.perPlate
+        let L = glass ? RH1Design().buildChamberHeight * 0.001 : scanArray.gap
         let centre = Vec3(0, 0, L / 2)
         let objectName = arg("--object") ?? "tetra"
         var fHi = 100_000.0, nF = glass ? 90 : 320
@@ -759,7 +789,7 @@ case "scan3d":
             setup.fHi = fHi; setup.frequencies = nF; setup.chords = chords; setup.snrDB = snrDB
             setup.gate = !args.contains("--no-gate")
             setup.listenBoth = args.contains("--listen-both")
-            I = try scanImageArray(ctx: ctx, array: PlateArray(perPlate: perPlate), object: object, subunit: subunit,
+            I = try scanImageArray(ctx: ctx, array: scanArray, object: object, subunit: subunit,
                                    grid: grid, setup: setup)
         }
         // How the image sits on the object: voxels above half the peak, near an object point?
@@ -778,7 +808,7 @@ case "scan3d":
         }
         var ocsv = "x_mm,y_mm,z_mm\n"
         for o in object { ocsv += String(format: "%.3f,%.3f,%.3f\n", (o.x - grid.origin.x) * 1000, (o.y - grid.origin.y) * 1000, (o.z - grid.origin.z) * 1000) }
-        let tag = glass ? "" : "-plates\(perPlate)"
+        let tag = glass ? "" : "-\(scanArray.tag)"
         let gate = GateResult(id: "SCAN", name: "scan of \(objectName)\(glass ? "" : " in open air"): image overlap with the object",
                               measured: precision, threshold: 0, comparison: .informational,
                               detail: String(format: "%d scatterers, %d frequencies %.0f–%.0f kHz%@, SNR %.0f dB; precision %.0f%%, recall %.0f%% (within %.1f mm)",
@@ -789,7 +819,7 @@ case "scan3d":
             writeReceipt(Receipt(name: "scan3d-" + objectName + tag, gates: [gate], durationSeconds: Date().timeIntervalSince(t0),
                                  device: deviceName(), gitSHA: gitSHA()))
         }
-        let base = "Receipts/scan3d_" + (glass ? "" : "plates\(perPlate)_") + objectName
+        let base = "Receipts/scan3d_" + (glass ? "" : "\(scanArray.tag)_") + objectName
         try? mipCSV(I, grid: grid).write(toFile: base + "_mip.csv", atomically: true, encoding: .utf8)
         try? ocsv.write(toFile: base + "_object.csv", atomically: true, encoding: .utf8)
         try? String(format: "%.4f,%d\n", h * 1000, n).write(toFile: base + "_grid.csv", atomically: true, encoding: .utf8)
@@ -807,8 +837,8 @@ case "replicate":
         let t0 = Date()
         func arg(_ name: String) -> String? { args.firstIndex(of: name).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
         let objectName = arg("--object") ?? "ring"
-        let perPlate = arg("--per-plate").flatMap(Int.init) ?? 192
-        let arr = PlateArray(perPlate: perPlate)
+        let arr = plateArray(args)
+        let perPlate = arr.perPlate
         let centre = arr.centre
         var scan = ArrayScanSetup()
         if let v = arg("--nf").flatMap(Int.init) { scan.frequencies = v }
@@ -890,10 +920,10 @@ case "replicate":
         for g in gates { print(g.line) }
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
-            writeReceipt(Receipt(name: "replicate-\(objectName)", gates: gates, durationSeconds: Date().timeIntervalSince(t0),
+            writeReceipt(Receipt(name: "replicate-\(objectName)" + (arr.lowerSites == nil ? "" : "-\(arr.tag)"), gates: gates, durationSeconds: Date().timeIntervalSince(t0),
                                  device: deviceName(), gitSHA: gitSHA()))
         }
-        let base = "Receipts/replicate_\(objectName)"
+        let base = "Receipts/replicate_\(objectName)" + (arr.lowerSites == nil ? "" : "_\(arr.tag)")
         try? mipCSV(I0, grid: grid).write(toFile: base + "_scan0_mip.csv", atomically: true, encoding: .utf8)
         try? mipCSV(I1, grid: grid).write(toFile: base + "_scan1_mip.csv", atomically: true, encoding: .utf8)
         try? String(format: "%.4f,%d\n", h * 1000, n).write(toFile: base + "_grid.csv", atomically: true, encoding: .utf8)
@@ -903,6 +933,14 @@ case "replicate":
             .write(toFile: base + "_sites.csv", atomically: true, encoding: .utf8)
         try? ("x_mm,y_mm,z_mm\n" + copy.map { rel($0) + "\n" }.joined()).write(toFile: base + "_copy.csv", atomically: true, encoding: .utf8)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
+
+case _ where BuildCommand.handles(cmd, args):
+    // the first builds between the open-air plates (BuildCore.swift); --glass: the command below.
+    exit(BuildCommand.run(args))
+
+case _ where PlaceCommand.handles(cmd, args):
+    // levitate, carry, fly between the open-air plates (PlaceCore.swift); --glass: the commands below.
+    exit(PlaceCommand.run(cmd, args))
 
 case "build":
     // The first build: N 200 µm PLA beads laid in a row on a support.
@@ -2605,6 +2643,12 @@ case "shot":
 case "cad":
     exit(CADCommand.run(args))
 
+case "windings":
+    exit(WindingsCommand.run(args))
+
+case "backend", "fcode", "play":
+    exit(MachineCommand.run(args))
+
 default:
     print("""
     fieldc — Field Compiler CLI
@@ -2618,6 +2662,10 @@ default:
       fieldc gpu                validate the Metal propagator against the CPU
       fieldc render [iso|front|top] [--light] [out.png]\n      fieldc scan [--receipt]   end-to-end scan -> chords -> .pattern -> Machine View\n      fieldc broadband          channel-count study: free field vs cavity + chord\n      fieldc shot [scene] [--all] [--light] [--contact-sheet] [--out DIR]
       fieldc cad [info|check|render|export|drawing|bom|params|step]   the RH-1 solid model
+      fieldc windings [--receipt]   the contrawound windings' fields: modes, channels, lift (Round 13)
+      fieldc fcode demo [--array cad] [--out f.fcode]   write a demonstration stream
+      fieldc play <f.fcode> [--object point|ring] [--log f.fcodelog]   play it through the emulated machine
+      fieldc backend [--receipt]    gates of the machine program layer (G-FC1…5)
 
     Built for CommandLineTools only — no Xcode, no external dependencies.
     """)

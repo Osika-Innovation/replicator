@@ -52,9 +52,16 @@ enum CADCommand {
                          d.rearGlassOD, d.buildChamberHeight, d.storageLinerID,
                          d.storageChamberHeight))
             let p = m.pattern
-            print("face pattern: \(p.sites.count) Vogel sites, \(p.drilled.count) drilled, "
-                + "\(p.subsumedCount) inside slot voids; \(d.slotArms) slots "
-                + String(format: "%.0f mm long", p.slotLength))
+            if d.faceStyle == .elementArray {
+                print("face pattern: \(p.elements.count) elements Ø\(Int(d.elementDiameter)) on a Vogel spiral, r "
+                    + String(format: "%.1f–%.1f", p.elements.map(\.radius).min() ?? 0, p.elements.map(\.radius).max() ?? 0)
+                    + "; \(d.slotArms) slot arms cut into \(p.slotCenterlines.count) dashes (up faces) / \(m.patternDown.slotCenterlines.count) (down faces), "
+                    + String(format: "%.0f mm cut per arm", p.slotLength))
+            } else {
+                print("face pattern: \(p.sites.count) Vogel sites, \(p.drilled.count) drilled, "
+                    + "\(p.subsumedCount) inside slot voids; \(d.slotArms) slots "
+                    + String(format: "%.0f mm long", p.slotLength))
+            }
             print("\nprovenance:")
             for r in d.provenance {
                 print("  [\(r.register.rawValue.padding(toLength: 9, withPad: " ", startingAt: 0))] "

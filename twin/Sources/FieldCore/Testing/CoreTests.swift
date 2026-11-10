@@ -8,7 +8,7 @@ public enum CoreTests {
         let groups: [String: (TestHarness) -> Void] = [
             "math": math, "geometry": geometry, "propagator": propagator, "gorkov": gorkov,
             "inverse": inverse, "cad": cad, "plates": wallsAndPlates, "air": air,
-            "force": force, "cavity": cavity, "scatter": scatter, "array": plateArray]
+            "force": force, "cavity": cavity, "scatter": scatter, "array": plateArray, "em": em, "machine": machine, "flow": flow]
         guard let g = groups[group] else { return nil }
         let h = TestHarness()
         g(h)
@@ -21,7 +21,7 @@ public enum CoreTests {
         pencil(h); trapKinds(h); chordAndVerbs(h); callResponse(h)
         surfaceHologram(h)
         provenance(h); gates(h)
-        cad(h); wallsAndPlates(h); air(h); force(h); cavity(h); scatter(h); plateArray(h)
+        cad(h); wallsAndPlates(h); air(h); force(h); cavity(h); scatter(h); plateArray(h); em(h); machine(h); flow(h)
         return h
     }
 

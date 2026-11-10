@@ -53,7 +53,7 @@ extension CoreTests {
             let (p, c) = RH1Freestanding.preset(o)
             t.check(p.gateCount == 6, "3 throat gates per face × 2 faces")
             t.check(p.elements.count == c.count, "one coupling per element")
-            let pat = FacePattern(RH1Design())
+            let pat = FacePattern(RH1Design.microHornFace)
             let perGate = p.elements.filter { $0.gateIndex == 0 }.count
             t.check(perGate > pat.drilled.count, "slots add apertures (\(perGate))")
             t.check(c.allSatisfy { $0.magnitude.isFinite && $0.magnitude > 0 }, "finite, nonzero")

@@ -109,7 +109,7 @@ public enum SceneBuilder {
                            showPanels: Bool = true,
                            showColumns: Bool = true,
                            doorAngleDeg: Double = 180,
-                           design d: RH1Design = RH1Design()) -> SceneGeometry {
+                           design d: RH1Design = RH1Design.microHornFace) -> SceneGeometry {
         var g = SceneGeometry()
         let mm = 0.001
         let bvR = (d.plateRadius - 15) * mm          // = RH1Freestanding build volume

@@ -165,7 +165,7 @@ public enum SceneRegistry {
             MachineCAD.applyRail(&s)
             s.overlays = ["cad.section"]
             let p = MachineCAD.model.pattern
-            s.statusLine = "plate face · \(p.drilled.count) micro-horns drilled · \(p.subsumedCount) of 380 sites fall in slot voids"
+            s.statusLine = "plate face · \(p.elements.count) driven elements · \(p.slotCenterlines.count) slot dashes on 12 arms"
             s.inspector = MachineCAD.inspector()
             return s
         }, solid: "plate"),

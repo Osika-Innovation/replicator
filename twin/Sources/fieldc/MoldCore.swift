@@ -25,7 +25,7 @@ enum MoldChamber {
 struct MoldSetup {
     var objective = "sieve"          // sieve | wells | funnel
     var tones: Int? = nil            // nil: 40 for the glass sieve, 9 for the plates, 20 otherwise
-    var band: (lo: Double, hi: Double)? = nil   // Hz; nil: 30–70 kHz
+    var band: (lo: Double, hi: Double)? = nil   // Hz; nil: 50–100 kHz
     var grains = 3000
     var iterations: Int? = nil       // nil: 400 for the sieve, 300 otherwise
     var seconds = 8.0
@@ -35,7 +35,7 @@ struct MoldSetup {
     var particles = true             // step grains as well as the basin map
     /// Basin-map feedback rounds for the sieve: weight the sites that get too
     /// little powder up and recompile from the last drive.
-    var feedback = 3
+    var feedback = 0
     var debug = false
 }
 
@@ -49,6 +49,9 @@ struct MoldOutcome {
     var formed = 0, rivalRatio = 0.0
     /// Basin map: share of the release on the shape (with recirculation if on),
     /// per-site shares, rogue share.
+    /// Per-site shares by the 26-neighbour lattice map (`BasinMap`), kept
+    /// beside the traced flow's (`basinPerSite`) so the two can be compared.
+    var latticePerSite: [Double] = []
     var basinOnShape = 0.0, basinRogue = 0.0
     var basinPerSite: [Double] = []
     var driveRMS = 0.0               // m/s per channel, rms over channels
@@ -59,6 +62,8 @@ struct MoldOutcome {
     var frequencies: [Double] = []
     var compileSeconds = 0.0
     var grainsCSV = "", sitesCSV = "", captureCSV = ""
+    /// Every sink of the basin map: where it is, its share, the site it counts for.
+    var sinksCSV = ""
     var captureLog: [String] = []
     var gates: [GateResult] = []
     var summary = ""
@@ -87,10 +92,18 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     let centre = Vec3(0, 0, L / 2)
     let objective = setup.objective
     let isPlates: Bool = { if case .plates = chamber { return true }; return false }()
-    // Defaults: the glass sieve's 40 tones; for the plates the design point of
-    // the channel sweep (S1): 9 tones over 30–70 kHz.
+    // Defaults: the glass sieve's 40 tones; for the plates the nine tones of
+    // the channel sweep (S1), which it ran over 30–70 kHz.
     let nTones = setup.tones ?? (isPlates ? 9 : (objective == "sieve" ? 40 : 20))
-    let band = setup.band ?? (30_000.0, 70_000.0)
+    // 50–100 kHz: the top of what the elements play. Neighbouring sites fill
+    // evenly only when the field can tell them apart, and 3.1 mm (the 16-site
+    // ring) needs the short wavelengths: at 32–68 kHz the powder gathered in
+    // every other site (10 of 16 filled, 0–17 % per site); at 53–97 kHz every
+    // site holds 5.3–7.0 % (fair 6.2 %) with the ring at 0°, 5° and 11.25°,
+    // and the tetrahedron 7.4–12.7 % (fair 10 %). The lift contrast doubles as
+    // well (3.1 against 1.6). 51–95 kHz already loses two sites; 60–100 keeps
+    // them at contrast 1.8. Traced flow, 2026-11-10 (README, Round 16).
+    let band = setup.band ?? (50_000.0, 100_000.0)
     let nGrains = setup.grains
     let freqs: [Double] = (0..<nTones).map { q in
         let frac: Double = (Double(q) + 0.5) / Double(nTones)
@@ -191,7 +204,15 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     struct Eval {
         var U: [Double]; var contrast: Double; var fUpMin: Double; var powerX: Double; var power: Double
         var onShape: Double; var rogue: Double; var perSite: [Double]; var sinks: Int
+        var sinkList: [(x: Vec3, share: Double, site: Int)] = []
+        var latticePerSite: [Double] = []
     }
+    // Starts for the traced flow: the release box's cells, then its top layer.
+    var boxStarts: [Vec3] = [], topStarts: [Vec3] = []
+    for k in releaseCells.2 { for j in releaseCells.1 { for i in releaseCells.0 {
+        boxStarts.append(lat.position(i, j, k))
+        if k == releaseCells.2.upperBound { topStarts.append(lat.position(i, j, k)) }
+    } } }
     func evaluate(_ drives: [[Complex]]) -> Eval {
         let U = field.potential(drives, particle: grain)
         var fUpMin = Double.infinity
@@ -214,18 +235,34 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
         let contrast = fUpMin / max(liftOut, 1e-300)
         let powerX = setup.powerX ?? (objective == "sieve" ? (contrast > 1 ? contrast.squareRoot() : 1.05) : 4.0)
         let power = powerX * weight / max(fUpMin, 1e-300)
+        // The lattice map (26-neighbour steepest descent), for comparison only:
+        // it cannot follow a streamline, so its per-site shares are not the grains'.
         let basins = BasinMap(U: U, lattice: lat, power: power, weight: setup.gravity ? weight : 0, release: releaseCells)
-        let shares = recirculate ? basins.recirculated : basins.direct
+        var lSite = [Double](repeating: 0, count: targets.count)
+        for (sink, w) in (recirculate ? basins.recirculated : basins.direct) {
+            let x = lat.positions[sink]
+            if onShapeDistance(x) <= 1e-3, let q = snapped.indices.min(by: { (snapped[$0] - x).length < (snapped[$1] - x).length }) { lSite[q] += w }
+        }
+        // The traced flow: where each release cell's grain actually ends.
+        let ends = FlowMap.trace(U: U, lattice: lat, power: power, weight: setup.gravity ? weight : 0, starts: boxStarts + topStarts,
+                                 maxSteps: 20_000, drag: 6 * Double.pi * 1.81e-5 * grain.radius, duration: setup.seconds)
+        let landed = FlowMap.shares(box: Array(ends[..<boxStarts.count]), top: Array(ends[boxStarts.count...]), recirculate: recirculate)
         var bSite = [Double](repeating: 0, count: targets.count)
         var bOn = 0.0, bRogue = 0.0
-        for (sink, w) in shares {
-            let x = lat.positions[sink]
+        var cells: [Int: (x: Vec3, share: Double, site: Int)] = [:]
+        for (x, w) in landed {
+            var site = -1
             if onShapeDistance(x) <= 1e-3, let q = snapped.indices.min(by: { (snapped[$0] - x).length < (snapped[$1] - x).length }) {
-                bSite[q] += w; bOn += w
+                bSite[q] += w; bOn += w; site = q
             } else { bRogue += w }
+            // Resting points gathered per lattice cell: the "sinks" of the flow.
+            let f = (x - lat.origin) / h
+            let c = lat.index(Int(f.x.rounded()), Int(f.y.rounded()), Int(f.z.rounded()))
+            if let e = cells[c] { cells[c] = (e.x, e.share + w, e.site) } else { cells[c] = (x, w, site) }
         }
         return Eval(U: U, contrast: contrast, fUpMin: fUpMin, powerX: powerX, power: power,
-                    onShape: bOn, rogue: bRogue, perSite: bSite, sinks: basins.sinks.count)
+                    onShape: bOn, rogue: bRogue, perSite: bSite, sinks: cells.count, sinkList: Array(cells.values),
+                    latticePerSite: lSite)
     }
     let fairShare = 1 / Double(max(1, targets.count))
     // Prefer: everything on the shape (≥ 95 %), then the most sites holding a
@@ -262,6 +299,9 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
                    100 * fun.funnelled, 100 * fun.funnelledAtStart))
     }
     var ev = evaluate(drives)
+    func filledSites(_ e: Eval) -> Int { e.perSite.filter { $0 >= 0.25 * fairShare }.count }
+    log(String(format: "  first compile: %.1f%% on the shape, %d/%d sites with a quarter of their share, sites %.1f–%.1f%% (fair %.1f%%)",
+               100 * ev.onShape, filledSites(ev), targets.count, 100 * (ev.perSite.min() ?? 0), 100 * (ev.perSite.max() ?? 0), 100 * fairShare))
     if objective == "sieve" && setup.feedback > 0 {
         // Basin-map feedback: weight the sites that get less than their fair
         // share up (√ of the shortfall, clamped), recompile from the last
@@ -281,8 +321,8 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
             last = sv.drives
             let e2 = evaluate(sv.drives)
             latest = e2
-            log(String(format: "  feedback round %d: contrast %.2f, %.1f%% on the shape, sites %.1f–%.1f%% (fair %.1f%%)",
-                       round, e2.contrast, 100 * e2.onShape, 100 * (e2.perSite.min() ?? 0), 100 * (e2.perSite.max() ?? 0), 100 * fairShare))
+            log(String(format: "  feedback round %d: contrast %.2f, %.1f%% on the shape, %d/%d sites filled, sites %.1f–%.1f%% (fair %.1f%%)",
+                       round, e2.contrast, 100 * e2.onShape, filledSites(e2), targets.count, 100 * (e2.perSite.min() ?? 0), 100 * (e2.perSite.max() ?? 0), 100 * fairShare))
             if better(e2, ev) { ev = e2; drives = sv.drives }
         }
     }
@@ -306,13 +346,18 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     out.drives = drives; out.power = power; out.frequencies = freqs
     let bSite = ev.perSite, bOn = ev.onShape, bRogue = ev.rogue
     out.basinOnShape = bOn; out.basinRogue = bRogue; out.basinPerSite = bSite
-    log(String(format: "  basin map: %.1f%% of the release ends on the shape%@, %.1f%% in rogue minima, %.1f%% %@; %d sinks; per-site shares %.1f–%.1f%%",
+    out.latticePerSite = ev.latticePerSite
+    out.sinksCSV = "x_mm,y_mm,z_mm,share,site\n" + ev.sinkList.sorted { $0.share > $1.share }.map {
+        String(format: "%.3f,%.3f,%.3f,%.5f,%d", ($0.x.x - centre.x) * 1000, ($0.x.y - centre.y) * 1000, ($0.x.z - centre.z) * 1000, $0.share, $0.site)
+    }.joined(separator: "\n") + "\n"
+    log(String(format: "  traced flow: %.1f%% of the release ends on the shape%@, %.1f%% in rogue minima, %.1f%% %@; %d resting cells; per-site shares %.1f–%.1f%% (the 26-neighbour lattice map says %.1f–%.1f%%)",
                100 * bOn, recirculate ? " (with recirculation)" : "", 100 * bRogue,
                100 * max(0, 1 - bOn - bRogue), recirculate ? "never lands" : "falls out",
-               ev.sinks, 100 * (bSite.min() ?? 0), 100 * (bSite.max() ?? 0)))
+               ev.sinks, 100 * (bSite.min() ?? 0), 100 * (bSite.max() ?? 0),
+               100 * (ev.latticePerSite.min() ?? 0), 100 * (ev.latticePerSite.max() ?? 0)))
     // --- the powder, stepped (the check) ---
     var perSite = [Int](repeating: 0, count: targets.count)
-    out.sitesCSV = "x_mm,y_mm,z_mm,grains,basin_share\n"
+    out.sitesCSV = "x_mm,y_mm,z_mm,grains,basin_share,lattice_share\n"
     if setup.particles {
         var rng = SplitMix64(seed: 23)
         var xs: [Vec3] = (0..<nGrains).map { _ in
@@ -384,8 +429,8 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     out.contrast = contrast; out.powerX = powerX; out.tones = nTones
     out.formed = em.formed; out.rivalRatio = em.rivalRatio
     for (q, p) in snapped.enumerated() {
-        out.sitesCSV += String(format: "%.3f,%.3f,%.3f,%d,%.4f\n", (p.x - centre.x) * 1000, (p.y - centre.y) * 1000,
-                               (p.z - centre.z) * 1000, perSite[q], bSite[q])
+        out.sitesCSV += String(format: "%.3f,%.3f,%.3f,%d,%.4f,%.4f\n", (p.x - centre.x) * 1000, (p.y - centre.y) * 1000,
+                               (p.z - centre.z) * 1000, perSite[q], bSite[q], ev.latticePerSite[q])
     }
     let fr = { (k: Int) in 100 * Double(k) / Double(nGrains) }
     let filled = perSite.filter { $0 > 0 }.count
@@ -401,23 +446,32 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
         case .plates(let a): return "open air, 2 × \(a.perPlate) elements"
         }
     }()
-    out.summary = String(format: "%@; %@ objective, %d tone%@, %.2f× holding, %.2f m/s rms per channel; basin map: %.1f%% on the shape, sites %.1f–%.1f%% (fair %.1f%%), %.1f%% rogue; lift contrast %.2f%@",
+    out.summary = String(format: "%@; %@ objective, %d tone%@, %.2f× holding, %.2f m/s rms per channel; traced flow: %.1f%% on the shape, sites %.1f–%.1f%% (fair %.1f%%), %.1f%% rogue; lift contrast %.2f%@",
                          chamberText, objective, nTones, nTones == 1 ? "" : "s", powerX, driveRMS, 100 * bOn,
                          100 * (bSite.min() ?? 0), 100 * (bSite.max() ?? 0), 100 * fairShare, 100 * bRogue, contrast,
                          setup.particles ? String(format: "; particles: %.1f%% on the shape after %.0f s, %d/%d sites filled (%d–%d)",
                                                   fr(out.captured), setup.seconds, filled, targets.count,
                                                   perSite.min() ?? 0, perSite.max() ?? 0) : "")
-    // G-M1/G-M2 on the basin map (exact for the overdamped flow on the lattice);
-    // G-B0: the basin map and the stepped grains agree on the share on the shape.
+    // G-M1/G-M2 on the traced flow (`FlowMap`: the streamlines the stepped
+    // grains follow, without the clock). Until 2026-11-10 they were judged on
+    // the 26-neighbour lattice map, whose per-site shares are not the grains'.
+    // G-B0: the traced flow and the stepped grains agree on the share on the
+    // shape; G-B1: and site by site.
     out.gates = [
         GateResult(id: "G-M1", name: "acoustic mold (\(label)): every site holds ≥ ¼ of its fair share of the powder",
                    measured: (bSite.min() ?? 0) / fairShare, threshold: 0.25, comparison: .greaterThan, detail: out.summary),
         GateResult(id: "G-M2", name: "acoustic mold (\(label)): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
                    measured: bOn, threshold: 0.95, comparison: .greaterThan, detail: out.summary)]
     if setup.particles {
-        out.gates.append(GateResult(id: "G-B0", name: "basin map vs stepped grains: the share on the shape agrees",
+        out.gates.append(GateResult(id: "G-B0", name: "traced flow vs stepped grains: the share on the shape agrees",
                                     measured: abs(bOn - Double(out.captured) / Double(nGrains)), threshold: 0.05,
                                     comparison: .lessThan, detail: out.summary))
+        let worst = bSite.indices.map { abs(bSite[$0] - Double(perSite[$0]) / Double(nGrains)) }.max() ?? 0
+        let latticeWorst = bSite.indices.map { abs(ev.latticePerSite[$0] - Double(perSite[$0]) / Double(nGrains)) }.max() ?? 0
+        out.gates.append(GateResult(id: "G-B1", name: "traced flow vs stepped grains, site by site (largest difference in share)",
+                                    measured: worst, threshold: 0.03, comparison: .lessThan,
+                                    detail: String(format: "%d grains, fair share %.1f%%; the 26-neighbour lattice map differs by up to %.1f%%",
+                                                   nGrains, 100 * fairShare, 100 * latticeWorst)))
     }
     return out
 }
