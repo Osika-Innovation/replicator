@@ -38,9 +38,21 @@
   },
   {
    "part": "plate.top/face plate top",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.0710305308,
-   "rel": 9.759725627553766e-05
+   "brep_mm3": 1206304.218730979,
+   "mesh_mm3": 1206616.721398478,
+   "rel": 0.00025905792473125694
+  },
+  {
+   "part": "plate.top/elements top",
+   "brep_mm3": 7539.8223686154615,
+   "mesh_mm3": 7539.8223686445535,
+   "rel": 3.858447268825091e-12
+  },
+  {
+   "part": "plate.top/element backings top",
+   "brep_mm3": 37699.111843077444,
+   "mesh_mm3": 37699.1118430711,
+   "rel": 1.682966714435473e-13
   },
   {
    "part": "plate.top/carrier ring top",
@@ -86,9 +98,21 @@
   },
   {
    "part": "plate.mid-up/face plate mid-up",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.0710305502,
-   "rel": 9.759725629236809e-05
+   "brep_mm3": 1209490.2950823018,
+   "mesh_mm3": 1209830.7817838555,
+   "rel": 0.0002815125536253422
+  },
+  {
+   "part": "plate.mid-up/elements mid-up",
+   "brep_mm3": 7539.82236861546,
+   "mesh_mm3": 7539.822368594443,
+   "rel": 2.787413620783763e-12
+  },
+  {
+   "part": "plate.mid-up/element backings mid-up",
+   "brep_mm3": 37699.11184307746,
+   "mesh_mm3": 37699.11184308937,
+   "rel": 3.159422604966592e-13
   },
   {
    "part": "plate.mid-up/carrier ring mid-up",
@@ -134,9 +158,21 @@
   },
   {
    "part": "plate.mid-down/face plate mid-down",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.071030568,
-   "rel": 9.759725630798184e-05
+   "brep_mm3": 1206304.218730979,
+   "mesh_mm3": 1206616.7213984516,
+   "rel": 0.00025905792470944664
+  },
+  {
+   "part": "plate.mid-down/elements mid-down",
+   "brep_mm3": 7539.8223686154615,
+   "mesh_mm3": 7539.822368616738,
+   "rel": 1.6923755019731773e-13
+  },
+  {
+   "part": "plate.mid-down/element backings mid-down",
+   "brep_mm3": 37699.111843077444,
+   "mesh_mm3": 37699.111843078535,
+   "rel": 2.89501155006102e-14
   },
   {
    "part": "plate.mid-down/carrier ring mid-down",
@@ -182,9 +218,21 @@
   },
   {
    "part": "plate.deck/face plate deck",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.0710305546,
-   "rel": 9.759725629622084e-05
+   "brep_mm3": 1209490.2950823018,
+   "mesh_mm3": 1209830.7817838558,
+   "rel": 0.0002815125536255347
+  },
+  {
+   "part": "plate.deck/elements deck",
+   "brep_mm3": 7539.82236861546,
+   "mesh_mm3": 7539.822368607868,
+   "rel": 1.006860892014976e-12
+  },
+  {
+   "part": "plate.deck/element backings deck",
+   "brep_mm3": 37699.11184307746,
+   "mesh_mm3": 37699.11184307778,
+   "rel": 8.49203388017899e-15
   },
   {
    "part": "plate.deck/carrier ring deck",
@@ -556,6 +604,6 @@
  "worstRatio": 0.4275432570529863,
  "worstPart": "base/feed pump",
  "missing": [],
- "seconds": 7.992049932479858,
+ "seconds": 14.681530237197876,
  "passed": true
 }

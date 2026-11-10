@@ -8,13 +8,19 @@ old Blender model were resolved how: [`twin/CAD.md`](../../twin/CAD.md).
 
 | file | what | made by |
 |---|---|---|
-| `rh1.step` | B-rep STEP assembly, 92 named, coloured components (152 solids — each contrawound winding is eleven 4-turn bodies). Opens in Fusion 360, SolidWorks, FreeCAD, Onshape as components. mm, floor z = 0, front +x. | `fieldc cad step` (CadQuery / OpenCascade) |
+| `rh1.step` | B-rep STEP assembly, 100 named, coloured components (each contrawound winding is eleven 4-turn bodies; each face's 192 elements and their backings are one compound each). Opens in Fusion 360, SolidWorks, FreeCAD, Onshape as components. mm, floor z = 0, front +x. | `fieldc cad step` (CadQuery / OpenCascade) |
 | `rh1_step_report.json` | per-part B-rep volume vs the twin's mesh volume — gate G-STEP | same |
-| `rh1_general_arrangement.svg` / `.png` | half-section elevation to scale + the plate face in plan | `fieldc cad drawing` |
+| `rh1_general_arrangement.svg` / `.png` | half-section elevation to scale + the plate face in plan | `fieldc cad drawing` (PNG: the SVG rasterised at 2×) |
 | `BOM.md` | bill of materials: part, material, register, volume, mass | `fieldc cad bom` |
-| `rh1_params.json` | the full design: stack, faces, horn/cone profiles, every sunflower site and slot, provenance, reconciliation, part volumes | `fieldc cad params` |
+| `rh1_params.json` | the full design: stack, faces, horn/cone profiles, every element site and slot dash (both face hands), provenance, reconciliation, part volumes | `fieldc cad params` |
 | `renders/` | iso, front, section, section-iso, detail, plate, storage, top | `fieldc cad render --all` |
 | `rh1_freestanding_rev3.blend` | render model for the deck / site: the same geometry with spec §8 finishes, assembly collections, rev2 camera and lights, a quarter section cutter wired in (disabled) | `Tools/rh1_blend.py` on the OBJ export |
+
+**Face as of 2026-11-10:** 192 independently driven Ø5 elements per face on a
+golden-angle annulus (r 12–196.5 mm), the twelve slot arms cut into dashes
+around them, no micro-horns. This is the array the twin's engine drives (gate
+G-CAD9 holds the two equal). The v0.4 micro-horn face is retired from this
+folder; it survives in the twin as `RH1Design.microHornFace`.
 
 Regenerate everything (from `twin/`):
 
