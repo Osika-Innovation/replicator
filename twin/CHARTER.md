@@ -255,3 +255,24 @@ The one loss worth weighing is G5 with `FDTD`: it is the only solver in the
 tree that does not assume the answer's form. Nothing on the open-air path
 uses it today, but it is what an independent check of the time-gated scan
 would be built on.
+
+## The second cut, second part: the test-only code — 2026-11-11
+
+Ruled by the operator: delete, keep the solver. The tag
+`twin-before-first-cut` still holds everything removed here.
+
+| what | before | after |
+|---|---|---|
+| `Sources/`, Swift + Metal | 18,535 lines | 18,112 |
+| `fieldc test` | 67 tests | 63 tests, all passing |
+
+Removed: `RH1.swift` (the frozen desktop preset) with its two tests and the
+gate-index test that ran on it; `Scan.run`, `Scan.ProbeCode` and
+`Scan.Result` (dead since `fieldc scan` went; `Scan.Gate` stays for the app);
+gates G6 and G15 with G15's test; the free-field `RH1` diagnostic inside G9.
+
+Kept: `FDTD` with G2, G3 and G5; G1; G7; G9a–c (the app's solver);
+`TestPresets`.
+
+Checked after the cut: the 63 tests, and all 22 app scenes against their
+goldens. 18,112 is about 600 above the proposed 17,500.

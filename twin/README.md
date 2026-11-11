@@ -15,7 +15,7 @@ Command Line Tools only; no Xcode.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test                 # 67 tests (FIELDC_VERBOSE=1 prints every measured value)
+./.build/release/fieldc test                 # 63 tests (FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gpu --receipt        # GPU kernels against their CPU reference (G-A1, G-A3)
 ./.build/release/fieldc mold --receipt       # powder → shape (--shape ring|tetra, --rotate deg, --band lo-hi, --fcode out.fcode)
 ./.build/release/fieldc scan3d --object ring --receipt   # gated pulse-echo scan (point | ring | tetra | R)
@@ -92,7 +92,7 @@ Receipts for every row are in `Receipts/`; each names the commit that made it.
   is undecided.
 * Reading small 3D wireframes from a scan (the tetrahedron) does not work
   yet; the ring does.
-* `Sources/` is 18,535 lines against the charter's proposed cap of 17,500.
+* `Sources/` is 18,112 lines against the charter's proposed cap of 17,500.
 
 ## Layout
 

@@ -83,39 +83,11 @@ public enum CoreTests {
             t.near(w.capSeparation, 0.460, 1e-9)
             t.near(p.medium.soundSpeed, 343.872, 0.01, "room air 20 C, 50 % RH")
         }
-        h.test("desktop RH-1 v0.3 frozen (receipt replay only)") { t in
-            // Superseded by the free-standing machine (2026-07-30 canon). Kept
-            // so old receipts replay; not maintained.
-            t.near(RH1.Dim.buildVolumeDiameter, 280, 0)
-            t.near(RH1.Dim.buildVolumeHeight, 300, 0)
-            t.near(RH1.Dim.plateDiameter, 300, 0)
-            t.near(RH1.Dim.boreDiameter, 80, 0)
-            t.check(RH1.Dim.panelCount == 6, "6 phononic panels")
-            t.check(RH1.Dim.columnCount == 7, "7 arcade columns")
-            // Documented conflict: mech §4 says 40x40; §10 + hardware spec say
-            // 40x20 with a CAD-correction note. We build to 40x20.
-            t.near(RH1.Dim.columnTangential, 40, 0)
-            t.near(RH1.Dim.columnRadial, 20, 0)
-        }
-        h.test("desktop RH-1 v0.3: 24 acoustic gates (frozen)") { t in
-            let p = RH1.preset()
-            t.check(p.gateCount == 24, "6 panels x 4 drivers, got \(p.gateCount)")
-            t.check(!p.elements.isEmpty, "elements populated")
-            t.near(p.buildVolume.radius, 0.140, 1e-9)
-            t.near(p.buildVolume.height, 0.300, 1e-9)
-        }
         h.test("build volume containment") { t in
             let bv = BuildVolume(radius: 0.14, height: 0.30)
             t.check(bv.contains(Vec3(0, 0, 0.15)), "centre is inside")
             t.check(!bv.contains(Vec3(0.2, 0, 0.15)), "outside radius")
             t.check(!bv.contains(Vec3(0, 0, 0.35)), "above the lid")
-        }
-        h.test("every element belongs to a valid gate") { t in
-            let p = RH1.preset()
-            for e in p.elements {
-                t.check(e.gateIndex >= 0 && e.gateIndex < p.gateCount,
-                        "gate \(e.gateIndex) out of range")
-            }
         }
     }
 
@@ -410,13 +382,6 @@ public enum CoreTests {
             for g in PhysicsGates.runAll() where g.comparison != .informational {
                 t.check(g.passed, g.line)
             }
-        }
-        h.test("reciprocity detects asymmetry") { t in
-            var S = [[Complex]](repeating: [Complex](repeating: .zero, count: 3), count: 3)
-            for i in 0..<3 { for j in 0..<3 { S[i][j] = Complex(Double(i + j), 0) } }
-            t.check(PhysicsGates.g15Reciprocity(S).passed, "symmetric matrix should pass")
-            S[0][2] = Complex(99, 0)
-            t.check(!PhysicsGates.g15Reciprocity(S).passed, "asymmetry must be caught")
         }
         h.test("receipt round-trips through JSON, ∞ and NaN included") { t in
             do {

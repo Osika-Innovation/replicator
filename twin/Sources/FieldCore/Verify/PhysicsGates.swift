@@ -5,52 +5,6 @@ import Foundation
 /// itself proves nothing (§25).
 public enum PhysicsGates {
 
-    // ---------------------------------------------------------------- G6 ----
-    /// G6 — standing wave: opposed-cap drive gives node spacing lambda/2 +/- 1%,
-    /// and the node count matches floor(2L/lambda).
-    public static func g6StandingWave(frequency: Double = 40_000,
-                                      medium: Medium = .air,
-                                      separation: Double = 0.3) -> GateResult {
-        let lambda = medium.wavelength(at: frequency)
-        let k = medium.wavenumber(at: frequency)
-
-        // Two opposed planar sources at z=0 and z=separation, driven in phase.
-        // The superposition of the two counter-propagating waves is the mold.
-        let n = 20001
-        var amp = [Double](repeating: 0, count: n)
-        for i in 0..<n {
-            let z = separation * Double(i) / Double(n - 1)
-            let up = Complex.expi(k * z)
-            let down = Complex.expi(k * (separation - z))
-            amp[i] = (up + down).magnitude
-        }
-
-        // Locate interior minima.
-        var nodes: [Double] = []
-        for i in 1..<(n - 1) where amp[i] < amp[i - 1] && amp[i] <= amp[i + 1] {
-            nodes.append(separation * Double(i) / Double(n - 1))
-        }
-        guard nodes.count >= 2 else {
-            return GateResult(id: "G6", name: "standing-wave node spacing",
-                              measured: .infinity, threshold: 0.01,
-                              detail: "found \(nodes.count) nodes, need >= 2")
-        }
-        var spacings: [Double] = []
-        for i in 1..<nodes.count { spacings.append(nodes[i] - nodes[i - 1]) }
-        let mean = spacings.reduce(0, +) / Double(spacings.count)
-        let relErr = abs(mean - lambda / 2) / (lambda / 2)
-
-        let expectedNodes = Int(2 * separation / lambda)
-        let countOK = abs(nodes.count - expectedNodes) <= 1
-        return GateResult(
-            id: "G6", name: "standing-wave node spacing",
-            measured: relErr, threshold: 0.01,
-            detail: "mean \(String(format: "%.4f", mean * 1000)) mm vs lambda/2 "
-                  + "\(String(format: "%.4f", lambda / 2 * 1000)) mm; "
-                  + "\(nodes.count) nodes (expected ~\(expectedNodes))"
-                  + (countOK ? "" : "  [COUNT MISMATCH]"))
-    }
-
     // ---------------------------------------------------------------- G7 ----
     /// G7 — Gor'kov analytic: the numerical potential path must reproduce the
     /// closed-form 1-D standing-wave force to within 2%.
@@ -360,27 +314,6 @@ public enum PhysicsGates {
         let gGS = focusGain[.gspat]! / n
         let gDP = focusGain[.diffpat]! / n
 
-        // RH-1's own focusing ability, reported not gated — the honest number
-        // for the hardware lane: what does a 24-channel aperture actually buy?
-        let rh1 = RH1.preset(frequency: frequency)
-        let rInset = 2 * lambda
-        let rR = rh1.buildVolume.radius, rsp = lambda / 2
-        let rlat = FieldLattice(
-            origin: Vec3(-rR, -rR, rInset), spacing: rsp,
-            nx: Int((2 * rR / rsp).rounded(.down)) + 1,
-            ny: Int((2 * rR / rsp).rounded(.down)) + 1,
-            nz: Int(((rh1.buildVolume.height - 2 * rInset) / rsp).rounded(.down)) + 1)
-        let rprop = Propagator(elements: rh1.elements, lattice: rlat,
-                               frequency: frequency, medium: rh1.medium,
-                               gateCount: rh1.gateCount)
-        let rTarget = Vec3(0, 0, rh1.buildVolume.height / 2)
-        let ru = InverseSolver.solve(propagator: rprop,
-                                     points: [.init(position: rTarget, targetAmplitude: 1)],
-                                     method: .gspat, iterations: 80)
-        let rField = rprop.forward(ru)
-        let rMean = rField.reduce(0.0) { $0 + $1.magnitude } / Double(rField.count)
-        let rGain = rprop.pressure(at: rTarget, drive: ru).magnitude / max(rMean, 1e-30)
-
         return [
             GateResult(id: "G9a", name: "lateral focus placement error (single plate)",
                        measured: placeErr * 1000,
@@ -432,45 +365,12 @@ public enum PhysicsGates {
                        detail: "IBP \(String(format: "%.2f", gIBP))x, "
                              + "GS-PAT \(String(format: "%.2f", gGS))x, "
                              + "Diff-PAT \(String(format: "%.2f", gDP))x over volume mean"),
-            // RETRACTED as a hardware finding. Kept as a diagnostic of the
-            // FREE-FIELD MONOCHROMATIC model only. This number assumes away the
-            // cavity (walls), the chord (per-tone apertures) and the force
-            // domain, and the corrected force-level study (`fieldc broadband`)
-            // shows 24 channels within +/-14% of a dense array. Do not quote
-            // this ratio to the hardware lane.
-            GateResult(id: "I1-freefield",
-                       name: "focusing gain, FREE-FIELD MONOCHROMATIC diagnostic only",
-                       measured: rGain, threshold: 0, comparison: .informational,
-                       detail: "RH-1 \(String(format: "%.1f", rGain))x vs dense "
-                             + "\(String(format: "%.1f", gGS))x over volume mean. "
-                             + "NOT a channel-count finding — see `fieldc broadband`, "
-                             + "which measures the force-level metric with walls and "
-                             + "a chord and finds parity"),
         ]
-    }
-
-    // --------------------------------------------------------------- G15 ----
-    /// G15 — reciprocity QC on a scattering matrix. Free, runs on every scan,
-    /// and catches calibration faults that would otherwise be read as targets.
-    public static func g15Reciprocity(_ S: [[Complex]]) -> GateResult {
-        let n = S.count
-        var num = 0.0, den = 0.0
-        for i in 0..<n {
-            for j in 0..<n {
-                let d = S[i][j] - S[j][i]
-                num += d.magnitudeSquared
-                den += S[i][j].magnitudeSquared
-            }
-        }
-        let rel = den > 0 ? (num / den).squareRoot() : 0
-        return GateResult(id: "G15", name: "reciprocity ||K-K^T||/||K||",
-                          measured: rel, threshold: 0.1,
-                          detail: "\(n)x\(n) matrix")
     }
 
     /// Run the CPU-side gate set.
     public static func runAll() -> [GateResult] {
         [g1Voxelizer(), g2EnergyConservation(), g3TimeOfFlight(), G5.run(),
-         g6StandingWave(), g7GorkovAnalytic()] + g9InverseSolver()
+         g7GorkovAnalytic()] + g9InverseSolver()
     }
 }
