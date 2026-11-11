@@ -169,7 +169,6 @@ case "mold":
         setup.particles = !args.contains("--no-particles")
         setup.debug = args.contains("--debug")
         if let v = arg("--feedback").flatMap(Int.init) { setup.feedback = v }
-        let perPlate = arg("--per-plate").flatMap(Int.init) ?? 192
         let reflection = arg("--reflection").flatMap(Double.init) ?? 0.9
         let moldArray = plateArray(args, reflection: reflection)
         let chamber: MoldChamber = .plates(moldArray)

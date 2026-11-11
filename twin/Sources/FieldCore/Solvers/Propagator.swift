@@ -154,16 +154,11 @@ public struct Propagator: Sendable {
     /// Per-element image table, computed once.
     let imageTable: [[(z: Double, weight: Double)]]
 
-    /// - Parameter precomputedH: an operator already built for exactly these
-    ///   arguments (the GPU port-field build, `FieldGPU.PortFieldsGPU`). The
-    ///   point evaluators below still walk the elements, so a gate can check
-    ///   that the two agree.
     public init(elements: [Element], lattice: FieldLattice,
                 frequency: Double, medium: Medium, gateCount: Int? = nil,
                 elementWeights: [Double]? = nil,
                 elementCoupling: [Complex]? = nil,
-                walls: Walls = .none,
-                precomputedH: [Complex]? = nil) {
+                walls: Walls = .none) {
         self.elements = elements
         self.lattice = lattice
         self.frequency = frequency
@@ -177,11 +172,6 @@ public struct Propagator: Sendable {
         self.gateCount = nG
 
         let nP = lattice.count
-        if let pre = precomputedH {
-            precondition(pre.count == nP * nG, "precomputed H has the wrong shape")
-            self.H = pre
-            return
-        }
         let k = medium.wavenumber(at: frequency)
         let alpha = medium.absorption(at: frequency)
         let prefactorMag = medium.density * medium.soundSpeed * k / (2 * .pi)

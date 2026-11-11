@@ -289,3 +289,23 @@ What that frees, now reached only from the test suite: `InverseSolver` with
 G9a–c, `PortFieldsGPU.propagator`, `RH1Freestanding.preset` / `.standard`,
 `ParticleSim`, `PatternFile`, `MatrixPencil`, `Scan.Gate`, and the
 `SceneBuilder` drawings for them. Not deleted: that is a ruling to ask for.
+
+## The third cut: the six-gate code — 2026-11-12
+
+Ruled by the operator ("yes"): delete what only the tests still reached.
+
+| what | before | after |
+|---|---|---|
+| `Sources/`, Swift + Metal | 17,652 lines (Swift only) | 16,293 with the shaders |
+| `fieldc test` | 63 tests | 52 tests, all passing |
+
+Removed: `InverseSolver` with gates G9a–c and I2; `MatrixPencil`;
+`PatternFile` (the `.pattern` format) with its five provenance tests;
+`ParticleSim`; `Scan.Gate`; `PortFieldsGPU` and the five Metal kernels only
+it called; `RH1Freestanding.preset` / `.standard` with the horn stub (only
+`roomAir` stays); `TestPresets.denseOpposedArray`; the Gor'kov lattice
+helpers only those tests used; the `SceneBuilder` drawings for them.
+
+The line count is now under the proposed cap of 17,500. Checked after the
+cut: the 52 tests, G-A1 and G-A3 on the GPU, and all 22 app scenes against
+their goldens. The tag `twin-before-first-cut` holds everything removed.

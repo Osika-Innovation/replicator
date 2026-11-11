@@ -34,15 +34,15 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
         let els = array.elements()
         self.channels = els.count
         self.walls = array.walls
-        let recs: [PortFieldsGPU.ElementPF] = els.map { e in
-            PortFieldsGPU.ElementPF(
+        let recs: [ElementPF] = els.map { e in
+            ElementPF(
                 position: SIMD4(Float(e.position.x), Float(e.position.y), Float(e.position.z), 0),
                 normal: SIMD4(Float(e.normal.x), Float(e.normal.y), Float(e.normal.z), 0),
                 area: Float(e.area), equivalentRadius: Float(e.equivalentRadius),
                 coupling: SIMD2(1, 0), gateIndex: Int32(e.gateIndex),
                 monopole: e.directivity == .monopole ? 1 : 0)
         }
-        guard let eb = ctx.device.makeBuffer(bytes: recs, length: max(1, recs.count) * MemoryLayout<PortFieldsGPU.ElementPF>.stride,
+        guard let eb = ctx.device.makeBuffer(bytes: recs, length: max(1, recs.count) * MemoryLayout<ElementPF>.stride,
                                              options: .storageModeShared) else { throw MetalContext.Error.noDevice }
         self.elementBuffer = eb
         self.latticePoints = lattice.positions.map { SIMD4(Float($0.x), Float($0.y), Float($0.z), 0) }
@@ -187,4 +187,17 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
         }
         return grad
     }
+}
+
+/// One element as the array kernels read it (`struct ElementPF` in the shader).
+struct ElementPF {
+    var position: SIMD4<Float>
+    var normal: SIMD4<Float>
+    var area: Float
+    var equivalentRadius: Float
+    var coupling: SIMD2<Float>
+    var gateIndex: Int32
+    var monopole: Int32
+    var pad0: Int32 = 0
+    var pad1: Int32 = 0
 }

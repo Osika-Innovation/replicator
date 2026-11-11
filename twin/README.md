@@ -15,7 +15,7 @@ Command Line Tools only; no Xcode.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test                 # 63 tests (FIELDC_VERBOSE=1 prints every measured value)
+./.build/release/fieldc test                 # 52 tests (FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gpu --receipt        # GPU kernels against their CPU reference (G-A1, G-A3)
 ./.build/release/fieldc mold --receipt       # powder → shape (--shape ring|tetra, --stl file.stl, --rotate deg, --band lo-hi, --fcode out.fcode)
 ./.build/release/fieldc scan3d --object ring --receipt   # gated pulse-echo scan (point | ring | tetra | R)
@@ -99,9 +99,8 @@ Receipts for every row are in `Receipts/`; each names the commit that made it.
   and the placing verbs still build their own fields (charter rule 2).
 * The app's Compile, Build and Scan run on the plates (rebuilt 2026-11-11),
   but it only molds: the bead-placing verbs and `replicate` are not in it.
-  The six-gate code it used to pin (`InverseSolver`, `PortFieldsGPU`'s
-  propagator, `RH1Freestanding.standard`, `ParticleSim`, `.pattern`,
-  `MatrixPencil`) is now reached only from tests; deleting it is undecided.
+  The six-gate code it used to pin was deleted on 2026-11-12 (operator
+  ruling); the tag `twin-before-first-cut` holds it.
 * The mold volume is a 24 mm cube and a mold is 16 sites. Larger or finer
   objects are scaled and sampled down to that, not built at size.
 * The CAD has no wiring layer for the 4 × 192 elements, and the horns, cones
@@ -109,7 +108,7 @@ Receipts for every row are in `Receipts/`; each names the commit that made it.
   is undecided.
 * Reading small 3D wireframes from a scan (the tetrahedron) does not work
   yet; the ring does.
-* `Sources/` is 18,306 lines against the charter's proposed cap of 17,500.
+* `Sources/` is 16,293 lines, under the charter's proposed cap of 17,500.
 
 ## Layout
 

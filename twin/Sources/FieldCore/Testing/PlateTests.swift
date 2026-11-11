@@ -47,22 +47,5 @@ extension CoreTests {
                 t.near(viaOp[n].im, direct.im, abs(direct.magnitude) * 1e-9 + 1e-12, "im[\(n)]")
             }
         }
-        h.test("plate preset: apertures from the CAD, 6 gates, couplings finite") { t in
-            var o = RH1Freestanding.Options()
-            o.slotSegment = 0.004
-            let (p, c) = RH1Freestanding.preset(o)
-            t.check(p.gateCount == 6, "3 throat gates per face × 2 faces")
-            t.check(p.elements.count == c.count, "one coupling per element")
-            let pat = FacePattern(RH1Design.microHornFace)
-            let perGate = p.elements.filter { $0.gateIndex == 0 }.count
-            t.check(perGate > pat.drilled.count, "slots add apertures (\(perGate))")
-            t.check(c.allSatisfy { $0.magnitude.isFinite && $0.magnitude > 0 }, "finite, nonzero")
-            for e in p.elements {
-                t.check(e.position.z == 0 || abs(e.position.z - 0.46) < 1e-9, "on a face")
-            }
-            o.slotsOpen = false
-            let (q, _) = RH1Freestanding.preset(o)
-            t.check(q.elements.count == 6 * pat.drilled.count, "closed slots: micro-horns only")
-        }
     }
 }

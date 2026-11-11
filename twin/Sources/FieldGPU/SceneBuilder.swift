@@ -343,32 +343,6 @@ extension SceneBuilder {
 
 extension SceneBuilder {
 
-    /// Particles, coloured by state: cool grey while still feedstock, hot orange
-    /// in transit while molten, settling to the material colour once latched.
-    public static func particles(_ sim: ParticleSim) -> SceneGeometry {
-        var g = SceneGeometry()
-        let r = 0.0018
-        for p in sim.particles {
-            // Temperature drives the glow so the thermal state is legible.
-            let hot = Float(min(1, max(0, (p.temperature - 300) / 200)))
-            let c: SIMD4<Float>
-            switch p.state {
-            case .feedstock:
-                c = SIMD4<Float>(0.55, 0.57, 0.60, 0.75)
-            case .inTransit:
-                c = SIMD4<Float>(0.95, 0.45 + 0.35 * (1 - hot), 0.25, 0.95)
-            case .trapped:
-                c = SIMD4<Float>(0.92 - 0.25 * (1 - hot), 0.86, 0.72, 1.0)
-            }
-            // A tiny 3-axis cross reads as a point at any zoom without needing
-            // point sprites.
-            g.line(p.position - Vec3(r, 0, 0), p.position + Vec3(r, 0, 0), c)
-            g.line(p.position - Vec3(0, r, 0), p.position + Vec3(0, r, 0), c)
-            g.line(p.position - Vec3(0, 0, r), p.position + Vec3(0, 0, r), c)
-        }
-        return g
-    }
-
     /// A cloud of points as small 3-axis crosses, one colour per point.
     public static func points(_ pts: [Vec3], colors: [SIMD4<Float>], radius r: Double) -> SceneGeometry {
         var g = SceneGeometry()
@@ -444,46 +418,6 @@ extension SceneBuilder {
             let p = e.position + n * 0.0004     // lift off the surface
             g.quad(p - t * s - b * s, p + t * s - b * s,
                    p + t * s + b * s, p - t * s + b * s, c)
-        }
-        return g
-    }
-}
-
-extension SceneBuilder {
-
-    /// A chord, drawn as what it is: a complex frequency plus the GATE PATTERN
-    /// that addresses it (§3). Each gate gets a radial bar whose length is
-    /// |r_k| for that gate, so the port-vector is legible as a shape on the
-    /// boundary rather than as a row of numbers.
-    ///
-    /// This is the half that breaks the isospectral ambiguity — a bare
-    /// eigenfrequency list cannot tell two different objects apart, the
-    /// port-vectors can.
-    public static func chords(gates: [Scan.Gate], chord: MatrixPencil.Chord,
-                              rank: Int = 0, palette: Palette = Palette())
-        -> SceneGeometry {
-        var g = SceneGeometry()
-        guard !chord.portVector.isEmpty else { return g }
-        let peak = chord.portVector.map(\.magnitude).max() ?? 1
-        guard peak > 0 else { return g }
-        // Fade successive chords so the top-weighted one dominates.
-        let fade = Float(max(0.25, 1.0 - 0.18 * Double(rank)))
-        for (i, gate) in gates.enumerated() {
-            guard i < chord.portVector.count else { break }
-            let a = chord.portVector[i]
-            let len = 0.004 + 0.045 * (a.magnitude / peak)
-            let dir = gate.normal.normalized
-            let base = gate.position
-            let tip = base + dir * len
-            // Phase tints; amplitude carries the signal (hue does not composite).
-            let ph = Float((a.phase + Double.pi) / (2 * Double.pi))
-            let c = SIMD4<Float>(0.45 + 0.5 * ph, 0.80 - 0.2 * ph,
-                                 0.95 - 0.4 * ph, fade)
-            g.line(base, tip, c)
-            // Cap so short bars still read.
-            let s = 0.003
-            g.line(tip - Vec3(s, 0, 0), tip + Vec3(s, 0, 0), c)
-            g.line(tip - Vec3(0, 0, s), tip + Vec3(0, 0, s), c)
         }
         return g
     }

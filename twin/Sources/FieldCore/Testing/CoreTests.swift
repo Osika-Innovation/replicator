@@ -7,7 +7,7 @@ public enum CoreTests {
     public static func run(group: String) -> TestHarness? {
         let groups: [String: (TestHarness) -> Void] = [
             "math": math, "geometry": geometry, "propagator": propagator, "gorkov": gorkov,
-            "inverse": inverse, "cad": cad, "plates": wallsAndPlates, "air": air,
+            "cad": cad, "plates": wallsAndPlates, "air": air,
             "force": force, "scatter": scatter, "array": plateArray, "em": em, "machine": machine, "flow": flow]
         guard let g = groups[group] else { return nil }
         let h = TestHarness()
@@ -17,9 +17,8 @@ public enum CoreTests {
 
     public static func runAll() -> TestHarness {
         let h = TestHarness()
-        math(h); geometry(h); propagator(h); gorkov(h); inverse(h)
-        pencil(h); trapKinds(h); chordAndVerbs(h)
-        provenance(h); gates(h)
+        math(h); geometry(h); propagator(h); gorkov(h)
+        chordAndVerbs(h); gates(h)
         cad(h); wallsAndPlates(h); air(h); force(h); scatter(h); plateArray(h); em(h); machine(h); flow(h)
         return h
     }
@@ -74,14 +73,6 @@ public enum CoreTests {
             t.near(d.bodyDiameter, 460, 0); t.near(d.overallHeight, 1650, 0)
             t.near(d.rearGlassOD, 444, 0); t.near(d.frontGlassOD, 464, 0)
             t.check(d.slotArms == 12, "12 spiral slots"); t.check(d.columnCount == 7, "7 columns")
-        }
-        h.test("RH-1 FS is the simulated machine") { t in
-            let (p, c, w) = RH1Freestanding.standard()
-            t.check(p.gateCount == 6, "3 throat piezos x 2 faces, got \(p.gateCount)")
-            t.check(c.count == p.elements.count && p.elements.count > 10_000, "virtual apertures with couplings")
-            t.near(p.buildVolume.radius, 0.190, 1e-9); t.near(p.buildVolume.height, 0.460, 1e-9)
-            t.near(w.capSeparation, 0.460, 1e-9)
-            t.near(p.medium.soundSpeed, 343.872, 0.01, "room air 20 C, 50 % RH")
         }
         h.test("build volume containment") { t in
             let bv = BuildVolume(radius: 0.14, height: 0.30)
@@ -158,121 +149,6 @@ public enum CoreTests {
         }
     }
 
-    // --------------------------------------------------------------- inverse
-    static func inverse(_ h: TestHarness) {
-        h.test("phase quantization is applied") { t in
-            let con = InverseSolver.Constraints(maxAmplitude: 1, phaseBits: 3)
-            let levels = Double(1 << 3)
-            for c in con.project([Complex.expi(0.31), Complex.expi(2.0)]) {
-                let q = c.phase / (2 * .pi) * levels
-                t.near(q, q.rounded(), 1e-9, "phase not on the quantization grid")
-            }
-        }
-        h.test("amplitude ceiling respected") { t in
-            let con = InverseSolver.Constraints(maxAmplitude: 0.5)
-            for c in con.project([Complex(10, 0), Complex(0, -7)]) {
-                t.check(c.magnitude <= 0.5 + 1e-12, "ceiling breached: \(c.magnitude)")
-            }
-        }
-    }
-
-    // ------------------------------------------------------------ matrix pencil
-    static func pencil(_ h: TestHarness) {
-        // Synthetic ground truth isolates the extractor from the FDTD: build a
-        // record from KNOWN damped sinusoids and see whether the pencil returns
-        // them. If this passes and the scan still fails, the fault is in the
-        // scan data, not the algorithm.
-        h.test("matrix pencil recovers known poles") { t in
-            let dt = 2e-6
-            let N = 600
-            let truth: [(f: Double, tau: Double, amp: Double, phase: Double)] = [
-                (12_000, 0.0008, 1.0, 0.3),
-                (23_500, 0.0005, 0.6, 1.1),
-            ]
-            var records: [[Double]] = []
-            for g in 0..<4 {
-                var rec = [Double](repeating: 0, count: N)
-                for n in 0..<N {
-                    let time = dt * Double(n)
-                    for m in truth {
-                        rec[n] += m.amp * (1.0 + 0.3 * Double(g))
-                              * exp(-time / m.tau)
-                              * cos(2 * .pi * m.f * time + m.phase + 0.2 * Double(g))
-                    }
-                }
-                records.append(rec)
-            }
-            let chords = MatrixPencil.extract(records: records, dt: dt, maxChords: 6)
-            t.check(!chords.isEmpty, "no chords extracted")
-            // Every true frequency must appear among the recovered poles.
-            for m in truth {
-                let hit = chords.contains { abs($0.frequencyHz - m.f) < 0.02 * m.f }
-                t.check(hit, "did not recover \(m.f) Hz; got "
-                    + chords.map { String(format: "%.0f", $0.frequencyHz) }
-                            .joined(separator: ", "))
-            }
-            // And the reconstruction must actually reproduce the record.
-            let re = MatrixPencil.synthesize(chords: chords, gates: records.count,
-                                             samples: N, dt: dt)
-            var worst = 0.0
-            for g in records.indices {
-                worst = max(worst, re[g].relativeL2(to: records[g]))
-            }
-            t.check(worst < 0.05,
-                    "reconstruction rel L2 = \(String(format: "%.4f", worst)), want < 0.05")
-        }
-    }
-
-    // ----------------------------------------------------------- trap kinds
-    static func trapKinds(_ h: TestHarness) {
-        // A focus and a trap are OPPOSITE requests, and confusing them puts
-        // matter in the wrong place. This checks the physics, not the code
-        // path: at a focus the pressure is high; at a twin trap it is a null
-        // sitting in a Gor'kov well.
-        h.test("focus makes an antinode, twin trap makes a node") { t in
-            let preset = TestPresets.denseOpposedArray(n: 12, separation: 0.10)
-            let f = 40_000.0
-            let lam = preset.medium.wavelength(at: f)
-            let R = preset.buildVolume.radius, sp = lam / 8
-            let lat = FieldLattice(
-                origin: Vec3(-R, -R, 0.03), spacing: sp,
-                nx: Int((2 * R / sp).rounded(.down)) + 1,
-                ny: Int((2 * R / sp).rounded(.down)) + 1,
-                nz: Int((0.04 / sp).rounded(.down)) + 1)
-            let prop = Propagator(elements: preset.elements, lattice: lat,
-                                  frequency: f, medium: preset.medium,
-                                  gateCount: preset.gateCount)
-            let target = Vec3(0, 0, 0.05)
-            let cp = [InverseSolver.ControlPoint(position: target, targetAmplitude: 1)]
-
-            let uFocus = InverseSolver.solve(propagator: prop, points: cp,
-                                             method: .gspat, iterations: 60,
-                                             trap: .focus)
-            let uTwin = InverseSolver.solve(propagator: prop, points: cp,
-                                            method: .gspat, iterations: 60,
-                                            trap: .twinTrap)
-            let mean = { (u: [Complex]) -> Double in
-                let fld = prop.forward(u)
-                return fld.reduce(0.0) { $0 + $1.magnitude } / Double(fld.count)
-            }
-            let pFocus = prop.pressure(at: target, drive: uFocus).magnitude / mean(uFocus)
-            let pTwin = prop.pressure(at: target, drive: uTwin).magnitude / mean(uTwin)
-            t.check(pFocus > 3, "focus should be well above the volume mean, got "
-                              + String(format: "%.2f", pFocus))
-            t.check(pTwin < 0.5, "twin trap should be a NULL at the target, got "
-                               + String(format: "%.2f", pTwin))
-
-            // And the twin trap must actually be a Gor'kov minimum there.
-            let g = Gorkov(medium: preset.medium, particle: .pla())
-            let U = g.potentialField(propagator: prop, drive: uTwin)
-            let traps = Gorkov.findTraps(U: U, lattice: lat, limit: 40)
-            let nearest = traps.map { ($0.position - target).length }.min() ?? .infinity
-            t.check(nearest < lam / 2,
-                    "no Gor'kov minimum within lambda/2 of the requested trap; "
-                  + "nearest is \(String(format: "%.1f", nearest * 1000)) mm")
-        }
-    }
-
     // ------------------------------------------------------- chord & verbs
     static func chordAndVerbs(_ h: TestHarness) {
         h.test("a chord is more than one tone, and shares power") { t in
@@ -299,80 +175,6 @@ public enum CoreTests {
                        d.tones[0].gates[i].magnitude, 1e-12,
                        "amplitude must NOT change — only phase")
             }
-        }
-    }
-
-    // ------------------------------------------------------------ provenance
-    /// G17 enforcement. This rule has been asserted repeatedly as the app's
-    /// central honesty commitment and was, until now, entirely untested — which
-    /// is exactly the kind of gap an audit is for.
-    static func provenance(_ h: TestHarness) {
-        func patternJSON(chordBody: String, measured: Int, inferred: Int) -> Data {
-            Data(("""
-            {"version":"pattern/0.2",
-             "meta":{"name":"t","date":"now","source":"emulated-scan",
-                     "machine":"m","calibrationRef":"c",
-                     "reconstruction":{"rung":"L0","greensFunction":"modelled"},
-                     "counts":{"measured":\(measured),"inferred":\(inferred)}},
-             "material":{"name":"PLA","density":1240,"soundSpeed":2220},
-             "band":[20000,80000],
-             "chords":[\(chordBody)]}
-            """).utf8)
-        }
-
-        h.test("a chord without provenance is REJECTED, not defaulted") { t in
-            let data = patternJSON(
-                chordBody: #"{"p":[-1,1000],"r":[[1,0]],"weight":1}"#,
-                measured: 1, inferred: 0)
-            do {
-                _ = try PatternFile.decode(data)
-                t.fail("decoded a chord with no provenance — it must be rejected, "
-                     + "because assuming 'measured' IS the failure mode")
-            } catch { /* expected */ }
-        }
-
-        h.test("an inferred chord without inferredBy is REJECTED") { t in
-            let data = patternJSON(
-                chordBody: #"{"p":[-1,1000],"r":[[1,0]],"weight":1,"provenance":"inferred"}"#,
-                measured: 0, inferred: 1)
-            do {
-                _ = try PatternFile.decode(data)
-                t.fail("accepted an inferred chord with no source — a fabricated "
-                     + "interior must always be traceable")
-            } catch { /* expected */ }
-        }
-
-        h.test("an unknown provenance value is REJECTED") { t in
-            let data = patternJSON(
-                chordBody: #"{"p":[-1,1000],"r":[[1,0]],"weight":1,"provenance":"probably"}"#,
-                measured: 1, inferred: 0)
-            do {
-                _ = try PatternFile.decode(data)
-                t.fail("accepted provenance 'probably'")
-            } catch { /* expected */ }
-        }
-
-        h.test("declared counts must match the chord list") { t in
-            let data = patternJSON(
-                chordBody: #"{"p":[-1,1000],"r":[[1,0]],"weight":1,"provenance":"measured"}"#,
-                measured: 7, inferred: 0)
-            do {
-                _ = try PatternFile.decode(data)
-                t.fail("accepted meta.counts that disagrees with the chord list")
-            } catch { /* expected */ }
-        }
-
-        h.test("a well-formed pattern decodes and excludes inferred from build") { t in
-            let body = #"{"p":[-1,1000],"r":[[1,0]],"weight":1,"provenance":"measured"},"#
-                     + #"{"p":[-2,2000],"r":[[1,0]],"weight":1,"provenance":"inferred","inferredBy":"prior/1"}"#
-            do {
-                let pat = try PatternFile.decode(
-                    patternJSON(chordBody: body, measured: 1, inferred: 1))
-                t.check(pat.chords.count == 2, "both chords present")
-                t.check(pat.buildableChords.count == 1,
-                        "inferred content must be excluded from what a build "
-                      + "may fabricate to; got \(pat.buildableChords.count)")
-            } catch { t.fail("rejected a well-formed pattern: \(error)") }
         }
     }
 
