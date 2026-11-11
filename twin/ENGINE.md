@@ -1,7 +1,7 @@
 # The engine plan — open air, physics-limited plates, linear-first compute
 
 Written 2026-10-01 after the operator's decisions below. This is the plan the
-twin is built to from Round 12 on. The README's rounds report what was built
+twin is built to from Round 12 on. The diary's rounds ([`../papers/twin_rounds.md`](../papers/twin_rounds.md)) report what was built
 and measured against it.
 
 ## Decisions (operator, 2026-10-01)
@@ -158,7 +158,7 @@ default of every open-air command, and the CAD draws the same sites:
 * Study S1 and the Round 12 receipts were run on the idealised layout
   (r 0 → 205). It stays available as `--array ideal` / `--per-plate N`. S1's
   knee has not been re-measured on the annulus; the ring and tetrahedron molds
-  and the ring scan have (README, Round 15).
+  and the ring scan have (diary, Round 15).
 * What the CAD session still owes: the wiring layer for 192 channels per face,
   and a use for the horn stack behind the plate.
 
@@ -171,7 +171,7 @@ default of every open-air command, and the CAD draws the same sites:
   flow (`FlowMap`), gated against the stepped grains (G-B1). `BasinMap` stays
   as the fast map of where anything can rest at all.
 * **The band.** S1 ran 30–70 kHz. Sites closer than about half a wavelength
-  are not filled separately; the mold now plays 50–100 kHz (README, Round 16).
+  are not filled separately; the mold now plays 50–100 kHz (diary, Round 16).
   "Tones buy confinement" needs the rider: only shorter wavelengths buy
   resolution.
 

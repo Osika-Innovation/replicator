@@ -217,3 +217,12 @@ What is left of the old machines, and why it is still here:
   can go, so they were left.
 
 The line count is 18,535 against the proposed 17,500.
+
+## The README, cut to the status — 2026-11-11
+
+Rule 9, done by the session that wrote Rounds 13–16. `README.md` went from
+1,371 lines to 108: what the twin is, the current commands, the gated results
+on the open-air machine, what the studies say, what is open. The
+round-by-round diary moved unchanged to `papers/twin_rounds.md`, with a note
+naming the commands that now exist only in the tag. The status is written by
+hand, not yet generated from the receipts.
