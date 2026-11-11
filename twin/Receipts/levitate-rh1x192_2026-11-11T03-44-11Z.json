@@ -1,0 +1,64 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T03:44:11Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 50.33284795284271,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 2.81 m\/s (152 dB plane-wave), rms 1.18 m\/s; field peak 157 dB; lateral 6 Hz; sibling ratio 0.06",
+      "id" : "LEV",
+      "measured" : 2.8082936762481436,
+      "name" : "rh1x192, 5-tone chord 30–70 kHz: PLA Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 4.14 m\/s (156 dB plane-wave), rms 1.74 m\/s; field peak 160 dB; lateral 6 Hz; sibling ratio 0.06",
+      "id" : "LEV",
+      "measured" : 4.1430496656431774,
+      "name" : "rh1x192, 5-tone chord 30–70 kHz: aluminium Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 7.06 m\/s (160 dB plane-wave), rms 2.96 m\/s; field peak 165 dB; lateral 6 Hz; sibling ratio 0.06",
+      "id" : "LEV",
+      "measured" : 7.063536237610876,
+      "name" : "rh1x192, 5-tone chord 30–70 kHz: steel Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 2.31 m\/s (151 dB plane-wave), rms 0.88 m\/s; field peak 157 dB; lateral 6 Hz; sibling ratio 0.05",
+      "id" : "LEV",
+      "measured" : 2.308516501044288,
+      "name" : "rh1x192, 10 tones 32–68 kHz: PLA Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 3.41 m\/s (154 dB plane-wave), rms 1.30 m\/s; field peak 160 dB; lateral 6 Hz; sibling ratio 0.05",
+      "id" : "LEV",
+      "measured" : 3.4057252771540463,
+      "name" : "rh1x192, 10 tones 32–68 kHz: aluminium Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 5.81 m\/s (159 dB plane-wave), rms 2.22 m\/s; field peak 165 dB; lateral 6 Hz; sibling ratio 0.05",
+      "id" : "LEV",
+      "measured" : 5.806455279872595,
+      "name" : "rh1x192, 10 tones 32–68 kHz: steel Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "9ddba61",
+  "name" : "levitate-rh1x192"
+}

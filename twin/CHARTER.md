@@ -117,8 +117,10 @@ below):
 | `build --shape tetra` | G-B2 pass | base of three touching, the fourth resting on all three | 233 s |
 | `build --check-part` | G-A4 pass | the part field's adjoint vs central differences: 8e-7 | seconds |
 
-No receipts were written for these runs: the tree was uncommitted. Re-run with
-`--receipt` after a commit.
+Receipts written 2026-11-11 on the committed tree (`a8f002a`): G-A1, G-A3,
+G-P1, G-P2, G-B1, G-B2 and G-A4 all pass (`gpu_…`, `levitate-rh1x192_…`,
+`carry-rh1x192_…`, `fly-rh1x192_…`, `build-rh1x192_…`,
+`build-tetra-rh1x192_…`, stamped `2026-11-11T03-4*` / `03-5*`).
 
 What the port needed, beyond swapping the field:
 
