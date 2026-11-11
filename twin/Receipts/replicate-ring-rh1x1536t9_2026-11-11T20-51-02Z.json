@@ -1,0 +1,91 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T20:51:02Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 600.3272780179977,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "ring: 12 sites read (100% on the object, 100% of it covered); open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.64 m\/s rms per channel; traced flow: 100.0% on the shape, sites 7.3–10.0% (fair 8.3%), 0.0% rogue; lift contrast 2.02; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (196–313); copy: 100% of the cloud within 1.5 mm of the original (median 0.33 mm); scans correlate 0.852",
+      "id" : "G-R1",
+      "measured" : 1,
+      "name" : "replicate (ring): the shape read off the scan lies on the object (sites within 1.5 mm)",
+      "passed" : true,
+      "threshold" : 0.9
+    },
+    {
+      "comparison" : ">",
+      "detail" : "ring: 12 sites read (100% on the object, 100% of it covered); open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.64 m\/s rms per channel; traced flow: 100.0% on the shape, sites 7.3–10.0% (fair 8.3%), 0.0% rogue; lift contrast 2.02; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (196–313); copy: 100% of the cloud within 1.5 mm of the original (median 0.33 mm); scans correlate 0.852",
+      "id" : "G-R2",
+      "measured" : 1,
+      "name" : "replicate (ring): ≥90% of the powder ends within 1.5 mm of the ORIGINAL object",
+      "passed" : true,
+      "threshold" : 0.9
+    },
+    {
+      "comparison" : ">",
+      "detail" : "ring: 12 sites read (100% on the object, 100% of it covered); open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.64 m\/s rms per channel; traced flow: 100.0% on the shape, sites 7.3–10.0% (fair 8.3%), 0.0% rogue; lift contrast 2.02; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (196–313); copy: 100% of the cloud within 1.5 mm of the original (median 0.33 mm); scans correlate 0.852",
+      "id" : "G-R3",
+      "measured" : 0.8524134201529586,
+      "name" : "replicate (ring): the copy's scan matches the original's (Pearson over the grid)",
+      "passed" : true,
+      "threshold" : 0.7
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.64 m\/s rms per channel; traced flow: 100.0% on the shape, sites 7.3–10.0% (fair 8.3%), 0.0% rogue; lift contrast 2.02; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (196–313)",
+      "id" : "G-M1",
+      "measured" : 0.8794447345827022,
+      "name" : "acoustic mold (read ring): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.64 m\/s rms per channel; traced flow: 100.0% on the shape, sites 7.3–10.0% (fair 8.3%), 0.0% rogue; lift contrast 2.02; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (196–313)",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999866,
+      "name" : "acoustic mold (read ring): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 26 (open-type scaled to 86.1 kHz, Ø4.6 mm): asked 2.12 m\/s at 86.1 kHz on its Ø4.6 mm face, can give 2.03; rms over the elements 0.95×",
+      "id" : "G-E1",
+      "measured" : 1.0445024634874966,
+      "name" : "element drive (read ring): the most any element is asked for ÷ what it can give",
+      "passed" : false,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "190 W electrical at the elements' efficiency, 133 W of it heat in the two plates",
+      "id" : "G-E2",
+      "measured" : 56.89330927613075,
+      "name" : "element drive (read ring): acoustic power radiated (W)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "<",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.64 m\/s rms per channel; traced flow: 100.0% on the shape, sites 7.3–10.0% (fair 8.3%), 0.0% rogue; lift contrast 2.02; particles: 100.0% on the shape after 8 s, 12\/12 sites filled (196–313)",
+      "id" : "G-B0",
+      "measured" : 1.3433698597964394e-14,
+      "name" : "traced flow vs stepped grains: the share on the shape agrees",
+      "passed" : true,
+      "threshold" : 0.05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "3000 grains, fair share 8.3%; the 26-neighbour lattice map differs by up to 1.9%",
+      "id" : "G-B1",
+      "measured" : 0.00943251127493093,
+      "name" : "traced flow vs stepped grains, site by site (largest difference in share)",
+      "passed" : true,
+      "threshold" : 0.03
+    }
+  ],
+  "gitSHA" : "1cdc269+dirty",
+  "name" : "replicate-ring-rh1x1536t9"
+}

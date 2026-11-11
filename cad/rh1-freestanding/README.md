@@ -15,7 +15,7 @@ old Blender model were resolved how: [`twin/CAD.md`](../../twin/CAD.md).
 | `MANUFACTURING.md` | the manufacturing pack: made parts and how, boards, bought parts, the transmitters tone by tone with their drive voltages, driver counts, assembly order, and what cannot be built from the model yet | `fieldc cad pack` |
 | `rh1_params.json` | the full design: stack, faces, horn/cone profiles, every element site and slot dash (both face hands), provenance, reconciliation, part volumes | `fieldc cad params` |
 | `renders/` | iso, front, section, section-iso, detail, plate, storage, top | `fieldc cad render --all` |
-| `rh1_freestanding_rev3.blend` | render model for the deck / site: the same geometry with spec §8 finishes, assembly collections, rev2 camera and lights, a quarter section cutter wired in (disabled) | `Tools/rh1_blend.py` on the OBJ export |
+| `rh1_freestanding_rev3.blend` | render model for the deck / site, with spec §8 finishes, assembly collections, rev2 camera and lights. **Stale: it still carries the face of 2026-11-10** (192 discs, slots in dashes); regenerate it with the last command below when the face is ruled on | `Tools/rh1_blend.py` on the OBJ export |
 
 **Face as of 2026-11-12 (proposal):** 1,536 resonant open-type transmitters
 per face, each tuned to one of nine tones (52.8–97.2 kHz, Ø7.6–4.1 mm), on a

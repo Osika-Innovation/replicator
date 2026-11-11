@@ -231,7 +231,48 @@ rules for hole webs (bar moved 2.0 → 1.0 mm with the reason in the code),
 trace pitch and driver board area; STEP re-exported and volume-gated; a
 manufacturing pack (`fieldc cad pack`).
 
-**What a build must hold** (study S5, `fieldc tolerance`): see the README.
+**The verbs on the new plate** (receipts `*-rh1x1536t9`): the ring mold
+passes everything (G-E1 0.96). The tetrahedron frame fills but asks 1.13×
+what the elements give; the ring read off a scan (12 sites) asks 1.04×; the
+ring taken from the STL leaves one site of sixteen empty, with feedback
+rounds as well. Holding a PLA bead takes 73 % of the ceiling; the carry
+passes; an integrated bead rides it at 1.25× and 1.5× holding (2× asks
+1.04×); the bead row and the bead tetrahedron build at 1.5× holding, where
+they ran at 4× on ideal pistons. `carry` now takes 500 s and `build`
+1,300 s.
+
+**The scan on resonant elements** failed at first (AUC 0.56) for two reasons,
+neither of them the resonance itself:
+
+4. *A folded bounce.* The sweep kept its 320 frequencies over the narrower
+   50–100 kHz band, which stretched the time window from 4.56 to 6.40 ms and
+   folded the plates' third bounce (8.04 ms) to 1.64 ms, inside the echo
+   gate. The sweep now keeps its frequency step.
+5. *A comb.* Nine resonance peaks are a comb in frequency, and a comb's echo
+   has range sidelobes. The controller knows each curve, so it sends and
+   weighs H*/(|H|² + ε²): through the resonator that is a flat, real gain
+   over ±6 % round each tone.
+
+With both: every voxel above half the peak within 2 mm of the object, AUC
+0.984, contrast 10.9× (the 192-disc plate gave 8.2×). `replicate` then
+passes G-R1–3 (the two scans correlate 0.852).
+
+**What a build must hold** (study S5, `fieldc tolerance`). Open loop — the
+drawing's drive played on random builds — the mold tolerates gain ±10 % and
+position ±0.2 mm, and almost nothing else: phase ±5° empties a site, as do
+0.3 % of resonance detuning, 2 % dead elements or air 0.3 K warmer. Closed
+loop — the mold compiled on one assembled machine as calibration measured it
+(gain ±10 %, phase ±20°, 2 % dead) — it passes, and keeps passing with
+calibration errors of gain ±2 %, phase ±5° and 0.1 K. So assembly may be
+loose and calibration may not; and the air must be known to 0.1 K beside
+plates that take about 100 W of heat.
+
+**Where it stands.** One plate design on which the powder mold, the scan,
+the copy and the bead verbs all run with real element limits, at the edge of
+those limits; a CAD that draws that plate and a pack that lists what to make
+and buy; a statement of what calibration must reach. Not a measured
+machine: the transmitter is an assumption, and the plate is the operator's
+to rule on.
 
 ## Round 16 — evenness, measured on the flow and fixed with the band (2026-11-10)
 

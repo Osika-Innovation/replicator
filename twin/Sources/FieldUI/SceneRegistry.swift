@@ -55,7 +55,7 @@ public enum SceneRegistry {
             s.objects = [ring]
             s.overlays = ["solid", "traps", "field", "matter"]
             s.frame = 80; s.frameCount = 80; s.simTimeMs = 8000; s.buildPercent = 100
-            s.statusLine = "mold compiled: 100% of the powder on the shape, sites 5.4–6.9% (fair 6.2%) · all gates pass"
+            s.statusLine = "mold compiled: 100% of the powder on the shape, sites 0.0–12.6% (fair 6.2%) · FAILS G-M1"
             s.inspector = [moldSection, moldGates] + machineSections()
             return s
         }),
@@ -90,7 +90,7 @@ public enum SceneRegistry {
             s.mode = .scan
             s.objects = [ring]
             s.overlays = ["solid", "scan"]
-            s.statusLine = "scanned in 37 s: 100% of the object imaged within 2 mm, AUC 0.990, 12 sites read"
+            s.statusLine = "scanned in 148 s: 100% of the object imaged within 2 mm, AUC 0.984, 12 sites read"
             s.inspector = [scanSection] + machineSections()
             return s
         }),
@@ -123,18 +123,19 @@ public enum SceneRegistry {
     static let moldSection = AppState.InspectorSection(title: "Mold", rows: [
         ("object", "ring.stl"), ("powder", "PLA Ø40 µm, 3000 grains"),
         ("sites", "16"), ("tones", "9, 53–97 kHz"),
-        ("drive", "2.81 m/s rms per element"), ("acoustic power", "111 W"),
-        ("lift contrast", "3.07"), ("on the shape", "100.0 %"),
-        ("per site", "5.4–6.9 % (fair 6.2 %)"),
+        ("drive", "1.84 m/s on the hardest-driven element"), ("acoustic power", "44 W"),
+        ("lift contrast", "1.88"), ("on the shape", "100.0 %"),
+        ("per site", "0.0–12.6 % (fair 6.2 %)"),
     ])
     static let moldGates = AppState.InspectorSection(title: "Gates", rows: [
-        ("G-M1", "0.856 ✓"), ("G-M2", "1 ✓"), ("G-B0", "2.89e-14 ✓"), ("G-B1", "0.00891 ✓"),
+        ("G-M1", "0 ✗ FAILS"), ("G-M2", "1 ✓"), ("G-E1", "0.909 ✓"), ("G-E2", "43.8 ✓"),
+        ("G-B0", "2.94e-14 ✓"), ("G-B1", "0.0133 ✓"),
     ])
     static let scanSection = AppState.InspectorSection(title: "Scan", rows: [
         ("method", "gated pulse-echo, matched filter"),
-        ("band", "30–100 kHz, 320 frequencies"), ("pulses", "8 random chords"),
+        ("band", "50–100 kHz, 228 frequencies"), ("pulses", "8 random chords"),
         ("grid", "±14 mm at 0.7 mm (41³)"),
-        ("recall", "100 % within 2 mm"), ("AUC", "0.990"), ("contrast", "8.2×"),
+        ("recall", "100 % within 2 mm"), ("AUC", "0.984"), ("contrast", "10.9×"),
     ])
 
     /// Machine-tab scenes: the CAD model, closed, cut, and the plate face.
@@ -166,7 +167,7 @@ public enum SceneRegistry {
             MachineCAD.applyRail(&s)
             s.overlays = ["cad.section"]
             let p = MachineCAD.model.pattern
-            s.statusLine = "plate face · \(p.elements.count) driven elements · \(p.slotCenterlines.count) slot dashes on 12 arms"
+            s.statusLine = "plate face · \(p.elements.count) driven elements \(p.elementSizeText) · " + (p.slotCenterlines.isEmpty ? "no room left for the light slots" : "\(p.slotCenterlines.count) slot dashes on 12 arms")
             s.inspector = MachineCAD.inspector()
             return s
         }, solid: "plate"),

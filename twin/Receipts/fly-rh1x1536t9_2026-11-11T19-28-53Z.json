@@ -1,0 +1,199 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T19:28:53Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 537.5574330091476,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.82 mm, carried; the hardest-driven element at 0.82 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.0002960866049382048,
+      "name" : "1.25× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.62 mm, carried; the hardest-driven element at 0.82 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00025014494456029163,
+      "name" : "1.25× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.59 mm, carried; the hardest-driven element at 0.82 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00023849830577431428,
+      "name" : "1.25× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.59 mm, carried; the hardest-driven element at 0.82 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00023435512187753723,
+      "name" : "1.25× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.77 mm, carried; the hardest-driven element at 0.90 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00021026736435182636,
+      "name" : "1.50× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.65 mm, carried; the hardest-driven element at 0.90 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00020966543537538447,
+      "name" : "1.50× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.52 mm, carried; the hardest-driven element at 0.90 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00019161672905559468,
+      "name" : "1.50× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.51 mm, carried; the hardest-driven element at 0.90 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00019132987947043193,
+      "name" : "1.50× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.73 mm, carried; the hardest-driven element at 1.04 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.0001710592298384193,
+      "name" : "2.00× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.62 mm, carried; the hardest-driven element at 1.04 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.0001546697799436403,
+      "name" : "2.00× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.48 mm, carried; the hardest-driven element at 1.04 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00014783434257167297,
+      "name" : "2.00× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.44 mm, carried; the hardest-driven element at 1.04 of its ceiling",
+      "id" : "FLY",
+      "measured" : 0.00014754575702645233,
+      "name" : "2.00× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.70 mm, carried; the hardest-driven element at 1.47 of its ceiling",
+      "id" : "FLY",
+      "measured" : 8.852734307627675e-05,
+      "name" : "4.00× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.43 mm, carried; the hardest-driven element at 1.47 of its ceiling",
+      "id" : "FLY",
+      "measured" : 8.139984509735527e-05,
+      "name" : "4.00× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.40 mm, carried; the hardest-driven element at 1.47 of its ceiling",
+      "id" : "FLY",
+      "measured" : 8.184891365010209e-05,
+      "name" : "4.00× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.36 mm, carried; the hardest-driven element at 1.47 of its ceiling",
+      "id" : "FLY",
+      "measured" : 8.055673481382341e-05,
+      "name" : "4.00× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.72 mm, carried; the hardest-driven element at 2.08 of its ceiling",
+      "id" : "FLY",
+      "measured" : 3.825696821053982e-05,
+      "name" : "8.00× holding drive, 10 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.53 mm, carried; the hardest-driven element at 2.08 of its ceiling",
+      "id" : "FLY",
+      "measured" : 5.882284931467599e-05,
+      "name" : "8.00× holding drive, 20 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.33 mm, carried; the hardest-driven element at 2.08 of its ceiling",
+      "id" : "FLY",
+      "measured" : 4.7353204059400445e-05,
+      "name" : "8.00× holding drive, 40 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : "info",
+      "detail" : "worst lag 0.32 mm, carried; the hardest-driven element at 2.08 of its ceiling",
+      "id" : "FLY",
+      "measured" : 4.682800520607749e-05,
+      "name" : "8.00× holding drive, 80 ms per 0.25 mm step",
+      "passed" : true,
+      "threshold" : 0.0005
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements (Ø390 mm, 460 mm apart, R 0.9); at least one drive level the elements can give (G-E1 < 1) and step time carries it to within 0.5 mm of the drop-off",
+      "id" : "G-P2",
+      "measured" : 1,
+      "name" : "a 200 µm PLA bead, integrated through the open-air plates' fields, rides the carry 5 mm up and 5 mm across",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "9c6d226+dirty",
+  "name" : "fly-rh1x1536t9"
+}

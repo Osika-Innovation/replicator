@@ -15,12 +15,13 @@ Command Line Tools only; no Xcode.
 
 ```sh
 swift build -c release
-./.build/release/fieldc test                 # 52 tests (FIELDC_VERBOSE=1 prints every measured value)
+./.build/release/fieldc test                 # 58 tests (FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gpu --receipt        # GPU kernels against their CPU reference (G-A1, G-A3)
-./.build/release/fieldc mold --receipt       # powder → shape (--shape ring|tetra, --stl file.stl, --rotate deg, --band lo-hi, --fcode out.fcode)
+./.build/release/fieldc mold --receipt       # powder → shape (--shape ring|tetra, --stl file.stl, --rotate deg, --fcode out.fcode)
+./.build/release/fieldc tolerance --receipt  # what a build must hold: the mold played on random builds (study S5)
 ./.build/release/fieldc scan3d --object ring --receipt   # gated pulse-echo scan (point | ring | tetra | R)
 ./.build/release/fieldc replicate --receipt  # scan → read the shape → mold a copy → scan the copy
-./.build/release/fieldc arraysweep --receipt # what the element count and the tones buy (study S1)
+./.build/release/fieldc arraysweep --receipt # what the element count and the tones buy on ideal pistons (study S1)
 ./.build/release/fieldc levitate --receipt   # the drive to hold one bead against gravity
 ./.build/release/fieldc carry --receipt      # pick up, carry, place (G-P1)
 ./.build/release/fieldc fly --receipt        # a bead integrated through the carry (G-P2)
@@ -29,7 +30,8 @@ swift build -c release
 ./.build/release/fieldc backend --receipt    # .fcode, frame log, emulated machine (G-FC1–5)
 ./.build/release/fieldc fcode demo --out demo.fcode
 ./.build/release/fieldc play demo.fcode --object ring
-./.build/release/fieldc cad check --rules    # CAD gates + design rules
+./.build/release/fieldc cad check --rules    # CAD gates + 28 design rules
+./.build/release/fieldc cad pack             # the manufacturing pack
 ./.build/release/fieldc cad export | step | render --all | drawing | bom | params
 ./.build/release/fieldc shot --all --compare # every UI scene against its golden in shots/
 ```
@@ -41,74 +43,133 @@ sh Tools/make_app.sh && open ".build/Field Compiler.app"   # --args --compile | 
 ```
 
 It opens on `Samples/ring.stl`. **Compile** makes a mold of the loaded object
-on the plates (about five minutes for 16 sites; the default ring passes every gate, 5.4–6.9 % per site, receipt `mold-ring-stl-sieve-rh1x192_2026-11-11T05-00-42Z`) and steps the powder through
-it; **Build** plays that powder frame by frame; **Scan** runs the plates'
-pulse-echo scan of the object (about 40 s); **Inspect** shows the compile's
-gates; **Machine** is the CAD. An STL larger than the mold volume (a 24 mm
-cube at the chamber centre) is scaled down to fit and the status line says so.
+on the plates (about five minutes) and steps the powder through it; **Build**
+plays that powder frame by frame; **Scan** runs the plates' pulse-echo scan of
+the object; **Inspect** shows the compile's gates; **Machine** is the CAD. An
+STL larger than the mold volume (a 24 mm cube at the chamber centre) is scaled
+down to fit and the status line says so.
 
-`--array ideal | microhorn` and `--per-plate N` swap the plate for the earlier
-ones; the default everywhere is the machine's own, `PlateArray.rh1`.
+`--array disc` is the face of 2026-11-10 (192 directly radiating Ø5 discs per
+face, ideal broadband pistons to the engine); `--array ideal | microhorn` and
+`--per-plate N` are the earlier ones; `--elements N` changes the count. The
+default everywhere is the machine's own, `PlateArray.rh1`.
 
-## Status — 2026-11-11
+## Status — 2026-11-12
 
-**The machine.** Two plates in open air, 460 mm apart. Each face carries 192
-independently driven Ø5 mm elements on a golden-angle spiral (r 12–196.5 mm),
-the twelve light slots cut into dashes around them. The CAD draws exactly the
-array the engine drives (gate G-CAD9, to 1e-6 mm). Operator rulings: redraw
-the face for the elements (2026-11-10); keep 192 per face (2026-11-11).
+**The machine.** Two plates in open air, 460 mm apart. Each face carries
+**1,536 resonant transmitters**, each tuned to one of nine tones
+(52.8–97.2 kHz) and driven by its own channel, on a golden-angle spiral
+(r 13–195 mm): the bought 40 kHz open-type part scaled to each tone, Ø7.6 mm
+down to Ø4.1 mm. The CAD draws exactly the array the engine drives (gate
+G-CAD9, to 1e-6 mm).
 
-**What the twin does on that machine, gated:**
+**This face is a proposal.** The operator's rulings stand at: redraw the face
+for the elements (2026-11-10); keep 192 per face (2026-11-11). Both were made
+while the engine drove ideal pistons. On 2026-11-12 the elements got a
+hardware model, and the 192 directly radiating discs turned out to give a
+three-hundredth of what the mold asks (gate G-E1 = 310; [`ENGINE.md`](ENGINE.md),
+"The elements are hardware"). 1,536 resonant elements per face is the first
+plate on which a mold passes with every element inside what it can deliver.
+What it costs: four faces × 1,536 channels; the twelve light slots (no room
+between the holes); and it rests on a transmitter nobody has measured.
+
+**What the twin does on that machine, gated.** Every row below was run on the
+1,536-element plate; G-E1 holds the drive to the elements' ceiling.
 
 | verb | result | gates |
 |---|---|---|
-| `mold` | Ø40 µm powder ends 100 % on a 16-site ring, 5.9–6.7 % per site (fair 6.25 %); the ring turned 5° and 11.25° and a tetrahedron frame pass too. 9 tones over 50–100 kHz, 3.0 m/s rms per element, ~126 W acoustic | G-M1, G-M2, G-B0, G-B1 |
-| `scan3d` | a wire ring imaged by time-gated pulse-echo: 100 % recall within 2 mm, object voxels outrank background voxels 0.990 (AUC) | SCAN, SCAN-AUC (informational) |
-| `replicate` | scan a ring, read its 12 sites to 0.56 mm, mold a copy (median 0.35 mm from the original), re-scan it (correlation 0.751, bar 0.70); 355 s | G-R1–3 |
-| `levitate` `carry` `fly` | one bead held, carried 10 mm on its point, and ridden by an integrated PLA bead | G-P1, G-P2 |
-| `build` | five beads placed in a touching row; four as a tetrahedron | G-B1, G-B2, G-A4 |
-| `backend` `fcode` `play` | a job as a `.fcode` stream, a CRC-checked binary frame log, an emulated machine behind `MachineBackend` | G-FC1–5 |
+| `mold` ring | Ø40 µm PLA powder ends 100 % on a 16-site ring, 5.2–7.2 % per site (fair 6.25 %), lift contrast 2.22, at 1.15× holding. The hardest-driven element is at 96 % of its ceiling; 48 W acoustic, 159 W electrical | G-M1, G-M2, G-B0, G-B1, **G-E1 0.96** |
+| `mold` tetrahedron frame | 100 % on the frame, 4.7–13.3 % per site (fair 10 %) — but it asks the elements for 1.13× what they can give | G-M1, G-M2, G-B0, G-B1 pass; **G-E1 fails (1.13)** |
+| `mold --stl` ring.stl (the app's object) | 100 % on the ring, but one site of sixteen stays empty (0.0–12.6 % per site), with two feedback rounds as well; the analytic ring above, 16 sites on the same circle, fills evenly | G-M2, G-B0, G-B1, G-E1 0.91 pass; **G-M1 fails** |
+| `scan3d` | a wire ring imaged by time-gated pulse-echo through the elements' resonance curves: every voxel above half the peak is within 2 mm of the object, 100 % recall, object voxels outrank background 0.984 (AUC) | SCAN, SCAN-AUC (informational) |
+| `replicate` | scan a ring, read its 12 sites (worst 0.50 mm off), mold a copy (median 0.33 mm from the original), re-scan it (correlation 0.852, bar 0.70); 600 s. The copy's mold asks 1.04× what the elements give | G-R1–3, G-M1, G-M2 pass; **G-E1 fails (1.04)** |
+| `levitate` | one Ø200 µm PLA bead held with the hardest element at 73 % of its ceiling. Aluminium would ask 1.08×, steel 1.84× | G-E1 0.73 |
+| `carry` `fly` | the bead carried 5 mm up and 5 mm across on its point (worst 0.03 mm off); an integrated bead rides the carry at 1.25× and 1.5× holding. 2× asks 1.04× | G-P1, G-P2 |
+| `build` | five beads placed in a touching row, four as a tetrahedron, at 1.5× holding (the drive was 4× on ideal pistons) | G-B1, G-B2, G-E1 0.90 |
+| `backend` `fcode` `play` | a job as a `.fcode` stream, a CRC-checked binary frame log, an emulated machine behind `MachineBackend` that sends and hears through the elements' resonance curves | G-FC1–5 |
 | `windings` | exact Biot–Savart on the CAD's winding centrelines | G-EM1–3 |
-| `cad` | 100 closed solids, STEP export volume-gated against the mesh | G-CAD1–9, 26 design rules |
+| `cad` | 104 closed solids, 28 design rules, STEP export volume-gated against the mesh, a manufacturing pack | G-CAD1–9, G-STEP |
+
+`fieldc status --plate rh1x1536t9` prints every gate of the newest receipts.
+The plate is at its limit. The ring passes with 4 % in hand; a shape that
+needs more drive than the ring does not pass G-E1, and how evenly the sites
+fill is not robust: one of the five molds above leaves a site empty.
 
 Receipts for every row are in `Receipts/`; each names the commit that made it.
 
+**What a build must hold** (study S5, `fieldc tolerance`: the compiled ring
+mold played, at the drawing's power, on random builds of the plates; a build
+passes when every site still holds a quarter of its fair share and 95 % of
+the powder ends on the shape):
+
+| what the build is off by | open loop: the drawing's drive on it | |
+|---|---|---|
+| element gain | ±10 % | holds |
+| element phase | ±5° already empties a site | fails |
+| element position | ±0.2 mm | holds |
+| resonance frequency | ±0.1 % holds, ±0.3 % fails | |
+| dead elements | 0.5 % holds, 2 % fails | |
+| air temperature | 0.1 K holds, 0.3 K fails; at 1 K the powder falls | |
+| all of an assembled machine's errors together | | fails |
+
+So a machine is **calibrated** before it molds: with the chamber empty every
+element is played alone and heard by the others (`MachineBackend.calibrate`),
+and the mold is compiled on the machine as measured. Taking one build with
+assembly-grade errors as that machine (gain ±10 %, phase ±20°, position
+±0.2 mm, resonance ±0.3 %, 2 % of the elements dead), the mold compiled on it
+passes its gates (sites 4.3–8.3 %, G-E1 0.93), and then:
+
+| what calibration leaves unmeasured | the mold on the machine |
+|---|---|
+| gain ±1 %, phase ±2°, air 0.05 K | holds (sites 0.70–1.33 of a fair share) |
+| gain ±2 %, phase ±5°, air 0.1 K | holds (0.67–1.31) |
+| gain ±5 %, phase ±10°, air 0.3 K | fails (a site empties; the weakest site lifts 0.99× a grain) |
+
+**The requirement:** assembly may be loose; calibration must reach gain ±2 %
+and phase ±5° per element, and the machine must know its air to 0.1 K while
+it molds — with about 100 W of heat going into the plates beside that air.
+
 **What the studies say.**
 
+* A real element plays one tone, and the plate needs about a third of its
+  face radiating at 2 m/s to mold PLA powder at 230 mm. The drive a mold
+  needs falls as 1/N; at a fixed share of the face radiating it falls as
+  f^1.5 (study of 2026-11-12, `ENGINE.md`).
 * Tones buy confinement and evenness; elements buy power. One tone never
-  makes a unique trap. Nine tones fill every site at 2 × 48 elements already;
-  192 is kept for the 3.5× lower drive per element (S1, 2026-11-10).
+  makes a unique trap (S1, on ideal pistons).
 * A mold must be judged on the traced flow (`FlowMap`), which agrees with
-  stepped grains to within 2 % of the powder per site. The 26-neighbour
-  lattice map misreports per-site shares.
+  stepped grains to within 2 % of the powder per site.
 * The mold band is 50–100 kHz because sites 3.1 mm apart are not resolved at
   30–70 kHz.
 * The windings put 0.48 mT in the chamber at 63 A. That is ~100× too little
   current to induction-levitate a Ø2 mm aluminium grain: the bore lift of
-  ruling R10 is OPEN as dimensioned. A Ø20 mm bore coil of 376 amp-turns
-  would hold mm-size shot at 100 kHz, not powder.
+  ruling R10 is OPEN as dimensioned.
 * The St. Clair patent claims were tested as referents and none adopted
   (table in `ENGINE.md`).
 
 **Open.**
 
-* No hardware has been measured. Every number above is a model of ideal
-  pistons in linear air; the elements' electrical response, their reach to
-  100 kHz and 3 m/s, and plate cross-talk are not modelled.
+* **No hardware has been measured.** The transmitters are the 40 kHz part's
+  datasheet scaled to nine other tones on the assumption that the face
+  velocity carries over. The plates' reflection (0.9) is a bare metal face's;
+  cross-talk between elements and their electrical response beyond one
+  resonance curve (Q 25, assumed) are not modelled.
+* **No margin.** The ring mold runs the hardest-driven element at 96 % of its
+  ceiling, on a face that cannot hold more elements.
+* **For the operator:** 1,536 resonant elements per face against the ruling
+  of 192; the light slots against the powder mold; what the horn, cone and
+  throat piezos behind each plate are for now.
 * Only `play` runs through `MachineBackend`. `mold`, `scan3d`, `replicate`
-  and the placing verbs still build their own fields (charter rule 2).
-* The app's Compile, Build and Scan run on the plates (rebuilt 2026-11-11),
-  but it only molds: the bead-placing verbs and `replicate` are not in it.
-  The six-gate code it used to pin was deleted on 2026-11-12 (operator
-  ruling); the tag `twin-before-first-cut` holds it.
+  and the placing verbs still build their own fields (charter rule 2). The
+  emulated machine does carry the elements' resonance curves and build
+  errors.
+* The app molds and scans; the bead-placing verbs and `replicate` are not in
+  it.
 * The mold volume is a 24 mm cube and a mold is 16 sites. Larger or finer
   objects are scaled and sampled down to that, not built at size.
-* The CAD has no wiring layer for the 4 × 192 elements, and the horns, cones
-  and throat piezos behind the faces no longer drive the sound: their role
-  is undecided.
-* Reading small 3D wireframes from a scan (the tetrahedron) does not work
-  yet; the ring does.
-* `Sources/` is 16,293 lines, under the charter's proposed cap of 17,500.
+* The base's contents, the controller, fasteners, gaskets and cabling are
+  envelopes or absent (`fieldc cad pack` lists them).
+* `Sources/` is 17,315 lines, under the charter's proposed cap of 17,500.
 
 ## Layout
 
