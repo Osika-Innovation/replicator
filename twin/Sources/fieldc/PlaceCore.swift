@@ -9,9 +9,6 @@ import Foundation
 // (G-P1, G-P2) are the same; the field is the matrix-free GPU operator
 // (`ArrayFieldGPU`), so nothing per element is stored and the solvers are the
 // field forms of `ForceCompiler.carryStep` / `moveWell`.
-//
-// `--glass` (or `--chamber glass`) runs the original glass-chamber commands
-// in main.swift.
 
 /// ∇U at x on a lattice: central differences, trilinear between nodes; nil
 /// within `margin` cells of the edge.
@@ -135,13 +132,6 @@ struct PlaceRig {
 }
 
 enum PlaceCommand {
-    static func handles(_ cmd: String, _ args: [String]) -> Bool {
-        guard ["levitate", "carry", "fly"].contains(cmd) else { return false }
-        if args.contains("--glass") { return false }
-        if let i = args.firstIndex(of: "--chamber"), i + 1 < args.count, args[i + 1] == "glass" { return false }
-        return true
-    }
-
     static func run(_ cmd: String, _ args: [String]) -> Int32 {
         do {
             let ctx = try MetalContext()

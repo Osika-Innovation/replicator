@@ -19,13 +19,6 @@ import Foundation
 // open mesh), streaming.
 
 enum BuildCommand {
-    static func handles(_ cmd: String, _ args: [String]) -> Bool {
-        guard cmd == "build" else { return false }
-        if args.contains("--glass") { return false }
-        if let i = args.firstIndex(of: "--chamber"), i + 1 < args.count, args[i + 1] == "glass" { return false }
-        return true
-    }
-
     static func run(_ args: [String]) -> Int32 {
         do {
             let ctx = try MetalContext()

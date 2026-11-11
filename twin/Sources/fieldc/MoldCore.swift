@@ -8,17 +8,14 @@ import Foundation
 // powder through the probe volume, and see where it ends in that field, with
 // gravity.
 //
-// Two chambers. `.plates(array)`, the default since ENGINE.md: two Ø410 mm
-// plates in open air, each N independently driven elements, matrix-free on
-// the GPU. `.glass`: the glass cylinder of Rounds 7–11 (six gates, stored
-// cavity rows).
+// The chamber is `.plates(array)`: two plates in open air, each N independently
+// driven elements, matrix-free on the GPU (ENGINE.md).
 //
 // Where the powder ends is computed twice: by the basin map (every start's
 // destination at once, recirculation in closed form) and by stepping 3,000
 // grains (the check, gate G-B0).
 
 enum MoldChamber {
-    case glass
     case plates(PlateArray)
 }
 
@@ -85,7 +82,6 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     let air = RH1Freestanding.roomAir
     let L: Double
     switch chamber {
-    case .glass: L = RH1Design().buildChamberHeight * 0.001
     case .plates(let a): L = a.gap
     }
     let lam40 = air.wavelength(at: 40_000)
@@ -128,30 +124,6 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     var start: [[Complex]] = []
     let field: any ForceCompiler.ForceField
     switch chamber {
-    case .glass:
-        let cav = RH1Freestanding.chamber(maxGamma: {
-            let k = air.wavenumber(at: freqs.max()!), e = Foundation.log(1e4) / 0.05
-            return (k * k + e * e).squareRoot() }())
-        let zMin = max(0.05, min(lat.origin.z, L - (lat.origin.z + Double(n - 1) * h)))
-        var tones: [ForceCompiler.Tone] = []
-        for f in freqs {
-            var op = RH1Freestanding.Options()
-            op.frequency = f; op.medium = air; op.slotSegment = max(2e-3, air.wavelength(at: f) / 4)
-            let (p, c) = RH1Freestanding.preset(op)
-            let src = cav.source(elements: p.elements, coupling: c, gateCount: p.gateCount, frequency: f, medium: air, zMin: zMin)
-            tones.append(ForceCompiler.Tone(frequency: f, medium: air,
-                                            rows: try CavityFieldsGPU.build(ctx: ctx, cavity: cav, source: src,
-                                                                            points: lat.positions, withGradient: true)))
-            let prop = Propagator(elements: p.elements, lattice: FieldLattice(origin: .zero, spacing: 1, nx: 1, ny: 1, nz: 1),
-                                  frequency: f, medium: air, gateCount: p.gateCount, elementCoupling: c,
-                                  cavity: cav, cavitySource: src)
-            let u = InverseSolver.solve(propagator: prop, points: snapped.map { .init(position: $0) },
-                                        method: .gspat, iterations: 80, trap: .twinTrap)
-            start.append(u.map { $0 * (1 / (u.l2 * Double(nTones).squareRoot())) })
-        }
-        field = ForceCompiler.StoredRows(tones: tones, lattice: lat, channels: 6)
-        log(String(format: "acoustic mold: %@, %d sites; glass chamber, 6 gates, %d tones %.0f–%.0f kHz; probe ±%.0f mm at %.2f mm (%d³)",
-                   label, targets.count, nTones, band.lo / 1000, band.hi / 1000, hh * 1000, h * 1000, n))
     case .plates(let arr):
         field = try ArrayFieldGPU(ctx: ctx, array: arr, frequencies: freqs, medium: air, lattice: lat)
         // Time reversal: every element driven with the conjugate of its field
@@ -442,7 +414,6 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     }
     let chamberText: String = {
         switch chamber {
-        case .glass: return "glass chamber, 6 gates"
         case .plates(let a): return "open air, 2 × \(a.perPlate) elements"
         }
     }()
