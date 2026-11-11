@@ -52,6 +52,12 @@ func plateArray(_ args: [String], reflection: Double = 0.9) -> PlateArray {
             var d = RH1Design()
             if arg("--array") == "disc" { d.elementTones = [] }
             if let n = arg("--elements").flatMap(Int.init) { d.elementCount = n }
+            // On the resonant face --band moves the plate's tones (and with them the elements' sizes).
+            if d.resonantElements, let b = arg("--band")?.split(separator: "-").compactMap({ Double($0) }), b.count == 2 {
+                let T = d.elementTones.count
+                let lo: Double = b[0] * 1000, step: Double = (b[1] - b[0]) * 1000 / Double(T)
+                d.elementTones = (0..<T).map { q -> Double in lo + step * (Double(q) + 0.5) }
+            }
             a = PlateArray.rh1(d, reflection: reflection)
         }
     }

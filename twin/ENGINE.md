@@ -246,6 +246,14 @@ radiating. At a fixed share of the face radiating, the drive a mold needs
 falls as f^1.5 (pressure per source ∝ f, force ∝ k p²), so a higher band
 would buy margin with still more, still smaller elements.
 
+**Margin does not come cheap.** Tried the same night: the band moved up to
+63–107 kHz with 2,048 elements per face (the same third of the face
+radiating; `fieldc mold --elements 2048 --band 60-110`). The ring's G-E1
+goes from 0.96 to 0.88; the tetrahedron frame's from 1.13 to 1.07, still a
+fail, and it then leaves a site empty. A third more channels buys 6–9 % of
+drive: less than the f^1.5 law says, because the air absorbs more up there.
+The shapes that do not pass on 1,536 elements do not pass by this route.
+
 **Two things the compiler had wrong for resonant plates**, both found by the
 runs disagreeing with a hand estimate:
 

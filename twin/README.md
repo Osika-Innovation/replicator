@@ -49,10 +49,10 @@ the object; **Inspect** shows the compile's gates; **Machine** is the CAD. An
 STL larger than the mold volume (a 24 mm cube at the chamber centre) is scaled
 down to fit and the status line says so.
 
-`--array disc` is the face of 2026-11-10 (192 directly radiating Ø5 discs per
+`--elements N` and `--band lo-hi` (kHz) change the resonant plate's element
+count and tones. `--array disc` is the face of 2026-11-10 (192 directly radiating Ø5 discs per
 face, ideal broadband pistons to the engine); `--array ideal | microhorn` and
-`--per-plate N` are the earlier ones; `--elements N` changes the count. The
-default everywhere is the machine's own, `PlateArray.rh1`.
+`--per-plate N` are the earlier ones. The default everywhere is the machine's own, `PlateArray.rh1`.
 
 ## Status — 2026-11-12
 
@@ -169,7 +169,7 @@ it molds — with about 100 W of heat going into the plates beside that air.
   objects are scaled and sampled down to that, not built at size.
 * The base's contents, the controller, fasteners, gaskets and cabling are
   envelopes or absent (`fieldc cad pack` lists them).
-* `Sources/` is 17,315 lines, under the charter's proposed cap of 17,500.
+* `Sources/` is 17,321 lines, under the charter's proposed cap of 17,500.
 
 ## Layout
 
