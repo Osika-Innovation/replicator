@@ -226,3 +226,30 @@ on the open-air machine, what the studies say, what is open. The
 round-by-round diary moved unchanged to `papers/twin_rounds.md`, with a note
 naming the commands that now exist only in the tag. The status is written by
 hand, not yet generated from the receipts.
+
+## The test-only old code, sorted — 2026-11-11
+
+Proposal; nothing here has been deleted. Traced by following who calls what
+in the tree at `9ddba61`.
+
+| code | lines | what it checks | guards the open-air machine? | proposed |
+|---|---|---|---|---|
+| G7, Gor'kov force vs closed form | 30 | `Gorkov`, which `ForceCompiler` uses for every force | yes | keep |
+| G1, voxelizer volume | 25 | `Voxelizer`, which the CAD gates use | yes | keep |
+| `TestPresets` | 73 | small arrays for the propagator's adjoint, gradient and absorption tests; `PlateArray` builds its CPU reference from `Propagator` | yes | keep |
+| G9a–c, inverse solver | ~170 | `InverseSolver`, used only by the app | no, the app | stays with the app; its `RH1.preset` section goes with `RH1` |
+| G15, reciprocity of a matrix | 20 | a helper only the tests call; the backend has its own reciprocity gate (G-FC) | no | go |
+| G6, node spacing | 36 | adds two plane waves in a loop; calls no engine code | no | go |
+| `FDTD` + G2 + G3 | 183 + ~75 | the time-domain solver against itself | no | go with G5 |
+| G5, propagator vs FDTD | 145 | the free-space kernel e^(ikr)/r against a wave-equation solver | weakly: the kernel is exact, and the open-air element is gated against the Rayleigh integral (G-A2) and the sphere series (G-S1) | operator's call |
+| `RH1` (desktop preset) + 4 tests | 139 + ~30 | the frozen v0.3 machine | no | go |
+| `Scan.run` in `ScanRunner.swift` | ~120 | — | **dead**: its only caller was `fieldc scan`, removed in the first cut. The app uses only the type `Scan.Gate` | go |
+
+If every "go" row and G5 go: about 790 lines, which brings `Sources/` to
+roughly 17,750. That is still about 250 above the proposed 17,500 with the
+app kept. Without G5 and `FDTD` it is about 390 lines.
+
+The one loss worth weighing is G5 with `FDTD`: it is the only solver in the
+tree that does not assume the answer's form. Nothing on the open-air path
+uses it today, but it is what an independent check of the time-gated scan
+would be built on.
