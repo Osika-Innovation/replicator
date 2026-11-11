@@ -47,6 +47,8 @@ struct PlaceRig {
     /// - Parameter half: half-width of the probe cube (m); ENGINE.md's work
     ///   volume is ±12 mm.
     init(ctx: MetalContext, array: PlateArray, freqs: [Double], half: Double = 12e-3) throws {
+        // Resonant elements play the plate's own tones, whatever chord is asked for.
+        let freqs = array.tones ?? freqs
         self.ctx = ctx; self.array = array; self.freqs = freqs
         lam40 = air.wavelength(at: 40_000)
         let h = air.wavelength(at: freqs.max()!) / 8
@@ -54,6 +56,7 @@ struct PlaceRig {
         let hh = Double(n - 1) / 2 * h
         lattice = FieldLattice(origin: array.centre - Vec3(hh, hh, hh), spacing: h, nx: n, ny: n, nz: n)
         field = try ArrayFieldGPU(ctx: ctx, array: array, frequencies: freqs, medium: air, lattice: lattice)
+        if array.toneOf != nil { field.amplitudeCap = 1.25 }      // resonant elements share one velocity ceiling
         options.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
         options.perToneStarts = false
     }
@@ -155,7 +158,9 @@ enum PlaceCommand {
     static func levitate(_ ctx: MetalContext, _ args: [String]) throws -> Int32 {
         let t0 = Date()
         let arr = plateArray(args)
-        let cases: [(String, [Double])] = [
+        let cases: [(String, [Double])] = arr.tones.map { t in
+            [(String(format: "the plate's %d tones %.0f–%.0f kHz", t.count, t.min()! / 1000, t.max()! / 1000), t)]
+        } ?? [
             ("5-tone chord 30–70 kHz", [30_000.0, 40_000, 50_000, 60_000, 70_000]),
             ("10 tones 32–68 kHz", spread10),
         ]
@@ -201,6 +206,13 @@ enum PlaceCommand {
                 let pPeak = (pmax2 * P).squareRoot()
                 print(String(format: "  %-18@ weight %.2e N · needs %5.2f m/s on the hardest element (%3.0f dB), %4.2f m/s rms · field peak %3.0f dB · lateral %3.0f Hz",
                              bname as NSString, weight, u, dB(air.density * air.soundSpeed * u), uRMS, dB(pPeak), fx))
+                // Against the elements: every entry at this power, by the element it is on.
+                let scale = P.squareRoot()
+                let eg = ElementGates.drive(amplitudes: r.drives.map { $0.map { $0.magnitude * scale } }, frequencies: rig.freqs,
+                                            pistonRadius: { arr.pistonRadius($0) }, spec: { e, _ in arr.spec(e, medium: air) },
+                                            medium: air, label: "holding \(bname)")
+                print("    " + eg[0].line)
+                gates.append(eg[0])
                 gates.append(GateResult(id: "LEV", name: "\(arr.tag), \(label): \(bname)", measured: u, threshold: 0,
                                         comparison: .informational,
                                         detail: String(format: "hardest element %.2f m/s (%.0f dB plane-wave), rms %.2f m/s; field peak %.0f dB; lateral %.0f Hz; sibling ratio %.2f",

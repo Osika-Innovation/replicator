@@ -180,7 +180,11 @@ public enum SceneRegistry {
         return [.init(title: "Machine", rows: [
             ("preset", "RH-1 free-standing"),
             ("plates", String(format: "2, %.0f mm apart, open air", a.gap * 1000)),
-            ("elements", String(format: "2 × %d, Ø%.0f mm pistons", a.perPlate, a.elementRadius * 2000)),
+            ("elements", a.tones == nil
+                ? String(format: "2 × %d, Ø%.0f mm pistons", a.perPlate, a.elementRadius * 2000)
+                : String(format: "2 × %d resonant, Ø%.1f–%.1f mm", a.perPlate,
+                         2000 * ((0..<a.channels).map { a.pistonRadius($0) }.min() ?? 0),
+                         2000 * ((0..<a.channels).map { a.pistonRadius($0) }.max() ?? 0))),
             ("layout", String(format: "golden-angle spiral, r %.0f–%.1f mm", a.innerRadius * 1000, a.plateRadius * 1000)),
             ("mold volume", "24 mm cube at the centre"),
         ]),

@@ -132,10 +132,15 @@ public func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3],
     let t0 = Date()
     let air = RH1Freestanding.roomAir
     let nF = setup.frequencies
-    let df = (setup.fHi - setup.fLo) / Double(max(1, nF - 1))
-    let freqs = (0..<nF).map { setup.fLo + df * Double($0) }
+    // Resonant elements only answer near their tones: sweep the plate's own
+    // band (5 % past its outermost tones), not the whole 30–100 kHz.
+    let fLo = array.tones.map { max(setup.fLo, 0.95 * $0.min()!) } ?? setup.fLo
+    let fHi = array.tones.map { min(setup.fHi, 1.05 * $0.max()!) } ?? setup.fHi
+    let df = (fHi - fLo) / Double(max(1, nF - 1))
+    let freqs = (0..<nF).map { fLo + df * Double($0) }
+    if array.tones != nil { log(String(format: "  resonant elements (Q %.0f): sweeping %.1f–%.1f kHz, each element through its own resonance curve", array.elementQ, fLo / 1000, fHi / 1000)) }
     let field = try ArrayFieldGPU(ctx: ctx, array: array, frequencies: freqs, medium: air,
-                                  lattice: FieldLattice(origin: grid.origin, spacing: grid.spacing, nx: 1, ny: 1, nz: 1))
+                                  lattice: FieldLattice(origin: grid.origin, spacing: grid.spacing, nx: 1, ny: 1, nz: 1), curve: true)
     let gridPts = grid.positions.map { SIMD4(Float($0.x), Float($0.y), Float($0.z), 0) }
     var acc = [Complex](repeating: .zero, count: grid.count)
     var rng = SplitMix64(seed: setup.seed)

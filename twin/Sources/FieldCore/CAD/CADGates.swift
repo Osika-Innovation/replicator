@@ -123,14 +123,15 @@ public enum CADGates {
             for (pat, offset) in [(model.pattern, 0), (model.patternDown, d.elementCount)] {
                 for e in pat.elements {
                     let p = els[offset + e.index].position
-                    worst = max(worst, abs(p.x * 1e3 - e.center.x), abs(p.y * 1e3 - e.center.y))
+                    worst = max(worst, abs(p.x * 1e3 - e.center.x), abs(p.y * 1e3 - e.center.y),
+                                abs(els[offset + e.index].equivalentRadius * 1e3 - e.pistonRadius))
                 }
             }
             let broken = designRules(model).filter { ["DR10", "DR11", "DR12", "DR26"].contains($0.id) && !$0.passed }
             let dashes = model.pattern.slotCenterlines.count
             return GateResult(id: "G-CAD9", name: "the engine's plate array is the CAD's (mm; +1 per broken element rule)",
                               measured: worst + Double(broken.count), threshold: 1e-6,
-                              detail: String(format: "2 × %d elements, same sites; slots cut into %d dashes on the up faces, %d on the down faces; %.0f %% of the slot area kept",
+                              detail: String(format: "2 × %d elements, same sites and sizes; slots cut into %d dashes on the up faces, %d on the down faces; %.0f %% of the slot area kept",
                                              d.elementCount, dashes, model.patternDown.slotCenterlines.count,
                                              100 * model.pattern.slotOpenArea / max(FacePattern(RH1Design.microHornFace).slotOpenArea, 1e-9)))
         }
@@ -223,9 +224,28 @@ public enum CADGates {
             // Dashes are cut on a fine centreline and drawn on a coarser one:
             // allow the chord's sagitta against the design web.
             rule("DR10", "element hole ↔ slot dash web", web, d.elementSlotWeb - 0.1)
-            rule("DR11", "element hole ↔ element hole web", holeWeb, 2.0)
+            // BAR CHANGED 2.0 → 1.0 mm for the resonant face, 2026-11-12, with
+            // the reason recorded (no silent gate weakening). 2 mm was a sized
+            // choice for 192 holes; 1,536 holes of Ø4.3–7.8 in the same annulus
+            // are nudged apart to 1 mm (`PlateArray.spread`). 1 mm of aluminium between
+            // reamed holes 11 mm deep is ordinary drilling practice; under it
+            // the web deflects and the holes go oval.
+            rule("DR11", "element hole ↔ element hole web", holeWeb, d.resonantElements ? d.elementHoleWeb : 2.0)
             rule("DR12", "outermost element hole ↔ storage liner", d.storageLinerID / 2 - outer, 0.5)
             rule("DR26", "innermost element hole ↔ bore collar hole", inner - d.boreHoleRadius, 2.0)
+            if d.resonantElements {
+                // Every element's trace crosses the circle where the rim
+                // electronics begin; 0.2 mm track and 0.2 mm gap is ordinary.
+                rule("DR27", "wiring board: trace pitch at the rim electronics",
+                     2 * Double.pi * d.rimInnerRadius * Double(d.wiringBoardLayers) / Double(d.elementCount), 0.4)
+                // One two-channel driver (SOIC-8 class, 40 mm² with its lands)
+                // per two elements and one eight-bit register (60 mm²) per
+                // eight, on ring boards stacked in the rim annulus, both sides.
+                let ring = Double.pi * (d.rimOuterRadius * d.rimOuterRadius - d.rimInnerRadius * d.rimInnerRadius)
+                let boards = ((d.rimDepthTo - d.rimDepthFrom) / d.rimBoardPitch).rounded(.down)
+                let need = Double(d.elementCount) * (40.0 / 2 + 60.0 / 8)
+                rule("DR28", "rim electronics: board area ÷ what the drivers need", 2 * boards * ring / need, 1.5)
+            }
         } else {
         var web = Double.infinity
         for s in model.pattern.drilled {

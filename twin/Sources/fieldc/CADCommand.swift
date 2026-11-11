@@ -53,7 +53,7 @@ enum CADCommand {
                          d.storageChamberHeight))
             let p = m.pattern
             if d.faceStyle == .elementArray {
-                print("face pattern: \(p.elements.count) elements Ø\(Int(d.elementDiameter)) on a Vogel spiral, r "
+                print("face pattern: \(p.elements.count) elements \(p.elementSizeText) on a Vogel spiral, r "
                     + String(format: "%.1f–%.1f", p.elements.map(\.radius).min() ?? 0, p.elements.map(\.radius).max() ?? 0)
                     + "; \(d.slotArms) slot arms cut into \(p.slotCenterlines.count) dashes (up faces) / \(m.patternDown.slotCenterlines.count) (down faces), "
                     + String(format: "%.0f mm cut per arm", p.slotLength))
@@ -97,6 +97,15 @@ enum CADCommand {
             }
             if args.contains("--receipt") { writeReceipt(r) }
             return r.allPassed ? 0 : 1
+
+        case "pack":
+            let (m, _) = build(args)
+            let md = CADExport.manufacturingMarkdown(m, medium: RH1Freestanding.roomAir)
+            if let out = value(args, "--out") {
+                try? md.write(toFile: out, atomically: true, encoding: .utf8)
+                print("wrote \(out)")
+            } else { print(md) }
+            return 0
 
         case "bom":
             let (m, _) = build(args)

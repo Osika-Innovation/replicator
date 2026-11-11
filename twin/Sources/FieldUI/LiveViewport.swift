@@ -608,9 +608,7 @@ public final class Document: ObservableObject {
                     for o in ["field", "traps", "matter"] { self.state.overlays.insert(o) }
                     self.state.frameCount = max(0, out.frames.count - 1)
                     let fair = 1 / Double(max(1, out.sites.count))
-                    let S = Double.pi * LiveMachine.array.elementRadius * LiveMachine.array.elementRadius
-                    let watts = 0.5 * LiveMachine.air.density * LiveMachine.air.soundSpeed * S
-                        * Double(ch * out.tones) * out.driveRMS * out.driveRMS
+                    let watts = out.gates.first { $0.id == "G-E2" }?.measured ?? 0
                     let f = out.frequencies
                     self.state.inspector = [
                         .init(title: "Mold", rows: [
@@ -618,7 +616,7 @@ public final class Document: ObservableObject {
                             ("powder", "\(material) Ø40 µm, 3000 grains"),
                             ("sites", "\(out.sites.count)"),
                             ("tones", String(format: "%d, %.0f–%.0f kHz", out.tones, (f.min() ?? 0) / 1000, (f.max() ?? 0) / 1000)),
-                            ("drive", String(format: "%.2f m/s rms per element", out.driveRMS)),
+                            ("drive", String(format: "%.2f m/s on the hardest-driven element", out.elementAmplitude.max() ?? 0)),
                             ("acoustic power", String(format: "%.0f W", watts)),
                             ("lift contrast", String(format: "%.2f", out.contrast)),
                             ("on the shape", String(format: "%.1f %%", 100 * out.basinOnShape)),

@@ -33,6 +33,26 @@ public struct MoldSetup {
     /// little powder up and recompile from the last drive.
     public var feedback = 0
     public var debug = false
+    /// Resonant elements: the most one element may be asked for, as a
+    /// multiple of the rms over all of them (`ArrayFieldGPU.amplitudeCap`).
+    public var amplitudeCap: Double? = 1.1
+    /// Resonant elements: the drive as a multiple of what holds a grain at
+    /// the weakest site. The elements' ceiling leaves no room for the middle
+    /// of the power window (√contrast), so the mold runs near its lower edge.
+    public var resonantHolding = 1.15
+    /// `ForceCompiler.Options.sieveEfficiency` and `.sieveContrastEnough`.
+    /// Tried on the resonant plates (2026-11-12): a mold that stops at
+    /// contrast 1.5 and then saves drive needs 5 % less of it, and loses
+    /// two sites of sixteen. Left off.
+    public var efficiency = 0.0
+    public var contrastEnough = Double.infinity
+    /// Play the compiled drive on other plates in other air than it was
+    /// compiled for — a built machine with its errors (`PlateArray.asBuilt`)
+    /// — at the power the drawing asked for. The gates then judge that.
+    public var playOn: (array: PlateArray, medium: Medium)? = nil
+    /// A tolerance study: the same drive played on each of these builds
+    /// (results in `MoldOutcome.builds`); the gates still judge the drawing.
+    public var builds: [(name: String, array: PlateArray, medium: Medium)] = []
     /// Keep the stepped grains' positions every this many seconds (nil: only the end).
     public var frameEvery: Double? = nil
     public init() {}
@@ -53,7 +73,13 @@ public struct MoldOutcome {
     public var latticePerSite: [Double] = []
     public var basinOnShape = 0.0, basinRogue = 0.0
     public var basinPerSite: [Double] = []
-    public var driveRMS = 0.0               // m/s per channel, rms over channels
+    /// Root-mean-square over every (channel, tone) entry of the velocity
+    /// amplitudes (peak, m/s) — one tone's share on one element.
+    public var driveRMS = 0.0
+    /// Per element: the root-sum-square of its tones' velocity amplitudes
+    /// (peak, m/s); ÷ √2 is its rms velocity in time. With resonant elements
+    /// it is simply the amplitude at the element's tone.
+    public var elementAmplitude: [Double] = []
     /// The compiled drives (unit total power), the drive power that scales them
     /// (Σ|v|², (m/s)²) and the tones — what a light view or a replay needs.
     public var drives: [[Complex]] = []
@@ -72,6 +98,10 @@ public struct MoldOutcome {
     public var sinksCSV = ""
     public var captureLog: [String] = []
     public var gates: [GateResult] = []
+    /// `MoldSetup.builds`, played: the share on the shape, the emptiest and
+    /// fullest site's share ÷ a fair share, and how many times a grain's
+    /// weight the weakest site lifts at the drawing's power.
+    public var builds: [(name: String, onShape: Double, siteMin: Double, siteMax: Double, weakestLift: Double)] = []
     public var summary = ""
     public init() {}
 }
@@ -100,7 +130,8 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
     let isPlates: Bool = { if case .plates = chamber { return true }; return false }()
     // Defaults: the glass sieve's 40 tones; for the plates the nine tones of
     // the channel sweep (S1), which it ran over 30–70 kHz.
-    let nTones = setup.tones ?? (isPlates ? 9 : (objective == "sieve" ? 40 : 20))
+    let lockedTones: [Double]? = { if case .plates(let a) = chamber { return a.tones }; return nil }()
+    let nTones = lockedTones?.count ?? setup.tones ?? (isPlates ? 9 : (objective == "sieve" ? 40 : 20))
     // 50–100 kHz: the top of what the elements play. Neighbouring sites fill
     // evenly only when the field can tell them apart, and 3.1 mm (the 16-site
     // ring) needs the short wavelengths: at 32–68 kHz the powder gathered in
@@ -111,7 +142,7 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
     // them at contrast 1.8. Traced flow, 2026-11-10 (README, Round 16).
     let band = setup.band ?? (50_000.0, 100_000.0)
     let nGrains = setup.grains
-    let freqs: [Double] = (0..<nTones).map { q in
+    let freqs: [Double] = lockedTones ?? (0..<nTones).map { q in
         let frac: Double = (Double(q) + 0.5) / Double(nTones)
         return band.lo + (band.hi - band.lo) * frac
     }
@@ -135,7 +166,16 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
     let field: any ForceCompiler.ForceField
     switch chamber {
     case .plates(let arr):
-        field = try ArrayFieldGPU(ctx: ctx, array: arr, frequencies: freqs, medium: air, lattice: lat)
+        let gpu = try ArrayFieldGPU(ctx: ctx, array: arr, frequencies: freqs, medium: air, lattice: lat)
+        if arr.toneOf != nil {
+            // Resonant elements have a velocity ceiling: every element at the
+            // same amplitude, and a mold that spends as little drive as it can
+            // once its power window is wide enough.
+            gpu.amplitudeCap = setup.amplitudeCap
+            o.sieveEfficiency = setup.efficiency
+            o.sieveContrastEnough = setup.contrastEnough
+        }
+        field = gpu
         // Time reversal: every element driven with the conjugate of its field
         // at each site, summed — a focus on every site at once.
         for f in freqs {
@@ -146,8 +186,12 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
                 let nrm = r.reduce(0.0) { $0 + $1.magnitudeSquared }.squareRoot()
                 for e in 0..<arr.channels { g[e] += r[e].conjugate * (1 / max(nrm, 1e-300)) }
             }
+            g = gpu.playable(g, tone: start.count)
             let nrm = g.reduce(0.0) { $0 + $1.magnitudeSquared }.squareRoot()
             start.append(g.map { $0 * (1 / (max(nrm, 1e-300) * Double(nTones).squareRoot())) })
+        }
+        if let m = arr.toneOf {
+            log("  resonant elements: each plays one of \(nTones) tones (\(m.filter { $0 == 0 }.count) elements on the first)")
         }
         log(String(format: "acoustic mold: %@, %d sites; open air, two plates of %d elements (Ø%.0f mm, %.0f mm apart, R %.1f), %d tone%@ %.0f–%.0f kHz; probe ±%.0f mm at %.2f mm (%d³)",
                    label, targets.count, arr.perPlate, arr.plateRadius * 2000, arr.gap * 1000, arr.reflection,
@@ -195,7 +239,8 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
         boxStarts.append(lat.position(i, j, k))
         if k == releaseCells.2.upperBound { topStarts.append(lat.position(i, j, k)) }
     } } }
-    func evaluate(_ drives: [[Complex]]) -> Eval {
+    func evaluate(_ drives: [[Complex]]) -> Eval { evaluate(drives, on: field, fixedPower: nil) }
+    func evaluate(_ drives: [[Complex]], on field: any ForceCompiler.ForceField, fixedPower: Double?) -> Eval {
         let U = field.potential(drives, particle: grain)
         var fUpMin = Double.infinity
         for p in snapped {
@@ -215,8 +260,9 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
             liftOut = max(liftOut, -(U[nn + lat.nx * lat.ny] - U[nn - lat.nx * lat.ny]) / (2 * h))
         } } }
         let contrast = fUpMin / max(liftOut, 1e-300)
-        let powerX = setup.powerX ?? (objective == "sieve" ? (contrast > 1 ? contrast.squareRoot() : 1.05) : 4.0)
-        let power = powerX * weight / max(fUpMin, 1e-300)
+        let middle = contrast > 1 ? contrast.squareRoot() : 1.05
+        let powerX = setup.powerX ?? (objective == "sieve" ? (lockedTones == nil ? middle : min(middle, setup.resonantHolding)) : 4.0)
+        let power = fixedPower ?? powerX * weight / max(fUpMin, 1e-300)
         // The lattice map (26-neighbour steepest descent), for comparison only:
         // it cannot follow a streamline, so its per-site shares are not the grains'.
         let basins = BasinMap(U: U, lattice: lat, power: power, weight: setup.gravity ? weight : 0, release: releaseCells)
@@ -309,6 +355,26 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
         }
     }
     let compileSeconds = Date().timeIntervalSince(t0)
+    var builds: [(name: String, onShape: Double, siteMin: Double, siteMax: Double, weakestLift: Double)] = []
+    for b in setup.builds {
+        let built = try ArrayFieldGPU(ctx: ctx, array: b.array, frequencies: freqs, medium: b.medium, lattice: lat)
+        let e = evaluate(drives, on: built, fixedPower: ev.power)
+        builds.append((b.name, e.onShape, (e.perSite.min() ?? 0) / fairShare, (e.perSite.max() ?? 0) / fairShare, e.fUpMin * e.power / weight))
+        log(String(format: "  %@: %.1f%% on the shape, sites %.2f–%.2f of a fair share, weakest site lifts %.2f× a grain",
+                   b.name, 100 * e.onShape, builds.last!.siteMin, builds.last!.siteMax, builds.last!.weakestLift))
+    }
+    var builtText = ""
+    if let world = setup.playOn {
+        let built = try ArrayFieldGPU(ctx: ctx, array: world.array, frequencies: freqs, medium: world.medium, lattice: lat)
+        let drawn = ev
+        ev = evaluate(drives, on: built, fixedPower: drawn.power)
+        builtText = String(format: "; played on %@ in air at %.1f m/s (drawn: %.1f): %.1f%% on the shape, sites %.1f–%.1f%%",
+                           world.array.tag, world.medium.soundSpeed, air.soundSpeed, 100 * ev.onShape,
+                           100 * (ev.perSite.min() ?? 0), 100 * (ev.perSite.max() ?? 0))
+        log(String(format: "  as built (%@): %.1f%% on the shape (drawn %.1f%%), sites %.1f–%.1f%% (drawn %.1f–%.1f%%), weakest site lifts %.2f× a grain's weight",
+                   world.array.tag, 100 * ev.onShape, 100 * drawn.onShape, 100 * (ev.perSite.min() ?? 0), 100 * (ev.perSite.max() ?? 0),
+                   100 * (drawn.perSite.min() ?? 0), 100 * (drawn.perSite.max() ?? 0), ev.fUpMin * ev.power / weight))
+    }
     let U = ev.U
     let em = ForceCompiler.evaluateMold(U, lattice: lat, targets: targets, options: o, wavelength: lam40)
     log(String(format: "  compiled (%@, %.1f s): %d/%d wells formed, rival/weakest %.2f", objective, compileSeconds,
@@ -324,7 +390,23 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
                setup.gravity ? "gravity on" : "gravity OFF",
                recirculate ? "fallen grains are sprinkled in again at the top" : "fallen grains are lost"))
     var out = MoldOutcome()
+    out.builds = builds
     out.driveRMS = driveRMS; out.compileSeconds = compileSeconds; out.channels = field.channels
+    let unit = drives.map { $0.reduce(0.0) { $0 + $1.magnitudeSquared } }.reduce(0, +)
+    out.elementAmplitude = (0..<field.channels).map { e in
+        (drives.reduce(0.0) { $0 + $1[e].magnitudeSquared } / max(unit, 1e-300) * power).squareRoot()
+    }
+    var elementGates: [GateResult] = []
+    if case .plates(let arr) = chamber {
+        let scale = (power / max(unit, 1e-300)).squareRoot()
+        elementGates = ElementGates.drive(amplitudes: drives.map { $0.map { $0.magnitude * scale } }, frequencies: freqs,
+                                          pistonRadius: { arr.pistonRadius($0) }, spec: { e, _ in arr.spec(e, medium: air) },
+                                          medium: air, label: label)
+        for g in elementGates { log("  " + g.line) }
+    }
+    let eaMax = out.elementAmplitude.max() ?? 0
+    let eaRMS = (out.elementAmplitude.reduce(0.0) { $0 + $1 * $1 } / Double(max(1, field.channels))).squareRoot()
+    log(String(format: "  per element (all its tones together): velocity amplitude %.2f m/s rms over the elements, %.2f m/s the largest", eaRMS, eaMax))
     out.drives = drives; out.power = power; out.frequencies = freqs
     let bSite = ev.perSite, bOn = ev.onShape, bRogue = ev.rogue
     out.basinOnShape = bOn; out.basinRogue = bRogue; out.basinPerSite = bSite
@@ -434,9 +516,9 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
     out.summary = String(format: "%@; %@ objective, %d tone%@, %.2f× holding, %.2f m/s rms per channel; traced flow: %.1f%% on the shape, sites %.1f–%.1f%% (fair %.1f%%), %.1f%% rogue; lift contrast %.2f%@",
                          chamberText, objective, nTones, nTones == 1 ? "" : "s", powerX, driveRMS, 100 * bOn,
                          100 * (bSite.min() ?? 0), 100 * (bSite.max() ?? 0), 100 * fairShare, 100 * bRogue, contrast,
-                         setup.particles ? String(format: "; particles: %.1f%% on the shape after %.0f s, %d/%d sites filled (%d–%d)",
+                         builtText + (setup.particles ? String(format: "; particles: %.1f%% on the shape after %.0f s, %d/%d sites filled (%d–%d)",
                                                   fr(out.captured), setup.seconds, filled, targets.count,
-                                                  perSite.min() ?? 0, perSite.max() ?? 0) : "")
+                                                  perSite.min() ?? 0, perSite.max() ?? 0) : ""))
     // G-M1/G-M2 on the traced flow (`FlowMap`: the streamlines the stepped
     // grains follow, without the clock). Until 2026-11-10 they were judged on
     // the 26-neighbour lattice map, whose per-site shares are not the grains'.
@@ -447,6 +529,7 @@ public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], s
                    measured: (bSite.min() ?? 0) / fairShare, threshold: 0.25, comparison: .greaterThan, detail: out.summary),
         GateResult(id: "G-M2", name: "acoustic mold (\(label)): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
                    measured: bOn, threshold: 0.95, comparison: .greaterThan, detail: out.summary)]
+    out.gates += elementGates
     if setup.particles {
         out.gates.append(GateResult(id: "G-B0", name: "traced flow vs stepped grains: the share on the shape agrees",
                                     measured: abs(bOn - Double(out.captured) / Double(nGrains)), threshold: 0.05,

@@ -147,7 +147,7 @@ public enum SceneBuilder {
             // the engine's array has it.
             if d.faceStyle == .elementArray {
                 for e in PlateArray.rh1(d).elements() where (e.position.z < 1e-9) == isLower {
-                    let c = e.position, r = d.elementDiameter / 2 * mm
+                    let c = e.position, r = e.equivalentRadius
                     for i in 0..<6 {
                         let a0 = 2 * Double.pi * Double(i) / 6, a1 = 2 * Double.pi * Double(i + 1) / 6
                         g.line(Vec3(c.x + r * cos(a0), c.y + r * sin(a0), z),

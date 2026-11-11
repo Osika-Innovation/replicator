@@ -272,8 +272,8 @@ public enum CADExport {
         }
         pv += String(format: "<circle class=\"bore\" cx=\"%.1f\" cy=\"%.1f\" r=\"%.2f\"/>\n", cx, cy, d.boreRadius * ps)
         if d.faceStyle == .elementArray {
-            pv += String(format: "<text text-anchor=\"middle\" x=\"%.1f\" y=\"%.1f\">PLATE FACE (UP-FACING), PLAN — %d driven elements Ø%.0f, %d slot arms in %d dashes</text>\n",
-                         cx, cy + d.plateRadius * ps + 30, model.pattern.elements.count, d.elementDiameter,
+            pv += String(format: "<text text-anchor=\"middle\" x=\"%.1f\" y=\"%.1f\">PLATE FACE (UP-FACING), PLAN — %d driven elements %@, %d slot arms in %d dashes</text>\n",
+                         cx, cy + d.plateRadius * ps + 30, model.pattern.elements.count, model.pattern.elementSizeText,
                          d.slotArms, model.pattern.slotCenterlines.count)
         } else {
         pv += String(format: "<text x=\"%.1f\" y=\"%.1f\">PLATE FACE, PLAN — %d micro-horns drilled, %d inside slot voids, %d slots</text>\n",

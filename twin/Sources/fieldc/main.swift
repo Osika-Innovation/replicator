@@ -41,12 +41,27 @@ func deviceName() -> String {
 /// micro-horns as elements (Round 14's comparison).
 func plateArray(_ args: [String], reflection: Double = 0.9) -> PlateArray {
     func arg(_ name: String) -> String? { args.firstIndex(of: name).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
-    if let n = arg("--per-plate").flatMap(Int.init) { return PlateArray(perPlate: n, reflection: reflection) }
-    switch arg("--array") {
-    case "ideal": return PlateArray(perPlate: 192, reflection: reflection)
-    case "microhorn", "cad": return PlateArray.fromCAD(reflection: reflection)
-    default: return PlateArray.rh1(reflection: reflection)
+    var a: PlateArray
+    if let n = arg("--per-plate").flatMap(Int.init) { a = PlateArray(perPlate: n, reflection: reflection) }
+    else {
+        switch arg("--array") {
+        case "ideal": a = PlateArray(perPlate: 192, reflection: reflection)
+        case "microhorn", "cad": a = PlateArray.fromCAD(reflection: reflection)
+        default:
+            // "disc": the directly radiating broadband Ø5 disc the face carried until 2026-11-12.
+            var d = RH1Design()
+            if arg("--array") == "disc" { d.elementTones = [] }
+            if let n = arg("--elements").flatMap(Int.init) { d.elementCount = n }
+            a = PlateArray.rh1(d, reflection: reflection)
+        }
     }
+    // --locked T [--band lo-hi]: resonant elements, each tuned to one of T tones.
+    if let T = arg("--locked").flatMap(Int.init), T > 0 {
+        var lo = 50_000.0, hi = 100_000.0
+        if let b = arg("--band")?.split(separator: "-").compactMap({ Double($0) }), b.count == 2 { lo = b[0] * 1000; hi = b[1] * 1000 }
+        a = a.locked(tones: (0..<T).map { lo + (hi - lo) * (Double($0) + 0.5) / Double(T) })
+    }
+    return a
 }
 
 func writeReceipt(_ r: Receipt) {
@@ -169,8 +184,32 @@ case "mold":
         setup.particles = !args.contains("--no-particles")
         setup.debug = args.contains("--debug")
         if let v = arg("--feedback").flatMap(Int.init) { setup.feedback = v }
+        if let v = arg("--cap").flatMap(Double.init) { setup.amplitudeCap = v > 0 ? v : nil }
+        if let v = arg("--efficiency").flatMap(Double.init) { setup.efficiency = v }
+        if let v = arg("--contrast-enough").flatMap(Double.init) { setup.contrastEnough = v }
+        if let v = arg("--power-x").flatMap(Double.init) { setup.powerX = v }
         let reflection = arg("--reflection").flatMap(Double.init) ?? 0.9
         let moldArray = plateArray(args, reflection: reflection)
+        // --as-built gain=0.05,phase=10,pos=0.2,resonance=0.005,dead=0.01,temp=0.5[,seed=1]: play the
+        // compiled drive on one random build within those tolerances, in air `temp` kelvin warmer.
+        if let spec = arg("--as-built") {
+            var tol = PlateArray.Tolerance(), seed: UInt64 = 1, dT = 0.0
+            for kv in spec.split(separator: ",") {
+                let p = kv.split(separator: "="); guard p.count == 2, let v = Double(p[1]) else { continue }
+                switch p[0] {
+                case "gain": tol.gain = v
+                case "phase": tol.phaseDegrees = v
+                case "pos": tol.position = v * 1e-3
+                case "resonance": tol.resonance = v
+                case "dead": tol.dead = v
+                case "temp": dT = v
+                case "seed": seed = UInt64(v)
+                default: print("unknown --as-built key \(p[0])")
+                }
+            }
+            setup.playOn = (moldArray.asBuilt(tol, seed: seed), Medium.air(temperatureC: 20 + dT, humidity: 50))
+            print(String(format: "as built: %@, air %.1f K warmer than the drawing's", tol.text, dT))
+        }
         let chamber: MoldChamber = .plates(moldArray)
         let L = moldArray.gap
         let centre = Vec3(0, 0, L / 2)
@@ -238,6 +277,58 @@ case "mold":
             do { try f.json().write(to: URL(fileURLWithPath: path)); print("fcode written: \(path) (\(f.frames[0].tones.count) tones × \(f.channels) channels)") }
             catch { print("FCODE NOT WRITTEN: \(error)") }
         }
+    } catch { print("GPU unavailable: \(error)"); exit(2) }
+
+case "tolerance":
+    // Study S5: what a build must hold. The ring mold is compiled once for the
+    // plates as drawn, then the same drive is played on random builds of the
+    // plates, one kind of error at a time and then together, each at three
+    // sizes and two seeds. A build passes as the drawing does: every site
+    // holds at least a quarter of its fair share (G-M1) and 95 % of the
+    // powder ends on the shape (G-M2).
+    do {
+        let t0 = Date()
+        let arr = plateArray(args)
+        let ctx = try MetalContext()
+        let (sites, segments) = moldShape("ring", centre: arr.centre)
+        typealias T = PlateArray.Tolerance
+        func tol(_ f: (inout T) -> Void) -> T { var t = T(); f(&t); return t }
+        var cases: [(String, T, Double)] = []
+        for v in [0.02, 0.05, 0.10] { cases.append((String(format: "gain ±%.0f %%", 100 * v), tol { $0.gain = v }, 0)) }
+        for v in [5.0, 10, 20] { cases.append((String(format: "phase ±%.0f°", v), tol { $0.phaseDegrees = v }, 0)) }
+        for v in [0.05e-3, 0.1e-3, 0.2e-3] { cases.append((String(format: "position ±%.2f mm", v * 1000), tol { $0.position = v }, 0)) }
+        for v in [0.001, 0.003, 0.01] { cases.append((String(format: "resonance ±%.1f %%", 100 * v), tol { $0.resonance = v }, 0)) }
+        for v in [0.005, 0.02, 0.05] { cases.append((String(format: "%.1f %% dead", 100 * v), tol { $0.dead = v }, 0)) }
+        for v in [0.1, 0.3, 1.0] { cases.append((String(format: "air %.1f K warmer", v), T(), v)) }
+        // Together: what calibration should leave (tight), and an uncalibrated build (loose).
+        cases.append(("calibrated: gain ±2 %, phase ±5°, position ±0.1 mm, 0.5 % dead, air 0.1 K",
+                      tol { $0.gain = 0.02; $0.phaseDegrees = 5; $0.position = 0.1e-3; $0.dead = 0.005 }, 0.1))
+        cases.append(("as assembled: gain ±10 %, phase ±20°, position ±0.2 mm, resonance ±1 %, 2 % dead, air 1 K",
+                      tol { $0.gain = 0.10; $0.phaseDegrees = 20; $0.position = 0.2e-3; $0.resonance = 0.01; $0.dead = 0.02 }, 1))
+        var setup = MoldSetup()
+        setup.particles = false
+        let seeds: [UInt64] = [1, 2]
+        for (name, t, dT) in cases { for s in seeds {
+            setup.builds.append(("\(name) #\(s)", arr.asBuilt(t, seed: s), Medium.air(temperatureC: 20 + dT, humidity: 50)))
+        } }
+        let out = try runMold(ctx: ctx, label: "ring", sites: sites, segments: segments, chamber: .plates(arr), setup: setup)
+        var gates = out.gates
+        print("\nbuild                                                                    on shape   sites ÷ fair    weakest lift   passes")
+        for (i, c) in cases.enumerated() {
+            let rs = out.builds[(i * seeds.count)..<((i + 1) * seeds.count)]
+            let on = rs.map(\.onShape).min()!, lo = rs.map(\.siteMin).min()!, hi = rs.map(\.siteMax).max()!, lift = rs.map(\.weakestLift).min()!
+            let ok = on >= 0.95 && lo >= 0.25
+            print(String(format: "%-72@ %5.1f %%    %.2f–%.2f      %.2f×          %@", c.0 as NSString, 100 * on, lo, hi, lift, ok ? "yes" : "NO"))
+            gates.append(GateResult(id: "S5", name: "ring mold on a build with \(c.0) (emptiest site ÷ fair share, worst of \(seeds.count) builds)",
+                                    measured: lo, threshold: 0.25, comparison: .informational,
+                                    detail: String(format: "%.1f %% on the shape, sites %.2f–%.2f of a fair share, weakest site lifts %.2f× a grain; %@",
+                                                   100 * on, lo, hi, lift, ok ? "passes G-M1 and G-M2" : "FAILS")))
+        }
+        print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
+        if args.contains("--receipt") {
+            writeReceipt(Receipt(name: "tolerance-\(arr.tag)", gates: gates, durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
+        }
+        exit(0)
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "arraysweep":

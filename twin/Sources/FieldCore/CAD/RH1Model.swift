@@ -4,7 +4,7 @@ import Foundation
 
 public enum CADMaterial: String, Codable, CaseIterable, Sendable {
     case anodized, plateMetal, columnMetal, ceramic, copper, bronze, pzt,
-         glass, photonic, former, fr4, polymer, emissive, placeholder
+         glass, photonic, former, fr4, polymer, emissive, placeholder, transmitter
 
     public var label: String {
         switch self {
@@ -22,6 +22,7 @@ public enum CADMaterial: String, Codable, CaseIterable, Sendable {
         case .polymer:     return "POM"
         case .emissive:    return "LED strip"
         case .placeholder: return "Envelope only (not specified)"
+        case .transmitter: return "Open-type ultrasonic transmitter (Al can)"
         }
     }
 
@@ -38,6 +39,7 @@ public enum CADMaterial: String, Codable, CaseIterable, Sendable {
         case .fr4, .emissive: return 1850
         case .polymer: return 1410
         case .placeholder: return 0
+        case .transmitter: return 1280          // a 0.7 g Ø9.9 × 7.1 can
         }
     }
 
@@ -58,12 +60,13 @@ public enum CADMaterial: String, Codable, CaseIterable, Sendable {
         case .polymer:     return (0.10, 0.10, 0.11, 1)
         case .emissive:    return (1.00, 0.94, 0.82, 1)
         case .placeholder: return (0.46, 0.48, 0.52, 0.55)
+        case .transmitter: return (0.70, 0.71, 0.73, 1)
         }
     }
     public var specular: Double {
         switch self {
         case .copper, .bronze, .glass, .photonic: return 0.9
-        case .plateMetal, .pzt: return 0.6
+        case .plateMetal, .pzt, .transmitter: return 0.6
         case .anodized, .columnMetal: return 0.35
         default: return 0.12
         }
@@ -72,7 +75,7 @@ public enum CADMaterial: String, Codable, CaseIterable, Sendable {
         switch self {
         case .glass, .photonic: return 96
         case .copper, .bronze: return 56
-        case .plateMetal, .pzt: return 40
+        case .plateMetal, .pzt, .transmitter: return 40
         case .anodized, .columnMetal: return 22
         default: return 8
         }
@@ -123,6 +126,8 @@ public struct FacePattern: Sendable {
         public var radius: Double          // distance from the axis
         public var pistonRadius: Double
         public var holeRadius: Double
+        /// Which of the plate's tones it is tuned to; nil = broadband.
+        public var tone: Int? = nil
     }
     /// The driven elements (empty on the v0.4 micro-horn face).
     public var elements: [ElementSite] = []
@@ -261,10 +266,16 @@ public struct FacePattern: Sendable {
     /// element hole. Where a dash starts and stops is decided on a fixed fine
     /// centreline, so it does not depend on the display tessellation.
     init(elementFace d: RH1Design, rotation: Double, slotSamples: Int, capSegments: Int) {
-        elements = PlateArray.vogel(d.elementCount, radius: d.elementFillRadius, rotation: rotation,
-                                    inner: d.elementInnerRadius).enumerated().map { i, p in
-            ElementSite(index: i, center: P2(p.x, p.y), radius: (p.x * p.x + p.y * p.y).squareRoot(),
-                        pistonRadius: d.elementDiameter / 2, holeRadius: d.elementHoleRadius)
+        // The engine's own sites (lower plate for an up-facing face, upper
+        // for a down-facing one), so the CAD cannot place or size an element
+        // differently from the array the field is computed for.
+        let arr = PlateArray.rh1(d)
+        let upper = rotation != 0
+        elements = arr.elements().filter { ($0.surface == .upperCap) == upper }.map { e in
+            let ch = e.gateIndex, i = ch - (upper ? arr.perPlate : 0)
+            let c = P2(e.position.x * 1e3, e.position.y * 1e3), r = arr.pistonRadius(ch) * 1e3
+            return ElementSite(index: i, center: c, radius: (c.x * c.x + c.y * c.y).squareRoot(),
+                               pistonRadius: r, holeRadius: r + d.elementHoleClearance, tone: arr.toneOf?[ch])
         }
         sites = []
         var lines: [[P2]] = [], widths: [[Double]] = [], outlines: [[P2]] = []
@@ -273,8 +284,8 @@ public struct FacePattern: Sendable {
         for (line, w) in FacePattern.centerlines(d, samples: fineN) {
             var blocked = [Bool](repeating: false, count: line.count)
             for i in 0..<line.count {
-                let keep = w[i] / 2 + d.elementHoleRadius + d.elementSlotWeb
-                for e in elements where (e.center - line[i]).length < keep { blocked[i] = true; break }
+                let keep = w[i] / 2 + d.elementSlotWeb
+                for e in elements where (e.center - line[i]).length < keep + e.holeRadius { blocked[i] = true; break }
             }
             // A dash ends in a round cap of radius w/2 beyond its last sample.
             // Pull every dash end back by w/2 + half a web from the blocked
@@ -331,6 +342,12 @@ public struct FacePattern: Sendable {
             a += Double.pi / 8 * (w[0] * w[0] + w[w.count - 1] * w[w.count - 1])
         }
         return a
+    }
+    /// The elements' face diameters as text: "Ø5" or "Ø4.1–7.5".
+    public var elementSizeText: String {
+        let s = elements.map { 2 * $0.pistonRadius }
+        guard let lo = s.min(), let hi = s.max() else { return "" }
+        return hi - lo < 0.05 ? String(format: "Ø%g", lo) : String(format: "Ø%.1f–%.1f", lo, hi)
     }
     /// Radiating area of the driven elements.
     public var elementArea: Double { elements.reduce(0) { $0 + Double.pi * $1.pistonRadius * $1.pistonRadius } }
@@ -438,9 +455,17 @@ public struct RH1Model: Sendable {
             tubeV(liR0, liR1, d.storageFloor, d.storageCeiling))
 
         // ---- the four radiating faces ----------------------------------
-        let plateUp = RH1Model.plateSolid(d, pat, detail: detail, z0: 0, z1: d.plateThickness)
+        // Inside the 12 mm envelope: the metal plate, and (resonant elements)
+        // the wiring board on its back. Built with the radiating face at the
+        // top for an up-facing face, at the bottom for a down-facing one.
+        let tb = d.plateThickness - d.facePlateThickness
+        let plateUp = RH1Model.plateSolid(d, pat, detail: detail, z0: tb, z1: d.plateThickness)
         let plateDown = d.faceStyle == .elementArray
-            ? RH1Model.plateSolid(d, patDown, detail: detail, z0: 0, z1: d.plateThickness) : plateUp
+            ? RH1Model.plateSolid(d, patDown, detail: detail, z0: 0, z1: d.facePlateThickness) : plateUp
+        var boardPat = pat, boardPatDown = patDown
+        boardPat.elements = []; boardPatDown.elements = []
+        let boardUp = tb > 0 ? RH1Model.plateSolid(d, boardPat, detail: detail, z0: 0, z1: tb) : nil
+        let boardDown = tb > 0 ? RH1Model.plateSolid(d, boardPatDown, detail: detail, z0: d.facePlateThickness, z1: d.plateThickness) : nil
         let hornProfile = RH1Model.hornProfile(d)
         let hornVol = RH1Model.profileRevolvedVolume(hornProfile)
         let coneProfile = RH1Model.coneProfile(d)
@@ -452,31 +477,49 @@ public struct RH1Model: Sendable {
             add("face plate \(f.id)", asm, .plateMetal, (f.facing == .down ? plateDown : plateUp).translated(Vec3(0, 0, zlo)),
                 d.faceStyle == .elementArray ? .resolved : .committed,
                 d.faceStyle == .elementArray
-                    ? "Ø\(Int(d.plateDiameter))×\(Int(d.plateThickness)), \(fp.elements.count) element holes Ø\(String(format: "%.1f", 2 * d.elementHoleRadius)) + \(fp.slotCenterlines.count) slot dashes on \(d.slotArms) arms, faces \(f.facing.rawValue)"
+                    ? "Ø\(Int(d.plateDiameter))×\(String(format: "%g", d.facePlateThickness)), \(fp.elements.count) element holes Ø\(String(format: "%.1f–%.1f", 2 * (fp.elements.map(\.holeRadius).min() ?? 0), 2 * (fp.elements.map(\.holeRadius).max() ?? 0))) + \(fp.slotCenterlines.count) slot dashes on \(d.slotArms) arms, faces \(f.facing.rawValue)"
                     : "Ø\(Int(d.plateDiameter))×\(Int(d.plateThickness)), \(pat.drilled.count) micro-horns + \(d.slotArms) slots, faces \(f.facing.rawValue), \(f.handedness) from its front",
-                RH1Model.plateAnalyticVolume(d, fp))
+                RH1Model.plateAnalyticVolume(d, fp, thickness: d.facePlateThickness))
             if !fp.elements.isEmpty {
-                // The driven elements: a piezo disc flush with the radiating
-                // surface and a damping backing behind it, to the plate's back.
+                // The driven elements, flush with the radiating surface, and
+                // what fills the rest of each hole to the plate's back.
                 let toBack = f.backZ > f.faceZ ? 1.0 : -1.0
-                let zPZT = f.faceZ + toBack * d.elementPZTThickness
-                let r = d.elementDiameter / 2
+                let zBack = f.faceZ + toBack * d.facePlateThickness
                 let nSeg = detail == .preview ? 8 : 12
                 // An n-gon of the disc's area, so the mesh volume is the cylinder's.
-                let rPoly = r * (2 * Double.pi / (Double(nSeg) * sin(2 * Double.pi / Double(nSeg)))).squareRoot()
-                var discs = IndexedMesh(), backs = IndexedMesh()
+                let poly = (2 * Double.pi / (Double(nSeg) * sin(2 * Double.pi / Double(nSeg)))).squareRoot()
+                var fronts = IndexedMesh(), backs = IndexedMesh()
+                var vFront = 0.0, vBack = 0.0
                 for e in fp.elements {
-                    let ring = Solid.circle(e.center, rPoly, segments: nSeg)
-                    discs.append(Solid.extrude(outer: ring, z0: min(f.faceZ, zPZT), z1: max(f.faceZ, zPZT)))
-                    backs.append(Solid.extrude(outer: ring, z0: min(zPZT, f.backZ), z1: max(zPZT, f.backZ)))
+                    let r = e.pistonRadius
+                    let h = d.resonantElements ? min(d.elementCanAspect * 2 * r, d.facePlateThickness - 1) : d.elementPZTThickness
+                    let zMid = f.faceZ + toBack * h
+                    let ring = Solid.circle(e.center, r * poly, segments: nSeg)
+                    fronts.append(Solid.extrude(outer: ring, z0: min(f.faceZ, zMid), z1: max(f.faceZ, zMid)))
+                    backs.append(Solid.extrude(outer: ring, z0: min(zMid, zBack), z1: max(zMid, zBack)))
+                    vFront += Double.pi * r * r * h; vBack += Double.pi * r * r * (d.facePlateThickness - h)
                 }
-                let n = Double(fp.elements.count)
-                add("elements \(f.id)", asm, .pzt, discs, .derived,
-                    "\(fp.elements.count) × Ø\(Int(d.elementDiameter)) × \(Int(d.elementPZTThickness)) piezo discs, one drive channel each (ENGINE.md S1)",
-                    n * Double.pi * r * r * d.elementPZTThickness)
-                add("element backings \(f.id)", asm, .polymer, backs, .assumed,
-                    "damping backing behind each disc, to the plate's back; material and wiring not specified",
-                    n * Double.pi * r * r * (d.plateThickness - d.elementPZTThickness))
+                if d.resonantElements {
+                    let sizes = fp.elements.map { 2 * $0.pistonRadius }
+                    add("elements \(f.id)", asm, .transmitter, fronts, .assumed,
+                        String(format: "%d open-type transmitters, one tone and one drive channel each: %d tones %.1f–%.1f kHz, Ø%.1f–%.1f (the 40 kHz Ø%.0f part scaled ∝ 1/f; unmeasured)",
+                               fp.elements.count, d.elementTones.count, d.elementTones.min()! / 1000, d.elementTones.max()! / 1000,
+                               sizes.min() ?? 0, sizes.max() ?? 0, d.elementFaceAt40k), vFront)
+                    add("element carriers \(f.id)", asm, .polymer, backs, .assumed,
+                        "a moulded carrier behind each transmitter, its two pins through to the wiring board", vBack)
+                } else {
+                    add("elements \(f.id)", asm, .pzt, fronts, .derived,
+                        "\(fp.elements.count) × Ø\(Int(d.elementDiameter)) × \(Int(d.elementPZTThickness)) piezo discs, one drive channel each (ENGINE.md S1)", vFront)
+                    add("element backings \(f.id)", asm, .polymer, backs, .assumed,
+                        "damping backing behind each disc, to the plate's back; material and wiring not specified", vBack)
+                }
+            }
+            if let b = f.facing == .down ? boardDown : boardUp {
+                let bp = f.facing == .down ? boardPatDown : boardPat
+                add("wiring board \(f.id)", asm, .fr4, b.translated(Vec3(0, 0, zlo)), .assumed,
+                    String(format: "%.1f mm, %d layers: one trace per element from its pins to the rim electronics; cut through where the light slots are",
+                           tb, d.wiringBoardLayers),
+                    RH1Model.plateAnalyticVolume(d, bp, thickness: tb))
             }
             add("carrier ring \(f.id)", asm, .anodized,
                 Solid.tube(r0: d.plateRadius, r1: d.carrierOuterRadius, z0: zlo, z1: zhi,
@@ -763,8 +806,7 @@ public struct RH1Model: Sendable {
     }
 
     /// Closed-form plate volume: disc − collar hole − slots − biconical holes.
-    static func plateAnalyticVolume(_ d: RH1Design, _ pat: FacePattern) -> Double {
-        let t = d.plateThickness
+    static func plateAnalyticVolume(_ d: RH1Design, _ pat: FacePattern, thickness t: Double) -> Double {
         var v = Double.pi * (d.plateRadius * d.plateRadius - d.boreHoleRadius * d.boreHoleRadius) * t
         v -= pat.slotOpenArea * t
         for e in pat.elements { v -= Double.pi * e.holeRadius * e.holeRadius * t }

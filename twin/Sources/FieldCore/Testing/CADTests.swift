@@ -105,7 +105,8 @@ extension CoreTests {
             for r in CADGates.designRules(m) where !r.passed {
                 t.fail("\(r.id) \(r.what): \(r.clearance) < \(r.minimum)")
             }
-            t.check(m.pattern.elements.count == 192 && m.pattern.sites.isEmpty, "element face: 192 elements, no micro-horns")
+            t.check(m.pattern.elements.count == m.design.elementCount && m.pattern.sites.isEmpty, "element face: \(m.design.elementCount) elements, no micro-horns")
+            t.check(m.pattern.elements.allSatisfy { $0.tone != nil }, "every element has its tone")
             let old = RH1Model(design: .microHornFace, detail: .preview)
             t.check(old.pattern.sites.count == 380 && old.pattern.elements.isEmpty, "v0.4 face: 380 Vogel sites")
             for p in old.parts { t.check(p.mesh.topology().isClosed && p.volume > 0, "v0.4 \(p.name) not a closed solid") }

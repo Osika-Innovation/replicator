@@ -67,26 +67,55 @@ public struct RH1Design: Codable, Sendable {
     /// preset `RH1Freestanding` and its receipts.
     public enum FaceStyle: String, Codable, Sendable { case elementArray, microHorns }
     public var faceStyle = FaceStyle.elementArray
-    /// Elements per face and their diameter: study S1's design point.
-    public var elementCount = 192
+    /// Elements per face. 1,536 resonant elements is about what the annulus
+    /// holds with 1 mm of metal between holes (DR11; a third of the face
+    /// radiates), and what the ring mold needs to keep every element inside
+    /// its velocity ceiling (gate G-E1, 2026-11-12). The operator's ruling
+    /// of 2026-11-11 was 192, made on ideal pistons.
+    public var elementCount = 1536
+    /// The tones the plate plays (Hz). Every element is a resonant open-type
+    /// transmitter tuned to one of them (`ElementSpec.scaled`, proposal of
+    /// 2026-11-12: a piezo disc radiating directly gives a twentieth of the
+    /// face velocity the molds need). Empty = that directly radiating disc,
+    /// Ø`elementDiameter`, playing every tone: the face until 2026-11-12.
+    public var elementTones: [Double] = (0..<9).map { 50_000 + 50_000 * (Double($0) + 0.5) / 9 }
+    /// Face diameter of the 40 kHz transmitter; the others scale ∝ 1/f.
+    public var elementFaceAt40k = 10.0
+    /// A transmitter's can is this fraction of its diameter tall.
+    public var elementCanAspect = 0.7
+    /// Diameter of the directly radiating disc (`elementTones` empty).
     public var elementDiameter = 5.0
+    /// The wiring board on the plate's back, inside the plate's envelope:
+    /// the face plate proper is `plateThickness` less this.
+    public var wiringBoardThickness = 1.0
+    /// Copper layers of the wiring board that carry element traces.
+    public var wiringBoardLayers = 4
+    public var resonantElements: Bool { !elementTones.isEmpty }
+    public var largestElementDiameter: Double {
+        resonantElements ? elementFaceAt40k * 40_000 / elementTones.min()! : elementDiameter
+    }
     /// The spiral fills this radius: the outermost element's hole then clears
-    /// the Ø400 storage liner (DR12), as the old sunflower's 196.5 did.
-    public var elementFillRadius = 196.5
+    /// the Ø400 storage liner by 0.9 mm (DR12 asks 0.5); 196.5 for Ø5 holes.
+    public var elementFillRadius: Double { storageLinerID / 2 - 0.9 - largestElementDiameter / 2 - elementHoleClearance }
     /// …and starts here (an equal-area annulus, as the old sunflower was), so
     /// the innermost element's hole leaves a real web to the Ø14 collar hole.
     /// A spiral from r = 0 would put it 0.4 mm from the collar.
-    public var elementInnerRadius = 12.0
+    /// 13 (12 until 2026-11-12): the first element of 1,536 sits almost on
+    /// the inner radius, and a Ø7.8 hole there needs its 2 mm to the collar.
+    public var elementInnerRadius = 13.0
     /// Radial clearance of an element in its through-hole (bond line).
     public var elementHoleClearance = 0.1
     /// The piezo disc at the radiating surface; a damping backing fills the
     /// rest of the hole (broadband, bonded — acoustic-hologram paper).
     public var elementPZTThickness = 2.0
+    /// Metal left between two element holes (DR11, resonant face).
+    public var elementHoleWeb = 1.0
     /// Metal left between an element's hole and a slot dash.
     public var elementSlotWeb = 1.0
     /// A slot dash shorter than this is not cut.
     public var slotMinDash = 8.0
-    public var elementHoleRadius: Double { elementDiameter / 2 + elementHoleClearance }
+    /// Slab the metal face plate occupies inside the 12 mm envelope.
+    public var facePlateThickness: Double { plateThickness - (resonantElements ? wiringBoardThickness : 0) }
 
     /// The v0.4 micro-horn face (see `FaceStyle`).
     public static var microHornFace: RH1Design {
@@ -146,6 +175,8 @@ public struct RH1Design: Codable, Sendable {
     public var rimOuterRadius = 204.0
     public var rimDepthFrom = 2.0
     public var rimDepthTo = 14.0
+    /// The rim annulus holds ring boards stacked at this pitch (drivers).
+    public var rimBoardPitch = 4.0
 
     // MARK: Enclosure
     public var rearGlassOD = 444.0

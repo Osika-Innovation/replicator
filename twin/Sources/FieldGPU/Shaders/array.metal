@@ -100,12 +100,13 @@ kernel void arrayAdjoint(device float2*          grad     [[buffer(0)]],
                          device const float2*    A        [[buffer(2)]],
                          device const float4*    points   [[buffer(3)]],
                          constant ArrParams&     P        [[buffer(4)]],
+                         device const float2*    gain     [[buffer(5)]],
                          uint                    tg       [[threadgroup_position_in_grid]],
                          uint                    tid      [[thread_index_in_threadgroup]])
 {
     threadgroup float2 sh[256];
     float2 acc = float2(0.0f);
-    if (tg < P.elementCount) {
+    if (tg < P.elementCount && (gain[tg].x != 0.0f || gain[tg].y != 0.0f)) {
         ElementPF el = elements[tg];
         for (uint p = tid; p < P.pointCount; p += 256) {
             float2 s0, sx, sy, sz;
