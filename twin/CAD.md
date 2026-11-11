@@ -2,9 +2,9 @@
 
 The free-standing RH-1 as a parametric solid model, built by FieldCore with no
 dependencies, rendered by the twin's Metal pipeline, gated like the physics,
-and exported to STL / OBJ / STEP. The physics preset for the plate-primary
-machine (`RH1Freestanding`) reads its apertures from this model, so the CAD
-and the simulation cannot drift apart.
+and exported to STL / OBJ / STEP. The engine's plates (`PlateArray.rh1`) and
+the face plates drawn here are built from the same sites and sizes, and gate
+G-CAD9 holds them equal, so the CAD and the simulation cannot drift apart.
 
 Source files: `Sources/FieldCore/CAD/` (kernel, design, model, gates, exports),
 `Sources/FieldGPU/SolidRenderer.swift` + `Shaders/solid.metal` (rendering),
@@ -15,23 +15,24 @@ Source files: `Sources/FieldCore/CAD/` (kernel, design, model, gates, exports),
 ```sh
 swift build -c release
 ./.build/release/fieldc cad info --reconciliation   # stack, provenance of every number, conflicts
-./.build/release/fieldc cad check --rules --receipt # CAD gates + 26 design rules
+./.build/release/fieldc cad check --rules --receipt # CAD gates + 28 design rules
 ./.build/release/fieldc cad render --all --out renders/    # iso, front, section, section-iso, detail, plate, storage, top
 ./.build/release/fieldc cad render detail --light --door open detail.png
 ./.build/release/fieldc cad export --out cad-out    # STL per part, rh1.obj+mtl, params, BOM, drawing
 ./.build/release/fieldc cad step --out cad-out/rh1.step   # B-rep STEP assembly (needs CadQuery)
+./.build/release/fieldc cad pack                    # the manufacturing pack: made parts, bought parts, drive electronics, assembly, what is missing
 ./.build/release/FieldCompilerApp                   # Machine tab: orbit, S = section, 1–5 views
 ```
 
 Options: `--preview | --fine` (tessellation only — the design is identical at
 every detail level), `--door open|closed|<deg>`.
 
-## What is modelled — 100 parts
+## What is modelled — 104 parts
 
 | assembly | parts | notes |
 |---|---|---|
 | body | bottom closure, lower body tube 0–1060, top band, crown, crown cap, LED ring | 4 mm anodized shells, Ø460 × 1650 |
-| plate.top / mid-up / mid-down / deck | face plate, carrier ring, gyroid horn, copper inner cone, 3 throat piezos, rim electronics | four radiating faces; the middle assembly is two back-to-back stacks |
+| plate.top / mid-up / mid-down / deck | face plate, 1,536 transmitters and their carriers, wiring board, carrier ring, gyroid horn, copper inner cone, 3 throat piezos, rim electronics | four radiating faces; the middle assembly is two back-to-back stacks |
 | torus.top / middle / deck | hollow former Ø290/Ø60, contrawound winding pair (CW feed A, CCW feed B) | 44 turns each, two independent feeds (R5) |
 | bore | collars top / middle, deck feed tube | Ø12 clear, Ø14 collar |
 | storage | chamber liner Ø400 | 420 → 936 |
@@ -40,30 +41,54 @@ every detail level), `--door open|closed|<deg>`.
 | photonic | 6 optically-addressed bay tiles | between the columns |
 | base / crown | intake filter, reservoir, graphite bay, PSU, compute, pump, cartridge circle, optical-stem head, touch UI | **envelopes only** — dimensioned nowhere |
 
-The face plate is the part that carries the design, and since the ruling of
-2026-11-10 it is drawn round the engine's plate (`faceStyle = .elementArray`):
-a Ø410 × 12 disc with a Ø14 collar hole and **192 driven elements** — Ø5 × 2
-piezo discs flush with the radiating surface, a damping backing behind each,
-in Ø5.2 through-holes on a golden-angle spiral over r 12 → 196.5 (innermost
-element at 15.6, outermost at 196.2). Up-facing faces carry the spiral as is,
-down-facing faces turned half a golden angle, exactly as `PlateArray.rh1`
-places the engine's two plates; gate G-CAD9 holds the CAD and the engine to
-the same sites. The twelve equiangular slot arms (α = 76.05°, r 32.6 → 189.7,
-width 2.8 → 6.0 mm) keep their spirals but are cut into dashes that leave
-1 mm of metal round every element hole: 151 dashes on the up faces, 142 on
-the down faces, 78 % of the unbroken slots' area. There are no micro-horns.
+The face plate is the part that carries the design. Since 2026-11-12 it is
+drawn for **resonant elements** (proposal; the operator's ruling of
+2026-11-11 was 192 elements, made when the engine drove ideal pistons — see
+`ENGINE.md`, "The elements are hardware"):
 
-**Open on this face:** how the 192 elements are wired (no flex or PCB layer is
-modelled, and the gyroid horn sits directly behind the plate); what the horn,
-cone and three throat piezos are for now that they no longer drive the sound
-(they remain as the slots' dielectric and feed); what dashing does to the
-slots as GHz radiators (not simulated).
+* **1,536 open-type transmitters per face**, each tuned to one of nine tones
+  (52.8–97.2 kHz) and driven by its own channel. A transmitter is the bought
+  40 kHz Ø10 mm part scaled to its tone: Ø7.6 mm at the lowest, Ø4.1 mm at the
+  highest, its can 0.7 diameters tall, flush with the radiating surface.
+* They sit on the golden-angle spiral over r 13 → 195.2 mm. The spiral spaces
+  centres evenly but the elements differ in size, so where two large ones
+  fall side by side they are nudged apart until every pair of holes keeps a
+  1 mm web (`PlateArray.spread`; rule DR11). 29 % of the face radiates.
+* Inside the plate's 12 mm envelope: an 11 mm aluminium plate with one
+  through-hole per element, a moulded carrier behind each transmitter, and a
+  1 mm four-layer **wiring board** on the plate's back that takes every
+  element's two pins to the rim electronics (one trace per element; 3.1 mm of
+  rim per trace per layer, rule DR27).
+* The **rim electronics** annulus holds the drivers: one two-channel gate
+  driver per two elements and one shift register per eight, on three ring
+  boards (rule DR28: 2.8× the board area they need).
+* Up-facing faces carry the lower plate's layout, down-facing faces the upper
+  plate's, exactly as `PlateArray.rh1` places the engine's two plates; gate
+  G-CAD9 holds sites and sizes equal to 1e-6 mm.
+
+`fieldc cad pack` lists the transmitters tone by tone with their drive
+voltages, the driver counts, the assembly order and what cannot be built from
+the model yet.
+
+**What this face gives up.** The twelve light slots are gone: between 1,536
+holes no stretch of a slot arm 8 mm long is left with 1 mm of metal to every
+hole, so no dash is cut (G-CAD8: 0 dashes). With 192 elements the arms were
+cut into ~150 dashes that kept three-quarters of their area. Whether the
+slots or the powder mold has the face is the operator's call.
+
+**Open on this face:** no transmitter of this kind has been measured at these
+tones; what the horn, cone and three throat piezos behind the plate are for
+now that the face carries its own elements; fasteners, gaskets and the board
+connectors.
+
+The face of 2026-11-10 — 192 Ø5 × 2 piezo discs flush with the surface,
+radiating directly, a damping backing behind each — is still built when
+`elementTones` is empty (`fieldc … --array disc`). It fails gate G-E1 by 310×.
 
 The v0.4 face — a 380-site sunflower of biconical micro-horns (face radius
 1.054 + 0.00981·r mm) behind one horn, crossed by twelve unbroken slots — is
-kept as `RH1Design.microHornFace`. The six-throat-gate preset
-`RH1Freestanding` and its receipts are built on it, and its claims (G-CAD5's
-21 × 34 parastichies) are still gated there.
+kept as `RH1Design.microHornFace`; its claims (G-CAD5's 21 × 34
+parastichies) are still gated there.
 
 ## Where every number comes from
 
@@ -110,9 +135,8 @@ These came out of building the geometry, not out of reading it:
    micro-horn faces ~2,700 mm² (throats ~680) — 12.8×. The papers call the
    slots voids in the conductor with porous gyroid behind; if so they radiate,
    and "too sparse to block the sound" undersells them — they are 93 % of the
-   open area and a spiral line-source array, not a sunflower. **Open question
-   for the operator:** are the slots acoustically open, or dielectric-filled?
-   `RH1Freestanding` carries both (`--slots-closed`).
+   open area and a spiral line-source array, not a sunflower. (On the
+   resonant face of 2026-11-12 the question is moot: no slot is left.)
 3. **"21 × 34" is the mid-field reading.** Nearest-neighbour parastichies of the
    380-site field run 13 × 21 (inner third), 21 × 34 (middle), 34 × 55 (rim) —
    the paper's claim holds where it says, and the rim reads the next pair.
@@ -133,18 +157,18 @@ These came out of building the geometry, not out of reading it:
 |---|---|---|
 | G-CAD1 | every part a closed, outward-oriented solid (edge census on shared vertices) | 0 failures |
 | G-CAD2 | mesh volume vs closed form, 77 parts | < 1 % |
-| G-CAD3 | 26 design-rule clearances (piezo/bore, winding layers, horn, elements, slots, glass, rollers, columns, tiles, …) | all ≥ minimum |
+| G-CAD3 | 28 design-rule clearances (piezo/bore, winding layers, horn, element holes and webs, wiring-board traces, driver board area, glass, rollers, columns, tiles, …) | all ≥ minimum |
 | G-CAD3b | sampled interference between every pair of neighbouring parts | none |
 | G-CAD4 | dimension audit vs spec/site (14 checks) | < 0.1 mm |
 | G-CAD5 | 21 × 34 parastichies present | present |
 | G-CAD6 | horn arc length vs mech §3c | < 1 mm |
 | G-CAD7/8 | mass budget; open area slots vs micro-horns | informational |
-| G-CAD9 | the engine's plate array (`PlateArray.rh1`) is the CAD's: same sites on all four faces, no element rule broken | < 1e-6 mm |
+| G-CAD9 | the engine's plate array (`PlateArray.rh1`) is the CAD's: same sites and element sizes on all four faces, no element rule broken | < 1e-6 mm |
 
 `fieldc cad step` adds **G-STEP**: every B-rep part's exact OpenCascade volume
 against the Swift mesh volume — two independent geometry kernels (1.5 % solids,
-3 % swept windings; worst part at 0.43× its tolerance). Re-importing the STEP
-gives 152 valid solids, 0 invalid.
+3 % swept windings; worst part at 0.43× its tolerance, re-run on the resonant
+face 2026-11-12).
 
 Unit tests (`fieldc test`) cover the triangulator (60-hole disc exact), revolve
 / sector / torus / extrusion / sweep closure and volumes, the interference test
@@ -172,7 +196,5 @@ itself (overlap caught, touching not), the stack, and a model-wide rule check.
 The gyroid lattice itself (the horn is its envelope), the V-groove
 construction of the micro-horn mesh (modelled as biconical holes), the EBG
 terminal layer, the photonic tiles' write projector (OPEN in the photonic
-note), gaskets, interlock and detents, wiring, and everything in the base
-beyond envelopes. The plate-primary acoustic preset's throat → aperture
-transfer is a labelled stub (`HornModel`), so every force it produces is a
-model number.
+note), gaskets, fasteners, interlock and detents, cabling beyond the wiring
+boards, the controller, and everything in the base beyond envelopes.

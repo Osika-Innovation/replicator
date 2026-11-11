@@ -86,13 +86,13 @@ public struct AppState: Sendable {
     public var theme: Theme = .dark
     public var mode: AppMode = .compile
     // Defaults describe the machine every mode simulates: the RH-1's two
-    // plates of 192 elements in room air (`gateCount` is the plate count).
+    // plates of 1,536 elements in room air (`gateCount` is the plate count).
     public var machineName = "RH-1 FS"
     public var material = "PLA"
     public var gateCount = 2
-    public var elementCount = 384
-    public var buildVolumeText = "Ø393 × 460 mm"
-    public var wavelengthText = "50–100 kHz · λ 3.4–6.9 mm"
+    public var elementCount = 3072
+    public var buildVolumeText = "Ø390 × 460 mm"
+    public var wavelengthText = "53–97 kHz · λ 3.5–6.5 mm"
     public var objects: [ObjectRow] = []
     public var machineView = false        // Machine View vs God View (§16.2)
     public var overlays: Set<String> = ["solid", "traps"]

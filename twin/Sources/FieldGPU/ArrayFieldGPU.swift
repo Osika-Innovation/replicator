@@ -40,13 +40,15 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
 
     /// - Parameter curve: for resonant elements, use the resonance curve at
     ///   every frequency (a scan) instead of one tone per element (a mold).
+    /// - Parameter equalise: with `curve`, the curves equalised to this floor
+    ///   (`PlateArray.gains`).
     public init(ctx: MetalContext, array: PlateArray, frequencies: [Double], medium: Medium,
-                lattice: FieldLattice, curve: Bool = false) throws {
+                lattice: FieldLattice, curve: Bool = false, equalise: Double? = nil) throws {
         self.ctx = ctx; self.lattice = lattice; self.frequencies = frequencies; self.medium = medium
         let els = array.elements()
         self.channels = els.count
         self.walls = array.walls
-        self.gain = array.gains(frequencies, curve: curve)
+        self.gain = array.gains(frequencies, curve: curve, equalise: equalise)
         let recs: [ElementPF] = els.map { e in
             ElementPF(
                 position: SIMD4(Float(e.position.x), Float(e.position.y), Float(e.position.z), 0),
@@ -132,8 +134,11 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
     }
 
     public func limited(_ drives: [[Complex]]) -> [[Complex]] {
-        guard let cap = amplitudeCap, let gain else { return drives }
+        guard let gain else { return drives }
+        // An entry an element cannot play is not part of the drive.
         var g = drives
+        for t in g.indices { for e in g[t].indices where gain[t][e] == .zero { g[t][e] = .zero } }
+        guard let cap = amplitudeCap else { return g }
         for _ in 0..<3 {
             var sum = 0.0, count = 0
             for t in g.indices { for e in g[t].indices where gain[t][e] != .zero { sum += g[t][e].magnitudeSquared; count += 1 } }

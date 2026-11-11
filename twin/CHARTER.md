@@ -309,3 +309,20 @@ helpers only those tests used; the `SceneBuilder` drawings for them.
 The line count is now under the proposed cap of 17,500. Checked after the
 cut: the 52 tests, G-A1 and G-A3 on the GPU, and all 22 app scenes against
 their goldens. The tag `twin-before-first-cut` holds everything removed.
+
+## The elements as hardware — 2026-11-12
+
+Not a cut: a round that added what the twin lacked, the transducer under the
+drive (`ENGINE.md`, "The elements are hardware"). Against the rules:
+
+| rule | where the round stands |
+|---|---|
+| 1, one machine | still two plates in open air. The plates are now resonant (`PlateArray.locked`); the ideal broadband piston stays as `--array disc`, because the as-drawn comparison (G-E1 = 310) is the reason for the change |
+| 2, one line to the machine | not advanced: only `play` runs through `MachineBackend`. The emulated machine does now carry the elements' resonance curves and a build's errors |
+| 3, the line cap | 16,293 → about 17,150 lines, under the proposed 17,500. The third cut removed 1,360 the same night |
+| 6, constants not flags | the sweeps that found the design point ran on flags (`--locked`, `--cap`, `--efficiency`, `--contrast-enough`, `--power-x`, `--as-built`); all are gone. Their answers are constants: 1,536 elements, nine tones, amplitude ceiling 1.1 × rms, 1.15× holding. A sieve that stops at "enough" contrast and then saves drive was tried, lost evenness, and was removed with its options |
+| 7, the time budget | not measured this round. A mold on 3,072 channels takes about 300 s, as before; `carry` 500 s and `build` 1,300 s, five times what they took on 384 broadband channels |
+| 9, the document is the run | `fieldc status` prints the newest receipt of each kind as a table; the README's result table is its output. `Receipts/` still holds every earlier plate's receipts |
+
+For the operator: the plate itself (1,536 resonant elements per face against
+the ruling of 192), and with it the light slots.

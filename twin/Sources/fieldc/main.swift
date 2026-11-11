@@ -55,12 +55,6 @@ func plateArray(_ args: [String], reflection: Double = 0.9) -> PlateArray {
             a = PlateArray.rh1(d, reflection: reflection)
         }
     }
-    // --locked T [--band lo-hi]: resonant elements, each tuned to one of T tones.
-    if let T = arg("--locked").flatMap(Int.init), T > 0 {
-        var lo = 50_000.0, hi = 100_000.0
-        if let b = arg("--band")?.split(separator: "-").compactMap({ Double($0) }), b.count == 2 { lo = b[0] * 1000; hi = b[1] * 1000 }
-        a = a.locked(tones: (0..<T).map { lo + (hi - lo) * (Double($0) + 0.5) / Double(T) })
-    }
     return a
 }
 
@@ -184,32 +178,8 @@ case "mold":
         setup.particles = !args.contains("--no-particles")
         setup.debug = args.contains("--debug")
         if let v = arg("--feedback").flatMap(Int.init) { setup.feedback = v }
-        if let v = arg("--cap").flatMap(Double.init) { setup.amplitudeCap = v > 0 ? v : nil }
-        if let v = arg("--efficiency").flatMap(Double.init) { setup.efficiency = v }
-        if let v = arg("--contrast-enough").flatMap(Double.init) { setup.contrastEnough = v }
-        if let v = arg("--power-x").flatMap(Double.init) { setup.powerX = v }
         let reflection = arg("--reflection").flatMap(Double.init) ?? 0.9
         let moldArray = plateArray(args, reflection: reflection)
-        // --as-built gain=0.05,phase=10,pos=0.2,resonance=0.005,dead=0.01,temp=0.5[,seed=1]: play the
-        // compiled drive on one random build within those tolerances, in air `temp` kelvin warmer.
-        if let spec = arg("--as-built") {
-            var tol = PlateArray.Tolerance(), seed: UInt64 = 1, dT = 0.0
-            for kv in spec.split(separator: ",") {
-                let p = kv.split(separator: "="); guard p.count == 2, let v = Double(p[1]) else { continue }
-                switch p[0] {
-                case "gain": tol.gain = v
-                case "phase": tol.phaseDegrees = v
-                case "pos": tol.position = v * 1e-3
-                case "resonance": tol.resonance = v
-                case "dead": tol.dead = v
-                case "temp": dT = v
-                case "seed": seed = UInt64(v)
-                default: print("unknown --as-built key \(p[0])")
-                }
-            }
-            setup.playOn = (moldArray.asBuilt(tol, seed: seed), Medium.air(temperatureC: 20 + dT, humidity: 50))
-            print(String(format: "as built: %@, air %.1f K warmer than the drawing's", tol.text, dT))
-        }
         let chamber: MoldChamber = .plates(moldArray)
         let L = moldArray.gap
         let centre = Vec3(0, 0, L / 2)
@@ -280,50 +250,11 @@ case "mold":
     } catch { print("GPU unavailable: \(error)"); exit(2) }
 
 case "tolerance":
-    // Study S5: what a build must hold. The ring mold is compiled once for the
-    // plates as drawn, then the same drive is played on random builds of the
-    // plates, one kind of error at a time and then together, each at three
-    // sizes and two seeds. A build passes as the drawing does: every site
-    // holds at least a quarter of its fair share (G-M1) and 95 % of the
-    // powder ends on the shape (G-M2).
+    // Study S5 (ToleranceCore.swift): the ring mold played on random builds of the plates.
     do {
         let t0 = Date()
         let arr = plateArray(args)
-        let ctx = try MetalContext()
-        let (sites, segments) = moldShape("ring", centre: arr.centre)
-        typealias T = PlateArray.Tolerance
-        func tol(_ f: (inout T) -> Void) -> T { var t = T(); f(&t); return t }
-        var cases: [(String, T, Double)] = []
-        for v in [0.02, 0.05, 0.10] { cases.append((String(format: "gain ±%.0f %%", 100 * v), tol { $0.gain = v }, 0)) }
-        for v in [5.0, 10, 20] { cases.append((String(format: "phase ±%.0f°", v), tol { $0.phaseDegrees = v }, 0)) }
-        for v in [0.05e-3, 0.1e-3, 0.2e-3] { cases.append((String(format: "position ±%.2f mm", v * 1000), tol { $0.position = v }, 0)) }
-        for v in [0.001, 0.003, 0.01] { cases.append((String(format: "resonance ±%.1f %%", 100 * v), tol { $0.resonance = v }, 0)) }
-        for v in [0.005, 0.02, 0.05] { cases.append((String(format: "%.1f %% dead", 100 * v), tol { $0.dead = v }, 0)) }
-        for v in [0.1, 0.3, 1.0] { cases.append((String(format: "air %.1f K warmer", v), T(), v)) }
-        // Together: what calibration should leave (tight), and an uncalibrated build (loose).
-        cases.append(("calibrated: gain ±2 %, phase ±5°, position ±0.1 mm, 0.5 % dead, air 0.1 K",
-                      tol { $0.gain = 0.02; $0.phaseDegrees = 5; $0.position = 0.1e-3; $0.dead = 0.005 }, 0.1))
-        cases.append(("as assembled: gain ±10 %, phase ±20°, position ±0.2 mm, resonance ±1 %, 2 % dead, air 1 K",
-                      tol { $0.gain = 0.10; $0.phaseDegrees = 20; $0.position = 0.2e-3; $0.resonance = 0.01; $0.dead = 0.02 }, 1))
-        var setup = MoldSetup()
-        setup.particles = false
-        let seeds: [UInt64] = [1, 2]
-        for (name, t, dT) in cases { for s in seeds {
-            setup.builds.append(("\(name) #\(s)", arr.asBuilt(t, seed: s), Medium.air(temperatureC: 20 + dT, humidity: 50)))
-        } }
-        let out = try runMold(ctx: ctx, label: "ring", sites: sites, segments: segments, chamber: .plates(arr), setup: setup)
-        var gates = out.gates
-        print("\nbuild                                                                    on shape   sites ÷ fair    weakest lift   passes")
-        for (i, c) in cases.enumerated() {
-            let rs = out.builds[(i * seeds.count)..<((i + 1) * seeds.count)]
-            let on = rs.map(\.onShape).min()!, lo = rs.map(\.siteMin).min()!, hi = rs.map(\.siteMax).max()!, lift = rs.map(\.weakestLift).min()!
-            let ok = on >= 0.95 && lo >= 0.25
-            print(String(format: "%-72@ %5.1f %%    %.2f–%.2f      %.2f×          %@", c.0 as NSString, 100 * on, lo, hi, lift, ok ? "yes" : "NO"))
-            gates.append(GateResult(id: "S5", name: "ring mold on a build with \(c.0) (emptiest site ÷ fair share, worst of \(seeds.count) builds)",
-                                    measured: lo, threshold: 0.25, comparison: .informational,
-                                    detail: String(format: "%.1f %% on the shape, sites %.2f–%.2f of a fair share, weakest site lifts %.2f× a grain; %@",
-                                                   100 * on, lo, hi, lift, ok ? "passes G-M1 and G-M2" : "FAILS")))
-        }
+        let gates = try runTolerance(ctx: try MetalContext(), array: arr)
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "tolerance-\(arr.tag)", gates: gates, durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
@@ -360,7 +291,8 @@ case "arraysweep":
         print("per plate  tones  trap ratio  ring sieve: contrast  on shape  sites (fair 6.3%)  rogue   drive (m/s rms)  acoustic W   compile")
         for N in counts {
             for T in toneSets {
-                var design = RH1Design(); design.elementCount = N
+                // S1 is a study of ideal broadband pistons: the Ø5 disc face.
+                var design = RH1Design(); design.elementCount = N; design.elementTones = []
                 let arr = PlateArray.rh1(design, reflection: reflection)
                 let centre = arr.centre
                 var trap = MoldSetup()
@@ -412,17 +344,18 @@ case "scan3d":
         var fHi = 100_000.0, nF = 320
         if let v = arg("--fmax").flatMap(Double.init) { fHi = v * 1000 }
         if let v = arg("--nf").flatMap(Int.init) { nF = v }
-        let fLo = 30_000.0
         let snrDB = arg("--snr").flatMap(Double.init) ?? 40.0
         let chords = arg("--chords").flatMap(Int.init) ?? 8
         let (object, subunit, half, h) = scanObject(objectName, centre: centre)
         let n = Int((2 * half / h).rounded()) + 1
         let grid = FieldLattice(origin: centre - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
         let I: [Double]
-        print(String(format: "scan of %@: %d scatterers (radius %.2f mm), open air, 2 × %d elements, %d frequencies %.0f–%.0f kHz × %d random chords, SNR %.0f dB; grid ±%.0f mm at %.2f mm (%d³)",
-                     objectName, object.count, subunit * 1000, perPlate, nF, fLo / 1000, fHi / 1000, chords, snrDB, half * 1000, h * 1000, n))
         var setup = ArrayScanSetup()
         setup.fHi = fHi; setup.frequencies = nF; setup.chords = chords; setup.snrDB = snrDB
+        let sweep = setup.sweep(on: scanArray)
+        print(String(format: "scan of %@: %d scatterers (radius %.2f mm), open air, 2 × %d elements, %d frequencies %.0f–%.0f kHz × %d random chords, SNR %.0f dB; grid ±%.0f mm at %.2f mm (%d³)",
+                     objectName, object.count, subunit * 1000, perPlate, sweep.count, sweep.lo / 1000, sweep.hi / 1000, chords, snrDB, half * 1000, h * 1000, n))
+
         setup.gate = !args.contains("--no-gate")
         setup.listenBoth = args.contains("--listen-both")
         I = try scanImageArray(ctx: ctx, array: scanArray, object: object, subunit: subunit,
@@ -446,7 +379,7 @@ case "scan3d":
         let gate = GateResult(id: "SCAN", name: "scan of \(objectName) in open air: image overlap with the object",
                               measured: precision, threshold: 0, comparison: .informational,
                               detail: String(format: "%d scatterers, %d frequencies %.0f–%.0f kHz%@, SNR %.0f dB; precision %.0f%%, recall %.0f%% (within %.1f mm); AUC %.3f, contrast %.1f×",
-                                             object.count, nF, fLo / 1000, fHi / 1000, " × \(chords) chords, 2 × \(perPlate) elements",
+                                             object.count, sweep.count, sweep.lo / 1000, sweep.hi / 1000, " × \(chords) chords, 2 × \(perPlate) elements",
                                              snrDB, 100 * precision, 100 * recall, tol * 1000, auc, imageContrast))
         let aucGate = GateResult(id: "SCAN-AUC", name: "scan of \(objectName): object voxels outrank background voxels (threshold-free)",
                                  measured: auc, threshold: 0, comparison: .informational,
@@ -509,7 +442,7 @@ case "replicate":
         let n = Int((2 * half / h).rounded()) + 1
         let grid = FieldLattice(origin: centre - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
         print(String(format: "replicate %@ in open air: 2 × %d elements; %d scatterers; scans: %d frequencies %.0f–%.0f kHz × %d chords, SNR %.0f dB, grid ±%.0f mm at %.2f mm (%d³)",
-                     objectName, perPlate, object.count, scan.frequencies, scan.fLo / 1000, scan.fHi / 1000, scan.chords, scan.snrDB,
+                     objectName, perPlate, object.count, scan.sweep(on: arr).count, scan.sweep(on: arr).lo / 1000, scan.sweep(on: arr).hi / 1000, scan.chords, scan.snrDB,
                      half * 1000, h * 1000, n))
         print("1. scan the original")
         let I0 = try scanImageArray(ctx: ctx, array: arr, object: object, subunit: 0.3e-3, grid: grid, setup: scan)
@@ -588,6 +521,15 @@ case "cad":
 
 case "windings":
     exit(WindingsCommand.run(args))
+
+case "status":
+    // The newest receipt of each kind (optionally: --plate rh1x1536t9), every gate with a bar.
+    let filter = args.firstIndex(of: "--plate").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? ""
+    let rs = Receipt.latest(in: URL(fileURLWithPath: "Receipts"), containing: filter)
+    print(Receipt.statusMarkdown(rs))
+    let failed = rs.flatMap(\.gates).filter { !$0.passed }
+    print(failed.isEmpty ? "all gates with a bar pass" : "\(failed.count) FAIL: " + failed.map(\.id).joined(separator: ", "))
+    exit(failed.isEmpty ? 0 : 1)
 
 case "backend", "fcode", "play":
     exit(MachineCommand.run(args))

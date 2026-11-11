@@ -109,7 +109,27 @@ public struct ArrayScanSetup {
     /// forward scattering of surfaces that do not face the firing plate);
     /// false = the firing plate only.
     public var listenBoth = false
+    /// Resonant elements: the floor their resonance curves are equalised to
+    /// (`PlateArray.gains`). 0.3: each element is used ±6 % round its tone,
+    /// at up to 1.8× its noise.
+    public var equalise = 0.3
     public init() {}
+
+    /// The sweep a scan of these plates makes: its band (Hz) and how many
+    /// frequencies. Resonant elements only answer near their tones, so the
+    /// band is the plate's own, 5 % past its outermost tones. The frequency
+    /// step stays the one the full band has: it sets the time window 1/df,
+    /// and the plates' later bounces (every 2L/c) fold back into that
+    /// window. At 219 Hz (window 4.56 ms) the second and third bounces fold
+    /// to 0.80 and 3.48 ms, clear of the echo gate; keeping the count
+    /// instead widened the window to 6.40 ms and folded the third bounce
+    /// into the gate (AUC 0.56, 2026-11-12).
+    public func sweep(on array: PlateArray) -> (lo: Double, hi: Double, count: Int) {
+        guard let t = array.tones else { return (fLo, fHi, frequencies) }
+        let lo = max(fLo, 0.95 * t.min()!), hi = min(fHi, 1.05 * t.max()!)
+        let step = (fHi - fLo) / Double(max(1, frequencies - 1))
+        return (lo, hi, Int(((hi - lo) / step).rounded()) + 1)
+    }
 }
 
 /// The matched-field image of `object` (small rigid scatterers of radius
@@ -131,16 +151,20 @@ public func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3],
                     setup: ArrayScanSetup, log: (String) -> Void = { print($0) }) throws -> [Double] {
     let t0 = Date()
     let air = RH1Freestanding.roomAir
-    let nF = setup.frequencies
-    // Resonant elements only answer near their tones: sweep the plate's own
-    // band (5 % past its outermost tones), not the whole 30–100 kHz.
-    let fLo = array.tones.map { max(setup.fLo, 0.95 * $0.min()!) } ?? setup.fLo
-    let fHi = array.tones.map { min(setup.fHi, 1.05 * $0.max()!) } ?? setup.fHi
+    let (fLo, fHi, nF) = setup.sweep(on: array)
     let df = (fHi - fLo) / Double(max(1, nF - 1))
     let freqs = (0..<nF).map { fLo + df * Double($0) }
-    if array.tones != nil { log(String(format: "  resonant elements (Q %.0f): sweeping %.1f–%.1f kHz, each element through its own resonance curve", array.elementQ, fLo / 1000, fHi / 1000)) }
+    if array.tones != nil { log(String(format: "  resonant elements (Q %.0f): sweeping %.1f–%.1f kHz, each element sent and heard through its own resonance curve, equalised to %.1f", array.elementQ, fLo / 1000, fHi / 1000, setup.equalise)) }
     let field = try ArrayFieldGPU(ctx: ctx, array: array, frequencies: freqs, medium: air,
-                                  lattice: FieldLattice(origin: grid.origin, spacing: grid.spacing, nx: 1, ny: 1, nz: 1), curve: true)
+                                  lattice: FieldLattice(origin: grid.origin, spacing: grid.spacing, nx: 1, ny: 1, nz: 1), curve: true, equalise: setup.equalise)
+    // Equalising what an element hears raises its noise where it is off its
+    // tone: by |H|/(|H|² + ε²), relative to an element on its tone.
+    let raw = array.gains(freqs, curve: true)
+    func noiseGain(_ t: Int, _ e: Int) -> Double {
+        guard let h = raw?[t][e].magnitude else { return 1 }
+        let eps = setup.equalise
+        return h / (h * h + eps * eps) * (1 + eps * eps)
+    }
     let gridPts = grid.positions.map { SIMD4(Float($0.x), Float($0.y), Float($0.z), 0) }
     var acc = [Complex](repeating: .zero, count: grid.count)
     var rng = SplitMix64(seed: setup.seed)
@@ -181,7 +205,7 @@ public func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3],
             if !setup.listenBoth { for e in 0..<C where !mine.contains(e) { r[e] = .zero } }
             let rms = (ears.reduce(0.0) { $0 + r[$1].magnitudeSquared } / Double(ears.count)).squareRoot()
             let sigma = rms * pow(10, -setup.snrDB / 20) / 2.0.squareRoot()
-            for e in ears { r[e] += Complex(gauss() * sigma, gauss() * sigma) }
+            for e in ears { let s = sigma * noiseGain(t, e); r[e] += Complex(gauss() * s, gauss() * s) }
             R[t] = r
         }
         // 2. Time gate per element: to the time domain over the band, keep the

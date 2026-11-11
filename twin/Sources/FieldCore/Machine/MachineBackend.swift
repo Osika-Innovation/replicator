@@ -111,6 +111,11 @@ public struct EmulatedBackend: MachineBackend {
         Complex(0, medium.density * medium.soundSpeed * medium.wavenumber(at: f) / (4 * Double.pi))
     }
 
+    /// What each element makes of a drive at f, and of what it hears: its
+    /// resonance curve and, on a built plate, its error (`PlateArray.gains`).
+    /// nil for ideal broadband elements.
+    func gains(_ f: Double) -> [Complex]? { array.gains([f], curve: true)?[0] }
+
     /// Empty-chamber transfer rx ← tx at one tone: the Rayleigh integral of
     /// the tx piston with its plate images, weighted by the rx face's own
     /// directivity and area. The direct term of an element onto itself is
@@ -123,6 +128,7 @@ public struct EmulatedBackend: MachineBackend {
         let walls = array.walls
         let n = elements.count
         let images = elements.map { walls.images(of: $0.position.z) }
+        let g = gains(f)
         var h = [[Complex]](repeating: [Complex](repeating: .zero, count: n), count: n)
         h.withUnsafeMutableBufferPointer { rows in
             let out = UncheckedSendableBuffer(rows)
@@ -141,6 +147,7 @@ public struct EmulatedBackend: MachineBackend {
                         acc += Complex(-ph.im, ph.re) * (pre * tx.area * rx.area * dir * img.weight * exp(-alpha * r) / r)
                     }
                     row[t] = acc * unit
+                    if let g { row[t] = row[t] * g[t] * g[e] }     // sent through tx's resonance, heard through rx's
                 }
                 out.base[e] = row
             }
@@ -155,9 +162,11 @@ public struct EmulatedBackend: MachineBackend {
 
     /// What every element receives from the scatterers when `drive` plays at
     /// `f` (Born, by reciprocity): r_e = Σ_s cM g_e(x_s) p(x_s) + cD ∇g_e·∇p.
-    public func echo(frequency f: Double, drive: [Complex]) -> [Complex] {
+    public func echo(frequency f: Double, drive sent: [Complex]) -> [Complex] {
         var r = [Complex](repeating: .zero, count: elements.count)
         guard !world.scatterers.isEmpty else { return r }
+        let g = gains(f)
+        let drive = g.map { g in sent.indices.map { sent[$0] * g[$0] } } ?? sent
         let prop = array.reference(frequency: f, medium: medium)
         let k = medium.wavenumber(at: f), a3 = pow(world.radius, 3)
         let cM = -k * k * a3 / 3, cD = -a3 / 2
@@ -172,6 +181,7 @@ public struct EmulatedBackend: MachineBackend {
                 r[e] += rows.p[e] * p * cM + (rows.grad[0][e] * gx + rows.grad[1][e] * gy + rows.grad[2][e] * gz) * cD
             }
         }
+        if let g { for e in r.indices { r[e] = r[e] * g[e] } }
         return r
     }
 
@@ -265,14 +275,16 @@ public enum MachineImaging {
             let k = medium.wavenumber(at: tone.frequency), a3 = pow(radius, 3)
             let cM = -k * k * a3 / 3, cD = -a3 / 2
             let rows = prop.gateGradientRows(at: x)
-            let d = tone.drive
+            let g = array.gains([tone.frequency], curve: true)?[0]
+            let d = g.map { g in tone.drive.indices.map { tone.drive[$0] * g[$0] } } ?? tone.drive
             var p = Complex.zero, gx = Complex.zero, gy = Complex.zero, gz = Complex.zero
             for c in 0..<d.count {
                 p += rows.p[c] * d[c]
                 gx += rows.grad[0][c] * d[c]; gy += rows.grad[1][c] * d[c]; gz += rows.grad[2][c] * d[c]
             }
             for (i, e) in rxGates.enumerated() {
-                let m = rows.p[e] * p * cM + (rows.grad[0][e] * gx + rows.grad[1][e] * gy + rows.grad[2][e] * gz) * cD
+                var m = rows.p[e] * p * cM + (rows.grad[0][e] * gx + rows.grad[1][e] * gy + rows.grad[2][e] * gz) * cD
+                if let g { m = m * g[e] }
                 let r = echo[ti][i]
                 num += m.conjugate * r; mm += m.magnitudeSquared; rr += r.magnitudeSquared
             }

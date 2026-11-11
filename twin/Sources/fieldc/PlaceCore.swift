@@ -61,6 +61,17 @@ struct PlaceRig {
         options.perToneStarts = false
     }
 
+    /// Gate G-E1 for a drive at `power` (Σ|g|², (m/s)²): the most any
+    /// element is asked for ÷ what it can give.
+    func elementGate(_ drives: [[Complex]], power: Double, label: String) -> GateResult {
+        let s = power.squareRoot()
+        return ElementGates.drive(amplitudes: drives.map { $0.map { $0.magnitude * s } }, frequencies: freqs,
+                                  pistonRadius: { array.pistonRadius($0) }, spec: { e, _ in array.spec(e, medium: air) },
+                                  medium: air, label: label)[0]
+    }
+
+    var tonesText: String { String(format: "%d tones %.0f–%.0f kHz", freqs.count, freqs.min()! / 1000, freqs.max()! / 1000) }
+
     func field(on lattice: FieldLattice) throws -> ArrayFieldGPU {
         try ArrayFieldGPU(ctx: ctx, array: array, frequencies: freqs, medium: air, lattice: lattice)
     }
@@ -206,13 +217,13 @@ enum PlaceCommand {
                 let pPeak = (pmax2 * P).squareRoot()
                 print(String(format: "  %-18@ weight %.2e N · needs %5.2f m/s on the hardest element (%3.0f dB), %4.2f m/s rms · field peak %3.0f dB · lateral %3.0f Hz",
                              bname as NSString, weight, u, dB(air.density * air.soundSpeed * u), uRMS, dB(pPeak), fx))
-                // Against the elements: every entry at this power, by the element it is on.
-                let scale = P.squareRoot()
-                let eg = ElementGates.drive(amplitudes: r.drives.map { $0.map { $0.magnitude * scale } }, frequencies: rig.freqs,
-                                            pistonRadius: { arr.pistonRadius($0) }, spec: { e, _ in arr.spec(e, medium: air) },
-                                            medium: air, label: "holding \(bname)")
-                print("    " + eg[0].line)
-                gates.append(eg[0])
+                // The machine is asked to hold PLA; the metals are reported, not required.
+                var eg = rig.elementGate(r.drives, power: P, label: "holding \(bname)")
+                if !bname.hasPrefix("PLA") {
+                    eg = GateResult(id: eg.id, name: eg.name, measured: eg.measured, threshold: 1, comparison: .informational, detail: eg.detail)
+                }
+                print("    " + eg.line)
+                gates.append(eg)
                 gates.append(GateResult(id: "LEV", name: "\(arr.tag), \(label): \(bname)", measured: u, threshold: 0,
                                         comparison: .informational,
                                         detail: String(format: "hardest element %.2f m/s (%.0f dB plane-wave), rms %.2f m/s; field peak %.0f dB; lateral %.0f Hz; sibling ratio %.2f",
@@ -272,7 +283,7 @@ enum PlaceCommand {
         var path: [Vec3] = []
         for k in 1...20 { path.append(w0 + Vec3(0, 0, Double(k) * stepLen)) }
         for k in 1...20 { path.append(w0 + Vec3(Double(k) * stepLen, 0, 20 * stepLen)) }
-        print(String(format: "%@; 10 tones 32–68 kHz; lattice %.2f mm (%d³), path steps 0.25 mm; 200 µm PLA", rig.chamberText,
+        print(String(format: "%@; %@; lattice %.2f mm (%d³), path steps 0.25 mm; 200 µm PLA", rig.chamberText, rig.tonesText,
                      rig.lattice.spacing * 1000, rig.lattice.nx))
         print(String(format: "picked up: sibling ratio %.2f (%d), well %.2f mm from the centre", r0.siblingRatio,
                      r0.siblings, r0.targetOffset * 1000))
@@ -311,8 +322,8 @@ enum PlaceCommand {
                      worstOff * 1000, minDepth, worstRatio, notUnique, steps))
         let gate = GateResult(id: "G-P1", name: "bead carried 5 mm up and 5 mm across between the open-air plates: on the point, continuous, downhill, still the deepest well",
                               measured: ok ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
-                              detail: String(format: "%@; %d steps of 0.25 mm, 10 tones; worst offset %.2f mm, shallowest %.2f; sibling ratio worst %.2f, %d steps ≥ 0.5",
-                                             rig.chamberText, steps, worstOff * 1000, minDepth, worstRatio, notUnique))
+                              detail: String(format: "%@; %d steps of 0.25 mm, %@; worst offset %.2f mm, shallowest %.2f; sibling ratio worst %.2f, %d steps ≥ 0.5",
+                                             rig.chamberText, steps, rig.tonesText, worstOff * 1000, minDepth, worstRatio, notUnique))
         print(gate.line)
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
@@ -360,9 +371,8 @@ enum PlaceCommand {
                      margins[weakest], weakest, margins.sorted()[margins.count / 2]))
         let gamma = 6 * Double.pi * 1.81e-5 * particle.radius
         let tauU = rig.settling
-        let perChannel = Double(rig.array.channels * rig.freqs.count)
-        print(String(format: "%@, 10 tones; carry 5 mm up + 5 mm across in 0.25 mm steps; 200 µm PLA, drive = 2 × holding (%.2f m/s rms per element)",
-                     rig.chamberText, (power / perChannel).squareRoot()))
+        print(String(format: "%@, %@; carry 5 mm up + 5 mm across in 0.25 mm steps; 200 µm PLA; at 2 × holding the hardest-driven element is at %.2f of its ceiling",
+                     rig.chamberText, rig.tonesText, drives.map { rig.elementGate($0, power: power, label: "").measured }.max() ?? .infinity))
         print(String(format: "bead: m %.2e kg, drag %.2e kg/s (1/e in %.0f ms); potential settles with τ = %.1f ms",
                      mass, gamma, mass / gamma * 1000, tauU * 1000))
         print("each step ramps the potential linearly from the old drive to the new (cross terms ignored), on top of the settling τ;")
@@ -371,8 +381,11 @@ enum PlaceCommand {
         var gates: [GateResult] = []
         var csv = "power_x,step_ms,t_s,x_mm,y_mm,z_mm,well_x_mm,well_y_mm,well_z_mm\n"
         var anyCarried = false
-        for mult in [2.0, 4.0, 8.0] {
+        // What each drive level asks of the hardest-driven element anywhere on the path.
+        let ask1 = drives.map { rig.elementGate($0, power: power / 2, label: "").measured }.max() ?? .infinity
+        for mult in [1.25, 1.5, 2.0, 4.0, 8.0] {
             let P = power * mult / 2
+            let ask = ask1 * mult.squareRoot()
             for Tstep in [0.01, 0.02, 0.04, 0.08] {
                 var x = w0, v = Vec3(0, 0, 0)
                 var t = 0.0
@@ -404,21 +417,22 @@ enum PlaceCommand {
                 if !escaped { step(from: drives.count - 1, to: drives.count - 1, duration: 0.4, drag: 1, ramp: false) }
                 let end = (x - path.last!).length
                 let carried = !escaped && end < 0.5e-3
-                if carried { anyCarried = true }
-                print(String(format: "      %3.0f×          %4.0f ms     %5.2f s      %5.2f mm     %5.2f mm     %@",
+                if carried && ask < 1 { anyCarried = true }
+                print(String(format: "    %5.2f×          %4.0f ms     %5.2f s      %5.2f mm     %5.2f mm     %@%@",
                              mult, Tstep * 1000, Tstep * Double(drives.count - 1), worst * 1000,
                              escaped ? .nan : end * 1000,
-                             escaped ? "escaped the trap" : (carried ? "carried" : "left behind")))
-                gates.append(GateResult(id: "FLY", name: String(format: "%.0f× holding drive, %.0f ms per 0.25 mm step", mult, Tstep * 1000),
+                             escaped ? "escaped the trap" : (carried ? "carried" : "left behind"),
+                             ask < 1 ? "" : String(format: " — but asks %.2f× what an element can give", ask)))
+                gates.append(GateResult(id: "FLY", name: String(format: "%.2f× holding drive, %.0f ms per 0.25 mm step", mult, Tstep * 1000),
                                         measured: escaped ? .infinity : end, threshold: 0.5e-3, comparison: .informational,
-                                        detail: String(format: "worst lag %.2f mm, %@", worst * 1000,
-                                                       escaped ? "escaped" : (carried ? "carried" : "left behind"))))
+                                        detail: String(format: "worst lag %.2f mm, %@; the hardest-driven element at %.2f of its ceiling", worst * 1000,
+                                                       escaped ? "escaped" : (carried ? "carried" : "left behind"), ask)))
                 if let r = record { csv += r }
             }
         }
         let g2 = GateResult(id: "G-P2", name: "a 200 µm PLA bead, integrated through the open-air plates' fields, rides the carry 5 mm up and 5 mm across",
                             measured: anyCarried ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
-                            detail: "\(rig.chamberText); at least one drive level and step time carries it to within 0.5 mm of the drop-off")
+                            detail: "\(rig.chamberText); at least one drive level the elements can give (G-E1 < 1) and step time carries it to within 0.5 mm of the drop-off")
         print(g2.line)
         gates.append(g2)
         print(String(format: "(%.1fs)", Date().timeIntervalSince(t0)))

@@ -1,5 +1,6 @@
 import SwiftUI
 import FieldCore
+import FieldGPU
 import CoreGraphics
 
 /// THE screenshot registry (§21).
@@ -189,8 +190,8 @@ public enum SceneRegistry {
             ("mold volume", "24 mm cube at the centre"),
         ]),
          .init(title: "Carrier", rows: [
-            ("mold band", "50–100 kHz, 9 tones"),
-            ("scan band", "30–100 kHz, 320 frequencies"),
+            ("mold band", a.tones.map { String(format: "%.0f–%.0f kHz, %d tones, one per element", $0.min()! / 1000, $0.max()! / 1000, $0.count) } ?? "50–100 kHz, 9 tones"),
+            ("scan band", String(format: "%.0f–%.0f kHz, %d frequencies", ArrayScanSetup().sweep(on: a).lo / 1000, ArrayScanSetup().sweep(on: a).hi / 1000, ArrayScanSetup().sweep(on: a).count)),
             ("medium", String(format: "air %.0f °C %.0f %% RH, %.2f m/s", air.air?.temperatureC ?? 20, air.air?.humidity ?? 50, air.soundSpeed)),
             ("walls", String(format: "plates, %d image orders, R %.2f", a.imageOrder, a.reflection)),
             ("solver", "matrix-free array field (GPU)"),

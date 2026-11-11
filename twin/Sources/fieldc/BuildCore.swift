@@ -142,7 +142,13 @@ enum BuildCommand {
         var fUp = 0.0
         for q in -15...15 { if let gr = latticeGradient(pickL, Upick, w0 + Vec3(0, 0, Double(q) * fs)) { fUp = max(fUp, -gr.z) } }
         guard fUp > 0 else { print("the pick-up well pushes nowhere upward"); return 1 }
-        let power = 4 * weight / fUp                  // 4× the holding drive (fly: carries at every step time)
+        // 4× the holding drive (fly: carries at every step time) — or, where
+        // the elements have a ceiling, as much as leaves the hardest-driven
+        // one at 90 % of it.
+        let ask1 = rig.elementGate(r0.drives, power: weight / fUp, label: "").measured
+        let multiple = arr.tones == nil ? 4.0 : min(4.0, 0.81 / (ask1 * ask1))
+        let power = multiple * weight / fUp
+        let elementGate = rig.elementGate(r0.drives, power: power, label: String(format: "building at %.2f× holding", multiple))
         let gamma = 6 * Double.pi * 1.81e-5 * a
         let tauU = rig.settling
         let Tstep = 0.04, dt = 1e-4
@@ -189,8 +195,9 @@ enum BuildCommand {
         var csv = "bead,t_s,x_mm,y_mm,z_mm\n"
         var t = 0.0
         var misses = 0
-        print(String(format: "%@, 10 tones, 4× holding drive (%.2f m/s rms per element); %d PLA beads Ø%.0f µm (%@), support %.1f mm below the pick-up",
-                     rig.chamberText, (power / Double(arr.channels * freqs.count)).squareRoot(), N, 2 * a * 1e6, shape, (w0.z - zs) * 1000))
+        print(String(format: "%@, %d tones, %.2f× holding drive; %d PLA beads Ø%.0f µm (%@), support %.1f mm below the pick-up",
+                     rig.chamberText, freqs.count, multiple, N, 2 * a * 1e6, shape, (w0.z - zs) * 1000))
+        print("  " + elementGate.line)
         print(scatterOn ? "the part scatters: placed beads join the field (coupled monopoles + dipoles), 25 µm grid near the part"
                         : "the part is acoustically invisible (--no-scatter)")
         print("each bead: gentle load → carry (0.25 mm, 80 ms steps) → hover 0.15 mm up → closed-loop lowering (0.05 mm steps) → fuse on first touch")
@@ -586,7 +593,7 @@ enum BuildCommand {
         print(String(format: "build time %.1f s (simulated); (%.1fs)", t, Date().timeIntervalSince(t0)))
         if args.contains("--receipt") {
             let tag = "_" + arr.tag + (shape == "row" ? "" : "_" + shape)
-            writeReceipt(Receipt(name: (shape == "row" ? "build" : "build-" + shape) + "-" + arr.tag, gates: [gate],
+            writeReceipt(Receipt(name: (shape == "row" ? "build" : "build-" + shape) + "-" + arr.tag, gates: [gate, elementGate],
                                  durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
             var fin = "bead,x_mm,y_mm,z_mm,site_x_mm,site_y_mm,on\n"
             for (k, b) in placed.enumerated() {
@@ -596,6 +603,6 @@ enum BuildCommand {
             try? csv.write(toFile: "Receipts/build\(tag)_trajectories.csv", atomically: true, encoding: .utf8)
             try? fin.write(toFile: "Receipts/build\(tag)_placed.csv", atomically: true, encoding: .utf8)
         }
-        return ok ? 0 : 1
+        return ok && elementGate.passed ? 0 : 1
     }
 }

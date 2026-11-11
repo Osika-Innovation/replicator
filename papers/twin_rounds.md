@@ -161,6 +161,78 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
 
+## Round 17 — the elements become hardware; the face that can drive a mold (2026-11-12)
+
+Asked by the operator: "keep working until we have the full machine,
+manufacturable and tested in digital twin". The night's work, in the order
+it happened.
+
+**The third cut.** The six-gate code only the tests still reached was
+deleted on the operator's ruling (`InverseSolver` and G9, `MatrixPencil`,
+`PatternFile`, `ParticleSim`, `PortFieldsGPU` and its kernels, the horn
+stub): 17,652 → 16,293 lines, 63 → 52 tests. Commit `b790e4f`.
+
+**What "manufacturable" ran into first.** Every drive figure so far was the
+velocity of an ideal piston. A hand calculation said the drawn element — a
+Ø5 × 2 mm PZT disc radiating directly, far below its resonances — moves
+d₃₃·V and nothing more: a tenth of a metre per second where the mold wanted
+metres. So the twin got an element model (`ElementSpec`) and a gate on every
+compiled drive (G-E1: the most any element is asked for ÷ what it can give),
+anchored where an anchor exists: the piezo constants for the disc, and the
+datasheet of the bought 40 kHz open-type transmitter (120 dB at 30 cm at
+10 V rms; a test holds the model to that level within 0.3 dB through the
+engine's own piston formula).
+
+Result on the plate as drawn: **G-E1 = 310**. Also found on the way: the
+"3.0 m/s rms per element" of every earlier receipt was per tone; one element
+carried nine tones, 9 m/s over the elements together.
+
+**What can radiate.** Only a light resonant radiator reaches metres per
+second in air, and it plays one tone. So the plate became resonant: each
+element tuned to one of the nine tones, its size following its tone
+(`PlateArray.locked`), every compile holding all elements under one
+amplitude ceiling. One tone per element divides each tone's aperture by
+nine, and the demand per element rises accordingly: the count per face had
+to go up.
+
+**Three bugs between the first run and the answer**, each caught by a run
+disagreeing with an estimate made beforehand:
+
+1. *A wedge per tone.* The tone of an element was a golden-ratio hash of its
+   index. The spiral's angle is the same golden sequence, so each tone's
+   elements fell in one 40° wedge of the plate and the lift contrast sat at
+   1.0–1.1 at any element count. The hash is now i·√2 and a test checks
+   that no tone's elements have a mean direction.
+2. *A third of the step.* The compilers' step size was set by channels ×
+   tones; a resonant plate has only as many free entries as channels. Every
+   compile ran under-stepped and stopped at contrast 1.3. With the step
+   fixed, 768 resonant elements per face reach contrast 2.3 and fill all
+   sixteen sites evenly without feedback.
+3. *Drive nobody can play.* The placing verbs started their compiles from a
+   focus on every tone for every element; the entries an element cannot play
+   stayed in the drive, took their share of the power and were held against
+   the element (G-E1 = 230 for holding one bead). Every compile now starts
+   from a drive the plate can play.
+
+**The design point.** The demand falls as 1/N and N is bounded by the face.
+1,536 elements of Ø4.1–7.6 mm fit the annulus with 1 mm webs once crowded
+pairs are nudged apart (`PlateArray.spread`); 29 % of the face radiates.
+There the ring mold passes with the hardest-driven element at 96 % of its
+ceiling, at 1.15× holding: sites 5.2–7.2 % (fair 6.2 %), contrast 2.22,
+48 W acoustic, 159 W electrical. A sieve that stops at contrast 1.5 and then
+saves drive was tried: 5 % less drive, two sites of sixteen empty. Removed.
+
+**What it costs.** Four faces × 1,536 channels. No light slots: nothing of a
+slot arm fits between the holes. No margin: 4 %.
+
+**The CAD followed** (104 parts): 11 mm face plate with 1,536 holes, a can
+and a carrier per element, a 1 mm wiring board on the plate's back, design
+rules for hole webs (bar moved 2.0 → 1.0 mm with the reason in the code),
+trace pitch and driver board area; STEP re-exported and volume-gated; a
+manufacturing pack (`fieldc cad pack`).
+
+**What a build must hold** (study S5, `fieldc tolerance`): see the README.
+
 ## Round 16 — evenness, measured on the flow and fixed with the band (2026-11-10)
 
 **The gate was reading a shortcut.** G-M1 ("every site holds a quarter of its

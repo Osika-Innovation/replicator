@@ -678,7 +678,7 @@ public final class Document: ObservableObject {
                     self.state.inspector = [
                         .init(title: "Scan", rows: [
                             ("method", "gated pulse-echo, matched filter"),
-                            ("band", String(format: "%.0f–%.0f kHz, %d frequencies", setup.fLo / 1000, setup.fHi / 1000, setup.frequencies)),
+                            ("band", String(format: "%.0f–%.0f kHz, %d frequencies", setup.sweep(on: LiveMachine.array).lo / 1000, setup.sweep(on: LiveMachine.array).hi / 1000, setup.sweep(on: LiveMachine.array).count)),
                             ("pulses", "\(setup.chords) random chords"),
                             ("scatterers", "\(object.count), Ø0.6 mm"),
                             ("grid", String(format: "±%.0f mm at %.1f mm (%d³)", half * 1000, h * 1000, n)),

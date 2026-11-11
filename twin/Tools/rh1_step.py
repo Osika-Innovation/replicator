@@ -27,7 +27,7 @@ COLORS = {
     "anodized": (0.80, 0.73, 0.60, 1.0), "plateMetal": (0.19, 0.20, 0.22, 1.0),
     "columnMetal": (0.14, 0.14, 0.16, 1.0), "ceramic": (0.80, 0.75, 0.64, 1.0),
     "copper": (0.86, 0.47, 0.27, 1.0), "bronze": (0.66, 0.50, 0.26, 1.0),
-    "pzt": (0.74, 0.75, 0.78, 1.0), "glass": (0.78, 0.90, 0.88, 0.25),
+    "pzt": (0.74, 0.75, 0.78, 1.0), "transmitter": (0.70, 0.71, 0.73, 1.0), "glass": (0.78, 0.90, 0.88, 0.25),
     "photonic": (0.42, 0.66, 0.72, 0.5), "former": (0.16, 0.15, 0.14, 1.0),
     "fr4": (0.16, 0.30, 0.20, 1.0), "polymer": (0.10, 0.10, 0.11, 1.0),
     "emissive": (1.00, 0.94, 0.82, 1.0), "placeholder": (0.46, 0.48, 0.52, 0.5),
@@ -63,10 +63,12 @@ def cylinder_axis(base, axis, radius, length):
     return cq.Solid.makeCylinder(radius, length, V(*base), V(*axis))
 
 
-def build_plate(d, sites, slot_lines, elements=()):
-    """Ø410 × 12 face plate: collar hole, slots (or slot dashes), and either the
-    v0.4 biconical micro-horns or the element array's through-holes."""
-    R, t = d["plateDiameter"] / 2, d["plateThickness"]
+def build_plate(d, sites, slot_lines, elements=(), z0=0.0, thickness=None):
+    """A Ø410 slab of the face-plate envelope from z0, `thickness` thick (the
+    whole 12 mm by default): collar hole, slots (or slot dashes), and either
+    the v0.4 biconical micro-horns or the element array's through-holes. The
+    metal plate and the wiring board on its back are both built with it."""
+    R, t = d["plateDiameter"] / 2, d["plateThickness"] if thickness is None else thickness
     plate = cq.Solid.makeCylinder(R, t, V(0, 0, 0), V(0, 0, 1))
     tools = [cq.Solid.makeCylinder(d["boreTubeOD"] / 2, t + 2, V(0, 0, -1), V(0, 0, 1))]
     for line in slot_lines:
@@ -78,7 +80,7 @@ def build_plate(d, sites, slot_lines, elements=()):
         tools.append(revolve_rz(prof).translate(V(x, y, 0)))
     for x, y, _, hole_r, _ in elements:
         tools.append(cq.Solid.makeCylinder(hole_r, t + 2, V(x, y, -1), V(0, 0, 1)))
-    return plate.cut(cq.Compound.makeCompound(tools)), len(tools)
+    return plate.cut(cq.Compound.makeCompound(tools)).translate(V(0, 0, z0)), len(tools)
 
 
 def slot_prism(line, z0, h, stride=4):
@@ -167,14 +169,21 @@ def main():
         tube(l0, l0 + d["storageLinerWall"], d["storageFloor"], storage_ceiling))
 
     tp = time.time()
-    plate0, ntools = build_plate(d, P["sites"], P["slotCenterlines"], P.get("elements", []))
+    # Resonant elements: the metal plate is the envelope less the wiring board
+    # on its back; an up-facing face has its back at the bottom of the envelope.
+    resonant = bool(d.get("elementTones"))
+    tb = d.get("wiringBoardThickness", 0) if resonant else 0.0
+    fpt = d["plateThickness"] - tb
+    plate0, ntools = build_plate(d, P["sites"], P["slotCenterlines"], P.get("elements", []), z0=tb, thickness=fpt)
     plate_down = plate0
     if P.get("elementsDown"):
-        plate_down, _ = build_plate(d, [], P["slotCenterlinesDown"], P["elementsDown"])
+        plate_down, _ = build_plate(d, [], P["slotCenterlinesDown"], P["elementsDown"], z0=0.0, thickness=fpt)
+    board0 = board_down = None
+    if tb > 0:
+        board0, _ = build_plate(d, [], P["slotCenterlines"], (), z0=0.0, thickness=tb)
+        board_down, _ = build_plate(d, [], P["slotCenterlinesDown"], (), z0=fpt, thickness=tb)
     print(f"  face plate: {ntools} cutting tools, {time.time() - tp:.1f}s")
-    er, et = d.get("elementDiameter", 0) / 2, d.get("elementPZTThickness", 0)
-    el_disc = cq.Solid.makeCylinder(er, et, V(0, 0, 0), V(0, 0, 1)) if er else None
-    el_back = cq.Solid.makeCylinder(er, d["plateThickness"] - et, V(0, 0, 0), V(0, 0, 1)) if er else None
+    et = d.get("elementPZTThickness", 0)
     pzt0 = cq.Solid.makeCylinder(d["pztDiameter"] / 2, d["pztThickness"], V(0, 0, 0), V(0, 0, 1))
     horn = [(r, dd) for r, dd in P["hornProfileRD"]]
     cone = [(r, dd) for r, dd in P["coneProfileRD"]]
@@ -187,14 +196,21 @@ def main():
         add(asm, f"face plate {f['id']}", "plateMetal", plate_down if down else plate0, cq.Location(V(0, 0, zlo)))
         els = P.get("elementsDown" if down else "elements", [])
         if els:
-            # piezo disc flush with the radiating surface, damping backing to the plate's back
+            # Each element flush with the radiating surface; behind it, to the
+            # metal plate's back, its carrier (resonant) or damping backing.
             to_back = 1.0 if f["backZ"] > f["faceZ"] else -1.0
-            z_disc = min(f["faceZ"], f["faceZ"] + to_back * et)
-            z_back = min(f["faceZ"] + to_back * et, f["backZ"])
-            add(asm, f"elements {f['id']}", "pzt",
-                cq.Compound.makeCompound([el_disc.translate(V(x, y, z_disc)) for x, y, *_ in els]))
-            add(asm, f"element backings {f['id']}", "polymer",
-                cq.Compound.makeCompound([el_back.translate(V(x, y, z_back)) for x, y, *_ in els]))
+            fronts, backs = [], []
+            for x, y, pr, *_ in els:
+                h = min(d["elementCanAspect"] * 2 * pr, fpt - 1) if resonant else et
+                z_mid = f["faceZ"] + to_back * h
+                z_end = f["faceZ"] + to_back * fpt
+                fronts.append(cq.Solid.makeCylinder(pr, h, V(x, y, min(f["faceZ"], z_mid)), V(0, 0, 1)))
+                backs.append(cq.Solid.makeCylinder(pr, fpt - h, V(x, y, min(z_mid, z_end)), V(0, 0, 1)))
+            add(asm, f"elements {f['id']}", "transmitter" if resonant else "pzt", cq.Compound.makeCompound(fronts))
+            add(asm, f"element carriers {f['id']}" if resonant else f"element backings {f['id']}", "polymer",
+                cq.Compound.makeCompound(backs))
+        if board0 is not None:
+            add(asm, f"wiring board {f['id']}", "fr4", board_down if down else board0, cq.Location(V(0, 0, zlo)))
         add(asm, f"carrier ring {f['id']}", "anodized",
             tube(d["plateDiameter"] / 2, d["carrierOD"] / 2, zlo, zhi))
         add(asm, f"gyroid horn {f['id']}", "ceramic", revolve_rz([(r, zb(dd)) for r, dd in horn]))
@@ -313,14 +329,24 @@ def main():
         tol = 0.03 if "winding" in key else 0.015
         if e / tol > worst:
             worst, worst_key = e / tol, key
+    # The transmitters and their carriers are bought parts: 12,000 cylinders
+    # that treble the file. They are built (and volume-checked above) but
+    # written only on request; their holes are in the plates and every site
+    # is in the parameters file.
+    lean = bool(d.get("elementTones")) and "--with-elements" not in args
+    left_out = 0
     assy = cq.Assembly(name="RH-1")
     for key, name, mat, s, loc in parts:
+        if lean and (name.startswith("elements ") or name.startswith("element carriers ")):
+            left_out += 1
+            continue
         r, g, b, a = COLORS[mat]
         assy.add(s, name=key.replace("/", "__").replace(" ", "_"), loc=loc,
                  color=cq.Color(r, g, b, a))
     assy.export(out_path, exportType="STEP")
     total = time.time() - t0
-    print(f"  {len(parts)} B-rep parts built in {build_s:.1f}s; STEP written in {total:.1f}s -> {out_path}")
+    print(f"  {len(parts)} B-rep parts built in {build_s:.1f}s; STEP written in {total:.1f}s -> {out_path}"
+          + (f" ({left_out} transmitter and carrier sets left out of the file; --with-elements writes them)" if left_out else ""))
     worst_rows = sorted(rows, key=lambda r: -r["rel"])[:5]
     for r in worst_rows:
         print(f"    {r['part']:<48} B-rep {r['brep_mm3']:12.1f}  mesh {r['mesh_mm3']:12.1f}  Δ {100 * r['rel']:.3f}%")

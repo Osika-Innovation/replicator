@@ -137,7 +137,9 @@ public struct PlateArray: Sendable {
     /// nil = as drawn.
     public var channelError: [Complex]? = nil
 
-    /// One random build of these plates within `tolerance`.
+    /// One random build of these plates within `tolerance`. On plates that
+    /// are already a build, the errors compound (and a dead element stays
+    /// dead): a calibrated machine and what calibration left unmeasured.
     public func asBuilt(_ tol: Tolerance, seed: UInt64) -> PlateArray {
         var a = self
         var rng = SplitMix64(seed: seed)
@@ -152,14 +154,15 @@ public struct PlateArray: Sendable {
             }
         }
         a.lowerSites = moved(0..<perPlate); a.upperSites = moved(perPlate..<channels)
-        a.channelError = (0..<channels).map { _ in
+        a.channelError = (0..<channels).map { c in
+            let was = channelError?[c] ?? .one
             if rng.nextUnit() < tol.dead { return Complex.zero }
             var e = Complex.expi(tol.phaseDegrees * Double.pi / 180 * gauss()) * max(0, 1 + tol.gain * gauss())
             if tones != nil {
                 let y = elementQ * 2 * tol.resonance * gauss()          // Q (f/f₀ − f₀/f) for a small detune
                 e = e * (Complex(1, -y) * (1 / (1 + y * y)))
             }
-            return e
+            return e * was
         }
         a.label = tag + "-built\(seed)"
         return a
@@ -170,7 +173,14 @@ public struct PlateArray: Sendable {
     /// f₀/f)), so a neighbouring tone still gets through, weaker and turned
     /// in phase (a scan sweeps frequency). Otherwise 1 at the element's own
     /// tone and 0 elsewhere: a drive that gives each element only its tone.
-    public func gains(_ frequencies: [Double], curve: Bool) -> [[Complex]]? {
+    ///
+    /// `equalise` (with `curve`): the controller knows each curve H, so it
+    /// can send H*/(|H|² + ε²) × the drive and weigh what it hears the same
+    /// way. Sent and heard through the resonator, that leaves the real gain
+    /// |H|²/(|H|² + ε²): flat across the band where |H| > ε and no phase
+    /// turn. A scan needs it — nine separate resonance peaks are a comb, and
+    /// a comb's echo repeats in range.
+    public func gains(_ frequencies: [Double], curve: Bool, equalise eps: Double? = nil) -> [[Complex]]? {
         guard let t = tones, let m = toneOf else {
             return channelError.map { e in frequencies.map { _ in e } }
         }
@@ -179,7 +189,9 @@ public struct PlateArray: Sendable {
                 let f0 = t[m[c]], err = channelError?[c] ?? .one
                 if !curve { return abs(f - f0) < 1 ? err : Complex.zero }
                 let y = elementQ * (f / f0 - f0 / f)
-                return Complex(1, -y) * (1 / (1 + y * y)) * err
+                let h = Complex(1, -y) * (1 / (1 + y * y)) * err
+                guard let eps else { return h }
+                return Complex(h.magnitudeSquared / (h.magnitudeSquared + eps * eps), 0)
             }
         }
     }

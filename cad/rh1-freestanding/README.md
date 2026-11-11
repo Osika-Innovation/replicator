@@ -8,19 +8,27 @@ old Blender model were resolved how: [`twin/CAD.md`](../../twin/CAD.md).
 
 | file | what | made by |
 |---|---|---|
-| `rh1.step` | B-rep STEP assembly, 100 named, coloured components (each contrawound winding is eleven 4-turn bodies; each face's 192 elements and their backings are one compound each). Opens in Fusion 360, SolidWorks, FreeCAD, Onshape as components. mm, floor z = 0, front +x. | `fieldc cad step` (CadQuery / OpenCascade) |
+| `rh1.step` | B-rep STEP assembly, named, coloured components (each contrawound winding is eleven 4-turn bodies). The four face plates carry their 1,536 element holes each; the transmitters and their carriers are bought parts and are left out of the file to keep it a third the size (`Tools/rh1_step.py --with-elements` writes them). Opens in Fusion 360, SolidWorks, FreeCAD, Onshape as components. mm, floor z = 0, front +x. | `fieldc cad step` (CadQuery / OpenCascade) |
 | `rh1_step_report.json` | per-part B-rep volume vs the twin's mesh volume — gate G-STEP | same |
 | `rh1_general_arrangement.svg` / `.png` | half-section elevation to scale + the plate face in plan | `fieldc cad drawing` (PNG: the SVG rasterised at 2×) |
 | `BOM.md` | bill of materials: part, material, register, volume, mass | `fieldc cad bom` |
+| `MANUFACTURING.md` | the manufacturing pack: made parts and how, boards, bought parts, the transmitters tone by tone with their drive voltages, driver counts, assembly order, and what cannot be built from the model yet | `fieldc cad pack` |
 | `rh1_params.json` | the full design: stack, faces, horn/cone profiles, every element site and slot dash (both face hands), provenance, reconciliation, part volumes | `fieldc cad params` |
 | `renders/` | iso, front, section, section-iso, detail, plate, storage, top | `fieldc cad render --all` |
 | `rh1_freestanding_rev3.blend` | render model for the deck / site: the same geometry with spec §8 finishes, assembly collections, rev2 camera and lights, a quarter section cutter wired in (disabled) | `Tools/rh1_blend.py` on the OBJ export |
 
-**Face as of 2026-11-10:** 192 independently driven Ø5 elements per face on a
-golden-angle annulus (r 12–196.5 mm), the twelve slot arms cut into dashes
-around them, no micro-horns. This is the array the twin's engine drives (gate
-G-CAD9 holds the two equal). The v0.4 micro-horn face is retired from this
-folder; it survives in the twin as `RH1Design.microHornFace`.
+**Face as of 2026-11-12 (proposal):** 1,536 resonant open-type transmitters
+per face, each tuned to one of nine tones (52.8–97.2 kHz, Ø7.6–4.1 mm), on a
+golden-angle annulus (r 13–195 mm), an 11 mm aluminium plate with a 1 mm
+wiring board on its back. This is the array the twin's engine drives (gate
+G-CAD9 holds the two equal), and the first face whose elements can deliver
+the drive the powder mold asks for (gate G-E1; [`twin/ENGINE.md`](../../twin/ENGINE.md),
+"The elements are hardware"). It has no room for the twelve light slots, no
+transmitter of this kind has been measured, and the operator's last ruling
+was 192 elements per face: see the twin's README before building from it.
+The face of 2026-11-10 (192 Ø5 piezo discs, slots in dashes) is
+`fieldc cad … ` with `elementTones` empty; the v0.4 micro-horn face survives
+as `RH1Design.microHornFace`.
 
 Regenerate everything (from `twin/`):
 
@@ -29,6 +37,7 @@ swift build -c release
 ./.build/release/fieldc cad check --receipt
 ./.build/release/fieldc cad export --out cad-out
 ./.build/release/fieldc cad step --out ../cad/rh1-freestanding/rh1.step
+./.build/release/fieldc cad pack --out ../cad/rh1-freestanding/MANUFACTURING.md
 ./.build/release/fieldc cad render --all --out ../cad/rh1-freestanding/renders
 blender -b --python Tools/rh1_blend.py -- cad-out/rh1.obj ../cad/rh1-freestanding/rh1_freestanding_rev3.blend
 ```

@@ -96,6 +96,55 @@ extension CoreTests {
             let f = FCodePrograms.demo(backend: b)
             t.check((try? small.play(f)) == nil, "48-channel stream on a 12-channel machine")
         }
+        h.test("resonant plate: every pair of element faces keeps its gap, inside the annulus") { t in
+            let d = RH1Design(), a = PlateArray.rh1(d)
+            let want = (2 * d.elementHoleClearance + d.elementHoleWeb) * 1e-3
+            for sites in [a.lowerSites!, a.upperSites!] {
+                var least = Double.infinity
+                for i in sites.indices { for j in (i + 1)..<sites.count {
+                    let gap = ((sites[i].x - sites[j].x) * (sites[i].x - sites[j].x) + (sites[i].y - sites[j].y) * (sites[i].y - sites[j].y)).squareRoot()
+                        - sites[i].radius - sites[j].radius
+                    least = min(least, gap)
+                } }
+                t.check(least >= want, String(format: "closest pair %.3f mm apart, want %.3f", least * 1000, want * 1000))
+                let r = sites.map { ($0.x * $0.x + $0.y * $0.y).squareRoot() }
+                t.check(r.min()! >= a.innerRadius - 1e-9 && r.max()! <= a.plateRadius + 1e-9, "a centre left the annulus")
+            }
+        }
+        h.test("a built plate: no tolerance, no change; errors compound; a dead element stays dead") { t in
+            let a = PlateArray(perPlate: 60).locked(tones: [60_000, 80_000])
+            let same = a.asBuilt(PlateArray.Tolerance(), seed: 3)
+            t.check(same.channelError!.allSatisfy { $0 == .one }, "zero tolerance must leave every element as drawn")
+            var tol = PlateArray.Tolerance(); tol.dead = 0.2; tol.gain = 0.1
+            let first = a.asBuilt(tol, seed: 4)
+            let dead = first.channelError!.indices.filter { first.channelError![$0] == .zero }
+            t.check(dead.count > 10 && dead.count < 40, "\(dead.count) dead of 120 at 20 %")
+            var small = PlateArray.Tolerance(); small.phaseDegrees = 5
+            let second = first.asBuilt(small, seed: 5)
+            t.check(dead.allSatisfy { second.channelError![$0] == .zero }, "a dead element came back")
+            let live = first.channelError!.indices.first { first.channelError![$0] != .zero }!
+            t.near(second.channelError![live].magnitude, first.channelError![live].magnitude, 1e-12, "a phase error must not change the gain")
+            let g = second.gains([60_000], curve: false)![0]
+            t.check(dead.allSatisfy { g[$0] == .zero }, "a dead element plays")
+        }
+        h.test("emulated backend, resonant elements: a lone scatterer is found through the resonance curves") { t in
+            // Each element sends and hears through its own resonance; the
+            // controller's matched filter knows the curves, so it still peaks
+            // on the scatterer, and an element far off the tone hears little.
+            let plate = PlateArray(perPlate: 36).locked(tones: [60_000, 70_000, 80_000])
+            let x = plate.centre + Vec3(3e-3, -2e-3, 1e-3)
+            var b = EmulatedBackend(array: plate, world: .init(scatterers: [x]))
+            let fr = FCodePrograms.codedPulse(array: plate, upperPlate: false, tones: [60_000, 65_000, 70_000, 75_000, 80_000], seed: 5, t: 0, duration: 5e-3)
+            let stream = FCodeFile(machine: b.name, calibrationRef: b.calibrationRef, band: b.band, channels: plate.channels, frames: [fr])
+            let rec = try b.play(stream)
+            let echo = MachineImaging.echo(of: rec.frames[0], sent: fr) { b.transfer(frequency: $0) }
+            let at = MachineImaging.match(echo: echo, sent: fr, rxGates: fr.rxGates, at: x, array: plate, medium: b.medium, radius: b.world.radius)
+            let off = MachineImaging.match(echo: echo, sent: fr, rxGates: fr.rxGates, at: x + Vec3(4e-3, 0, 0), array: plate, medium: b.medium, radius: b.world.radius)
+            t.check(at > 0.99 && off < 0.8, String(format: "match %.3f on the scatterer, %.3f 4 mm aside", at, off))
+            let e60 = plate.toneOf!.firstIndex(of: 0)!, e80 = plate.toneOf!.firstIndex(of: 2)!
+            let heard = echo[0]                                   // the 60 kHz tone
+            t.check(heard[e80].magnitude < 0.2 * heard[e60].magnitude + 1e-30, "an 80 kHz element hears little at 60 kHz")
+        }
         h.test("the machine's plates are the CAD's: same sites, on the plate, clear of the slots") { t in
             let d = RH1Design(), a = PlateArray.rh1(d), m = RH1Model(design: d, detail: .preview)
             let els = a.elements()

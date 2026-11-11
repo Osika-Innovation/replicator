@@ -55,15 +55,6 @@ public enum ForceCompiler {
         /// offset; the compiler prefers results inside this radius, and the
         /// smooth refinement treats a well outside it as "no target yet".
         public var placement: Double? = nil
-        /// Sieve: extra weight on the lift the weakest site gives per unit of
-        /// drive power, beside the lift contrast (0 = contrast alone).
-        public var sieveEfficiency = 0.0
-        /// Sieve: a contrast above this is a wide enough power window. Past
-        /// it the compile stops pushing the contrast and only raises the
-        /// sites' lift per unit drive power: the drive is what the elements
-        /// must deliver, so a mold that buys contrast it does not need with
-        /// drive is a worse mold. ∞ = contrast alone.
-        public var sieveContrastEnough = Double.infinity
         public init() {}
     }
 
@@ -621,7 +612,7 @@ public enum ForceCompiler {
             c[n] -= w
             for st in axes { c[n - s * st] += w / 6; c[n + s * st] += w / 6 }
         }
-        var g = normalize(start)
+        var g = normalize(field.limited(start))
         func score(_ U: [Double]) -> (Mold, Double) {
             let e = evaluateMold(U, lattice: lat, targets: targets, options: o, wavelength: wavelength)
             let m = Mold(drives: g, depths: e.depths, rivalRatio: e.rivalRatio, formed: e.formed)
@@ -785,7 +776,7 @@ public enum ForceCompiler {
             }
         }
         func share(_ s: [Double]) -> Double { Double(s.filter { $0 > 0 }.count) / M }
-        var g = normalize(start)
+        var g = normalize(field.limited(start))
         let s0 = share(slopes(field.potential(g, particle: particle)))
         var best = Funnel(drives: g, funnelled: s0, funnelledAtStart: s0)
         var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
@@ -907,12 +898,10 @@ public enum ForceCompiler {
             for st in axes { m += U[n - s * st] + U[n + s * st] }
             return m / 6 - U[n]
         }
-        func weakest(_ U: [Double]) -> Double {
-            columns.map { c in c.reduce(-Double.infinity) { max($0, lift(U, $1)) } }.min() ?? 0
-        }
         func measure(_ U: [Double]) -> Double {
             let out = outside.reduce(0.0) { max($0, lift(U, $1)) }
-            return weakest(U) / max(out, 1e-300)
+            let tl = columns.map { c in c.reduce(-Double.infinity) { max($0, lift(U, $1)) } }.min() ?? 0
+            return tl / max(out, 1e-300)
         }
         // Sideways: at each target's level and one up (where its grains rest),
         // each of the four horizontal neighbours `sw` steps out must lie above
@@ -935,16 +924,11 @@ public enum ForceCompiler {
             }.count
         }
         // Best: a real window first (contrast > 1.2), then the most sites held sideways, then the contrast.
-        // Keys: (contrast, sites held, the weakest site's lift per unit power).
-        func better(_ a: (Double, Int, Double), than b: (Double, Int, Double)) -> Bool {
+        func better(_ a: (Double, Int), than b: (Double, Int)) -> Bool {
             let wa = a.0 > 1.2, wb = b.0 > 1.2
             if wa != wb { return wa }
             if a.1 != b.1 { return a.1 > b.1 }
-            // Below "enough" contrast the wider window wins; once both
-            // have enough, the one that lifts more per unit drive power.
-            let ca = min(a.0, o.sieveContrastEnough), cb = min(b.0, o.sieveContrastEnough)
-            if ca != cb { return ca > cb }
-            return a.2 > b.2
+            return a.0 > b.0
         }
         // Landing: where a falling grain is caught — near the shape, off the
         // sites — U must fall sideways toward the nearest site (the funnel of
@@ -977,11 +961,11 @@ public enum ForceCompiler {
                 (l.v.0 * (U[l.n + 1] - U[l.n - 1]) + l.v.1 * (U[l.n + lat.nx] - U[l.n - lat.nx])) / (2 * h)
             }
         }
-        var g = normalize(start)
+        var g = normalize(field.limited(start))
         let U0 = field.potential(g, particle: particle)
         let c0 = measure(U0)
         var best = Sieve(drives: g, contrast: c0, contrastAtStart: c0)
-        var bestKey = (c0, held(U0), weakest(U0))
+        var bestKey = (c0, held(U0))
         var m1 = g.map { $0.map { _ in Complex.zero } }, v2 = g.map { $0.map { _ in 0.0 } }
         let b1 = 0.9, b2 = 0.999
         let lr0 = 0.05 / Double(2 * field.entries).squareRoot()
@@ -1010,8 +994,7 @@ public enum ForceCompiler {
             let et = colL.indices.map { sw8[$0] * exp(-(colL[$0] - mt) / Tt) }, zt = et.reduce(0, +)
             let smin = mt - Tt * Foundation.log(zt)
             let now = measure(U), hNow = held(U)
-            let key = (now, hNow, weakest(U))
-            if better(key, than: bestKey) { best = Sieve(drives: g, contrast: now, contrastAtStart: c0); bestKey = key }
+            if better((now, hNow), than: bestKey) { best = Sieve(drives: g, contrast: now, contrastAtStart: c0); bestKey = (now, hNow) }
             let ls = landingSlopes(U)
             if let log, it % 50 == 1 {
                 let fun = Double(ls.filter { $0 > 0 }.count) / Double(max(ls.count, 1))
@@ -1024,15 +1007,12 @@ public enum ForceCompiler {
             // loss = log smax − log smin (+ sideways depth where a target has none).
             var cw = [Double](repeating: 0, count: lat.count)
             func addLift(_ n: Int, _ w: Double) { cw[n + sz] -= w / (2 * h); cw[n - sz] += w / (2 * h) }
-            // Past "enough" contrast the outside term is switched off: the
-            // step then only raises the sites' lift per unit power.
-            let pushOut = now < o.sieveContrastEnough ? 1.0 : 0.0
-            for (q, n) in outside.enumerated() where eo[q] > 1e-12 { addLift(n, pushOut * eo[q] / zo / smax) }
+            for (q, n) in outside.enumerated() where eo[q] > 1e-12 { addLift(n, eo[q] / zo / smax) }
             if smin > 0.01 * scale {
                 for (t, c) in columns.enumerated() {
                     let wt = et[t] / zt
                     guard wt > 1e-12 else { continue }
-                    for (q, n) in c.enumerated() { addLift(n, -(1 + o.sieveEfficiency) * wt * colW[t][q] / smin) }
+                    for (q, n) in c.enumerated() { addLift(n, -wt * colW[t][q] / smin) }
                 }
             } else {
                 // No ratio yet: lift the weakest columns (soft-minimum weights).
@@ -1104,9 +1084,8 @@ public enum ForceCompiler {
             g = normalize(field.limited(g))
         }
         let UL = field.potential(g, particle: particle)
-        let lastKey = (measure(UL), held(UL), weakest(UL))
-        if better(lastKey, than: bestKey) {
-            best = Sieve(drives: g, contrast: lastKey.0, contrastAtStart: c0); bestKey = lastKey
+        if better((measure(UL), held(UL)), than: bestKey) {
+            best = Sieve(drives: g, contrast: measure(UL), contrastAtStart: c0); bestKey = (measure(UL), held(UL))
         }
         log?(String(format: "    best: contrast %.2f, %d/%d sites held sideways (start %.2f)", best.contrast, bestKey.1, targets.count, c0))
         if returnLast {
@@ -1168,7 +1147,7 @@ public enum ForceCompiler {
                                 particle: ParticleMaterial, drives start: [[Complex]], to x: Vec3,
                                 iterations: Int = 8, balance: Vec3 = Vec3(0, 0, 0)) -> (drives: [[Complex]], residual: Double) {
         let lat = field.lattice, G = field.channels
-        var g = normalize(start)
+        var g = normalize(field.limited(start))
         let h = lat.spacing
         let axes = [1, lat.nx, lat.nx * lat.ny]
         let corners = trilinear(lat, x)
@@ -1243,7 +1222,7 @@ public enum ForceCompiler {
                                  iterations: Int = 60, balance: Vec3 = Vec3(0, 0, 0),
                                  rivalsBelow: Double = 0) -> [[Complex]] {
         let lat = field.lattice, G = field.channels
-        var g = normalize(start)
+        var g = normalize(field.limited(start))
         let h = lat.spacing, s = o.shellSteps
         let axes = [1, lat.nx, lat.nx * lat.ny]
         let corners = trilinear(lat, x)
@@ -1341,7 +1320,7 @@ public enum ForceCompiler {
                                particle: ParticleMaterial, drives start: [[Complex]], at x: Vec3,
                                balance: Vec3, step h: Double, iterations: Int = 24) -> [[Complex]] {
         let lat = field.lattice, G = field.channels
-        var g = normalize(start)
+        var g = normalize(field.limited(start))
         let hs = lat.spacing
         let axes = [1, lat.nx, lat.nx * lat.ny]
         let corners = trilinear(lat, x)

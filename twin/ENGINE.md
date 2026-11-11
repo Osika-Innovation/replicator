@@ -194,3 +194,76 @@ it does not. Receipt: `windings` (`fieldc windings --receipt`).
 | Panels at 19.47° | not yet: side panels are not in the open-air engine | Testable as an array-geometry sweep when panels enter (compare against neighbouring angles, pre-registered). |
 | Negative mass, wormholes, hyperspace light at 1 m/s, the smoke test | no handle the twin can test | The smoke test is a bench experiment with an unpowered control; nothing in the twin predicts an effect. |
 
+
+## The elements are hardware — 2026-11-12
+
+Until this date the engine drove ideal pistons: any face velocity, at every
+tone at once. "What the CAD session needs from this" asked for elements
+"broadband over 30–100 kHz", and nothing checked that such a thing exists.
+It now does (`ElementSpec`, gates G-E1 and G-E2), and it changes the plate.
+
+**A correction to every earlier drive figure.** "3.0 m/s rms per element" was
+the root-mean-square over every (element, tone) entry of the velocity
+amplitudes. One element carried nine such tones: 9.0 m/s over the elements
+and 12.2 m/s on the hardest-driven one (root-sum-square of its tones'
+amplitudes), on a Ø5 mm face.
+
+**The element as drawn cannot do it.** A Ø5 × 2 mm PZT-8 disc radiating
+directly is far below its own resonances across 50–100 kHz (the lowest is
+468 kHz), so its face moves d₃₃·V: 0.16 m/s at 97 kHz at 400 V/mm. The ring
+mold asked that element for 4.75 m/s at that tone alone. G-E1, the most any
+element is asked for ÷ what it can give: **310** (bar < 1). No free parameter
+is involved.
+
+**What can.** Air loads a solid so lightly that only a light, resonant
+radiator reaches metres per second. The bought 40 kHz open-type transmitter
+(a bimorph with a cone, Ø10 mm) gives 120 dB at 30 cm at 10 V rms by its
+datasheet, which is a face velocity of 2.0 m/s at its continuous limit — and
+it plays one tone, about 4 % wide. So:
+
+* every element is resonant and plays **one** of the plate's tones
+  (`PlateArray.locked`); which tone is a hash of its place on the spiral;
+* an element's size follows its tone (the 40 kHz part scaled ∝ 1/f, Ø7.6 mm at
+  53 kHz to Ø4.1 mm at 97 kHz), **assumed** to keep the face velocity. Nobody
+  has built or measured one;
+* a compile holds every element under one amplitude ceiling
+  (`ArrayFieldGPU.amplitudeCap`), because a drive that leans on a few
+  elements wastes the rest.
+
+**What that costs.** One tone per element divides each tone's aperture by
+nine. Properly compiled, the ring mold needs:
+
+| elements per face | G-E1 | lift contrast | sites filled | note |
+|---:|---:|---:|---|---|
+| 192, directly radiating discs (as drawn) | 310 | 3.23 | 16/16 | ideal pistons made it look easy |
+| 768 resonant | 2.56 | 2.31 | 16/16 | 1.52× holding |
+| 1,344 resonant | 1.18 | 2.03 | 16/16 | 1.43× holding |
+| **1,536 resonant** | **0.96** | 2.22 | 16/16 | 1.15× holding; 48 W acoustic, 159 W electrical |
+
+The demand falls as 1/N, and N is bounded by the face: 1,536 holes of
+Ø4.3–7.8 mm leave 1 mm webs in the annulus the plate offers, 29 % of it
+radiating. At a fixed share of the face radiating, the drive a mold needs
+falls as f^1.5 (pressure per source ∝ f, force ∝ k p²), so a higher band
+would buy margin with still more, still smaller elements.
+
+**Two things the compiler had wrong for resonant plates**, both found by the
+runs disagreeing with a hand estimate:
+
+* the step size was set by channels × tones, but a resonant plate has only as
+  many free drive entries as channels: every compile ran with a third of its
+  step and stopped at contrast 1.3 whatever the element count;
+* a golden-ratio hash for the tones put every tone in one 40° wedge of the
+  plate, because the spiral's angle is the same golden sequence. The hash is
+  now i·√2, and a test holds every tone's elements spread round the plate.
+
+**What a build must hold** is study S5 (`fieldc tolerance`): the compiled
+drive played on random builds of the plates. Results in the README.
+
+**Open.** The scaled transmitters are an assumption until one is measured.
+The 4 % headroom at 1,536 elements is not a margin. The plates' reflection
+(0.9) was set for a bare metal face; a face one-third covered in open
+transmitters may reflect less. The twelve light slots do not fit between
+1,536 elements: no stretch of a slot arm 8 mm long is left with 1 mm of metal
+to every hole (gate G-CAD8 reports 0 dashes). The operator's ruling of
+2026-11-11 was 192 elements per face; this plate is a proposal that
+supersedes it only if ruled so.
