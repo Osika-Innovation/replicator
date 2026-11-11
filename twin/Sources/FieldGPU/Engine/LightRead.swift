@@ -1,5 +1,4 @@
 import FieldCore
-import FieldGPU
 import Foundation
 
 // Reading the field with light (ENGINE.md, "scan and reading"). Sound changes
@@ -14,20 +13,23 @@ import Foundation
 // rendering of the field for the screen. n₀ − 1 = 2.7e-4 at 633 nm, γ = 1.4,
 // P₀ = 101 325 Pa.
 
-struct LightView {
-    var n: Int                 // pixels per side (y across, z up)
-    var spacing: Double        // m
-    var halfWidth: Double      // m
+public struct LightView {
+    public var n: Int                 // pixels per side (y across, z up)
+    public var spacing: Double        // m
+    public var halfWidth: Double      // m
     /// rms over tones of |Δφ_f| (rad), [k · n + j].
-    var amplitude: [Double]
-    var peak: Double { amplitude.max() ?? 0 }
+    public var amplitude: [Double]
+    public var peak: Double { amplitude.max() ?? 0 }
+    public init(n: Int, spacing: Double, halfWidth: Double, amplitude: [Double]) {
+        self.n = n; self.spacing = spacing; self.halfWidth = halfWidth; self.amplitude = amplitude
+    }
 }
 
 /// The view along x through the plate array's field for compiled drives at
 /// drive power `power` (Σ|v|², (m/s)²): rays every `spacing` over ±halfWidth
 /// in y and z around `centre`, each integrated over ±pathHalfLength in x
 /// (samples every λ/4 at the highest tone).
-func lightView(field: ArrayFieldGPU, drives: [[Complex]], power: Double, centre: Vec3,
+public func lightView(field: ArrayFieldGPU, drives: [[Complex]], power: Double, centre: Vec3,
                halfWidth: Double, spacing: Double, pathHalfLength: Double) throws -> LightView {
     let n = Int((2 * halfWidth / spacing).rounded()) + 1
     let coef = (2 * Double.pi / 633e-9) * 2.7e-4 / (1.4 * 101_325)

@@ -276,3 +276,16 @@ Kept: `FDTD` with G2, G3 and G5; G1; G7; G9a–c (the app's solver);
 
 Checked after the cut: the 63 tests, and all 22 app scenes against their
 goldens. 18,112 is about 600 above the proposed 17,500.
+
+## The app, rebuilt on the plates — 2026-11-11
+
+Asked for by the operator. Scan, Compile, Build and Inspect now call the same
+library functions as `fieldc` (`runMold`, `scanImageArray`, moved from the
+`fieldc` target to `FieldGPU/Engine/`), on `PlateArray.rh1`. The app opens on
+`Samples/ring.stl`. Nothing in `FieldUI` or the app refers to the six-gate
+machine any more.
+
+What that frees, now reached only from the test suite: `InverseSolver` with
+G9a–c, `PortFieldsGPU.propagator`, `RH1Freestanding.preset` / `.standard`,
+`ParticleSim`, `PatternFile`, `MatrixPencil`, `Scan.Gate`, and the
+`SceneBuilder` drawings for them. Not deleted: that is a ruling to ask for.

@@ -143,6 +143,18 @@ public enum SceneBuilder {
                            Vec3(line[i].x * mm, line[i].y * mm, z), palette.cap)
                 }
             }
+            // The element face: every driven element of this plate, where
+            // the engine's array has it.
+            if d.faceStyle == .elementArray {
+                for e in PlateArray.rh1(d).elements() where (e.position.z < 1e-9) == isLower {
+                    let c = e.position, r = d.elementDiameter / 2 * mm
+                    for i in 0..<6 {
+                        let a0 = 2 * Double.pi * Double(i) / 6, a1 = 2 * Double.pi * Double(i + 1) / 6
+                        g.line(Vec3(c.x + r * cos(a0), c.y + r * sin(a0), z),
+                               Vec3(c.x + r * cos(a1), c.y + r * sin(a1), z), palette.cap)
+                    }
+                }
+            }
             if isLower {
                 for s in pattern.drilled {
                     let c = s.center, r = s.faceRadius * mm
@@ -353,6 +365,48 @@ extension SceneBuilder {
             g.line(p.position - Vec3(r, 0, 0), p.position + Vec3(r, 0, 0), c)
             g.line(p.position - Vec3(0, r, 0), p.position + Vec3(0, r, 0), c)
             g.line(p.position - Vec3(0, 0, r), p.position + Vec3(0, 0, r), c)
+        }
+        return g
+    }
+
+    /// A cloud of points as small 3-axis crosses, one colour per point.
+    public static func points(_ pts: [Vec3], colors: [SIMD4<Float>], radius r: Double) -> SceneGeometry {
+        var g = SceneGeometry()
+        for (i, p) in pts.enumerated() {
+            let c = colors[min(i, colors.count - 1)]
+            g.line(p - Vec3(r, 0, 0), p + Vec3(r, 0, 0), c)
+            g.line(p - Vec3(0, r, 0), p + Vec3(0, r, 0), c)
+            g.line(p - Vec3(0, 0, r), p + Vec3(0, 0, r), c)
+        }
+        return g
+    }
+
+    /// An axis-aligned box outline.
+    public static func box(min a: Vec3, max b: Vec3, color: SIMD4<Float>) -> SceneGeometry {
+        var g = SceneGeometry()
+        let c = [Vec3(a.x, a.y, a.z), Vec3(b.x, a.y, a.z), Vec3(b.x, b.y, a.z), Vec3(a.x, b.y, a.z),
+                 Vec3(a.x, a.y, b.z), Vec3(b.x, a.y, b.z), Vec3(b.x, b.y, b.z), Vec3(a.x, b.y, b.z)]
+        for (i, j) in [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)] {
+            g.line(c[i], c[j], color)
+        }
+        return g
+    }
+
+    /// The plates' drive: every element of both plates as a filled disc whose
+    /// brightness is its drive amplitude (`amplitude[channel]`, lower plate
+    /// first, as `PlateArray` orders its channels).
+    public static func elementDrive(sites: [(x: Double, y: Double, z: Double, radius: Double)],
+                                    amplitude: [Double]) -> SceneGeometry {
+        var g = SceneGeometry()
+        let peak = max(amplitude.max() ?? 1, 1e-300)
+        for (i, e) in sites.enumerated() where i < amplitude.count {
+            let c = ramp(amplitude[i] / peak)
+            let r = e.radius * 1.6, z = e.z
+            for k in 0..<6 {
+                let a0 = 2 * Double.pi * Double(k) / 6, a1 = 2 * Double.pi * Double(k + 1) / 6
+                g.tri(Vec3(e.x, e.y, z), Vec3(e.x + r * cos(a0), e.y + r * sin(a0), z),
+                      Vec3(e.x + r * cos(a1), e.y + r * sin(a1), z), c)
+            }
         }
         return g
     }

@@ -1,5 +1,4 @@
 import FieldCore
-import FieldGPU
 import Foundation
 
 // Scanning as functions, so `fieldc scan3d` and `fieldc replicate` share the
@@ -14,7 +13,7 @@ import Foundation
 
 /// Maximum-intensity projections of an image (peak 1) for the figures:
 /// rows "view,i,j,value" for xy, xz and yz.
-func mipCSV(_ I: [Double], grid: FieldLattice) -> String {
+public func mipCSV(_ I: [Double], grid: FieldLattice) -> String {
     let n = grid.nx
     var csv = "view,i,j,value\n"
     for (view, axes) in [("xy", (0, 1, 2)), ("xz", (0, 2, 1)), ("yz", (1, 2, 0))] {
@@ -34,7 +33,7 @@ func mipCSV(_ I: [Double], grid: FieldLattice) -> String {
 /// `threshold`; two sites closer than 1.8 spacing are joined when the image
 /// stays bright along the segment between them (its mean ≥ 0.6 threshold).
 /// A site left unjoined is kept as a lone point.
-func extractShape(image I: [Double], grid: FieldLattice, threshold: Double,
+public func extractShape(image I: [Double], grid: FieldLattice, threshold: Double,
                   spacing: Double, within: (Vec3) -> Bool = { _ in true }) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
     let order = I.indices.filter { I[$0] >= threshold && within(grid.positions[$0]) }.sorted { I[$0] > I[$1] }
     var sites: [Vec3] = []
@@ -79,7 +78,7 @@ func extractShape(image I: [Double], grid: FieldLattice, threshold: Double,
 }
 
 /// Pearson correlation of two images.
-func pearson(_ a: [Double], _ b: [Double]) -> Double {
+public func pearson(_ a: [Double], _ b: [Double]) -> Double {
     let n = Double(a.count)
     let ma = a.reduce(0, +) / n, mb = b.reduce(0, +) / n
     var sab = 0.0, saa = 0.0, sbb = 0.0
@@ -92,24 +91,25 @@ func pearson(_ a: [Double], _ b: [Double]) -> Double {
 
 // MARK: - Scanning in open air (ENGINE.md, study S3)
 
-struct ArrayScanSetup {
-    var fLo = 30_000.0
-    var fHi = 100_000.0
+public struct ArrayScanSetup {
+    public var fLo = 30_000.0
+    public var fHi = 100_000.0
     /// Frequencies, evenly spaced: Δf sets the time window 1/Δf, which must
     /// hold the direct echoes without the plate bounces wrapping onto them.
-    var frequencies = 320
+    public var frequencies = 320
     /// Coded pulses: each chord drives every element of ONE plate with a
     /// random phase, the same pattern at every frequency; the plates alternate.
-    var chords = 8
-    var snrDB = 40.0
-    var seed: UInt64 = 17
+    public var chords = 8
+    public var snrDB = 40.0
+    public var seed: UInt64 = 17
     /// Keep only the direct echoes (time gate); false = the whole response.
-    var gate = true
+    public var gate = true
     /// Listen on both plates (the direct path through the volume to the far
     /// plate arrives in the same window as the direct echo, and carries the
     /// forward scattering of surfaces that do not face the firing plate);
     /// false = the firing plate only.
-    var listenBoth = false
+    public var listenBoth = false
+    public init() {}
 }
 
 /// The matched-field image of `object` (small rigid scatterers of radius
@@ -127,7 +127,7 @@ struct ArrayScanSetup {
 ///     I(x) = |Σ_{f,pulse} cM f(x) b(x) + cD ∇f(x)·∇b(x)|,
 /// the matched filter rₓᴴ r. Two forward passes over the grid per pulse and
 /// frequency; nothing stored.
-func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subunit: Double, grid: FieldLattice,
+public func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subunit: Double, grid: FieldLattice,
                     setup: ArrayScanSetup, log: (String) -> Void = { print($0) }) throws -> [Double] {
     let t0 = Date()
     let air = RH1Freestanding.roomAir
@@ -237,7 +237,7 @@ func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subuni
 /// shape, not the peaks: junctions and ends (sites with ≠ 2 neighbours) stay
 /// where they are; every chain between them, and every closed loop, is walked
 /// and sampled at equal arc length, about `spacing` apart.
-func resampleShape(sites: [Vec3], segments: [(Vec3, Vec3)], spacing: Double) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
+public func resampleShape(sites: [Vec3], segments: [(Vec3, Vec3)], spacing: Double) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
     func idx(_ p: Vec3) -> Int? { sites.firstIndex { ($0 - p).length < 1e-9 } }
     var adj = [[Int]](repeating: [], count: sites.count)
     for (a, b) in segments {
@@ -303,4 +303,43 @@ func resampleShape(sites: [Vec3], segments: [(Vec3, Vec3)], spacing: Double) -> 
         sample(chain, closed: true)
     }
     return (outSites, outSegs)
+}
+
+
+/// How an image sits on its object. `precision` and `recall` use voxels above
+/// half the peak within `tol` of an object point; `auc` is threshold-free: the
+/// chance a voxel within `tol` of the object is brighter than one beyond 2·tol
+/// (0.5 = no image); `contrast` is the mean image on the object ÷ off it.
+public struct ScanScore: Sendable {
+    public var hot = 0
+    public var precision = 0.0, recall = 0.0, auc = 0.0, contrast = 0.0
+    public var spill = 0.0, spillReach = 0.0, objectShare = 0.0
+    public var peakDistance = 0.0
+    public init() {}
+}
+
+public func scanScore(image I: [Double], grid: FieldLattice, object: [Vec3], tol: Double) -> ScanScore {
+    var s = ScanScore()
+    let pos = grid.positions
+    let dist = pos.map { x in object.map { ($0 - x).length }.min() ?? 0 }
+    let hot = I.indices.filter { I[$0] >= 0.5 }
+    s.hot = hot.count
+    s.precision = Double(hot.filter { dist[$0] <= tol }.count) / Double(max(1, hot.count))
+    let hotPts = hot.map { pos[$0] }
+    s.recall = Double(object.filter { o in hotPts.contains { ($0 - o).length <= tol } }.count) / Double(max(1, object.count))
+    if let pk = I.indices.max(by: { I[$0] < I[$1] }) { s.peakDistance = dist[pk] }
+    let onIdx = I.indices.filter { dist[$0] <= tol }, offIdx = I.indices.filter { dist[$0] > 2 * tol }
+    let order = (onIdx + offIdx).sorted { I[$0] < I[$1] }
+    var rankSum = 0.0
+    for (r, i) in order.enumerated() where dist[i] <= tol { rankSum += Double(r + 1) }
+    let nOn = Double(onIdx.count), nOff = Double(offIdx.count)
+    s.auc = nOn > 0 && nOff > 0 ? (rankSum - nOn * (nOn + 1) / 2) / (nOn * nOff) : 0
+    let meanOn = onIdx.reduce(0) { $0 + I[$1] } / max(1, nOn), meanOff = offIdx.reduce(0) { $0 + I[$1] } / max(1, nOff)
+    s.contrast = meanOff > 0 ? meanOn / meanOff : 0
+    var eAll = 0.0, eOut = 0.0, dOut = 0.0
+    for i in I.indices { eAll += I[i]; if dist[i] > tol { eOut += I[i]; dOut += I[i] * (dist[i] - tol) } }
+    s.spill = eAll > 0 ? eOut / eAll : 0
+    s.spillReach = eOut > 0 ? dOut / eOut : 0
+    s.objectShare = nOn / Double(max(1, I.count))
+    return s
 }

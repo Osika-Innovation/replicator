@@ -31,57 +31,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ? .light : .dark
         // `--machine` opens straight into the Machine tab (the RH-1 solid model).
         state.mode = ProcessInfo.processInfo.arguments.contains("--machine") ? .machine : .compile
-        // The free-standing RH-1 in room air — the machine every mode simulates.
-        let (preset, _, walls) = RH1Freestanding.standard()
-        let bv = preset.buildVolume
-        let air = preset.medium
+        // The RH-1's two plates in room air — the machine every mode simulates.
         MachineCAD.applyRail(&state)
-        let lam = air.wavelength(at: 40_000) * 1000
-        state.wavelengthText = String(format: "λ %.3f mm · node %.3f mm", lam, lam / 2)
         state.statusLine = "ready — no object loaded"
-        state.inspector = [
-            .init(title: "Machine", rows: [
-                ("preset", preset.displayName),
-                ("gates", "\(preset.gateCount) acoustic (3 throat piezos × 2 faces)"),
-                ("apertures", "\(preset.elements.count / RH1Freestanding.gatesPerFace) physical · \(preset.elements.count) virtual"),
-                ("build volume", String(format: "Ø%.0f × %.0f", bv.radius * 2000, bv.height * 1000)),
-                ("λ @ 40 kHz", String(format: "%.3f mm", air.wavelength(at: 40_000) * 1000)),
-            ]),
-            .init(title: "Carrier", rows: [
-                ("band", String(format: "%.0f–%.0f kHz", preset.defaultBand.lowerBound / 1000,
-                                preset.defaultBand.upperBound / 1000)),
-                ("medium", String(format: "air %.0f °C %.0f %% RH, %.2f m/s",
-                                  air.air?.temperatureC ?? 20, air.air?.humidity ?? 50, air.soundSpeed)),
-                ("absorption", String(format: "%.2f dB/m @ 40 kHz", air.absorption(at: 40_000) * 8.686)),
-                ("walls", String(format: "plates, %d image orders, R %.2f", walls.order, walls.reflectionCoefficient)),
-                ("solver", "T0 port fields (GPU)"),
-            ]),
-            .init(title: "Gates", rows: [
-                ("G1 voxelizer", "0.40% ✓"),
-                ("G2 energy", "0.71% ✓"),
-                ("G3 time of flight", "0.44% ✓"),
-                ("G6 node spacing", "2.5e-5 ✓"),
-                ("G7 Gor'kov", "3.6e-7 ✓"),
-                ("G-GPU vs CPU", "3.8e-6 ✓"),
-            ]),
-        ]
+        state.inspector = SceneRegistry.machineSections()
 
         let doc = Document(state: state)
-        // Default object so the viewport shows something with real structure the
-        // moment the app opens, and so the sample is on disk to re-load.
+        // The default object: a wire ring, read from an STL on disk like any
+        // other (written once if it is not there), so the app opens on
+        // something the machine is gated to scan and to mold.
         let samples = URL(fileURLWithPath: "Samples")
         try? FileManager.default.createDirectory(at: samples,
                                                  withIntermediateDirectories: true)
-        let cupURL = samples.appendingPathComponent("cup.stl")
-        let cup = STL.sampleCup()
-        if !FileManager.default.fileExists(atPath: cupURL.path) {
+        let ringURL = samples.appendingPathComponent("ring.stl")
+        if !FileManager.default.fileExists(atPath: ringURL.path) {
             // Written in millimetres, the STL convention.
-            let mm = Mesh(triangles: cup.triangles.map {
+            let mm = Mesh(triangles: STL.sampleRing().triangles.map {
                 Triangle($0.a * 1000, $0.b * 1000, $0.c * 1000)
             })
-            try? STL.writeBinary(mm, to: cupURL)
+            try? STL.writeBinary(mm, to: ringURL)
         }
-        doc.adopt(cup, name: "cup.stl (sample)")
+        let args = ProcessInfo.processInfo.arguments
+        let chosen = args.firstIndex(of: "--stl").flatMap { $0 + 1 < args.count ? URL(fileURLWithPath: args[$0 + 1]) : nil }
+        doc.load(url: chosen ?? ringURL)
         self.document = doc
 
         let content = NSHostingView(rootView: LiveAppShell(doc))
@@ -95,6 +67,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(content)
         NSApp.activate(ignoringOtherApps: true)
+        // `--compile` / `--scan`: run that on the loaded object straight away.
+        if args.contains("--scan") { doc.state.mode = .scan }
+        if args.contains("--scan") || args.contains("--compile") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { doc.runPrimary() }
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ s: NSApplication) -> Bool { true }

@@ -19,95 +19,6 @@ func git(_ args: [String]) -> String? {
 
 /// HEAD, marked `+dirty` when the working tree differs from it — a receipt
 /// that names a commit the numbers were not produced from is a false receipt.
-/// The mold's test shapes around a centre: sites, and the segments joining them.
-func moldShape(_ shape: String, centre: Vec3, ringSites: Int = 16) -> ([Vec3], [(Vec3, Vec3)]) {
-    var sites: [Vec3] = []
-    var segments: [(Vec3, Vec3)] = []
-    switch shape {
-    case "tetra":
-        // 4 vertices + 6 edge midpoints of a tetrahedron with 12 mm edges.
-        let e = 12e-3
-        let v = [Vec3(0, 0, 0), Vec3(e, 0, 0), Vec3(e / 2, e * 3.0.squareRoot() / 2, 0),
-                 Vec3(e / 2, e * 3.0.squareRoot() / 6, e * (2.0 / 3).squareRoot())]
-        let c = (v[0] + v[1] + v[2] + v[3]) * 0.25
-        sites = v.map { centre + $0 - c }
-        for i in 0..<4 { for j in (i + 1)..<4 {
-            sites.append(centre + (v[i] + v[j]) * 0.5 - c)
-            segments.append((centre + v[i] - c, centre + v[j] - c))
-        } }
-    default:
-        // Sites on a horizontal ring, 8 mm radius (16: 3.1 mm apart).
-        let m = ringSites
-        sites = (0..<m).map { q in
-            let th = 2 * Double.pi * Double(q) / Double(m)
-            return centre + Vec3(8e-3 * cos(th), 8e-3 * sin(th), 0)
-        }
-        segments = (0..<m).map { (sites[$0], sites[($0 + 1) % m]) }
-    }
-    return (sites, segments)
-}
-
-/// The scan's test objects around a centre: scatterer points, the scatterer
-/// radius, and the image grid (half-width, spacing).
-func scanObject(_ name: String, centre: Vec3) -> ([Vec3], Double, Double, Double) {
-    func segment(_ a: Vec3, _ b: Vec3, _ step: Double) -> [Vec3] {
-        let m = max(1, Int(((b - a).length / step).rounded()))
-        return (0...m).map { a + (b - a) * (Double($0) / Double(m)) }
-    }
-    var object: [Vec3] = []
-    var subunit = 0.3e-3
-    var half = 24e-3, h = 1.25e-3
-    switch name {
-    case "R":
-        // An extruded letter R, 40 mm tall, strokes every 1.5 mm, 3 layers 3 mm apart.
-        let H = 40e-3, W = 24e-3
-        var strokes: [(Vec3, Vec3)] = [(Vec3(0, 0, 0), Vec3(0, 0, H))]
-        let bowlTop = H, bowlBottom = H * 0.5, r = (bowlTop - bowlBottom) / 2
-        strokes.append((Vec3(0, 0, bowlTop), Vec3(W - r, 0, bowlTop)))
-        strokes.append((Vec3(0, 0, bowlBottom), Vec3(W - r, 0, bowlBottom)))
-        strokes.append((Vec3(W * 0.35, 0, bowlBottom), Vec3(W, 0, 0)))
-        var pts: [Vec3] = []
-        for (a, b) in strokes { pts += segment(a, b, 1.5e-3) }
-        for q in 0...16 {                              // the bowl: a half circle
-            let th = -Double.pi / 2 + Double.pi * Double(q) / 16
-            pts.append(Vec3(W - r + r * cos(th), 0, bowlBottom + r + r * sin(th)))
-        }
-        for layer in [-3e-3, 0, 3e-3] {
-            for p0 in pts { object.append(centre + Vec3(p0.x - W / 2, layer, p0.z - H / 2)) }
-        }
-    case "bead-tetra":
-        // The twin's own 4-bead tetrahedron (Ø200 µm, touching): below the wavelength.
-        let a = 0.1e-3, d = 2 * a
-        let b0 = Vec3(0, 0, 0), b1 = Vec3(d, 0, 0), b2 = Vec3(d / 2, d * 3.0.squareRoot() / 2, 0)
-        let c = (b0 + b1 + b2) * (1.0 / 3)
-        let top = c + Vec3(0, 0, d * (2.0 / 3).squareRoot())
-        object = [b0, b1, b2, top].map { centre + $0 - c }
-        subunit = a; half = 8e-3; h = 0.4e-3
-    case "point":
-        // One small scatterer off the centre: the scan's point-spread.
-        object = [centre + Vec3(3e-3, 2e-3, 1e-3)]
-        half = 8e-3; h = 0.4e-3
-    case "ring":
-        // A wire ring, 8 mm radius, in the mid-plane, scatterers every 1 mm.
-        object = (0..<50).map { q in
-            let th = 2 * Double.pi * Double(q) / 50
-            return centre + Vec3(8e-3 * cos(th), 8e-3 * sin(th), 0)
-        }
-        half = 14e-3; h = 0.7e-3
-    default:
-        // A regular tetrahedron wireframe, 30 mm edges, sampled every 1.5 mm.
-        let e = 30e-3
-        let v = [Vec3(0, 0, 0), Vec3(e, 0, 0), Vec3(e / 2, e * 3.0.squareRoot() / 2, 0),
-                 Vec3(e / 2, e * 3.0.squareRoot() / 6, e * (2.0 / 3).squareRoot())]
-        let c = (v[0] + v[1] + v[2] + v[3]) * 0.25
-        for i in 0..<4 { for j in (i + 1)..<4 { object += segment(v[i], v[j], 1.5e-3).map { centre + $0 - c } } }
-        var seen: [Vec3] = []
-        for p0 in object where !seen.contains(where: { ($0 - p0).length < 1e-6 }) { seen.append(p0) }
-        object = seen
-    }
-    return (object, subunit, half, h)
-}
-
 func gitSHA() -> String {
     guard let sha = git(["rev-parse", "--short", "HEAD"]), !sha.isEmpty else { return "unknown" }
     let dirty = !(git(["status", "--porcelain", "--untracked-files=no", "--", "."]) ?? "").isEmpty
@@ -240,7 +151,7 @@ case "mold":
         let ctx = try MetalContext()
         let t0 = Date()
         func arg(_ name: String) -> String? { args.firstIndex(of: name).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
-        let shape = arg("--shape") ?? "ring"
+        var shape = arg("--shape") ?? "ring"
         var setup = MoldSetup()
         if let v = arg("--objective") { setup.objective = v }
         if let v = arg("--tones").flatMap(Int.init) { setup.tones = v }
@@ -265,6 +176,18 @@ case "mold":
         let L = moldArray.gap
         let centre = Vec3(0, 0, L / 2)
         var (sites, segments) = moldShape(shape, centre: centre, ringSites: arg("--sites").flatMap(Int.init) ?? 16)
+        if let path = arg("--stl") {
+            // The shape read from an STL (millimetres), as the app reads it:
+            // placed at the centre, sites spread evenly over its surface.
+            let raw = try STL.read(contentsOf: URL(fileURLWithPath: path))
+            let placed = meshInMold(Mesh(triangles: raw.triangles.map { Triangle($0.a * 0.001, $0.b * 0.001, $0.c * 0.001) }), centre: centre)
+            sites = meshPoints(placed.mesh, count: arg("--sites").flatMap(Int.init) ?? 16, minSpacing: 2.5e-3)
+            segments = meshSegments(joining: sites)
+            shape = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent + "-stl"
+            let nn = sites.indices.map { i in sites.indices.filter { $0 != i }.map { (sites[$0] - sites[i]).length }.min() ?? 0 }
+            print(String(format: "shape from %@: scale %.2f, %d sites, nearest-neighbour spacing %.2f–%.2f mm, %d segments",
+                         path, placed.scale, sites.count, (nn.min() ?? 0) * 1000, (nn.max() ?? 0) * 1000, segments.count))
+        }
         if let deg = arg("--rotate").flatMap(Double.init) {
             // Turn the shape about the vertical axis through the centre (a robustness check).
             let c = cos(deg * .pi / 180), sn = sin(deg * .pi / 180)
@@ -414,43 +337,19 @@ case "scan3d":
         setup.listenBoth = args.contains("--listen-both")
         I = try scanImageArray(ctx: ctx, array: scanArray, object: object, subunit: subunit,
                                grid: grid, setup: setup)
-        // How the image sits on the object: voxels above half the peak, near an object point?
-        let hot = I.indices.filter { I[$0] >= 0.5 }
-        func nearObject(_ x: Vec3, _ r: Double) -> Bool { object.contains { ($0 - x).length <= r } }
+        // How the image sits on the object (`scanScore`). Precision hangs on
+        // one number (half the PEAK voxel), so one bright scatterer moves it by
+        // tens of percent (2026-11-10: 62–91 % as the array's fill radius
+        // changes, the image itself hardly changing); AUC and contrast do not.
         let tol = max(2e-3, 1.5 * h)
-        let precision = Double(hot.filter { nearObject(grid.positions[$0], tol) }.count) / Double(max(1, hot.count))
-        let hotPts = hot.map { grid.positions[$0] }
-        let recall = Double(object.filter { o in hotPts.contains { ($0 - o).length <= tol } }.count) / Double(object.count)
+        let sc = scanScore(image: I, grid: grid, object: object, tol: tol)
+        let precision = sc.precision, recall = sc.recall, auc = sc.auc, imageContrast = sc.contrast
+        let spill = sc.spill, spillReach = sc.spillReach
         print(String(format: "image: %d voxels above half the peak; %.0f%% of them within %.1f mm of the object; %.0f%% of the object has such a voxel within %.1f mm",
-                     hot.count, 100 * precision, tol * 1000, 100 * recall, tol * 1000))
-        if let pk = I.indices.max(by: { I[$0] < I[$1] }) {
-            let x = grid.positions[pk]
-            let d = object.map { ($0 - x).length }.min() ?? 0
-            print(String(format: "image peak %.2f mm from the nearest object point", d * 1000))
-        }
-        // Threshold-free scores. Precision above hangs on one number (half the
-        // PEAK voxel), so one bright scatterer moves it by tens of percent
-        // (2026-11-10: 62–91 % as the array's fill radius changes, the image
-        // itself hardly changing). These do not:
-        //   AUC — the chance a voxel on the object (within tol) is brighter
-        //         than a voxel off it (beyond 2·tol); 0.5 = no image, 1 = perfect.
-        //   contrast — mean image on the object ÷ mean image off it.
-        //   spill — of the image's energy, the share beyond tol of the object,
-        //         and how far that share sits from it (energy-weighted mean).
-        let dist = grid.positions.map { x in object.map { ($0 - x).length }.min() ?? 0 }
-        let onIdx = I.indices.filter { dist[$0] <= tol }, offIdx = I.indices.filter { dist[$0] > 2 * tol }
-        let order = (onIdx + offIdx).sorted { I[$0] < I[$1] }
-        var rankSum = 0.0
-        for (r, i) in order.enumerated() where dist[i] <= tol { rankSum += Double(r + 1) }
-        let nOn = Double(onIdx.count), nOff = Double(offIdx.count)
-        let auc = nOn > 0 && nOff > 0 ? (rankSum - nOn * (nOn + 1) / 2) / (nOn * nOff) : 0
-        let meanOn = onIdx.reduce(0) { $0 + I[$1] } / max(1, nOn), meanOff = offIdx.reduce(0) { $0 + I[$1] } / max(1, nOff)
-        let imageContrast = meanOff > 0 ? meanOn / meanOff : 0
-        var eAll = 0.0, eOut = 0.0, dOut = 0.0
-        for i in I.indices { eAll += I[i]; if dist[i] > tol { eOut += I[i]; dOut += I[i] * (dist[i] - tol) } }
-        let spill = eAll > 0 ? eOut / eAll : 0, spillReach = eOut > 0 ? dOut / eOut : 0
+                     sc.hot, 100 * precision, tol * 1000, 100 * recall, tol * 1000))
+        print(String(format: "image peak %.2f mm from the nearest object point", sc.peakDistance * 1000))
         print(String(format: "threshold-free: AUC %.3f (object voxel brighter than background voxel); contrast %.1f×; %.0f%% of the image energy lies beyond %.1f mm of the object, on average %.1f mm further out (object fills %.1f%% of the grid)",
-                     auc, imageContrast, 100 * spill, tol * 1000, spillReach * 1000, 100 * nOn / Double(I.count)))
+                     auc, imageContrast, 100 * spill, tol * 1000, spillReach * 1000, 100 * sc.objectShare))
         var ocsv = "x_mm,y_mm,z_mm\n"
         for o in object { ocsv += String(format: "%.3f,%.3f,%.3f\n", (o.x - grid.origin.x) * 1000, (o.y - grid.origin.y) * 1000, (o.z - grid.origin.z) * 1000) }
         let tag = "-\(scanArray.tag)"

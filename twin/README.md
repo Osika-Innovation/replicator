@@ -17,7 +17,7 @@ Command Line Tools only; no Xcode.
 swift build -c release
 ./.build/release/fieldc test                 # 63 tests (FIELDC_VERBOSE=1 prints every measured value)
 ./.build/release/fieldc gpu --receipt        # GPU kernels against their CPU reference (G-A1, G-A3)
-./.build/release/fieldc mold --receipt       # powder → shape (--shape ring|tetra, --rotate deg, --band lo-hi, --fcode out.fcode)
+./.build/release/fieldc mold --receipt       # powder → shape (--shape ring|tetra, --stl file.stl, --rotate deg, --band lo-hi, --fcode out.fcode)
 ./.build/release/fieldc scan3d --object ring --receipt   # gated pulse-echo scan (point | ring | tetra | R)
 ./.build/release/fieldc replicate --receipt  # scan → read the shape → mold a copy → scan the copy
 ./.build/release/fieldc arraysweep --receipt # what the element count and the tones buy (study S1)
@@ -33,6 +33,19 @@ swift build -c release
 ./.build/release/fieldc cad export | step | render --all | drawing | bom | params
 ./.build/release/fieldc shot --all --compare # every UI scene against its golden in shots/
 ```
+
+The app (same engine, same plates):
+
+```sh
+sh Tools/make_app.sh && open ".build/Field Compiler.app"   # --args --compile | --scan | --stl file.stl | --machine
+```
+
+It opens on `Samples/ring.stl`. **Compile** makes a mold of the loaded object
+on the plates (about five minutes for 16 sites; the default ring passes every gate, 5.4–6.9 % per site, receipt `mold-ring-stl-sieve-rh1x192_2026-11-11T05-00-42Z`) and steps the powder through
+it; **Build** plays that powder frame by frame; **Scan** runs the plates'
+pulse-echo scan of the object (about 40 s); **Inspect** shows the compile's
+gates; **Machine** is the CAD. An STL larger than the mold volume (a 24 mm
+cube at the chamber centre) is scaled down to fit and the status line says so.
 
 `--array ideal | microhorn` and `--per-plate N` swap the plate for the earlier
 ones; the default everywhere is the machine's own, `PlateArray.rh1`.
@@ -84,25 +97,29 @@ Receipts for every row are in `Receipts/`; each names the commit that made it.
   100 kHz and 3 m/s, and plate cross-talk are not modelled.
 * Only `play` runs through `MachineBackend`. `mold`, `scan3d`, `replicate`
   and the placing verbs still build their own fields (charter rule 2).
-* The SwiftUI app (`FieldCompilerApp`) still simulates the earlier six-gate
-  machine; it stays until it is rebuilt on the plates (ruled 2026-11-11).
-  `fieldc shot` renders its scenes.
+* The app's Compile, Build and Scan run on the plates (rebuilt 2026-11-11),
+  but it only molds: the bead-placing verbs and `replicate` are not in it.
+  The six-gate code it used to pin (`InverseSolver`, `PortFieldsGPU`'s
+  propagator, `RH1Freestanding.standard`, `ParticleSim`, `.pattern`,
+  `MatrixPencil`) is now reached only from tests; deleting it is undecided.
+* The mold volume is a 24 mm cube and a mold is 16 sites. Larger or finer
+  objects are scaled and sampled down to that, not built at size.
 * The CAD has no wiring layer for the 4 × 192 elements, and the horns, cones
   and throat piezos behind the faces no longer drive the sound: their role
   is undecided.
 * Reading small 3D wireframes from a scan (the tetrahedron) does not work
   yet; the ring does.
-* `Sources/` is 18,112 lines against the charter's proposed cap of 17,500.
+* `Sources/` is 18,306 lines against the charter's proposed cap of 17,500.
 
 ## Layout
 
 | target | what |
 |---|---|
 | `FieldCore` | pure Swift: geometry, CAD, solvers, force compiler, `.fcode`, backend, gates, tests |
-| `FieldGPU` | Metal: the matrix-free array field and its adjoint, the part field, rendering |
+| `FieldGPU` | Metal: the matrix-free array field and its adjoint, the part field, rendering; `Engine/`: the mold and the scan as library functions the CLI and the app both call |
 | `FieldUI` | the SwiftUI shell and the screenshot harness |
 | `fieldc` | the CLI: one verb per line above |
-| `FieldCompilerApp` | the app |
+| `FieldCompilerApp` | the app: the same engine behind a window |
 
 Toolchain notes (Swift 6.2, Command Line Tools, runtime-compiled Metal) are at
 the end of the diary.

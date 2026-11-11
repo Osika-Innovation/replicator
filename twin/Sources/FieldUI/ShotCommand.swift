@@ -64,15 +64,30 @@ public enum ShotCommand {
                 } else if let ctx {
                     do {
                         let r = try Renderer(ctx: ctx)
-                        r.load(SceneBuilder.rh1(palette: theme.isDark
-                                                ? SceneBuilder.Palette()
-                                                : SceneBuilder.Palette.light))
+                        // The chamber with the element faces, the mold volume,
+                        // and the object if the scene has one; the camera on
+                        // the mold volume, as the live viewport opens.
+                        let palette = theme.isDark ? SceneBuilder.Palette() : SceneBuilder.Palette.light
+                        let c = PlateArray.rh1().centre
+                        let half = Vec3(12e-3, 12e-3, 12e-3)
+                        var extra = SceneBuilder.box(min: c - half, max: c + half,
+                                                     color: SIMD4<Float>(0.5, 0.6, 0.7, 0.35))
+                        if !st.objects.isEmpty && st.overlays.contains("solid") {
+                            let ring = Mesh(triangles: STL.sampleRing().triangles.map {
+                                Triangle($0.a + c, $0.b + c, $0.c + c) })
+                            let g = SceneBuilder.object(ring, palette: palette)
+                            extra.linePositions += g.linePositions; extra.lineColors += g.lineColors
+                            extra.trianglePositions += g.trianglePositions; extra.triangleColors += g.triangleColors
+                        }
+                        r.load(SceneBuilder.rh1(palette: palette, design: RH1Design()), object: extra)
                         r.background = theme.viewportBackground
                         switch scene.camera {
                         case "front": r.camera = .front
                         case "top":   r.camera = .top
                         default:      r.camera = .home
                         }
+                        r.camera.target = SIMD3<Float>(Float(c.x), Float(c.y), Float(c.z))
+                        r.camera.distance = 0.085
                         st.viewport = try r.renderOffscreen(width: 1480, height: 1000)
                     } catch {
                         print("  viewport failed for \(scene.id): \(error)")

@@ -1,5 +1,4 @@
 import FieldCore
-import FieldGPU
 import Foundation
 
 // The single-shot acoustic mold as a function, so `fieldc mold`, `fieldc
@@ -15,60 +14,71 @@ import Foundation
 // destination at once, recirculation in closed form) and by stepping 3,000
 // grains (the check, gate G-B0).
 
-enum MoldChamber {
+public enum MoldChamber {
     case plates(PlateArray)
 }
 
-struct MoldSetup {
-    var objective = "sieve"          // sieve | wells | funnel
-    var tones: Int? = nil            // nil: 40 for the glass sieve, 9 for the plates, 20 otherwise
-    var band: (lo: Double, hi: Double)? = nil   // Hz; nil: 50–100 kHz
-    var grains = 3000
-    var iterations: Int? = nil       // nil: 400 for the sieve, 300 otherwise
-    var seconds = 8.0
-    var powerX: Double? = nil        // nil: the sieve's window middle, else 4×
-    var recirculate: Bool? = nil     // nil: on for the sieve
-    var gravity = true
-    var particles = true             // step grains as well as the basin map
+public struct MoldSetup {
+    public var objective = "sieve"          // sieve | wells | funnel
+    public var tones: Int? = nil            // nil: 40 for the glass sieve, 9 for the plates, 20 otherwise
+    public var band: (lo: Double, hi: Double)? = nil   // Hz; nil: 50–100 kHz
+    public var grains = 3000
+    public var iterations: Int? = nil       // nil: 400 for the sieve, 300 otherwise
+    public var seconds = 8.0
+    public var powerX: Double? = nil        // nil: the sieve's window middle, else 4×
+    public var recirculate: Bool? = nil     // nil: on for the sieve
+    public var gravity = true
+    public var particles = true             // step grains as well as the basin map
     /// Basin-map feedback rounds for the sieve: weight the sites that get too
     /// little powder up and recompile from the last drive.
-    var feedback = 0
-    var debug = false
+    public var feedback = 0
+    public var debug = false
+    /// Keep the stepped grains' positions every this many seconds (nil: only the end).
+    public var frameEvery: Double? = nil
+    public init() {}
 }
 
-struct MoldOutcome {
-    var sites: [Vec3] = []
-    var perSite: [Int] = []
-    var final: [Vec3] = []
-    var onShape: [Bool] = []
-    var captured = 0, rogue = 0, drifting = 0, lost = 0, resprinkles = 0
-    var contrast = 0.0, powerX = 0.0, tones = 0, channels = 0
-    var formed = 0, rivalRatio = 0.0
+public struct MoldOutcome {
+    public var sites: [Vec3] = []
+    public var perSite: [Int] = []
+    public var final: [Vec3] = []
+    public var onShape: [Bool] = []
+    public var captured = 0, rogue = 0, drifting = 0, lost = 0, resprinkles = 0
+    public var contrast = 0.0, powerX = 0.0, tones = 0, channels = 0
+    public var formed = 0, rivalRatio = 0.0
     /// Basin map: share of the release on the shape (with recirculation if on),
     /// per-site shares, rogue share.
     /// Per-site shares by the 26-neighbour lattice map (`BasinMap`), kept
     /// beside the traced flow's (`basinPerSite`) so the two can be compared.
-    var latticePerSite: [Double] = []
-    var basinOnShape = 0.0, basinRogue = 0.0
-    var basinPerSite: [Double] = []
-    var driveRMS = 0.0               // m/s per channel, rms over channels
+    public var latticePerSite: [Double] = []
+    public var basinOnShape = 0.0, basinRogue = 0.0
+    public var basinPerSite: [Double] = []
+    public var driveRMS = 0.0               // m/s per channel, rms over channels
     /// The compiled drives (unit total power), the drive power that scales them
     /// (Σ|v|², (m/s)²) and the tones — what a light view or a replay needs.
-    var drives: [[Complex]] = []
-    var power = 0.0
-    var frequencies: [Double] = []
-    var compileSeconds = 0.0
-    var grainsCSV = "", sitesCSV = "", captureCSV = ""
+    public var drives: [[Complex]] = []
+    public var power = 0.0
+    public var frequencies: [Double] = []
+    public var compileSeconds = 0.0
+    public var grainsCSV = "", sitesCSV = "", captureCSV = ""
+    /// What a viewer needs: the probe lattice, the compiled potential on it
+    /// (per unit drive power; × `power` = joules), the grain weight (N), and
+    /// the stepped grains' positions over time (`MoldSetup.frameEvery`).
+    public var lattice: FieldLattice? = nil
+    public var potential: [Double] = []
+    public var grainWeight = 0.0
+    public var frames: [(t: Double, x: [Vec3])] = []
     /// Every sink of the basin map: where it is, its share, the site it counts for.
-    var sinksCSV = ""
-    var captureLog: [String] = []
-    var gates: [GateResult] = []
-    var summary = ""
+    public var sinksCSV = ""
+    public var captureLog: [String] = []
+    public var gates: [GateResult] = []
+    public var summary = ""
+    public init() {}
 }
 
 /// Distance from x to a shape given as segments (a segment from a point to
 /// itself is a lone site).
-func shapeDistance(_ x: Vec3, _ segments: [(Vec3, Vec3)]) -> Double {
+public func shapeDistance(_ x: Vec3, _ segments: [(Vec3, Vec3)]) -> Double {
     segments.reduce(Double.infinity) { m, s in
         let d = s.1 - s.0
         let dd = d.dot(d)
@@ -77,7 +87,7 @@ func shapeDistance(_ x: Vec3, _ segments: [(Vec3, Vec3)]) -> Double {
     }
 }
 
-func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments: [(Vec3, Vec3)],
+public func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments: [(Vec3, Vec3)],
              chamber: MoldChamber, setup: MoldSetup, log: @escaping (String) -> Void = { print($0) }) throws -> MoldOutcome {
     let air = RH1Freestanding.roomAir
     let L: Double
@@ -318,6 +328,7 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
     out.drives = drives; out.power = power; out.frequencies = freqs
     let bSite = ev.perSite, bOn = ev.onShape, bRogue = ev.rogue
     out.basinOnShape = bOn; out.basinRogue = bRogue; out.basinPerSite = bSite
+    out.lattice = lat; out.potential = ev.U; out.grainWeight = weight
     out.latticePerSite = ev.latticePerSite
     out.sinksCSV = "x_mm,y_mm,z_mm,share,site\n" + ev.sinkList.sorted { $0.share > $1.share }.map {
         String(format: "%.3f,%.3f,%.3f,%.5f,%d", ($0.x.x - centre.x) * 1000, ($0.x.y - centre.y) * 1000, ($0.x.z - centre.z) * 1000, $0.share, $0.site)
@@ -349,6 +360,8 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
             }
         }
         record(0)
+        if setup.frameEvery != nil { out.frames.append((0, xs)) }
+        var nextFrame = setup.frameEvery ?? .infinity
         let dt = 5e-4
         var t = 0.0
         var nextSnap = 1
@@ -384,6 +397,7 @@ func runMold(ctx: MetalContext, label: String, sites targetPts: [Vec3], segments
                 }
             }
             t += dt
+            if t >= nextFrame - 1e-9 { out.frames.append((t, xs)); nextFrame += setup.frameEvery ?? .infinity }
             if nextSnap < snaps.count && t >= snaps[nextSnap] - 1e-9 { record(snaps[nextSnap]); nextSnap += 1 }
         }
         for i in 0..<nGrains where alive[i] {
