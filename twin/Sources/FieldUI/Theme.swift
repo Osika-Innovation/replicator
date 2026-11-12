@@ -86,7 +86,7 @@ public struct AppState: Sendable {
     public var theme: Theme = .dark
     public var mode: AppMode = .compile
     // Defaults describe the machine every mode simulates: the RH-1's two
-    // plates of 1,536 elements in room air (`gateCount` is the plate count).
+    // plates of 2,560 elements in room air (`gateCount` is the plate count).
     public var machineName = "RH-1 FS"
     public var material = "PLA"
     public var gateCount = 2

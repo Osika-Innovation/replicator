@@ -156,7 +156,7 @@ extension CoreTests {
                 }
             }
             t.check(m.pattern.elements.allSatisfy { $0.radius - $0.holeRadius > d.boreHoleRadius + 2 }, "clear of the collar hole")
-            // 1,536 elements leave no stretch of a slot arm 8 mm long with 1 mm
+            // A filled face leaves no stretch of a slot arm 8 mm long with 1 mm
             // of metal to every hole: the dense face has no light slots (OPEN).
             var sparse = d; sparse.elementCount = 192
             t.check(FacePattern(sparse).slotCenterlines.count > d.slotArms, "192 elements: the slots are dashed")

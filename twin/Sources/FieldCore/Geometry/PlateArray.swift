@@ -78,13 +78,14 @@ public struct PlateArray: Sendable {
 
     /// Nudge sites apart until every pair of faces is at least `apart` from
     /// each other, keeping every centre in the annulus the spiral filled.
-    /// Deterministic; a few passes over neighbouring pairs.
+    /// Deterministic: passes over neighbouring pairs until none is short. A
+    /// face filled to its limit (2,560 elements) takes a few thousand.
     func spread(_ sites: [Site], apart: Double) -> [Site] {
         guard apart > 0, sites.count > 1 else { return sites }
         var s = sites
         let rMax = (s.map(\.radius).max() ?? 0)
         let cell = 2 * rMax + apart
-        for _ in 0..<200 {
+        for _ in 0..<20_000 {
             var grid: [Int: [Int]] = [:]
             func key(_ x: Double, _ y: Double) -> Int { Int((x / cell).rounded(.down)) &* 73_856_093 ^ Int((y / cell).rounded(.down)) &* 19_349_663 }
             for (i, e) in s.enumerated() { grid[key(e.x, e.y), default: []].append(i) }

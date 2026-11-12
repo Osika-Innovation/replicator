@@ -529,7 +529,7 @@ case "windings":
     exit(WindingsCommand.run(args))
 
 case "status":
-    // The newest receipt of each kind (optionally: --plate rh1x1536t9), every gate with a bar.
+    // The newest receipt of each kind (optionally: --plate rh1x2560t9), every gate with a bar.
     let filter = args.firstIndex(of: "--plate").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? ""
     let rs = Receipt.latest(in: URL(fileURLWithPath: "Receipts"), containing: filter)
     print(Receipt.statusMarkdown(rs))

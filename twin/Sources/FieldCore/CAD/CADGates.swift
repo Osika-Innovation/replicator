@@ -226,7 +226,7 @@ public enum CADGates {
             rule("DR10", "element hole ↔ slot dash web", web, d.elementSlotWeb - 0.1)
             // BAR CHANGED 2.0 → 1.0 mm for the resonant face, 2026-11-12, with
             // the reason recorded (no silent gate weakening). 2 mm was a sized
-            // choice for 192 holes; 1,536 holes of Ø4.3–7.8 in the same annulus
+            // choice for 192 holes; 2,560 holes of Ø4.3–7.8 in the same annulus
             // are nudged apart to 1 mm (`PlateArray.spread`). 1 mm of aluminium between
             // reamed holes 11 mm deep is ordinary drilling practice; under it
             // the web deflects and the holes go oval.

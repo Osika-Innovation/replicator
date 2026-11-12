@@ -67,12 +67,14 @@ public struct RH1Design: Codable, Sendable {
     /// preset `RH1Freestanding` and its receipts.
     public enum FaceStyle: String, Codable, Sendable { case elementArray, microHorns }
     public var faceStyle = FaceStyle.elementArray
-    /// Elements per face. 1,536 resonant elements is about what the annulus
-    /// holds with 1 mm of metal between holes (DR11; a third of the face
-    /// radiates), and what the ring mold needs to keep every element inside
-    /// its velocity ceiling (gate G-E1, 2026-11-12). The operator's ruling
-    /// of 2026-11-11 was 192, made on ideal pistons.
-    public var elementCount = 1536
+    /// Elements per face: the face filled. The drive a mold asks of each
+    /// element falls as 1/N until no more fit; shape control stops improving
+    /// near 550 (the patterns the plate can make in the mold volume), so the
+    /// count is what the annulus holds with 1 mm of metal between holes
+    /// (DR11): 2,560 mixed-size elements, over half the face radiating.
+    /// 1,536 until 2026-11-12 was the spiral's limit, not the plate's. The
+    /// operator's ruling of 2026-11-11 was 192, made on ideal pistons.
+    public var elementCount = 2560
     /// The tones the plate plays (Hz). Every element is a resonant open-type
     /// transmitter tuned to one of them (`ElementSpec.scaled`, proposal of
     /// 2026-11-12: a piezo disc radiating directly gives a twentieth of the
@@ -100,7 +102,7 @@ public struct RH1Design: Codable, Sendable {
     /// …and starts here (an equal-area annulus, as the old sunflower was), so
     /// the innermost element's hole leaves a real web to the Ø14 collar hole.
     /// A spiral from r = 0 would put it 0.4 mm from the collar.
-    /// 13 (12 until 2026-11-12): the first element of 1,536 sits almost on
+    /// 13 (12 until 2026-11-12): the first element of the spiral sits almost on
     /// the inner radius, and a Ø7.8 hole there needs its 2 mm to the collar.
     public var elementInnerRadius = 13.0
     /// Radial clearance of an element in its through-hole (bond line).
