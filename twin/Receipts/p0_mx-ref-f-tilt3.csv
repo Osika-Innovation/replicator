@@ -1,0 +1,4 @@
+policy,gap_mm,reflection,image_order,seed,calibration,outcome,level,step_ms,hardest_of_full,predicted_travel_mm,travel_mm,absolute_mm,between_plates_deg,pair_spread_deg
+P0-planner/1,46.0,0.5,3,7,"receiver can, one pass per plate and a side reference pass, tilted 3°",lost,4.000,40.000,0.283,0.123,,,-2.217,13.747
+P0-planner/1,46.0,0.5,3,8,"receiver can, one pass per plate and a side reference pass, tilted 3°",lost,4.000,40.000,0.309,0.101,,,-1.917,13.233
+P0-planner/1,46.0,0.5,3,9,"receiver can, one pass per plate and a side reference pass, tilted 3°",lost,4.000,40.000,0.345,0.145,,,-2.074,16.132

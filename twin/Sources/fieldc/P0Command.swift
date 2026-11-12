@@ -241,26 +241,35 @@ enum P0Command {
     /// body two, so that an input silent on the axis is still heard.
     static func probeOffsets(_ a: PlateArray) -> [Vec3] { a.inputs == nil ? [Vec3(0, 0, 0)] : [Vec3(4e-3, 3e-3, 0), Vec3(0, 0, 0)] }
 
-    /// The planner's policy, frozen as "P0-planner/1" (2026-11-12). It sees
+    /// The planner's policy, frozen as "P0-planner/2" (2026-11-12). It sees
     /// the drawing, the calibration record and these constants — never the
     /// emulated build's own errors. It tries drive levels in this order, then
-    /// step times, and takes the first job that (a) asks no element for more
+    /// step times, and takes the first job that (a) asks no channel for more
     /// than `ceiling` of full drive, (b) carries the bead on the calibrated
     /// model with its travel within `modelBar`, and (c) still carries it
     /// within `copyBar` on two copies of that model moved by what the
     /// calibration cannot see: every element ±0.2 mm, and the upper plate
-    /// turned against the lower by ±15° (±5° when a reference pass measured
-    /// the plates' ratio). No job passing all three: it plays nothing.
+    /// turned against the lower. The turn is ±15° without a reference; with
+    /// one, twice the spread its pairs reported but at least ±5° — and ±15°
+    /// again if that spread is over 7.5°, a reference that cannot be
+    /// trusted. No job passing all three: it plays nothing.
+    /// (/1 trusted any reference to ±5°: a can tilted 3° on the side pass
+    /// then lost the bead in 3 of 3, receipts `p0-mx-ref-f-tilt3`.)
     enum Planner {
-        static let name = "P0-planner/1"
+        static let name = "P0-planner/2"
         static let levels = [4.0, 6, 8], steps = [0.04, 0.08]
         static let modelBar = 0.25e-3, copyBar = 0.5e-3
-        static func turn(referenced: Bool) -> Double { referenced ? 5 : 15 }
+        /// `spread`: the reference pairs' disagreement (degrees); nil with no
+        /// reference pass; 0 for a point microphone.
+        static func turn(spread: Double?) -> Double {
+            guard let s = spread, s <= 7.5 else { return 15 }
+            return max(5, 2 * s)
+        }
     }
 
-    static func choose(_ ctx: MetalContext, _ plan: Plan, calibrated: PlateArray, setup: Setup, machine m: MachineDescription, referenced: Bool = false)
+    static func choose(_ ctx: MetalContext, _ plan: Plan, calibrated: PlateArray, setup: Setup, machine m: MachineDescription, spread: Double? = nil)
         throws -> (job: FCodeFile, hardest: Double, level: Double, step: Double, predicted: Double)? {
-        let turn = Planner.turn(referenced: referenced)
+        let turn = Planner.turn(spread: spread)
         for level in Planner.levels { for step in Planner.steps {
             let c = plan.stream(m, level: level, step: step)
             guard c.hardest < ceiling * setup.full else { continue }
@@ -305,7 +314,8 @@ enum P0Command {
         let Us = sent.frames.dropLast().map { fr in
             field.potential([fr.tones[0].drive.prefix(machine.array.driveChannels).map(machine.pulsed)], particle: rig.particle)
         }
-        let r = PlaceCommand.ride(Us: Us, lattice: fb, path: path, power: 1, stepTime: step, particle: rig.particle, settling: rig.settling)
+        let r = PlaceCommand.ride(Us: Us, lattice: fb, path: path, power: 1, stepTime: step, particle: rig.particle,
+                                  settling: max(rig.settling, machine.array.inputs?.settling ?? 0))
         return r.escaped ? nil : (((r.end - r.start) - (path.last! - path[0])).length, r.worst, (r.end - path.last!).length)
     }
 
@@ -346,7 +356,7 @@ enum P0Command {
             print(String(format: "calibrated: gains %.2f–%.2f of their mean, phases within %.0f° of it", cal.errors.map(\.magnitude).min() ?? 0, cal.errors.map(\.magnitude).max() ?? 0, worstDeg))
             print("remove the probe, then press return to play the job"); _ = readLine()
             let calibrated = drawn.calibrated(cal)
-            guard let pl = try plan(ctx, on: calibrated), let p = try choose(ctx, pl, calibrated: calibrated, setup: setup, machine: d, referenced: cal.plateRatio != nil) else { print("no job the model carries"); return 1 }
+            guard let pl = try plan(ctx, on: calibrated), let p = try choose(ctx, pl, calibrated: calibrated, setup: setup, machine: d, spread: cal.plateRatioSpreadDegrees) else { print("no job the model carries"); return 1 }
             try save(cal, p.job)
             _ = try hw.play(p.job)
             print(String(format: "played: %d frames at %.0f× holding, %.0f ms per step, hardest element at %.2f of full drive; the model predicts the bead %.2f mm from the drop-off. The camera record judges it (P0 acceptance protocol).",
@@ -451,7 +461,7 @@ enum P0Command {
         let calibrated = drawn.calibrated(cal)
         guard let pl = try plan(ctx, on: calibrated) else { return nil }
         guard let p = try choose(ctx, pl, calibrated: calibrated, setup: setup, machine: emu.describe(),
-                                 referenced: cal.plateRatio != nil || o.probe == .point) else { return out }
+                                 spread: o.probe == .point ? 0 : cal.plateRatioSpreadDegrees) else { return out }
         try save(cal, p.job)
         _ = try emu.play(p.job)
         let rode = try ride(ctx, p.job, path: pl.path, step: p.step, on: emu)
@@ -574,7 +584,7 @@ enum P0Command {
     /// in build order, checked: nothing depends on itself, and whatever is
     /// not bought names its tolerance and its inspection.
     static func upgrades(_ args: [String]) -> Int32 {
-        struct Rec: Decodable { var id, what, by, gain, status: String; var needs: [String]; var tolerance, inspection: String?; var humanMinutes: Double }
+        struct Rec: Decodable { var id, what, by, gain, status: String; var needs: [String]; var anyOf: [String]?; var tolerance, inspection: String?; var humanMinutes: Double }
         struct File: Decodable { var records: [Rec] }
         guard let data = FileManager.default.contents(atPath: "Design/upgrade_graph.json"), let file = try? JSONDecoder().decode(File.self, from: data) else {
             print("cannot read Design/upgrade_graph.json"); return 2
@@ -582,15 +592,15 @@ enum P0Command {
         let byID = Dictionary(uniqueKeysWithValues: file.records.map { ($0.id, $0) })
         var order: [Rec] = [], done = Set<String>(), left = file.records
         while !left.isEmpty {
-            let ready = left.filter { $0.needs.allSatisfy(done.contains) }
+            let ready = left.filter { $0.needs.allSatisfy(done.contains) && ($0.anyOf.map { $0.contains(where: done.contains) } ?? true) }
             if ready.isEmpty { break }
             order += ready; done.formUnion(ready.map(\.id)); left.removeAll { done.contains($0.id) }
         }
-        let unknown = file.records.flatMap { r in r.needs.filter { byID[$0] == nil }.map { "\(r.id) needs \($0)" } }
+        let unknown = file.records.flatMap { r in (r.needs + (r.anyOf ?? [])).filter { byID[$0] == nil }.map { "\(r.id) needs \($0)" } }
         let bare = file.records.filter { $0.by != "external" && ($0.tolerance == nil || $0.inspection == nil) }.map(\.id)
         print("| # | id | what | by | needs | status | human min (est.) |\n|---:|---|---|---|---|---|---:|")
         for (i, r) in order.enumerated() {
-            print("| \(i + 1) | \(r.id) | \(r.what) | \(r.by) | \(r.needs.joined(separator: ", ")) | \(r.status) | \(Int(r.humanMinutes)) |")
+            print("| \(i + 1) | \(r.id) | \(r.what) | \(r.by) | \(r.needs.joined(separator: ", "))\(r.anyOf.map { " + one of: " + $0.joined(separator: ", ") } ?? "") | \(r.status) | \(Int(r.humanMinutes)) |")
         }
         let gates = [
             GateResult(id: "G-UP1", name: "upgrade graph: records that depend on themselves or on nothing known", measured: Double(left.count + unknown.count), threshold: 0.5,

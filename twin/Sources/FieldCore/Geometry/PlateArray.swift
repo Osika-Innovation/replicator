@@ -60,6 +60,8 @@ public struct PlateArray: Sendable {
         public var maxDrive: [Double]
         /// Per input, what a calibration measured against the model; nil = as modelled.
         public var error: [Complex]? = nil
+        /// The slowest input's settling time (s); the field cannot change faster.
+        public var settling = 0.0
         public init(frequencies: [Double], weights: [[[Complex]]], plateOf: [Int], maxDrive: [Double]) {
             self.frequencies = frequencies; self.weights = weights; self.plateOf = plateOf; self.maxDrive = maxDrive
         }

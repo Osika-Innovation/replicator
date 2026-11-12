@@ -61,7 +61,8 @@ public enum Calibration {
     /// The reference pass: a can on its side hears a lower element and the
     /// upper element facing it at mirror angles, so whatever its directivity
     /// is, it is the same for both. Each such pair gives the plates' ratio;
-    /// their weighted mean is taken and their spread recorded.
+    /// the phase of their weighted mean is applied and their spread recorded:
+    /// pairs that disagree mean the can was not square to the mid-plane.
     public static func run<B: MachineBackend>(_ backend: inout B, array: PlateArray, medium: Medium, probe: Vec3,
                                               probeGate: Int, velocity: Double, date: String,
                                               kind: Probe = .can(radius: 5e-3), reference: Bool = false, extra: [Vec3] = [],
@@ -128,7 +129,10 @@ public enum Calibration {
                 sum += r * w; weights += w; each.append((r, w))
             }
             if weights > 0 {
-                let s = sum * (1 / weights)
+                // Only the phase is taken: by symmetry the plates' amplitude ratio is
+                // already in the two facing passes, and a tilted can corrupts it here.
+                let mean = sum * (1 / weights)
+                let s = mean.magnitude > 0 ? mean * (1 / mean.magnitude) : Complex.one
                 for c in upper { e[c] = e[c] * s }
                 var v = 0.0
                 for (r, w) in each { let d = atan2((r * s.conjugate).im, (r * s.conjugate).re); v += w * d * d }

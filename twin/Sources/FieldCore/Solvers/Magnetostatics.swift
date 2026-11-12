@@ -211,6 +211,11 @@ struct UncheckedSendableBuffer<T>: @unchecked Sendable {
     init(_ b: UnsafeMutableBufferPointer<T>) { base = b }
 }
 
+/// The little linear algebra this program still needs (the complex SVD,
+/// least squares and eigenvalue routines of the six-gate solver went on
+/// 2026-11-12: nothing called them).
+public enum LinAlg {}
+
 public extension LinAlg {
     /// Eigen-decomposition of a real symmetric matrix (cyclic Jacobi).
     /// Returns eigenvalues in descending order with their unit eigenvectors.

@@ -83,11 +83,11 @@ public struct EmulatedBackend: MachineBackend {
     public var probeFacing: [Vec3] = []
     /// A facing probe's response to sound from an angle (cosine to its axis)
     /// at wavenumber k. The default is a can a little larger than its
-    /// drawing with a phase that turns off-axis and 5 % from behind — what a
+    /// drawing with a phase that turns off-axis, falling smoothly to 5 % behind — what a
     /// calibrator does not know about its receiver.
     public var probeResponse: @Sendable (_ cosine: Double, _ k: Double) -> Complex = { c, k in
         let d = Propagator.pistonDirectivity(k: k, a: 5.4e-3, cosTheta: abs(c))
-        return Complex.expi(0.4 * (1 - c)) * (c > 0 ? d : 0.05 * d)
+        return Complex.expi(0.4 * (1 - c)) * (d * (0.525 + 0.475 * tanh(c / 0.2)))     // front to back without a step
     }
     public var channels: Int { array.driveChannels + probes.count }
     /// Pulse-width drive, as the P0 controller makes it (Firmware/p0/fcore.c):

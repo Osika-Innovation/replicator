@@ -1,0 +1,4 @@
+policy,gap_mm,reflection,image_order,seed,calibration,outcome,level,step_ms,hardest_of_full,predicted_travel_mm,travel_mm,absolute_mm,between_plates_deg,pair_spread_deg
+P0-planner/1,46.0,0.95,3,7,"receiver can, one pass per plate and a side reference pass",pass,6.000,40.000,0.413,0.151,0.238,0.383,-0.271,0.168
+P0-planner/1,46.0,0.95,3,8,"receiver can, one pass per plate and a side reference pass",refused,,,,,,,-0.004,0.097
+P0-planner/1,46.0,0.95,3,9,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.503,0.180,0.217,0.283,-0.177,0.191

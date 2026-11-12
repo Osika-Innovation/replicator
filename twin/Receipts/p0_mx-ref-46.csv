@@ -1,0 +1,19 @@
+policy,gap_mm,reflection,image_order,seed,calibration,outcome,level,step_ms,hardest_of_full,predicted_travel_mm,travel_mm,absolute_mm,between_plates_deg,pair_spread_deg
+P0-planner/1,46.0,0.0,3,7,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.312,0.232,0.479,0.689,-0.290,0.154
+P0-planner/1,46.0,0.0,3,8,"receiver can, one pass per plate and a side reference pass",pass,8.000,40.000,0.372,0.188,0.287,0.391,-0.000,0.113
+P0-planner/1,46.0,0.0,3,9,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.384,0.292,0.220,0.423,-0.168,0.185
+P0-planner/1,46.0,0.0,3,10,"receiver can, one pass per plate and a side reference pass",pass,8.000,40.000,0.364,0.195,0.259,0.379,-0.094,0.312
+P0-planner/1,46.0,0.0,3,11,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.385,0.178,0.151,0.360,0.075,0.050
+P0-planner/1,46.0,0.0,3,12,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.358,0.269,0.359,0.534,0.200,0.163
+P0-planner/1,46.0,0.5,3,7,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.379,0.231,0.268,0.309,-0.299,0.139
+P0-planner/1,46.0,0.5,3,8,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.376,0.129,0.202,0.268,-0.003,0.094
+P0-planner/1,46.0,0.5,3,9,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.433,0.155,0.156,0.157,-0.164,0.181
+P0-planner/1,46.0,0.5,3,10,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.377,0.192,0.077,0.276,-0.083,0.293
+P0-planner/1,46.0,0.5,3,11,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.425,0.184,0.158,0.254,0.075,0.047
+P0-planner/1,46.0,0.5,3,12,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.458,0.165,0.096,0.182,0.182,0.152
+P0-planner/1,46.0,0.9,3,7,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.373,0.162,0.313,0.514,-0.275,0.164
+P0-planner/1,46.0,0.9,3,8,"receiver can, one pass per plate and a side reference pass",pass,6.000,40.000,0.425,0.154,0.186,0.257,-0.005,0.095
+P0-planner/1,46.0,0.9,3,9,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.531,0.193,0.235,0.266,-0.174,0.189
+P0-planner/1,46.0,0.9,3,10,"receiver can, one pass per plate and a side reference pass",refused,,,,,,,-0.066,0.329
+P0-planner/1,46.0,0.9,3,11,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.535,0.205,0.152,0.367,0.073,0.048
+P0-planner/1,46.0,0.9,3,12,"receiver can, one pass per plate and a side reference pass",pass,4.000,40.000,0.570,0.291,0.328,0.213,0.173,0.173

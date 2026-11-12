@@ -89,12 +89,6 @@ public struct IndexedMesh: Sendable {
                     faces: faces.map { SIMD3($0.x, $0.z, $0.y) })
     }
 
-    /// Mirror through the plane y = 0. Reverses winding so normals stay outward.
-    public func mirroredY() -> IndexedMesh {
-        IndexedMesh(vertices: vertices.map { Vec3($0.x, -$0.y, $0.z) },
-                    faces: faces.map { SIMD3($0.x, $0.z, $0.y) })
-    }
-
     public var bounds: (min: Vec3, max: Vec3) {
         guard let f = vertices.first else { return (.zero, .zero) }
         var lo = f, hi = f

@@ -65,17 +65,4 @@ public enum Voxelizer {
         return l1 * t.a.x + l2 * t.b.x + l3 * t.c.x
     }
 
-    /// Per-cell material assignment for the FDTD grid.
-    public static func materialGrid(mesh: Mesh, lattice: FieldLattice,
-                                    inside: Medium, outside: Medium)
-        -> (rho: [Double], c2: [Double]) {
-        let occ = voxelize(mesh: mesh, lattice: lattice)
-        var rho = [Double](repeating: outside.density, count: occ.count)
-        var c2 = [Double](repeating: outside.soundSpeed * outside.soundSpeed, count: occ.count)
-        for i in occ.indices where occ[i] {
-            rho[i] = inside.density
-            c2[i] = inside.soundSpeed * inside.soundSpeed
-        }
-        return (rho, c2)
-    }
 }

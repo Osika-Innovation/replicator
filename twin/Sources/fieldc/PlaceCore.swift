@@ -402,12 +402,7 @@ enum PlaceCommand {
         let w0 = path[0]
         print(String(format: "carry compiled: %d drives (%.0f s)", drives.count, Date().timeIntervalSince(t0)))
         // A fine box around the path, 0.1 mm, where the bead can go.
-        let margin = 3e-3, fs = 0.1e-3
-        let lo = Vec3(path.map(\.x).min()! - margin, path.map(\.y).min()! - margin, path.map(\.z).min()! - margin)
-        let hi = Vec3(path.map(\.x).max()! + margin, path.map(\.y).max()! + margin, path.map(\.z).max()! + margin)
-        let fb = FieldLattice(origin: lo, spacing: fs, nx: Int(((hi.x - lo.x) / fs).rounded()) + 1,
-                              ny: Int(((hi.y - lo.y) / fs).rounded()) + 1, nz: Int(((hi.z - lo.z) / fs).rounded()) + 1)
-        let fine = try rig.field(on: fb)
+        let (fb, fine) = try P0Command.box(path, rig), fs = fb.spacing
         let Us = drives.map { fine.potential($0, particle: particle) }
         func gradU(_ U: [Double], _ x: Vec3) -> Vec3? { latticeGradient(fb, U, x) }
         // Power: twice what holds the bead at the pick-up.

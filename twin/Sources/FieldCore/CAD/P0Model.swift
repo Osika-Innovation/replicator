@@ -48,6 +48,19 @@ public struct P0Model: Sendable {
         add("probe bar", .polymer, bar, "printed PETG; across two diagonal rods, removed after calibration", barVolume)
         add("probe receiver", .transmitter, Solid.extrude(outer: circle(0, 0, d.canDiameter), z0: mid, z1: mid + d.canHeight),
             "bought: 40 kHz open-type receiver, face on the mid-plane", ngonArea(d.canDiameter) * d.canHeight)
+        // ---- side cradle: for the reference pass the receiver lies on its side,
+        // its axis on the mid-plane, in a groove on the bar turned over (bar top at mid − canHeight).
+        let barTop = mid - d.canHeight, grooveR = d.canDiameter / 2 + 0.1, lip = 3.0, top = 5.0
+        var profile = [P2(-bw - 2, -lip), P2(-bw, -lip), P2(-bw, 0), P2(bw, 0), P2(bw, -lip), P2(bw + 2, -lip), P2(bw + 2, top)]
+        let a0 = -asin((d.canHeight - top) / grooveR)
+        for q in 0...24 {
+            let t = a0 + (-Double.pi - 2 * a0) * Double(q) / 24
+            profile.append(P2(grooveR * cos(t), d.canHeight + grooveR * sin(t)))
+        }
+        profile.append(P2(-bw - 2, top))
+        let cradle = Solid.extrude(outer: profile, z0: -7, z1: 7).transformed { Vec3($0.z, $0.x, $0.y + barTop) }.rotatedZ(45)
+        add("side cradle", .polymer, cradle,
+            "printed PETG; sits over the turned bar and holds the receiver on its side, axis on the mid-plane, for the reference pass", abs(signedArea(profile)) * 14)
         for (i, sx) in [-rr, rr].enumerated() {
             let c = P2(sx * cos(Double.pi / 4), sx * sin(Double.pi / 4))
             add("flip spacer \(i + 1)", .polymer,
@@ -70,6 +83,8 @@ public struct P0Model: Sendable {
             ("probe bar ↔ lower cans' faces (receiver facing down)", d.gap / 2, 5),
             ("probe bar, turned over ↔ upper cans' faces", d.gap / 2 - d.canHeight - d.plateThickness, 5),
             ("rod length left for nuts and feet", d.rodLength - d.plateSpacing - 2 * d.plateThickness, 60),
+            ("side cradle: floor under the receiver", d.canHeight - d.canDiameter / 2 - 0.1, 1.5),
+            ("receiver on its side ↔ either plate's cans", d.gap / 2 - d.canDiameter / 2, 10),
         ]
     }
 }

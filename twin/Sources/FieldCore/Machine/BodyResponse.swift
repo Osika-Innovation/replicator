@@ -26,6 +26,9 @@ public struct BodyResponse: Codable, Sendable, Equatable {
         public var plate: Int
         /// The largest drive the input takes, in `driveUnit`.
         public var maxDrive: Double
+        /// Time for the body's response to a change at this input to settle
+        /// to 1/e (s): about Q ÷ (π f) for a resonant source. nil = at once.
+        public var settling: Double? = nil
     }
     public struct Uncertainty: Codable, Sendable, Equatable {
         /// One standard deviation of each response entry: relative gain, phase (degrees).
@@ -89,6 +92,7 @@ public struct BodyResponse: Codable, Sendable, Equatable {
         var w: [[[Complex]]] = []
         for f in response { var rows: [[Complex]] = []; for row in f { rows.append(row.map(entry)) }; w.append(rows) }
         a.inputs = PlateArray.InputMap(frequencies: frequencies, weights: w, plateOf: inputs.map(\.plate), maxDrive: inputs.map(\.maxDrive))
+        a.inputs!.settling = inputs.compactMap(\.settling).max() ?? 0
         a.label = "body-" + name + (seed.map { "-as\($0)" } ?? "")
         return a
     }
