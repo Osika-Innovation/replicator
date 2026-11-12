@@ -148,10 +148,10 @@ public enum FCodeWire {
         return c ^ 0xFFFF_FFFF
     }
 
-    static func put<T: FixedWidthInteger>(_ v: T, _ out: inout [UInt8]) {
+    public static func put<T: FixedWidthInteger>(_ v: T, _ out: inout [UInt8]) {
         withUnsafeBytes(of: v.littleEndian) { out.append(contentsOf: $0) }
     }
-    static func put(_ v: Float, _ out: inout [UInt8]) { put(v.bitPattern, &out) }
+    public static func put(_ v: Float, _ out: inout [UInt8]) { put(v.bitPattern, &out) }
 
     static func verbCode(_ v: FCodeFile.Verb) -> UInt8 {
         switch v { case .add: return 1; case .remove: return 2; case .listen: return 3 }

@@ -47,6 +47,13 @@ func plateArray(_ args: [String], reflection: Double = 0.9) -> PlateArray {
         switch arg("--array") {
         case "ideal": a = PlateArray(perPlate: 192, reflection: reflection)
         case "microhorn", "cad": a = PlateArray.fromCAD(reflection: reflection)
+        case "p0":
+            // Prototype P0: --side N transmitters per row, --gap mm, --reflect R (0 = the plates return nothing).
+            var p = P0Design()
+            if let n = arg("--side").flatMap(Int.init) { p.side = n }
+            if let g = arg("--gap").flatMap(Double.init) { p.gap = g }
+            if let r = arg("--reflect").flatMap(Double.init) { p.reflection = r }
+            a = PlateArray.p0(p)
         default:
             // "disc": the directly radiating broadband Ø5 disc the face carried until 2026-11-12.
             var d = RH1Design()
@@ -536,6 +543,12 @@ case "status":
     let failed = rs.flatMap(\.gates).filter { !$0.passed }
     print(failed.isEmpty ? "all gates with a bar pass" : "\(failed.count) FAIL: " + failed.map(\.id).joined(separator: ", "))
     exit(failed.isEmpty ? 0 : 1)
+
+case "p0":
+    exit(P0Command.run(args))
+
+case "upgrades":
+    exit(P0Command.upgrades(args))
 
 case "backend", "fcode", "play":
     exit(MachineCommand.run(args))

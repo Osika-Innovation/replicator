@@ -326,3 +326,20 @@ drive (`ENGINE.md`, "The elements are hardware"). Against the rules:
 
 For the operator: the plate itself (1,536 resonant elements per face against
 the ruling of 192), and with it the light slots.
+
+## The platform's first configuration — 2026-11-12, evening
+
+A round that added a second configuration (P0) and the line to hardware
+(`../papers/twin_rounds.md`, Round 18). Against the rules:
+
+| rule | where the round stands |
+|---|---|
+| 1, one machine | two configurations of one engine: RH-1 and P0 are both `PlateArray`s; nothing in the solvers knows which it is running. The emulated machine gained probe microphones and the controller's pulse-width drive |
+| 2, one line to the machine | advanced for P0: calibration is a program any `MachineBackend` plays, the hold / move / release job goes through `play`, and `SerialBackend` puts the emulator's exact frame log on a byte link (`fieldc p0 link`, G-HW1–3, against the firmware compiled for this computer). The RH-1 verbs still build their own fields |
+| 3, the line cap | **over**: 17,754 lines against the proposed 17,500. Added: P0 (design, model, command), `Calibration`, `SerialBackend`. Removed: nothing this round — the rear stack left the element face but stays for the micro-horn face. The cut that would restore the cap is the v0.4 micro-horn face with its horn, cone, piezos and gates G-CAD5/6: the operator's call |
+| 6, constants not flags | `--side`, `--gap`, `--reflect`, `--seed` exist on `--array p0` because the bench will measure the reflection and set the gap; the design point is the constant (4 × 4, 46 mm, 15 V). `--feedback` stays a flag: the default compile is unchanged though two rounds fix the ring on 2,560 |
+| 7, the time budget | `build` on 5,120 channels took over an hour beside other runs; not measured alone |
+| 9, the document is the run | the P0 order pack's results table is the output of `fieldc p0 link | job | cad` and `fieldc build --array p0`; the upgrade graph is a JSON file `fieldc upgrades` checks |
+
+For the operator: 2,560 against the ruling of 192; the rear stack's removal;
+the micro-horn face (cut or keep); the P0 pack.

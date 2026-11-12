@@ -8,10 +8,10 @@ an *envelope* is a volume reserved for something not designed yet.
 
 | register | parts |
 |---|---:|
-| committed | 18 |
+| committed | 10 |
 | site | 6 |
 | derived | 16 |
-| resolved | 31 |
+| resolved | 19 |
 | assumed | 24 |
 | envelope | 9 |
 
@@ -25,11 +25,9 @@ an *envelope* is a volume reserved for something not designed yet.
 | crown | 1 | Al 6063, champagne anodized | rolled and welded Al 6063 tube, turned at the ends, anodized | 0.866 | committed |
 | crown cap | 1 | Al 6063, champagne anodized | CNC turned from Al, anodized | 1.794 | committed |
 | storage chamber liner | 1 | Al 6063, champagne anodized | rolled and welded Al 6063 tube, turned at the ends, anodized | 7.070 | resolved |
-| face plate | 4 | Al 6082, dark machined | CNC milled from Al 6082 plate: holes drilled and reamed, slots milled, both faces skimmed | 2.691 | resolved |
-| element carriers | 4 | POM | injection moulded (machined for a prototype) | 0.370 | assumed |
+| face plate | 4 | Al 6082, dark machined | CNC milled from Al 6082 plate: holes drilled and reamed, slots milled, both faces skimmed | 1.873 | resolved |
+| element carriers | 4 | POM | injection moulded (machined for a prototype) | 0.617 | assumed |
 | carrier ring | 4 | Al 6063, champagne anodized | CNC turned from Al, anodized | 0.921 | resolved |
-| gyroid horn | 4 | Graded ceramic gyroid (alumina, ρ_rel 0.25) | ceramic additive (SLA) — the gyroid lattice itself is not modelled | 0.317 | committed |
-| inner cone | 4 | Copper | turned from copper bar | 0.026 | committed |
 | torus former | 3 | Torus former, glass-filled PEEK | machined from glass-filled PEEK, two halves | 0.732 | committed |
 | winding | 3 | Copper | wound on its former, then potted | 1.021 | assumed |
 | winding | 3 | Phosphor bronze | wound on its former, then potted | 1.168 | assumed |
@@ -51,8 +49,7 @@ an *envelope* is a volume reserved for something not designed yet.
 
 | part | qty | material | how | kg each | register |
 |---|---:|---|---|---:|---|
-| elements | 4 | Open-type ultrasonic transmitter (Al can) | bought: custom-tuned open-type transmitter | 0.207 | assumed |
-| throat piezo | 12 | PZT-8, silvered | bought: PZT-8 disc, silvered | 0.019 | resolved |
+| elements | 4 | Open-type ultrasonic transmitter (Al can) | bought: custom-tuned open-type transmitter | 0.345 | assumed |
 | rear glass (fixed) | 1 | Low-iron laminated glass, ITO-class coat | bought: bent laminated glass, coated | 3.178 | committed |
 | front glass (rotating) | 1 | Low-iron laminated glass, ITO-class coat | bought: bent laminated glass, coated | 3.265 | committed |
 | RX / status strip | 7 | LED strip | bought: LED strip | 0.004 | derived |
@@ -61,37 +58,37 @@ an *envelope* is a volume reserved for something not designed yet.
 
 ## The elements
 
-Each face carries 1536 resonant transmitters, each tuned to one of 9 tones and driven by its own channel.
+Each face carries 2560 resonant transmitters, each tuned to one of 9 tones and driven by its own channel.
 They are the bought 40 kHz open-type transmitter (Ø10 mm) scaled to each tone. **No such part has been built or measured at these tones**: the face velocity it reaches is assumed equal to the 40 kHz part's.
 
 | tone kHz | face Ø mm | can Ø × h mm | drive V rms (max) | face velocity m/s | per up face | per down face | machine |
 |---:|---:|---|---:|---:|---:|---:|---:|
-| 52.8 | 7.6 | 7.6 × 5.3 | 6.8 | 2.03 | 171 | 170 | 682 |
-| 58.3 | 6.9 | 6.9 × 4.8 | 6.2 | 2.03 | 170 | 172 | 684 |
-| 63.9 | 6.3 | 6.3 × 4.4 | 5.6 | 2.03 | 171 | 169 | 680 |
-| 69.4 | 5.8 | 5.8 × 4.0 | 5.2 | 2.03 | 171 | 171 | 684 |
-| 75.0 | 5.3 | 5.3 × 3.7 | 4.8 | 2.03 | 170 | 172 | 684 |
-| 80.6 | 5.0 | 5.0 × 3.5 | 4.5 | 2.03 | 171 | 169 | 680 |
-| 86.1 | 4.6 | 4.6 × 3.3 | 4.2 | 2.03 | 170 | 172 | 684 |
-| 91.7 | 4.4 | 4.4 × 3.1 | 3.9 | 2.03 | 171 | 170 | 682 |
-| 97.2 | 4.1 | 4.1 × 2.9 | 3.7 | 2.03 | 171 | 171 | 684 |
+| 52.8 | 7.6 | 7.6 × 5.3 | 6.8 | 2.03 | 285 | 284 | 1138 |
+| 58.3 | 6.9 | 6.9 × 4.8 | 6.2 | 2.03 | 284 | 285 | 1138 |
+| 63.9 | 6.3 | 6.3 × 4.4 | 5.6 | 2.03 | 285 | 284 | 1138 |
+| 69.4 | 5.8 | 5.8 × 4.0 | 5.2 | 2.03 | 284 | 285 | 1138 |
+| 75.0 | 5.3 | 5.3 × 3.7 | 4.8 | 2.03 | 284 | 284 | 1136 |
+| 80.6 | 5.0 | 5.0 × 3.5 | 4.5 | 2.03 | 285 | 283 | 1136 |
+| 86.1 | 4.6 | 4.6 × 3.3 | 4.2 | 2.03 | 284 | 286 | 1140 |
+| 91.7 | 4.4 | 4.4 × 3.1 | 3.9 | 2.03 | 284 | 285 | 1138 |
+| 97.2 | 4.1 | 4.1 × 2.9 | 3.7 | 2.03 | 285 | 284 | 1138 |
 
 ## Drive electronics, per face
 
 | item | qty | note |
 |---|---:|---|
-| drive channels | 1536 | one per element: a square wave at the element's tone, phase set by timing |
-| two-channel gate drivers (SOIC-8 class) | 768 | 20 V rail at most; each element is a ~2 nF load |
-| 8-bit shift registers | 192 | the phase pattern, clocked from the controller |
+| drive channels | 2560 | one per element: a square wave at the element's tone, phase set by timing |
+| two-channel gate drivers (SOIC-8 class) | 1280 | 20 V rail at most; each element is a ~2 nF load |
+| 8-bit shift registers | 320 | the phase pattern, clocked from the controller |
 | wiring board | 1 | 4 layers, 1.0 mm, on the plate's back |
 | ring boards in the rim annulus | 3 | carry the drivers and registers |
 
-Every element of the two build-chamber faces at its full drive: about 213 W electrical, of which 149 W is heat in the plates (efficiency 30 %, assumed).
+Every element of the two build-chamber faces at its full drive: about 354 W electrical, of which 248 W is heat in the plates (efficiency 30 %, assumed).
 
 ## Assembly order
 
 1. Each plate stack, face down on a flat: press the element carriers and transmitters into the face plate, flush with the face; lay the wiring board on the plate's back and solder every pin; fit the carrier ring.
-2. Behind it: the gyroid horn, the copper cone and the three throat piezos; then the rim electronics' ring boards, plugged to the wiring board.
+2. Behind it: the rim electronics' ring boards, plugged to the wiring board. Nothing else: the horn, cone and throat piezos of the micro-horn face are not part of this configuration.
 3. Wind each torus former (inner layer, then outer, opposite hand) and pot it; seat it on its setback behind the plate.
 4. Stack from the base: bottom closure, base envelopes, deck plate stack, storage liner, middle assembly (two stacks about one torus), rear glass and the seven columns, top plate stack, top band, crown.
 5. Hang the front glass on its two V-tracks; check it turns through 180°.
@@ -109,4 +106,4 @@ Every element of the two build-chamber faces at its full drive: about 213 W elec
 * **optical stem head** — an envelope only. bidirectional stem TX/RX + crown camera (spec §6.0, R2-b)
 * **touch UI 7in** — an envelope only. 7″ capacitive panel (spec §4) — placement conflict, see reconciliation
 * The gyroid lattice, the photonic tiles' hologram layer and write projector, gaskets, fasteners, the door interlock, cabling beyond the wiring boards, and the controller are not modelled.
-* No element has been measured. The horn, cone and throat piezos behind each plate are drawn as the papers describe them; what they do now that the face carries its own elements is undecided.
+* No element has been measured. The space behind each plate that the horn, cone and throat piezos held is empty; what cools the plate (its elements' heat) is not designed.

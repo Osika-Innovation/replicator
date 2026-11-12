@@ -76,7 +76,7 @@ enum BuildCommand {
         if shape == "tetra" { N = 4 }
         let scatterOn = !args.contains("--no-scatter")
         let arr = plateArray(args)
-        let rig = try PlaceRig(ctx: ctx, array: arr, freqs: PlaceCommand.spread10)
+        let rig = try PlaceRig(ctx: ctx, array: arr, freqs: PlaceCommand.spread10, particle: PlaceCommand.bead(arr).material)
         let air = rig.air, particle = rig.particle, freqs = rig.freqs
         let r0 = rig.pickUp()
         guard let w0 = r0.targetWell else { print("no trap at the pick-up"); return 1 }

@@ -275,3 +275,66 @@ transmitters may reflect less. The twelve light slots do not fit between
 to every hole (gate G-CAD8 reports 0 dashes). The operator's ruling of
 2026-11-11 was 192 elements per face; this plate is a proposal that
 supersedes it only if ruled so.
+
+## How many elements — 2026-11-12, later the same day
+
+The operator asked for the count at which "more would not make anything
+better", from first principles. There are two ceilings, and they are far apart.
+
+**Control saturates near 550 per face.** The independent patterns a plate can
+make inside the mold volume number about plate area × mold cross-section ÷
+(λ z)² per tone: for this plate (0.119 m²), a 24 mm mold and z = 230 mm, about
+30 at 53 kHz, 60 at 75 kHz, 100 at 97 kHz — some 550 over the nine tones
+(DERIVED). Beyond that, elements add no shape the plate could not already
+make. SIMULATED agreement: 768 elements already reach the lift contrast of
+1,536 and of 2,560 (2.3, 2.2, 2.0–2.8).
+
+**Drive saturates only when the face is full.** The pressure at a site is set
+by radiating area × face velocity; the velocity is capped by the transmitter
+(2 m/s) and each element's area by its tone, so the count is the area that
+fits. The spiral of the morning stopped at 1,536 because its spreading ran
+200 passes; run to convergence, the annulus holds **2,560** mixed-size
+elements with 1 mm webs, 49 % of the face radiating (a calculation outside
+the twin gives 2,600–2,800 before the webs fall under 1 mm; hexagonal packing
+with each tone in its own zone, which the wedge fault forbids, 3,120).
+
+| elements per face | ring G-E1 | 1/N from 1,536 | ring, sites (fair 6.2 %) |
+|---:|---:|---:|---|
+| 1,536 | 0.96 | — | 5.2–7.2 % |
+| 2,304 | 0.66 | 0.64 | 1.6–10.4 % |
+| **2,560** | **0.57** | 0.57 | 0.0–11.5 %: one site empty; with two feedback rounds 5.4–7.5 % at G-E1 0.66 |
+| 3,072 (does not fit) | 0.54 | 0.48 | one site empty |
+
+Drive follows 1/N. Evenness does not improve with N — control was saturated
+long before — and is the compile's business: two rounds of the basin-map
+feedback (`--feedback 2`) fill the ring on 2,560.
+
+Past a full face the levers are others: a larger plate, a shorter distance, a
+stronger transmitter, or fewer tones. Nine tones sharing the face cost about
+√9 in velocity against one; how few tones still mold evenly has not been asked.
+
+## The first platform configuration, P0 — 2026-11-12
+
+`PlateArray.p0`: two 4 × 4 arrays of the bought 40 kHz transmitter, 46 mm
+apart, one tone — the same solver, another configuration (`P0Design`,
+`fieldc p0 …`, `fieldc carry | fly | build --array p0`). What the twin says
+of it is in `cad/p0-platform/ORDER_PACK.md`, section 8. Three things it
+taught the engine:
+
+* **Reflection and gap decide a small machine.** With plates 10 half-waves
+  apart the cavity's own standing wave competes with the trap. At 46 mm the
+  hold / move / release job passes whether the plates reflect 0, 0.5 or 0.9;
+  2 mm either side it does not at 0.9. The reflection coefficient the twin
+  has carried since October (0.9, a bare metal face) is unmeasured and is the
+  first thing the bench measures.
+* **Calibration at one point is a statement about that point.** It finds each
+  element's gain and phase there, an element's misplacement only as phase,
+  and — a receiver hearing one plate at a time — nothing of the phase between
+  the plates. So a job is planned on the calibrated model *and* on copies of
+  it moved by what calibration cannot see (elements ±0.2 mm, plates ±15°),
+  and judged on the bead's travel, not its absolute place.
+* **One tone holds and carries; it does not place a bead beside a bead.** The
+  row and tetrahedron builds fail on 4 × 4 and on 6 × 6 at 40 kHz (second
+  bead 1–2 mm off). The first part needs an aperture with more tones, and no
+  catalog part plays them (`cad/rh1-freestanding/TRANSDUCER_SPEC.md`).
+

@@ -118,7 +118,8 @@ public extension CADExport {
         // ---- assembly ----
         s += "## Assembly order\n\n"
         s += "1. Each plate stack, face down on a flat: press the element carriers and transmitters into the face plate, flush with the face; lay the wiring board on the plate's back and solder every pin; fit the carrier ring.\n"
-        s += "2. Behind it: the gyroid horn, the copper cone and the three throat piezos; then the rim electronics' ring boards, plugged to the wiring board.\n"
+        s += d.rearStack ? "2. Behind it: the gyroid horn, the copper cone and the three throat piezos; then the rim electronics' ring boards.\n"
+                         : "2. Behind it: the rim electronics' ring boards, plugged to the wiring board. Nothing else: the horn, cone and throat piezos of the micro-horn face are not part of this configuration.\n"
         s += "3. Wind each torus former (inner layer, then outer, opposite hand) and pot it; seat it on its setback behind the plate.\n"
         s += "4. Stack from the base: bottom closure, base envelopes, deck plate stack, storage liner, middle assembly (two stacks about one torus), rear glass and the seven columns, top plate stack, top band, crown.\n"
         s += "5. Hang the front glass on its two V-tracks; check it turns through 180°.\n"
@@ -128,7 +129,7 @@ public extension CADExport {
         s += "## Not buildable from this pack yet\n\n"
         for p in model.parts where p.material == .placeholder { s += "* **\(p.name)** — an envelope only. \(p.note)\n" }
         s += "* The gyroid lattice, the photonic tiles' hologram layer and write projector, gaskets, fasteners, the door interlock, cabling beyond the wiring boards, and the controller are not modelled.\n"
-        s += "* No element has been measured. The horn, cone and throat piezos behind each plate are drawn as the papers describe them; what they do now that the face carries its own elements is undecided.\n"
+        s += "* No element has been measured." + (d.rearStack ? "" : " The space behind each plate that the horn, cone and throat piezos held is empty; what cools the plate (its elements' heat) is not designed.") + "\n"
         return s
     }
 }

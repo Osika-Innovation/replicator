@@ -172,5 +172,23 @@ extension CoreTests {
             t.check(els[0].position.x == els[drilled].position.x && els[drilled].position.z == a.gap, "same pattern on both plates")
             t.check(els.allSatisfy { $0.position.radiusXY + $0.equivalentRadius <= d.plateRadius * 1e-3 }, "every element on the plate")
         }
+        h.test("P0: calibration through the backend finds a build's gains and phases, one plate at a time") { t in
+            let drawn = PlateArray.p0(), air = RH1Freestanding.roomAir
+            var tol = PlateArray.Tolerance(); tol.gain = 0.1; tol.phaseDegrees = 20
+            var m = EmulatedBackend(array: drawn.asBuilt(tol, seed: 3), band: [39_000, 41_000])
+            m.probes = [drawn.centre]
+            t.check(m.describe().channels == drawn.channels + 1, "the probe is a channel")
+            let r = try! Calibration.run(&m, array: drawn, medium: air, probe: drawn.centre, probeGate: drawn.channels, velocity: 0.2, date: "")
+            let truth = m.array.channelError!
+            for plate in [0..<drawn.perPlate, drawn.perPlate..<drawn.channels] {
+                let mean = plate.reduce(Complex.zero) { $0 + truth[$1] } * (1 / Double(plate.count))
+                for c in plate { t.check((r.errors[c] * mean - truth[c]).magnitude < 1e-3, "channel \(c)") }   // 16-bit wire
+            }
+            // The controller's pulse widths: amplitude sin(π w / N), phase kept to a step.
+            m.pulse = (512, 2.0)
+            let z = m.pulsed(Complex.expi(0.7) * 1.0)
+            t.near(z.magnitude, 1.0, 0.02, "amplitude to a width step"); t.near(atan2(z.im, z.re), 0.7, 0.01, "phase to a step")
+            t.check(m.pulsed(Complex(1e-4, 0)) == .zero, "under one step: off")
+        }
     }
 }

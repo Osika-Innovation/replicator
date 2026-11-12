@@ -526,24 +526,26 @@ public struct RH1Model: Sendable {
                            segments: seg(d.carrierOuterRadius)),
                 .resolved, "spec §3 carrier Ø409→452 (seat lip as butt joint)",
                 tubeV(d.plateRadius, d.carrierOuterRadius, zlo, zhi))
-            let mapZ = { (p: P2) in P2(p.x, f.zBehind(p.y)) }
-            add("gyroid horn \(f.id)", asm, .ceramic,
-                Solid.revolve(hornProfile.map(mapZ), segments: seg(d.mouthRadius)),
-                .committed,
-                "throat Ø\(Int(d.throatDiameter)) → mouth Ø\(Int(d.mouthDiameter)), quarter-ellipse 184×20, mech §3c",
-                hornVol)
-            add("inner cone \(f.id)", asm, .copper,
-                Solid.revolve(coneProfile.map(mapZ), segments: seg(d.throatRadius + 2)),
-                .committed, "coax centre conductor, bore rim → throat, mech §3c", coneVol)
-            let pz0 = min(f.zBehind(d.hornThroatDepth), f.zBehind(d.hornThroatDepth + d.pztThickness))
-            for k in 0..<d.pztCount {
-                let az = (d.pztFirstAzimuthDeg + 360 * Double(k) / Double(d.pztCount)) * .pi / 180
-                let c = Vec3(d.pztPitchRadius * cos(az), d.pztPitchRadius * sin(az), pz0)
-                add("throat piezo \(f.id).\(k + 1)", asm, .pzt,
-                    Solid.cylinder(base: c, axis: Vec3(0, 0, 1), radius: d.pztDiameter / 2,
-                                   length: d.pztThickness, segments: 64),
-                    .resolved, "Ø\(Int(d.pztDiameter)) (mech §3c assumed Ø25 — see reconciliation)",
-                    Double.pi * pow(d.pztDiameter / 2, 2) * d.pztThickness)
+            if d.rearStack {
+                let mapZ = { (p: P2) in P2(p.x, f.zBehind(p.y)) }
+                add("gyroid horn \(f.id)", asm, .ceramic,
+                    Solid.revolve(hornProfile.map(mapZ), segments: seg(d.mouthRadius)),
+                    .committed,
+                    "throat Ø\(Int(d.throatDiameter)) → mouth Ø\(Int(d.mouthDiameter)), quarter-ellipse 184×20, mech §3c",
+                    hornVol)
+                add("inner cone \(f.id)", asm, .copper,
+                    Solid.revolve(coneProfile.map(mapZ), segments: seg(d.throatRadius + 2)),
+                    .committed, "coax centre conductor, bore rim → throat, mech §3c", coneVol)
+                let pz0 = min(f.zBehind(d.hornThroatDepth), f.zBehind(d.hornThroatDepth + d.pztThickness))
+                for k in 0..<d.pztCount {
+                    let az = (d.pztFirstAzimuthDeg + 360 * Double(k) / Double(d.pztCount)) * .pi / 180
+                    let c = Vec3(d.pztPitchRadius * cos(az), d.pztPitchRadius * sin(az), pz0)
+                    add("throat piezo \(f.id).\(k + 1)", asm, .pzt,
+                        Solid.cylinder(base: c, axis: Vec3(0, 0, 1), radius: d.pztDiameter / 2,
+                                       length: d.pztThickness, segments: 64),
+                        .resolved, "Ø\(Int(d.pztDiameter)) (mech §3c assumed Ø25 — see reconciliation)",
+                        Double.pi * pow(d.pztDiameter / 2, 2) * d.pztThickness)
+                }
             }
             let r0z = f.zBehind(d.rimDepthFrom), r1z = f.zBehind(d.rimDepthTo)
             add("rim electronics \(f.id)", asm, .fr4,

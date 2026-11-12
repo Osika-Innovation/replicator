@@ -213,13 +213,14 @@ def main():
             add(asm, f"wiring board {f['id']}", "fr4", board_down if down else board0, cq.Location(V(0, 0, zlo)))
         add(asm, f"carrier ring {f['id']}", "anodized",
             tube(d["plateDiameter"] / 2, d["carrierOD"] / 2, zlo, zhi))
-        add(asm, f"gyroid horn {f['id']}", "ceramic", revolve_rz([(r, zb(dd)) for r, dd in horn]))
-        add(asm, f"inner cone {f['id']}", "copper", revolve_rz([(r, zb(dd)) for r, dd in cone]))
-        pz = min(zb(d["hornThroatDepth"]), zb(d["hornThroatDepth"] + d["pztThickness"]))
-        for k in range(d["pztCount"]):
-            az = math.radians(d["pztFirstAzimuthDeg"] + 360 * k / d["pztCount"])
-            c = (d["pztPitchRadius"] * math.cos(az), d["pztPitchRadius"] * math.sin(az), pz)
-            add(asm, f"throat piezo {f['id']}.{k + 1}", "pzt", pzt0, cq.Location(V(*c)))
+        if d.get("faceStyle") == "microHorns":      # the rear stack exists only on the micro-horn face
+            add(asm, f"gyroid horn {f['id']}", "ceramic", revolve_rz([(r, zb(dd)) for r, dd in horn]))
+            add(asm, f"inner cone {f['id']}", "copper", revolve_rz([(r, zb(dd)) for r, dd in cone]))
+            pz = min(zb(d["hornThroatDepth"]), zb(d["hornThroatDepth"] + d["pztThickness"]))
+            for k in range(d["pztCount"]):
+                az = math.radians(d["pztFirstAzimuthDeg"] + 360 * k / d["pztCount"])
+                c = (d["pztPitchRadius"] * math.cos(az), d["pztPitchRadius"] * math.sin(az), pz)
+                add(asm, f"throat piezo {f['id']}.{k + 1}", "pzt", pzt0, cq.Location(V(*c)))
         r0z, r1z = zb(d["rimDepthFrom"]), zb(d["rimDepthTo"])
         add(asm, f"rim electronics {f['id']}", "fr4",
             tube(d["rimInnerRadius"], d["rimOuterRadius"], min(r0z, r1z), max(r0z, r1z)))

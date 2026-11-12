@@ -161,6 +161,66 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
 
+## Round 18 — the face filled, the rear stack removed, the first platform (2026-11-12)
+
+Asked by the operator: how many elements, from first principles; then, with
+`ENGINEERING_MANAGEMENT.md`, one enduring platform, a prototype ready to
+order, and the dependencies between here and a first self-made part.
+
+**How many.** Two ceilings (`ENGINE.md`, "How many elements"): control
+saturates near 550 elements per face, drive only when the face is full.
+"1,536 is what the face holds" was wrong: it was where a 200-pass spreading
+stopped. Run to convergence the face holds 2,560 at 1 mm webs, and the
+default is now that (proposal). Every receipt was re-run on it: the
+tetrahedron mold and the copy of a scanned ring, which failed G-E1 on 1,536
+(1.13, 1.04), pass (0.54, 0.60); the ring molds lose a site at the default
+compile and fill evenly with two feedback rounds. Table in the README.
+
+**The rear stack.** Horn, cone and throat piezos sit behind a plate whose
+back the wiring board closes: nothing they radiate reaches the chamber. They
+are now built only on the micro-horn face (104 → 84 parts, 28 → 24 rules).
+
+**No catalog transmitter plays the mold's tones.** A search found Ø ≤ 10 mm
+open-type parts at 40 kHz only (one 60 kHz part, level unstated). The RH-1
+elements are therefore a custom part: its specification and acceptance test
+are written (`cad/rh1-freestanding/TRANSDUCER_SPEC.md`); nobody was contacted.
+
+**P0.** The first configuration of the platform is two 4 × 4 plates of the
+catalog 40 kHz part on four threaded rods, a probe receiver on a bar, a
+48-pin controller and sixteen driver chips on breadboards: about $330 +
+250 SEK and six hours of hands. In the twin: `P0Design`, `PlateArray.p0`,
+`P0Model` (printable parts, fit checks), `Calibration` (a program any backend
+plays), `SerialBackend` (the frame log on a byte link), `fieldc p0 link | job | cad`.
+The controller's firmware core (`Firmware/p0/fcore.c`) is compiled for the
+computer and tested against the emulated machine over a pipe: same bytes
+sent, records equal within 0.06 % and 0.04°. The board-side file has never
+been compiled.
+
+**What the P0 runs found**, each by a run disagreeing with what was expected:
+
+1. *The gap is sharp.* With plates reflecting 0.9, a 60 mm gap (14 half-waves)
+   holds a bead and cannot carry it; the job passes at 46 mm and not at 44.
+2. *A calibration at one point.* It measured the build's phase at the probe
+   to 0.03°, and the bead still left the trap on some builds: the elements'
+   positions and the phase between the plates are not in it. The planner now
+   tests a job on copies of its model moved by exactly those unknowns and
+   plays nothing they do not carry; 18 of 18 emulated cases then pass at 46 mm.
+3. *An absolute bar nobody could measure.* The first job gate asked the bead
+   to end within 0.5 mm of the drawing's point. No bench knows that point
+   better than the probe was placed. The gate is on the bead's travel; the
+   absolute figure is printed beside it.
+4. *P0 cannot make a part.* A second bead lands 1–2 mm from where it is
+   wanted, on 4 × 4 and on 6 × 6: one tone has a well every 4.3 mm. The first
+   self-made part (a bonded four-bead scan phantom) waits for an aperture
+   that plays more tones, which waits for the custom transmitters.
+
+**The dependency graph** (`twin/Design/upgrade_graph.json`, `fieldc upgrades`):
+fifteen records from the bought seeds to a mold-capable aperture, each made
+or measured one naming its tolerance and its inspection; checked acyclic.
+
+**Not done:** nothing ordered, nothing measured; the pack's blockers are
+listed in it.
+
 ## Round 17 — the elements become hardware; the face that can drive a mold (2026-11-12)
 
 Asked by the operator: "keep working until we have the full machine,

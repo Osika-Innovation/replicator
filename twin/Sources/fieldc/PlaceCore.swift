@@ -39,14 +39,15 @@ struct PlaceRig {
     let field: ArrayFieldGPU
     var options = ForceCompiler.Options()
     let lam40: Double
-    let particle = ParticleMaterial.pla()
+    let particle: ParticleMaterial
     var centre: Vec3 { array.centre }
     /// A trap this unique (deepest rival / target) is carried by moving it alone.
     static let unique = 0.3
 
     /// - Parameter half: half-width of the probe cube (m); ENGINE.md's work
     ///   volume is ±12 mm.
-    init(ctx: MetalContext, array: PlateArray, freqs: [Double], half: Double = 12e-3) throws {
+    init(ctx: MetalContext, array: PlateArray, freqs: [Double], half: Double = 12e-3, particle: ParticleMaterial = .pla()) throws {
+        self.particle = particle
         // Resonant elements play the plate's own tones, whatever chord is asked for.
         let freqs = array.tones ?? freqs
         self.ctx = ctx; self.array = array; self.freqs = freqs
@@ -157,6 +158,12 @@ enum PlaceCommand {
         } catch { print("GPU unavailable: \(error)"); return 2 }
     }
 
+    /// The bead a machine is asked to place: P0's is watched by eye and
+    /// camera, so expanded polystyrene; the RH-1's is the spec's PLA bead.
+    static func bead(_ a: PlateArray) -> (name: String, material: ParticleMaterial) {
+        a.tag.hasPrefix("p0") ? ("Ø1.5 mm EPS", .eps(radius: 0.75e-3)) : ("200 µm PLA", .pla())
+    }
+
     static let spread10 = (0..<10).map { 30_000 + 40_000 * (Double($0) + 0.5) / 10 }
 
     // MARK: - levitate
@@ -175,7 +182,8 @@ enum PlaceCommand {
             ("5-tone chord 30–70 kHz", [30_000.0, 40_000, 50_000, 60_000, 70_000]),
             ("10 tones 32–68 kHz", spread10),
         ]
-        let beads: [(String, ParticleMaterial)] = [
+        // P0 is watched by eye and camera: its bead is expanded polystyrene.
+        let beads: [(String, ParticleMaterial)] = (arr.tag.hasPrefix("p0") ? [("EPS Ø1.5 mm", ParticleMaterial.eps(radius: 0.75e-3))] : []) + [
             ("PLA Ø200 µm", .pla()),
             ("aluminium Ø200 µm", ParticleMaterial(density: 2700, soundSpeed: 6320, radius: 100e-6)),
             ("steel Ø200 µm", ParticleMaterial(density: 7850, soundSpeed: 5900, radius: 100e-6)),
@@ -249,8 +257,10 @@ enum PlaceCommand {
 
     /// The carry sequence: pick up at the centre, 5 mm up, then 5 mm across,
     /// in 0.25 mm steps, each a `carryStep` from the last drive.
-    static func carrySequence(_ ctx: MetalContext, _ args: [String], each: ((Int, Vec3, [[Complex]]) -> Void)? = nil) throws -> Carry? {
-        let rig = try PlaceRig(ctx: ctx, array: plateArray(args), freqs: spread10)
+    static func carrySequence(_ ctx: MetalContext, _ args: [String], array: PlateArray? = nil,
+                              each: ((Int, Vec3, [[Complex]]) -> Void)? = nil) throws -> Carry? {
+        let arr = array ?? plateArray(args)
+        let rig = try PlaceRig(ctx: ctx, array: arr, freqs: spread10, particle: bead(arr).material)
         let r0 = rig.pickUp()
         guard let w0 = r0.targetWell else { print("no trap at the start"); return nil }
         let stepLen = 0.25e-3
@@ -275,7 +285,7 @@ enum PlaceCommand {
         let stepLen = 0.25e-3
         var ok = true, worstRatio = 0.0, worstOff = 0.0, notUnique = 0, minDepth = Double.infinity
         let arr = plateArray(args)
-        let rig = try PlaceRig(ctx: ctx, array: arr, freqs: spread10)
+        let rig = try PlaceRig(ctx: ctx, array: arr, freqs: spread10, particle: bead(arr).material)
         let r0 = rig.pickUp()
         guard let w0 = r0.targetWell else { print("no trap at the start"); return 1 }
         var prevWell = w0, steps = 0
@@ -283,8 +293,8 @@ enum PlaceCommand {
         var path: [Vec3] = []
         for k in 1...20 { path.append(w0 + Vec3(0, 0, Double(k) * stepLen)) }
         for k in 1...20 { path.append(w0 + Vec3(Double(k) * stepLen, 0, 20 * stepLen)) }
-        print(String(format: "%@; %@; lattice %.2f mm (%d³), path steps 0.25 mm; 200 µm PLA", rig.chamberText, rig.tonesText,
-                     rig.lattice.spacing * 1000, rig.lattice.nx))
+        print(String(format: "%@; %@; lattice %.2f mm (%d³), path steps 0.25 mm; %@", rig.chamberText, rig.tonesText,
+                     rig.lattice.spacing * 1000, rig.lattice.nx, bead(arr).name))
         print(String(format: "picked up: sibling ratio %.2f (%d), well %.2f mm from the centre", r0.siblingRatio,
                      r0.siblings, r0.targetOffset * 1000))
         print("step  target (mm from pick-up)   well off target   moved     ratio (siblings)   depth vs start   old well → new: downhill?")
@@ -333,6 +343,48 @@ enum PlaceCommand {
         return ok ? 0 : 1
     }
 
+    /// A bead integrated through a carry: loaded gently at the first point
+    /// (20× drag for 0.3 s), released to air drag, then each step's potential
+    /// ramped linearly from the old drive to the new on top of the field's
+    /// settling time. `Us`: the potential of each drive per unit power on
+    /// `lattice`; `power` scales them to newtons.
+    static func ride(Us: [[Double]], lattice fb: FieldLattice, path: [Vec3], power P: Double, stepTime Tstep: Double,
+                     particle: ParticleMaterial, settling tauU: Double, record wanted: Bool = false,
+                     mult: Double = 4) -> (escaped: Bool, worst: Double, end: Vec3, record: String?, start: Vec3) {
+        let mass = particle.mass(), g0 = 9.81, gamma = 6 * Double.pi * 1.81e-5 * particle.radius
+        let w0 = path[0]
+        var x = w0, v = Vec3(0, 0, 0)
+        var t = 0.0
+        let dt = 1e-4
+        var worst = 0.0, escaped = false
+        var record: String? = wanted ? "" : nil
+        func step(from a: Int, to b: Int, duration: Double, drag: Double, ramp: Bool) {
+            var tt = 0.0
+            while tt < duration && !escaped {
+                let cmd = ramp ? min(1, tt / duration) : 1
+                let lagged = max(0, cmd - tauU / duration * (1 - exp(-tt / max(tauU, 1e-12))))
+                let wb = a == b ? 1 : lagged, wa = 1 - wb
+                guard let ga = latticeGradient(fb, Us[a], x), let gb = latticeGradient(fb, Us[b], x) else { escaped = true; return }
+                let force = (ga * wa + gb * wb) * (-P) + Vec3(0, 0, -mass * g0) - v * (gamma * drag)
+                v = v + force * (dt / mass)
+                x = x + v * dt
+                tt += dt; t += dt
+                if a != b { worst = max(worst, (x - path[b]).length) }
+                if record != nil, Int((t / 1e-3).rounded()) != Int(((t - dt) / 1e-3).rounded()) {
+                    record! += String(format: "%.0f,%.0f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", mult, Tstep * 1000, t,
+                                      (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000,
+                                      (path[b].x - w0.x) * 1000, (path[b].y - w0.y) * 1000, (path[b].z - w0.z) * 1000)
+                }
+            }
+        }
+        step(from: 0, to: 0, duration: 0.3, drag: 20, ramp: false)   // gentle loading
+        step(from: 0, to: 0, duration: 0.2, drag: 1, ramp: false)
+        let start = x                                            // where the bead sits before the carry
+        for i in 1..<Us.count where !escaped { step(from: i - 1, to: i, duration: Tstep, drag: 1, ramp: true) }
+        if !escaped { step(from: Us.count - 1, to: Us.count - 1, duration: 0.4, drag: 1, ramp: false) }
+        return (escaped, worst, x, record, start)
+    }
+
     // MARK: - fly
 
     /// A bead that moves (G-P2): a 200 µm PLA bead integrated through the
@@ -371,8 +423,8 @@ enum PlaceCommand {
                      margins[weakest], weakest, margins.sorted()[margins.count / 2]))
         let gamma = 6 * Double.pi * 1.81e-5 * particle.radius
         let tauU = rig.settling
-        print(String(format: "%@, %@; carry 5 mm up + 5 mm across in 0.25 mm steps; 200 µm PLA; at 2 × holding the hardest-driven element is at %.2f of its ceiling",
-                     rig.chamberText, rig.tonesText, drives.map { rig.elementGate($0, power: power, label: "").measured }.max() ?? .infinity))
+        print(String(format: "%@, %@; carry 5 mm up + 5 mm across in 0.25 mm steps; %@; at 2 × holding the hardest-driven element is at %.2f of its ceiling",
+                     rig.chamberText, rig.tonesText, bead(rig.array).name, drives.map { rig.elementGate($0, power: power, label: "").measured }.max() ?? .infinity))
         print(String(format: "bead: m %.2e kg, drag %.2e kg/s (1/e in %.0f ms); potential settles with τ = %.1f ms",
                      mass, gamma, mass / gamma * 1000, tauU * 1000))
         print("each step ramps the potential linearly from the old drive to the new (cross terms ignored), on top of the settling τ;")
@@ -387,34 +439,10 @@ enum PlaceCommand {
             let P = power * mult / 2
             let ask = ask1 * mult.squareRoot()
             for Tstep in [0.01, 0.02, 0.04, 0.08] {
-                var x = w0, v = Vec3(0, 0, 0)
-                var t = 0.0
-                let dt = 1e-4
-                var worst = 0.0, escaped = false
-                var record: String? = (mult == 4 && Tstep == 0.04) ? "" : nil
-                func step(from a: Int, to b: Int, duration: Double, drag: Double, ramp: Bool) {
-                    var tt = 0.0
-                    while tt < duration && !escaped {
-                        let cmd = ramp ? min(1, tt / duration) : 1
-                        let lagged = max(0, cmd - tauU / duration * (1 - exp(-tt / tauU)))
-                        let wb = a == b ? 1 : lagged, wa = 1 - wb
-                        guard let ga = gradU(Us[a], x), let gb = gradU(Us[b], x) else { escaped = true; return }
-                        let force = (ga * wa + gb * wb) * (-P) + Vec3(0, 0, -mass * g0) - v * (gamma * drag)
-                        v = v + force * (dt / mass)
-                        x = x + v * dt
-                        tt += dt; t += dt
-                        if a != b { worst = max(worst, (x - path[b]).length) }
-                        if record != nil, Int((t / 1e-3).rounded()) != Int(((t - dt) / 1e-3).rounded()) {
-                            record! += String(format: "%.0f,%.0f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", mult, Tstep * 1000, t,
-                                              (x.x - w0.x) * 1000, (x.y - w0.y) * 1000, (x.z - w0.z) * 1000,
-                                              (path[b].x - w0.x) * 1000, (path[b].y - w0.y) * 1000, (path[b].z - w0.z) * 1000)
-                        }
-                    }
-                }
-                step(from: 0, to: 0, duration: 0.3, drag: 20, ramp: false)   // gentle loading
-                step(from: 0, to: 0, duration: 0.2, drag: 1, ramp: false)
-                for i in 1..<drives.count where !escaped { step(from: i - 1, to: i, duration: Tstep, drag: 1, ramp: true) }
-                if !escaped { step(from: drives.count - 1, to: drives.count - 1, duration: 0.4, drag: 1, ramp: false) }
+                let ride = PlaceCommand.ride(Us: Us, lattice: fb, path: path, power: P, stepTime: Tstep, particle: particle,
+                                             settling: tauU, record: mult == 4 && Tstep == 0.04, mult: mult)
+                let escaped = ride.escaped, worst = ride.worst, x = ride.end
+                let record = ride.record
                 let end = (x - path.last!).length
                 let carried = !escaped && end < 0.5e-3
                 if carried && ask < 1 { anyCarried = true }
@@ -430,7 +458,7 @@ enum PlaceCommand {
                 if let r = record { csv += r }
             }
         }
-        let g2 = GateResult(id: "G-P2", name: "a 200 µm PLA bead, integrated through the open-air plates' fields, rides the carry 5 mm up and 5 mm across",
+        let g2 = GateResult(id: "G-P2", name: "a \(bead(rig.array).name) bead, integrated through the open-air plates' fields, rides the carry 5 mm up and 5 mm across",
                             measured: anyCarried ? 1 : 0, threshold: 0.5, comparison: .greaterThan,
                             detail: "\(rig.chamberText); at least one drive level the elements can give (G-E1 < 1) and step time carries it to within 0.5 mm of the drop-off")
         print(g2.line)

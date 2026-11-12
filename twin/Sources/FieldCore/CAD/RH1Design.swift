@@ -67,6 +67,14 @@ public struct RH1Design: Codable, Sendable {
     /// preset `RH1Freestanding` and its receipts.
     public enum FaceStyle: String, Codable, Sendable { case elementArray, microHorns }
     public var faceStyle = FaceStyle.elementArray
+    /// The gyroid horn, copper cone and three throat piezos behind a plate
+    /// exist only on the micro-horn face, where they are the sound source.
+    /// On the element face every element radiates from the face itself and
+    /// the plate's back is closed by the wiring board: a horn behind it has
+    /// no path to the chamber and nothing to feed (SYS-01, 2026-11-12,
+    /// proposal). What would reverse it: a measured need for a source the
+    /// face elements cannot be, e.g. a tone below their band through the bore.
+    public var rearStack: Bool { faceStyle == .microHorns }
     /// Elements per face: the face filled. The drive a mold asks of each
     /// element falls as 1/N until no more fit; shape control stops improving
     /// near 550 (the patterns the plate can make in the mold volume), so the

@@ -77,7 +77,7 @@ public enum CADGates {
         if interference { out.append(interferenceGate(model)) }
         out.append(dimensionAudit(model))
         out.append(parastichies(model))
-        out.append(horn(model))
+        if model.design.rearStack { out.append(horn(model)) }
         out.append(contentsOf: massAndAreas(model))
         out.append(engineArray(model))
         return out
@@ -184,23 +184,27 @@ public enum CADGates {
         }
         let wireR = d.windingWireDiameter / 2
         let windEnv = d.torusTubeRadius + d.windingOuterLayerGap + wireR
+        if d.rearStack {
         rule("DR1", "throat piezo ↔ bore collar",
              d.pztPitchRadius - d.pztDiameter / 2 - d.boreHoleRadius, 0.5)
         rule("DR2", "throat piezos ↔ each other",
              2 * d.pztPitchRadius * sin(Double.pi / 3) - d.pztDiameter, 1.0)
         rule("DR3", "piezo front ↔ horn apex (axial)",
              d.hornThroatDepth - RH1Model.hornProfile(d).map(\.y).max()!, 0.0)
+        }
         let topSet = d.torusSetback
         let midSet = d.face("mid-up").backZ - d.middleTorusZ
         rule("DR4", "outer winding ↔ plate back (top/deck)", topSet - windEnv, 2.0)
         rule("DR5", "outer winding ↔ plate back (middle)", midSet - windEnv, 2.0)
         rule("DR6", "outer winding ↔ rim electronics (radial)",
              d.rimInnerRadius - (d.torusMajorRadius + windEnv), 2.0)
+        if d.rearStack {
         // horn back surface to the winding envelope, in the (r, depth) plane
         var hornGap = Double.infinity
         let cen = P2(d.torusMajorRadius, topSet)
         for p in RH1Model.hornProfile(d) { hornGap = min(hornGap, (p - cen).length - windEnv) }
         rule("DR7", "outer winding ↔ gyroid horn", hornGap, 1.0)
+        }
         rule("DR8", "inner ↔ outer winding layer",
              d.windingOuterLayerGap - d.windingInnerLayerGap - 2 * wireR, 0.3)
         rule("DR9", "inner winding ↔ torus former",
@@ -412,8 +416,10 @@ public enum CADGates {
             let v = p.mesh.vertices.map { ($0.x * $0.x + $0.y * $0.y).squareRoot() }
             checks.append(("clear bore Ø", 2 * (v.min() ?? 0), 12))
         }
-        checks.append(("horn mouth Ø", 2 * d.mouthRadius, 404))
-        checks.append(("horn throat Ø", 2 * d.throatRadius, 36))
+        if d.rearStack {
+            checks.append(("horn mouth Ø", 2 * d.mouthRadius, 404))
+            checks.append(("horn throat Ø", 2 * d.throatRadius, 36))
+        }
         var worst = 0.0, worstWhat = ""
         for (w, m, doc) in checks {
             let e = abs(m - doc)

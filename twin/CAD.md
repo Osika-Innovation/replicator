@@ -15,7 +15,7 @@ Source files: `Sources/FieldCore/CAD/` (kernel, design, model, gates, exports),
 ```sh
 swift build -c release
 ./.build/release/fieldc cad info --reconciliation   # stack, provenance of every number, conflicts
-./.build/release/fieldc cad check --rules --receipt # CAD gates + 28 design rules
+./.build/release/fieldc cad check --rules --receipt # CAD gates + design rules
 ./.build/release/fieldc cad render --all --out renders/    # iso, front, section, section-iso, detail, plate, storage, top
 ./.build/release/fieldc cad render detail --light --door open detail.png
 ./.build/release/fieldc cad export --out cad-out    # STL per part, rh1.obj+mtl, params, BOM, drawing
@@ -27,12 +27,12 @@ swift build -c release
 Options: `--preview | --fine` (tessellation only — the design is identical at
 every detail level), `--door open|closed|<deg>`.
 
-## What is modelled — 104 parts
+## What is modelled — 84 parts
 
 | assembly | parts | notes |
 |---|---|---|
 | body | bottom closure, lower body tube 0–1060, top band, crown, crown cap, LED ring | 4 mm anodized shells, Ø460 × 1650 |
-| plate.top / mid-up / mid-down / deck | face plate, 1,536 transmitters and their carriers, wiring board, carrier ring, gyroid horn, copper inner cone, 3 throat piezos, rim electronics | four radiating faces; the middle assembly is two back-to-back stacks |
+| plate.top / mid-up / mid-down / deck | face plate, 2,560 transmitters and their carriers, wiring board, carrier ring, rim electronics | four radiating faces; the middle assembly is two back-to-back stacks |
 | torus.top / middle / deck | hollow former Ø290/Ø60, contrawound winding pair (CW feed A, CCW feed B) | 44 turns each, two independent feeds (R5) |
 | bore | collars top / middle, deck feed tube | Ø12 clear, Ø14 collar |
 | storage | chamber liner Ø400 | 420 → 936 |
@@ -46,22 +46,22 @@ drawn for **resonant elements** (proposal; the operator's ruling of
 2026-11-11 was 192 elements, made when the engine drove ideal pistons — see
 `ENGINE.md`, "The elements are hardware"):
 
-* **1,536 open-type transmitters per face**, each tuned to one of nine tones
+* **2,560 open-type transmitters per face** (the face filled; 1,536 until the layout was relaxed to convergence the same day), each tuned to one of nine tones
   (52.8–97.2 kHz) and driven by its own channel. A transmitter is the bought
   40 kHz Ø10 mm part scaled to its tone: Ø7.6 mm at the lowest, Ø4.1 mm at the
   highest, its can 0.7 diameters tall, flush with the radiating surface.
 * They sit on the golden-angle spiral over r 13 → 195.2 mm. The spiral spaces
   centres evenly but the elements differ in size, so where two large ones
   fall side by side they are nudged apart until every pair of holes keeps a
-  1 mm web (`PlateArray.spread`; rule DR11). 29 % of the face radiates.
+  1 mm web (`PlateArray.spread`; rule DR11). 49 % of the face radiates.
 * Inside the plate's 12 mm envelope: an 11 mm aluminium plate with one
   through-hole per element, a moulded carrier behind each transmitter, and a
   1 mm four-layer **wiring board** on the plate's back that takes every
-  element's two pins to the rim electronics (one trace per element; 3.1 mm of
+  element's two pins to the rim electronics (one trace per element; 1.8 mm of
   rim per trace per layer, rule DR27).
 * The **rim electronics** annulus holds the drivers: one two-channel gate
   driver per two elements and one shift register per eight, on three ring
-  boards (rule DR28: 2.8× the board area they need).
+  boards (rule DR28: 1.7× the board area they need; the bar is 1.5).
 * Up-facing faces carry the lower plate's layout, down-facing faces the upper
   plate's, exactly as `PlateArray.rh1` places the engine's two plates; gate
   G-CAD9 holds sites and sizes equal to 1e-6 mm.
@@ -70,16 +70,24 @@ drawn for **resonant elements** (proposal; the operator's ruling of
 voltages, the driver counts, the assembly order and what cannot be built from
 the model yet.
 
-**What this face gives up.** The twelve light slots are gone: between 1,536
+**What this face gives up.** The twelve light slots are gone: between 2,560
 holes no stretch of a slot arm 8 mm long is left with 1 mm of metal to every
 hole, so no dash is cut (G-CAD8: 0 dashes). With 192 elements the arms were
 cut into ~150 dashes that kept three-quarters of their area. Whether the
 slots or the powder mold has the face is the operator's call.
 
-**Open on this face:** no transmitter of this kind has been measured at these
-tones; what the horn, cone and three throat piezos behind the plate are for
-now that the face carries its own elements; fasteners, gaskets and the board
-connectors.
+**No rear stack on this face (SYS-01, 2026-11-12, proposal).** The gyroid
+horn, copper cone and three throat piezos are the micro-horn face's sound
+source. Here every element radiates from the face and the plate's back is
+closed by the wiring board, so a horn behind it reaches nothing: the element
+face is built without them (`RH1Design.rearStack`). Consequences, checked:
+104 → 84 parts, 28 → 24 design rules (DR1–3 and DR7 belong to the stack),
+G-CAD6 not run, 1.6 kg lighter, every other gate unchanged. What would bring
+a rear source back: a measured need for a tone the face elements cannot play.
+
+**Open on this face:** no transmitter of this kind exists in a catalogue or
+has been measured at these tones (`cad/rh1-freestanding/TRANSDUCER_SPEC.md`);
+what carries away the plates' heat; fasteners, gaskets and the board connectors.
 
 The face of 2026-11-10 — 192 Ø5 × 2 piezo discs flush with the surface,
 radiating directly, a damping backing behind each — is still built when
@@ -156,12 +164,12 @@ These came out of building the geometry, not out of reading it:
 | gate | measures | bar |
 |---|---|---|
 | G-CAD1 | every part a closed, outward-oriented solid (edge census on shared vertices) | 0 failures |
-| G-CAD2 | mesh volume vs closed form, 77 parts | < 1 % |
-| G-CAD3 | 28 design-rule clearances (piezo/bore, winding layers, horn, element holes and webs, wiring-board traces, driver board area, glass, rollers, columns, tiles, …) | all ≥ minimum |
+| G-CAD2 | mesh volume vs closed form, 69 parts | < 1 % |
+| G-CAD3 | 24 design-rule clearances on the element face, 28 on the micro-horn face (piezo/bore and horn there only; winding layers, element holes and webs, wiring-board traces, driver board area, glass, rollers, columns, tiles, …) | all ≥ minimum |
 | G-CAD3b | sampled interference between every pair of neighbouring parts | none |
-| G-CAD4 | dimension audit vs spec/site (14 checks) | < 0.1 mm |
+| G-CAD4 | dimension audit vs spec/site (12 checks; 14 with the horn) | < 0.1 mm |
 | G-CAD5 | 21 × 34 parastichies present | present |
-| G-CAD6 | horn arc length vs mech §3c | < 1 mm |
+| G-CAD6 | horn arc length vs mech §3c (micro-horn face only) | < 1 mm |
 | G-CAD7/8 | mass budget; open area slots vs micro-horns | informational |
 | G-CAD9 | the engine's plate array (`PlateArray.rh1`) is the CAD's: same sites and element sizes on all four faces, no element rule broken | < 1e-6 mm |
 

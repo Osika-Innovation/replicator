@@ -9,6 +9,9 @@ public struct MachineDescription: Codable, Sendable, Equatable {
     public var band: [Double]                 // Hz
     /// Stable identifier of the geometry and medium the calibration belongs to.
     public var calibrationRef: String
+    /// Chamber air (°C) and driver supply (V), where the machine measures them.
+    public var temperature: Double? = nil
+    public var supply: Double? = nil
 }
 
 /// The empty machine's transfer between its own channels, per tone:
@@ -70,6 +73,25 @@ public struct EmulatedBackend: MachineBackend {
     }
 
     public var array: PlateArray
+    /// Microphones in the chamber (m): listen-only channels after the
+    /// elements', gate `array.channels + i`. They hear the pressure (Pa) at
+    /// their point; a stream for this machine carries a (zero) drive for them.
+    public var probes: [Vec3] = []
+    public var channels: Int { array.channels + probes.count }
+    /// Pulse-width drive, as the P0 controller makes it (Firmware/p0/fcore.c):
+    /// each channel is high for a whole number of `steps` per period, so its
+    /// amplitude sin(π w / steps) × `full` and its phase come in steps. nil =
+    /// the drive as sent.
+    public var pulse: (steps: Int, full: Double)? = nil
+
+    public func pulsed(_ z: Complex) -> Complex {
+        guard let p = pulse else { return z }
+        let n = Double(p.steps), a = min(1, z.magnitude / p.full)
+        let w = (asin(a) / Double.pi * n).rounded()
+        guard w >= 1 else { return .zero }
+        let k0 = (-atan2(z.im, z.re) / (2 * Double.pi) * n - w / 2).rounded()
+        return Complex.expi(-2 * Double.pi * (k0 + w / 2) / n) * (p.full * sin(Double.pi * w / n))
+    }
     public var medium: Medium
     public var world: World
     public var name: String
@@ -102,7 +124,7 @@ public struct EmulatedBackend: MachineBackend {
     }
 
     public func describe() -> MachineDescription {
-        MachineDescription(name: name, channels: array.channels, perPlate: array.perPlate, gap: array.gap,
+        MachineDescription(name: name, channels: channels, perPlate: array.perPlate, gap: array.gap,
                            band: band, calibrationRef: calibrationRef)
     }
 
@@ -186,8 +208,8 @@ public struct EmulatedBackend: MachineBackend {
     }
 
     public mutating func play(_ stream: FCodeFile) throws -> PortRecords {
-        guard stream.channels == array.channels else {
-            throw FCodeFile.Invalid.wire("stream has \(stream.channels) channels, the machine \(array.channels)")
+        guard stream.channels == channels else {
+            throw FCodeFile.Invalid.wire("stream has \(stream.channels) channels, the machine \(channels)")
         }
         let bytes = try FCodeWire.encode(stream)
         frameLog.append(contentsOf: bytes)
@@ -202,13 +224,21 @@ public struct EmulatedBackend: MachineBackend {
         for fr in sent.frames {
             var tones: [PortRecords.Tone] = []
             for tone in fr.tones where !fr.rxGates.isEmpty {
-                let d = tone.drive
+                let d = tone.drive.prefix(array.channels).map(pulsed)
                 let key = tone.frequency.bitPattern
-                if transfers[key] == nil { transfers[key] = transfer(frequency: tone.frequency) }
-                let h = transfers[key]!
-                let sc = echo(frequency: tone.frequency, drive: d)
+                let onElements = fr.rxGates.contains { $0 < array.channels }
+                if onElements, transfers[key] == nil { transfers[key] = transfer(frequency: tone.frequency) }
+                let sc = onElements ? echo(frequency: tone.frequency, drive: d) : []
+                let g = gains(tone.frequency)
                 var rec = fr.rxGates.map { e -> Complex in
+                    if e >= array.channels {                      // a probe: the pressure at its point
+                        let row = array.reference(frequency: tone.frequency, medium: medium).gateRow(at: probes[e - array.channels])
+                        var p = Complex.zero
+                        for t in 0..<d.count { p += row[t] * d[t] * (g?[t] ?? .one) }
+                        return p
+                    }
                     var v = sc[e]
+                    let h = transfers[key]!
                     for t in 0..<d.count { v += h[e][t] * d[t] }
                     return v
                 }
