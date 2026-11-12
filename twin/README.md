@@ -90,7 +90,7 @@ holds the drive to what an element can give.
 | `mold` tetrahedron frame | 100 % on the frame, 5.5–13.3 % per site (fair 10 %), hardest element at 54 % of its ceiling. On 1,536 it asked 1.13× | G-M1, G-M2, G-B0, G-B1, G-E1 0.54 |
 | `mold` ring | drive is ample (0.57) but **one site of sixteen stays empty** (0.0–11.5 %, fair 6.25 %) | G-M2, G-B0, G-B1, G-E1 pass; **G-M1 fails** |
 | `mold` ring `--feedback 2` | two rounds of basin-map feedback fill it: 5.4–7.5 % per site, lift contrast 2.82 | G-M1, G-M2, G-E1 0.66 |
-| `mold --stl` ring.stl (the app's object) | as the ring: one site empty at the default compile | **G-M1 fails**; G-E1 0.55 |
+| `mold --stl` ring.stl (the app's object) | sixteen sites on the same circle, read off the STL: sites empty at the default compile (0.0–14.6 %) **and with two feedback rounds** (12 of 16 filled) | **G-M1 fails**; G-E1 0.55 |
 | `scan3d` | a wire ring imaged by time-gated pulse-echo through the elements' resonance curves: 98 % of the voxels above half the peak within 2 mm of the object, 100 % recall, AUC 0.980 | SCAN, SCAN-AUC (informational) |
 | `replicate` | scan a ring, read its 12 sites, mold a copy (7.2–9.4 % per site, fair 8.3 %), re-scan it (correlation 0.80, bar 0.70). On 1,536 the copy's mold asked 1.04× | G-R1–3, G-M1, G-M2, G-E1 0.60 |
 | `levitate` | one Ø200 µm PLA bead held with the hardest element at 41 % of its ceiling; aluminium 60 %; steel would ask 1.03× | G-E1 0.41 |
@@ -101,9 +101,10 @@ holds the drive to what an element can give.
 | `cad` | 84 closed solids, 24 design rules, STEP export volume-gated against the mesh, a manufacturing pack. No horn, cone or throat piezos on this face (`CAD.md`) | G-CAD1–5, 7–9, G-STEP |
 
 `fieldc status --plate rh1x2560t9` prints every gate of the newest receipts.
-What still fails is evenness at the default compile, not drive: how evenly
-sixteen sites fill is the compile's doing (feedback fixes the ring), and the
-default has not been changed.
+What still fails is evenness, not drive: how evenly sixteen sites fill is
+the compile's doing. Feedback fixes the analytic ring and not the ring read
+from the STL; the default compile is unchanged. The newest ring receipts are
+the feedback runs.
 
 **What a build must hold** (study S5, `fieldc tolerance`). The open-loop half
 of the study — the drawing's drive on random builds — says nothing new on
@@ -169,8 +170,9 @@ acceptance protocol and its blockers — is
 * **For the operator:** 2,560 resonant elements per face against the ruling
   of 192; the light slots against the powder mold; the rear stack's removal;
   the P0 pack's blockers and whether to order.
-* The ring's evenness depends on the compile (feedback rounds); the default
-  compile leaves a site empty on two of the four molds above.
+* **Evenness is not solved.** The default compile leaves a site empty on the
+  ring; two feedback rounds fix the analytic ring and leave four sites of the
+  STL ring empty. The app's default object therefore still fails G-M1.
 * `mold`, `scan3d`, `replicate` and the RH-1 placing verbs still build their
   own fields; `play` and the whole P0 path (`link`, `job`) run through
   `MachineBackend`.

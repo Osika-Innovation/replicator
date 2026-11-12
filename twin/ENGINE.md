@@ -307,7 +307,8 @@ with each tone in its own zone, which the wedge fault forbids, 3,120).
 
 Drive follows 1/N. Evenness does not improve with N — control was saturated
 long before — and is the compile's business: two rounds of the basin-map
-feedback (`--feedback 2`) fill the ring on 2,560.
+feedback (`--feedback 2`) fill the ring on 2,560 — and do not fill the same
+ring read from an STL (12 of 16 sites): evenness is open.
 
 Past a full face the levers are others: a larger plate, a shorter distance, a
 stronger transmitter, or fewer tones. Nine tones sharing the face cost about
