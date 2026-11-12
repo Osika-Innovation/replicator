@@ -161,6 +161,59 @@ All 10 gates pass. `G9b` reports informational — see below.
 | G9a | lateral focus placement, single plate | 1.79 mm (bar 2.64 mm) |
 | G9c | best method vs IBP focusing gain | 1.00× (bar > 0.98) |
 
+## Round 19 — the platform made ready for another architecture (2026-11-12/13)
+
+Asked by the operator: the preferred study is now a few strong piezo inputs
+into printed acoustic bodies (another session's); P0 as drafted is a
+reference, not the selected prototype. This session's part: firmware,
+comparable results, calibration margin, the interface a body arrives through,
+and the dependency claim corrected.
+
+**Firmware.** `Firmware/p0` compiles for the RP2350B with pico-sdk 2.1.1 and
+Arm GNU 14.2: 37 kB of flash, 59 kB of RAM, no warnings; artifact, hash,
+timing and five assumptions only a board can settle in `FIRMWARE.md`.
+Homebrew's ARM compiler has no C library; Arm's own archive was used.
+Compiled is not flashed.
+
+**The 18 of 18 was 17 of 18.** Round 18 reported the job passing on all
+eighteen cases. As run it was seventeen; the eighteenth passed after the
+planner's floor was raised and only that case re-run. The policy is now
+frozen in code and the whole matrix run under it (`fieldc p0 matrix`,
+105 cases, one CSV row each): 96 pass, 4 refused, 5 played and failed.
+
+**Three things the runs corrected:**
+
+1. *The receiver is not a point.* The emulated probe became a can with a
+   facing and a directivity the calibrator does not know. Two passes then
+   leave the plates 1.6–13.8° apart; a third pass with the can on its side
+   measures the difference from mirrored pairs, to 0.3°.
+2. *A reference can lie.* Tilted 3°, the side pass corrupted the plates'
+   amplitude ratio and the bead was lost in 3 of 3 — played, not refused —
+   while the pairs' spread stood at 13–16° unread. The calibration now takes
+   only the phase, and policy /2 widens its copies by the spread.
+3. *An input can be silent where the probe is.* The first few-input
+   reference set had inputs with a node on the axis; calibration at the
+   centre divided by nothing. It now fits over several probe points.
+
+**Margin.** At plate reflection 0.9 the job holds over 45–46.5 mm; at 0 over
+44–48 mm. One or six images and reflection 0.95 do not move the 46 mm
+result. A reflecting plane that is not the cans' faces would, and is untested.
+
+**The interface.** `body-response/0.1`: patches, inputs, a complex response
+per frequency, limits, uncertainty, provenance. P0 written as a body
+reproduces P0 (travel 0.14 against 0.13 mm). Calibration and the job use one
+frequency: multiplexing in frequency or time cannot be evaluated yet.
+
+**The dependency claim, corrected.** Round 18 said the first part needs a
+multi-tone aperture and therefore custom transmitters. What the runs show is
+that two one-tone apertures fail to place a bead beside a bead. The graph now
+carries that as an open requirement with four routes, and the first part is
+an origin fiducial — one bead bonded on a printed post — which needs only
+what hold, move and release show.
+
+**Removed:** five functions nothing called and the complex linear algebra
+left from the six-gate solver.
+
 ## Round 18 — the face filled, the rear stack removed, the first platform (2026-11-12)
 
 Asked by the operator: how many elements, from first principles; then, with

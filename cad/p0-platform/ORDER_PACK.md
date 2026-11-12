@@ -202,20 +202,22 @@ through the 16-bit wire and the controller's pulse widths.
 |---|---|
 | Link (G-HW1–3) | the controller core, compiled for a computer, returns the emulated machine's records within 0.06 % and 0.04°; the frame log sent is byte for byte the emulator's |
 | Holding a Ø1.5 mm polystyrene bead | 0.2–0.4 m/s on the hardest element, of 1.52 at 15 V |
-| Job, gap 46 mm (G-P0a, G-P0b) | **passes on 18 of 18**: six builds × plates reflecting 0, 0.5 and 0.9. Travel error 0.10–0.49 mm (bar 0.5); hardest element 0.34–0.58 of full drive (bar 0.71, a −3 dB unit); level 4–8 × holding, chosen by the planner. 17 as run; the 18th after the planner's floor was raised from 2 × to 4 × |
-| Job, gap 44 mm | plates reflecting 0: 6 of 6. Reflecting 0.5: 2 pass, 3 lose the bead, 1 refused by the planner. Reflecting 0.9: the planner refuses all 6 |
-| Job, gaps 40, 42, 50, 62, 80 mm, plates reflecting 0.9 | 1 of 15 passes; the planner refuses 13 |
+| Job at 46 mm, first runs (planner not yet frozen) | **17 of 18** (six builds × plates reflecting 0, 0.5, 0.9): one job at 2 × holding lost the bead. With the planner's floor raised to 4 ×, that case alone was re-run and passed |
+| Job at 46 mm, frozen policy `P0-planner/2` | two-pass calibration 18 of 18; with the reference pass 17 of 18 (one played, travel 0.51 mm). Travel error 0.10–0.51 mm (bar 0.5); **absolute placement 0.11–0.70 mm, no bar** |
+| The phase between the plates | 1.6–13.8° unmeasured by two passes; 0.0–0.3° after the side reference pass; a point microphone leaves none |
+| Calibration under disturbance | noise 30 dB down, 0.5 K drift, probe 0.2 mm high, receiver tilted 3°, all together: 8 of 9, one refused. Under the earlier policy /1 the tilt alone lost the bead 3 of 3 |
+| Gap neighbourhood, plates reflecting 0.9 | passes 45–46.5 mm (15 of 15 with the 46 mm cell at 5 of 6); 44 mm 2 of 3; 47 mm 1 of 3; 48 mm 0 of 3. Reflecting 0: 44–48 mm all pass |
+| Reflection model | one or six images instead of three, and reflection 0.95: 9 of 9 at 46 mm |
 | Control: job compiled on the drawing, uncalibrated | the bead leaves the trap or travels 0.3–0.9 mm off on most builds |
 | RH-1's stricter carry gate (G-P1: still the one deepest well) | fails on most gaps: one tone has equal wells every 4.3 mm, so "deepest" has no meaning here. Reported, not P0's bar |
 | Placing beads touching (G-B1 row, G-B2 tetrahedron) | **fails**: the second bead lands 1–2 mm off, on A1 and on a 6 × 6 one-tone aperture |
 
-**The gap is sharp when the plates reflect.** 46 mm works across the range;
-2 mm either side does not if the reflection is high. The reflection is not
-known (0.9 is a bare metal face's; cans on a printed plate are something
-else) and is the first number K-ELEM measures; the nuts then set the gap the
-twin picks for it. The planner refusing a job is the intended behaviour: it
-plays nothing its own model, perturbed by what calibration cannot see, does
-not carry.
+**The gap is sharp when the plates reflect**: a window of about 45–46.5 mm at
+reflection 0.9, none needed at 0. The reflection is unknown and is the first
+thing the bench measures. Every number, the policy's history and the
+requirements derived from the window are in
+`twin/Design/P0_CALIBRATION_MARGIN.md`. Travel error is a manipulation
+observable; it does not establish where a part's features would land.
 
 ## 9. The first self-made part, and what the later ones wait for
 

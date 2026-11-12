@@ -334,8 +334,30 @@ taught the engine:
   the plates. So a job is planned on the calibrated model *and* on copies of
   it moved by what calibration cannot see (elements ±0.2 mm, plates ±15°),
   and judged on the bead's travel, not its absolute place.
-* **One tone holds and carries; it does not place a bead beside a bead.** The
-  row and tetrahedron builds fail on 4 × 4 and on 6 × 6 at 40 kHz (second
-  bead 1–2 mm off). The first part needs an aperture with more tones, and no
-  catalog part plays them (`cad/rh1-freestanding/TRANSDUCER_SPEC.md`).
+* **The two one-tone apertures tried hold and carry; they do not place a bead
+  beside a bead.** The row and tetrahedron builds fail on 4 × 4 and on 6 × 6
+  at 40 kHz (second bead 1–2 mm off). That is a limit of those
+  configurations. Whether the remedy is more tones, a structured body with a
+  few inputs, a larger or differently shaped one-tone aperture, or a process
+  in which the work moves to the bead has not been compared
+  (`Design/upgrade_graph.json`, record M-A2).
 
+## Calibration, the planner and the body interface — 2026-11-12/13
+
+* **What the receiver cannot hear.** A can hears the plate it faces, so two
+  passes leave the phase between the plates unmeasured (1.6–13.8° on the
+  builds tried). One more pass with the can on its side measures it from
+  mirrored pairs, to 0.3°; the pairs' disagreement says whether to trust it.
+  A probe's height is not an error but the origin: about 50° per millimetre.
+* **A planner must know what it does not know.** The frozen policy
+  (`P0-planner/2`) plays a job only if it carries on the calibrated model and
+  on copies moved by the calibration's own blind spots. Policy /1 trusted any
+  reference to ±5° and lost the bead when the can was tilted 3°.
+* **Travel is not placement.** Jobs are passed on the bead's travel (a camera
+  can measure it); where the bead ends in the drawing's frame is reported
+  beside it, 0.06–0.70 mm, and has no bar yet.
+* **A body is a plate with a mixing matrix.** A few inputs driving whole
+  radiating faces enter as `PlateArray.inputs` from a `body-response/0.1`
+  file; the field engine maps a drive through it and its adjoint back, and
+  nothing else changes. Results and gaps: `Design/BODY_INTERFACE.md`,
+  `Design/P0_CALIBRATION_MARGIN.md`.

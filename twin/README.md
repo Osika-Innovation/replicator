@@ -32,7 +32,7 @@ swift build -c release
 ./.build/release/fieldc play demo.fcode --object ring
 ./.build/release/fieldc cad check --rules    # CAD gates + design rules
 ./.build/release/fieldc cad pack             # the manufacturing pack
-./.build/release/fieldc p0 cad | link | job  # the P0 platform: frame parts, controller link, hold / move / release
+./.build/release/fieldc p0 cad | link | job | matrix | body   # the P0 platform: frame parts, controller link, hold / move / release, the matrix, reference body files
 ./.build/release/fieldc upgrades             # the upgrade dependency graph, checked
 ./.build/release/fieldc cad export | step | render --all | drawing | bom | params
 ./.build/release/fieldc shot --all --compare # every UI scene against its golden in shots/
@@ -136,12 +136,14 @@ acceptance protocol and its blockers — is
 
 | verb | result | gates |
 |---|---|---|
-| `p0 cad` | 12 closed solids, eight fit checks, STL and a drawing of the aperture plate | G-P0C1–3 |
+| `p0 cad` | 13 closed solids, ten fit checks, STL and a drawing of the aperture plate | G-P0C1–3 |
 | `p0 link` | the controller's firmware core (`Firmware/p0/fcore.c`), compiled for this computer and driven over a pipe by `SerialBackend`, returns the emulated machine's records within 0.06 % and 0.04° for the same frame log | G-HW1–3 |
-| `p0 job` | calibrate one plate at a time → compile hold, 5 mm up, 5 mm across, hold, release → check it on the calibrated model and on copies moved by what calibration cannot see → play. On emulated builds (gain ±10 %, phase ±20°, position ±0.2 mm) the bead's travel is within 0.5 mm in 18 of 18 cases at 46 mm, whatever the plates reflect; at 44 mm with reflecting plates the planner refuses to play | G-P0a, G-P0b |
-| `p0 job --port /dev/cu.usbmodem…` | the same calls to a controller on USB. **Never run: there is no hardware** | — |
-| `build --array p0` | **fails**: a second bead lands 1–2 mm off. One tone does not place a bead beside a bead | G-B1, G-B2 fail |
-| `upgrades` | the dependency graph from the bought seeds to a first self-made part and a mold-capable aperture (`Design/upgrade_graph.json`): acyclic, every made or measured record names its tolerance and inspection | G-UP1–2 |
+| `p0 job` | calibrate (one plate at a time, then a side reference pass for the phase between them) → compile hold, 5 mm up, 5 mm across, hold, release → check it under the frozen planner policy → play, or decline | G-P0a, G-P0b; P0-ABS (placement, no bar) |
+| `p0 matrix` | that session over gaps, plate reflections, image orders, builds and calibration disturbances, one CSV row each. Under `P0-planner/2`: 96 of 105 pass, 4 refused, 5 played and failed. At 46 mm: 18 of 18 two-pass, 17 of 18 with the reference. Window at reflection 0.9: 45–46.5 mm. Travel error 0.08–0.51 mm where it passes; absolute placement 0.06–0.70 mm. Record: [`Design/P0_CALIBRATION_MARGIN.md`](Design/P0_CALIBRATION_MARGIN.md) | P0-MX (informational) |
+| `p0 job --body file.json` | the same session on a body-response file — a few inputs driving whole radiating faces ([`Design/BODY_INTERFACE.md`](Design/BODY_INTERFACE.md)). P0 written as a 32-input body gives the native result (travel 0.14 against 0.13 mm); a made-up six-input set calibrates and the planner declines its job | — |
+| `p0 job --port /dev/cu.usbmodem…` | the same calls to a controller on USB. The firmware compiles for the RP2350B (`Firmware/p0/FIRMWARE.md`) and has **never been flashed** | — |
+| `build --array p0` | **fails** on this aperture (and on a 6 × 6 of the same part): a second bead lands 1–2 mm off. A limit of those two configurations; the remedy is open | G-B1, G-B2 fail |
+| `upgrades` | the dependency graph (`Design/upgrade_graph.json`): the first self-made part is an origin fiducial (one bead bonded on a printed post); placing a bead beside a bead is an open requirement with four candidate routes, none chosen. Acyclic; every made or measured record names its tolerance and inspection | G-UP1–2 |
 
 ### What the studies say
 
@@ -149,7 +151,8 @@ acceptance protocol and its blockers — is
   full. Tones buy confinement and evenness; elements buy power (S1, and the
   count study of 2026-11-12).
 * A real element plays one tone. Nine tones sharing the face cost about √9
-  in drive against one; one tone cannot place beads touching.
+  in drive against one. The two one-tone apertures tried (4 × 4, 6 × 6 at
+  40 kHz) do not place beads touching; what would is not established.
 * A small machine is ruled by its gap and its plates' reflection (P0: 46 mm
   works across reflection 0–0.9, 44 mm does not at 0.9).
 * A mold must be judged on the traced flow (`FlowMap`), which agrees with
@@ -176,15 +179,18 @@ acceptance protocol and its blockers — is
 * `mold`, `scan3d`, `replicate` and the RH-1 placing verbs still build their
   own fields; `play` and the whole P0 path (`link`, `job`) run through
   `MachineBackend`.
-* The P0 controller's board-side firmware (`Firmware/p0/pico_main.c`) has
-  never been compiled.
+* The P0 controller's firmware compiles for its board and has never run on one.
+* P0 as drafted is a reference and test bed, not the selected prototype: the
+  preferred study is a few strong piezo inputs into printed bodies (another
+  session's). The platform takes such a body as a `body-response/0.1` file;
+  calibration and the job use its first frequency only.
 * The app molds and scans; the bead-placing verbs, `replicate` and P0 are not in it.
 * The mold volume is a 24 mm cube and a mold is 16 sites.
 * The RH-1 base's contents, controller, fasteners, gaskets, cabling and plate
   cooling are envelopes or absent (`fieldc cad pack` lists them).
-* `Sources/` is 17,754 lines, over the charter's proposed cap of 17,500. The
-  largest removable block is the v0.4 micro-horn face with its rear stack
-  and gates, kept as the papers' comparison: the operator's call.
+* `Sources/` is about 18,000 lines, over the charter's proposed cap of 17,500.
+  Five unreferenced functions and the unused complex linear algebra were
+  removed on 2026-11-12; the micro-horn face and its rear stack are kept.
 
 ## Layout
 

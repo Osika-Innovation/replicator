@@ -343,3 +343,14 @@ A round that added a second configuration (P0) and the line to hardware
 
 For the operator: 2,560 against the ruling of 192; the rear stack's removal;
 the micro-horn face (cut or keep); the P0 pack.
+
+## The platform made ready — 2026-11-13
+
+| rule | where the round stands (Round 19) |
+|---|---|
+| 1, one machine | a body driven through a few inputs is a `PlateArray` with a mixing matrix: no second engine |
+| 2, one line to the machine | the P0 path is whole on the emulator and through the firmware core; the board firmware compiles and has not run |
+| 3, the line cap | about 18,000 lines against the proposed 17,500. The cap is not treated as a reason to cut acoustic geometry still in use: this round removed only what a reference scan showed nothing calls (five functions, 245 lines of complex linear algebra). Next candidates by the same test: none found among functions; types and the `--array disc | ideal | microhorn` comparison faces were not scanned |
+| 6, constants not flags | the planner's policy is constants with a name (`P0-planner/2`); the matrix's disturbances are flags because they are the experiment |
+| 9, the document is the run | `Design/P0_CALIBRATION_MARGIN.md` ends in the table `Tools/p0_matrix_summary.py` prints from the receipts |
+
