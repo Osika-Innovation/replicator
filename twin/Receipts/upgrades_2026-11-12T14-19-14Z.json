@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T14:19:14Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "19 records in build order",
+      "id" : "G-UP1",
+      "measured" : 0,
+      "name" : "upgrade graph: records that depend on themselves or on nothing known",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "",
+      "id" : "G-UP2",
+      "measured" : 0,
+      "name" : "upgrade graph: made or measured records without a tolerance and an inspection",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "6a798d3",
+  "name" : "upgrades"
+}

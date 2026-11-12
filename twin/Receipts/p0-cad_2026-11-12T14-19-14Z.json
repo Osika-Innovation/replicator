@@ -1,0 +1,37 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T14:19:14Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0.005202054977416992,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "13 parts",
+      "id" : "G-P0C1",
+      "measured" : 0,
+      "name" : "P0 frame: every part a closed solid",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "",
+      "id" : "G-P0C2",
+      "measured" : 2.969274985307623e-14,
+      "name" : "P0 frame: mesh volume vs closed form",
+      "passed" : true,
+      "threshold" : 0.01
+    },
+    {
+      "comparison" : "<",
+      "detail" : "10 checks",
+      "id" : "G-P0C3",
+      "measured" : 0,
+      "name" : "P0 frame: fit checks failed",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "6a798d3",
+  "name" : "p0-cad"
+}

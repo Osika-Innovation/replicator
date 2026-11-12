@@ -1,0 +1,46 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T14:19:34Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 18.524327039718628,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "p0x16g46, build: gain ±10 %, phase ±20°, position ±0.20 mm, resonance ±0.3 %, 0.0 % dead; receiver can, one pass per plate and a side reference pass; 4× holding, 40 ms per 0.25 mm (P0-planner\/2; worst predicted travel error 0.20 mm); 16-bit wire, pulse widths of 512 steps; travel off by 0.33 mm; 0.48 mm from the drawing's drop-off",
+      "id" : "G-P0a",
+      "measured" : 0.32673967775851237,
+      "name" : "hold, 5 mm up, 5 mm across, hold: a Ø1.5 mm EPS bead on the emulated build, job compiled on its calibration (its travel vs the travel asked, mm)",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "0.60 of 1.52 m\/s (the datasheet level at a 0–15 V square wave); the bar is a −3 dB unit",
+      "id" : "G-P0b",
+      "measured" : 0.39742805391725394,
+      "name" : "the job's hardest-driven channel ÷ its full drive",
+      "passed" : true,
+      "threshold" : 0.708
+    },
+    {
+      "comparison" : "info",
+      "detail" : "calibration left the plates -0.3° apart (about 0.00 mm of height); the probe sat 0.00 mm off the mid-plane",
+      "id" : "P0-ABS",
+      "measured" : 0.4783117033145315,
+      "name" : "where the bead ends against the drawing's drop-off point (mm): placement, not travel",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "info",
+      "detail" : "the bead left the trap",
+      "id" : "P0-RAW",
+      "measured" : "inf",
+      "name" : "control: the same job compiled on the drawing, uncalibrated, on the same build (travel error, mm)",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "6a798d3",
+  "name" : "p0-job-p0x16g46"
+}
