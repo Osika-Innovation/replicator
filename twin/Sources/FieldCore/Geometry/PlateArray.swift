@@ -47,6 +47,49 @@ public struct PlateArray: Sendable {
     /// A resonant element's quality factor in air: its bandwidth is f/Q.
     public var elementQ = 25.0
 
+    /// A body driven through a few inputs: its elements are surface patches
+    /// and each input moves all of them (`BodyResponse`). nil = one drive
+    /// channel per element.
+    public struct InputMap: Sendable {
+        public var frequencies: [Double]
+        /// [frequency][input][element]: patch velocity (m/s) per unit input drive.
+        public var weights: [[[Complex]]]
+        /// Which body an input drives: 0 lower, 1 upper.
+        public var plateOf: [Int]
+        /// The largest drive each input takes, in the drive's own unit.
+        public var maxDrive: [Double]
+        /// Per input, what a calibration measured against the model; nil = as modelled.
+        public var error: [Complex]? = nil
+        public init(frequencies: [Double], weights: [[[Complex]]], plateOf: [Int], maxDrive: [Double]) {
+            self.frequencies = frequencies; self.weights = weights; self.plateOf = plateOf; self.maxDrive = maxDrive
+        }
+    }
+    public var inputs: InputMap? = nil
+    /// Channels a drive addresses: the inputs of a body, else the elements.
+    public var driveChannels: Int { inputs?.plateOf.count ?? channels }
+    /// 0 for a channel of the lower plate or body, 1 for the upper.
+    public func plate(of channel: Int) -> Int { inputs?.plateOf[channel] ?? (channel < perPlate ? 0 : 1) }
+
+    /// A body's weights at the listed frequency nearest f, with the inputs' measured errors.
+    public func inputWeights(_ m: InputMap, at f: Double) -> [[Complex]] {
+        let q = m.frequencies.indices.min { abs(m.frequencies[$0] - f) < abs(m.frequencies[$1] - f) } ?? 0
+        guard let e = m.error else { return m.weights[q] }
+        return m.weights[q].indices.map { i in m.weights[q][i].map { $0 * e[i] } }
+    }
+    /// A per-element row (what each element contributes at a point) as a per-channel row.
+    public func channelRow(_ row: [Complex], frequency f: Double) -> [Complex] {
+        guard let m = inputs else { return row }
+        return inputWeights(m, at: f).map { w in var v = Complex.zero; for e in row.indices { v += w[e] * row[e] }; return v }
+    }
+    /// A drive per channel as a velocity per element.
+    public func elementDrive(_ d: [Complex], frequency f: Double) -> [Complex] {
+        guard let m = inputs else { return d }
+        let w = inputWeights(m, at: f)
+        var out = [Complex](repeating: .zero, count: channels)
+        for i in d.indices where d[i] != .zero { for e in out.indices { out[e] += w[i][e] * d[i] } }
+        return out
+    }
+
     /// The same plates with resonant elements, each tuned to one of `tones`.
     /// Which tone an element gets is a hash of its place along the spiral
     /// (the fractional part of i·√2), so every tone's sub-array is spread

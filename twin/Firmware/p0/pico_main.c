@@ -1,9 +1,10 @@
 // P0 controller on an RP2350B board (48 GPIO): the board side of fcore.h.
 //
-// NOT COMPILED AND NOT RUN in this repository: no pico-sdk here and no board
-// yet. fcore.c is tested on a computer (sim_main.c, `fieldc p0 link`); this
-// file is the part that test cannot reach. First bench task: build it, then
-// check each numbered assumption below with an oscilloscope.
+// COMPILED, NEVER FLASHED OR RUN (FIRMWARE.md): it builds for the RP2350B with
+// the official SDK and toolchain, and no board has executed it. fcore.c is
+// tested on a computer (sim_main.c, `fieldc p0 link`); this file is the part
+// that test cannot reach. First bench task: check each numbered assumption
+// below with an oscilloscope.
 //
 // Pins:  GPIO0–31   drive outputs, channel = GPIO number (0–15 lower plate, 16–31 upper)
 //        GPIO40     ADC0: the probe receiver between this pin and GND (wire gate 32);

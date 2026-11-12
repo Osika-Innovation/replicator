@@ -15,6 +15,12 @@ import Metal
 public final class ArrayFieldGPU: ForceCompiler.ForceField {
     public let lattice: FieldLattice
     public let channels: Int
+    /// Radiating elements (or surface patches); equal to `channels` unless
+    /// the array is a body driven through a few inputs.
+    public let elementCount: Int
+    /// A body's response, [tone][input][element]: surface velocity per unit
+    /// input drive (`PlateArray.inputs`). nil = one channel per element.
+    public let mix: [[[Complex]]]?
     public let frequencies: [Double]
     public let medium: Medium
     public var toneCount: Int { frequencies.count }
@@ -46,7 +52,9 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
                 lattice: FieldLattice, curve: Bool = false, equalise: Double? = nil) throws {
         self.ctx = ctx; self.lattice = lattice; self.frequencies = frequencies; self.medium = medium
         let els = array.elements()
-        self.channels = els.count
+        self.elementCount = els.count
+        self.channels = array.driveChannels
+        self.mix = array.inputs.map { m in frequencies.map { array.inputWeights(m, at: $0) } }
         self.walls = array.walls
         self.gain = array.gains(frequencies, curve: curve, equalise: equalise)
         let recs: [ElementPF] = els.map { e in
@@ -85,7 +93,7 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
     func params(tone t: Int, points n: Int) -> ArrParams {
         let f = frequencies[t]
         let k = medium.wavenumber(at: f)
-        return ArrParams(pointCount: UInt32(n), elementCount: UInt32(channels), order: Int32(walls.order),
+        return ArrParams(pointCount: UInt32(n), elementCount: UInt32(elementCount), order: Int32(walls.order),
                          k: Float(k), prefactorMag: Float(medium.density * medium.soundSpeed * k / (2 * .pi)),
                          alpha: Float(medium.absorption(at: f)), capSeparation: Float(walls.capSeparation),
                          reflection: Float(walls.reflectionCoefficient))
@@ -95,8 +103,8 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
     public func fields(_ sent: [Complex], tone t: Int, points: [SIMD4<Float>]) throws -> [Complex] {
         precondition(sent.count == channels)
         let drive = playable(sent, tone: t)
-        let dp = driveBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: channels)
-        for e in 0..<channels { dp[e] = SIMD2(Float(drive[e].re), Float(drive[e].im)) }
+        let dp = driveBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: elementCount)
+        for e in 0..<elementCount { dp[e] = SIMD2(Float(drive[e].re), Float(drive[e].im)) }
         var out = [Complex](repeating: .zero, count: points.count * 4)
         var start = 0
         while start < points.count {
@@ -123,9 +131,22 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
     }
 
     /// What the elements make of a tone's drive (their velocities).
-    public func playable(_ drive: [Complex], tone t: Int) -> [Complex] {
+    public func playable(_ sent: [Complex], tone t: Int) -> [Complex] {
+        var drive = sent
+        if let m = mix?[t] {                                     // a few inputs → the whole surface
+            drive = [Complex](repeating: .zero, count: elementCount)
+            for i in sent.indices where sent[i] != .zero { for e in 0..<elementCount { drive[e] += m[i][e] * sent[i] } }
+        }
         guard let g = gain?[t] else { return drive }
         return drive.indices.map { drive[$0] * g[$0] }
+    }
+
+    /// An element-wise gradient brought back to the drive channels.
+    func channelGradient(_ grad: [Complex], tone t: Int) -> [Complex] {
+        var g = grad
+        if let gn = gain?[t] { g = g.indices.map { g[$0] * gn[$0].conjugate } }
+        guard let m = mix?[t] else { return g }
+        return m.map { row in var v = Complex.zero; for e in 0..<elementCount { v += row[e].conjugate * g[e] }; return v }
     }
 
     public var entries: Int {
@@ -134,14 +155,15 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
     }
 
     public func limited(_ drives: [[Complex]]) -> [[Complex]] {
-        guard let gain else { return drives }
+        guard gain != nil || amplitudeCap != nil else { return drives }
+        func plays(_ t: Int, _ e: Int) -> Bool { gain.map { $0[t][e] != .zero } ?? true }
         // An entry an element cannot play is not part of the drive.
         var g = drives
-        for t in g.indices { for e in g[t].indices where gain[t][e] == .zero { g[t][e] = .zero } }
+        for t in g.indices { for e in g[t].indices where !plays(t, e) { g[t][e] = .zero } }
         guard let cap = amplitudeCap else { return g }
         for _ in 0..<3 {
             var sum = 0.0, count = 0
-            for t in g.indices { for e in g[t].indices where gain[t][e] != .zero { sum += g[t][e].magnitudeSquared; count += 1 } }
+            for t in g.indices { for e in g[t].indices where plays(t, e) { sum += g[t][e].magnitudeSquared; count += 1 } }
             let lim = cap * (sum / Double(max(1, count))).squareRoot()
             for t in g.indices { for e in g[t].indices {
                 let m = g[t][e].magnitude
@@ -182,9 +204,7 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
                     A[b + c] = SIMD2(Float(ac.re), Float(ac.im))
                 }
             }
-            let grad = try! adjointPass(A: A, points: pts, tone: t)
-            guard let g = gain?[t] else { return grad }
-            return grad.indices.map { grad[$0] * g[$0].conjugate }
+            return channelGradient(try! adjointPass(A: A, points: pts, tone: t), tone: t)
         }
     }
 
@@ -214,10 +234,10 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
 
     /// Σ over points of conj(G_e)·A per element (see `arrayAdjoint`).
     func adjointPass(A: [SIMD2<Float>], points: [SIMD4<Float>], tone t: Int) throws -> [Complex] {
-        var grad = [Complex](repeating: .zero, count: channels)
+        var grad = [Complex](repeating: .zero, count: elementCount)
         // The kernel skips an element whose gain at this tone is zero.
-        let gp = driveBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: channels)
-        for e in 0..<channels {
+        let gp = driveBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: elementCount)
+        for e in 0..<elementCount {
             let g = gain?[t][e] ?? .one
             gp[e] = SIMD2(Float(g.re), Float(g.im))
         }
@@ -229,7 +249,7 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
             let ap = aBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: n * 4)
             for i in 0..<(n * 4) { ap[i] = A[start * 4 + i] }
             var P = params(tone: t, points: n)
-            try ctx.dispatchGroups("arrayAdjoint", groups: channels, threads: 256) { enc in
+            try ctx.dispatchGroups("arrayAdjoint", groups: elementCount, threads: 256) { enc in
                 enc.setBuffer(gradBuf, offset: 0, index: 0)
                 enc.setBuffer(elementBuffer, offset: 0, index: 1)
                 enc.setBuffer(aBuf, offset: 0, index: 2)
@@ -237,8 +257,8 @@ public final class ArrayFieldGPU: ForceCompiler.ForceField {
                 enc.setBytes(&P, length: MemoryLayout<ArrParams>.stride, index: 4)
                 enc.setBuffer(driveBuf, offset: 0, index: 5)
             }
-            let h = gradBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: channels)
-            for e in 0..<channels { grad[e] += Complex(Double(h[e].x), Double(h[e].y)) }
+            let h = gradBuf.contents().bindMemory(to: SIMD2<Float>.self, capacity: elementCount)
+            for e in 0..<elementCount { grad[e] += Complex(Double(h[e].x), Double(h[e].y)) }
             start += n
         }
         return grad

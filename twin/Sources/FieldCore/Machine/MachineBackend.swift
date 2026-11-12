@@ -77,7 +77,19 @@ public struct EmulatedBackend: MachineBackend {
     /// elements', gate `array.channels + i`. They hear the pressure (Pa) at
     /// their point; a stream for this machine carries a (zero) drive for them.
     public var probes: [Vec3] = []
-    public var channels: Int { array.channels + probes.count }
+    /// Which way each probe faces (unit vector); empty or zero = a point
+    /// microphone that hears every direction alike. A 40 kHz receiver can is
+    /// not that: it hears what it faces.
+    public var probeFacing: [Vec3] = []
+    /// A facing probe's response to sound from an angle (cosine to its axis)
+    /// at wavenumber k. The default is a can a little larger than its
+    /// drawing with a phase that turns off-axis and 5 % from behind — what a
+    /// calibrator does not know about its receiver.
+    public var probeResponse: @Sendable (_ cosine: Double, _ k: Double) -> Complex = { c, k in
+        let d = Propagator.pistonDirectivity(k: k, a: 5.4e-3, cosTheta: abs(c))
+        return Complex.expi(0.4 * (1 - c)) * (c > 0 ? d : 0.05 * d)
+    }
+    public var channels: Int { array.driveChannels + probes.count }
     /// Pulse-width drive, as the P0 controller makes it (Firmware/p0/fcore.c):
     /// each channel is high for a whole number of `steps` per period, so its
     /// amplitude sin(π w / steps) × `full` and its phase come in steps. nil =
@@ -224,17 +236,27 @@ public struct EmulatedBackend: MachineBackend {
         for fr in sent.frames {
             var tones: [PortRecords.Tone] = []
             for tone in fr.tones where !fr.rxGates.isEmpty {
-                let d = tone.drive.prefix(array.channels).map(pulsed)
+                let d = array.elementDrive(tone.drive.prefix(array.driveChannels).map(pulsed), frequency: tone.frequency)
                 let key = tone.frequency.bitPattern
-                let onElements = fr.rxGates.contains { $0 < array.channels }
+                let onElements = array.inputs == nil && fr.rxGates.contains { $0 < array.channels }
                 if onElements, transfers[key] == nil { transfers[key] = transfer(frequency: tone.frequency) }
                 let sc = onElements ? echo(frequency: tone.frequency, drive: d) : []
                 let g = gains(tone.frequency)
                 var rec = fr.rxGates.map { e -> Complex in
-                    if e >= array.channels {                      // a probe: the pressure at its point
-                        let row = array.reference(frequency: tone.frequency, medium: medium).gateRow(at: probes[e - array.channels])
+                    if e >= array.driveChannels {                 // a probe: the pressure at its point
+                        let row = array.reference(frequency: tone.frequency, medium: medium).gateRow(at: probes[e - array.driveChannels])
+                        let i = e - array.driveChannels
+                        let facing = i < probeFacing.count ? probeFacing[i] : Vec3(0, 0, 0)
+                        let k = medium.wavenumber(at: tone.frequency), els = facing.length > 0 ? array.elements() : []
                         var p = Complex.zero
-                        for t in 0..<d.count { p += row[t] * d[t] * (g?[t] ?? .one) }
+                        for t in 0..<d.count {
+                            var v = row[t] * d[t] * (g?[t] ?? .one)
+                            if facing.length > 0 {
+                                let to = els[t].position - probes[i]
+                                v = v * probeResponse(to.dot(facing) / max(to.length * facing.length, 1e-12), k)
+                            }
+                            p += v
+                        }
                         return p
                     }
                     var v = sc[e]

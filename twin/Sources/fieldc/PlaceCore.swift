@@ -49,7 +49,7 @@ struct PlaceRig {
     init(ctx: MetalContext, array: PlateArray, freqs: [Double], half: Double = 12e-3, particle: ParticleMaterial = .pla()) throws {
         self.particle = particle
         // Resonant elements play the plate's own tones, whatever chord is asked for.
-        let freqs = array.tones ?? freqs
+        let freqs = array.tones ?? array.inputs?.frequencies ?? freqs
         self.ctx = ctx; self.array = array; self.freqs = freqs
         lam40 = air.wavelength(at: 40_000)
         let h = air.wavelength(at: freqs.max()!) / 8
@@ -57,7 +57,7 @@ struct PlaceRig {
         let hh = Double(n - 1) / 2 * h
         lattice = FieldLattice(origin: array.centre - Vec3(hh, hh, hh), spacing: h, nx: n, ny: n, nz: n)
         field = try ArrayFieldGPU(ctx: ctx, array: array, frequencies: freqs, medium: air, lattice: lattice)
-        if array.toneOf != nil { field.amplitudeCap = 1.25 }      // resonant elements share one velocity ceiling
+        if array.toneOf != nil || array.inputs != nil { field.amplitudeCap = 1.25 }   // channels share one drive ceiling
         options.shellSteps = max(2, Int((air.wavelength(at: 50_000) / 4 / h).rounded()))
         options.perToneStarts = false
     }
@@ -66,6 +66,10 @@ struct PlaceRig {
     /// element is asked for ÷ what it can give.
     func elementGate(_ drives: [[Complex]], power: Double, label: String) -> GateResult {
         let s = power.squareRoot()
+        if let m = array.inputs {                                // a body: each input against its own limit
+            let ask = drives.flatMap { d in d.indices.map { d[$0].magnitude * s / m.maxDrive[$0] } }.max() ?? 0
+            return GateResult(id: "G-E1", name: "input drive (\(label)): the most any input is asked for ÷ its limit", measured: ask, threshold: 1, detail: "\(m.plateOf.count) inputs")
+        }
         return ElementGates.drive(amplitudes: drives.map { $0.map { $0.magnitude * s } }, frequencies: freqs,
                                   pistonRadius: { array.pistonRadius($0) }, spec: { e, _ in array.spec(e, medium: air) },
                                   medium: air, label: label)[0]
@@ -82,8 +86,8 @@ struct PlaceRig {
     /// levitator), unit total power over the chord.
     func nodeStart(at x: Vec3) -> [[Complex]] {
         freqs.map { f in
-            let r = array.reference(frequency: f, medium: air).gateGradientRows(at: x).p
-            var g = r.enumerated().map { e, v in v.conjugate * (e < array.perPlate ? 1.0 : -1.0) }
+            let r = array.channelRow(array.reference(frequency: f, medium: air).gateGradientRows(at: x).p, frequency: f)
+            var g = r.enumerated().map { e, v in v.conjugate * (array.plate(of: e) == 0 ? 1.0 : -1.0) }
             let nrm = g.reduce(0.0) { $0 + $1.magnitudeSquared }.squareRoot()
             g = g.map { $0 * (1 / (max(nrm, 1e-300) * Double(freqs.count).squareRoot())) }
             return g
@@ -97,7 +101,7 @@ struct PlaceRig {
     func steer(_ drives: [[Complex]], from a: Vec3, to b: Vec3) -> [[Complex]] {
         freqs.indices.map { t in
             let ref = array.reference(frequency: freqs[t], medium: air)
-            let ra = ref.gateGradientRows(at: a).p, rb = ref.gateGradientRows(at: b).p
+            let ra = array.channelRow(ref.gateGradientRows(at: a).p, frequency: freqs[t]), rb = array.channelRow(ref.gateGradientRows(at: b).p, frequency: freqs[t])
             return drives[t].indices.map { e in
                 let turn = rb[e].conjugate * ra[e]
                 let m = turn.magnitude
@@ -161,7 +165,7 @@ enum PlaceCommand {
     /// The bead a machine is asked to place: P0's is watched by eye and
     /// camera, so expanded polystyrene; the RH-1's is the spec's PLA bead.
     static func bead(_ a: PlateArray) -> (name: String, material: ParticleMaterial) {
-        a.tag.hasPrefix("p0") ? ("Ø1.5 mm EPS", .eps(radius: 0.75e-3)) : ("200 µm PLA", .pla())
+        a.tag.hasPrefix("p0") || a.inputs != nil ? ("Ø1.5 mm EPS", .eps(radius: 0.75e-3)) : ("200 µm PLA", .pla())
     }
 
     static let spread10 = (0..<10).map { 30_000 + 40_000 * (Double($0) + 0.5) / 10 }

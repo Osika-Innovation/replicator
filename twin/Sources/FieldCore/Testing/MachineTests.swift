@@ -178,7 +178,11 @@ extension CoreTests {
             var m = EmulatedBackend(array: drawn.asBuilt(tol, seed: 3), band: [39_000, 41_000])
             m.probes = [drawn.centre]
             t.check(m.describe().channels == drawn.channels + 1, "the probe is a channel")
-            let r = try! Calibration.run(&m, array: drawn, medium: air, probe: drawn.centre, probeGate: drawn.channels, velocity: 0.2, date: "")
+            // A can exactly as the calibrator draws it: a piston of 5 mm, deaf behind.
+            m.probeResponse = { c, k in Complex(c > 0 ? Propagator.pistonDirectivity(k: k, a: 5e-3, cosTheta: c) : 0, 0) }
+            let r = try! Calibration.run(&m, array: drawn, medium: air, probe: drawn.centre, probeGate: drawn.channels, velocity: 0.2, date: "") { pass, b in
+                b.probeFacing = [Vec3(0, 0, pass == 0 ? -1 : 1)]
+            }
             let truth = m.array.channelError!
             for plate in [0..<drawn.perPlate, drawn.perPlate..<drawn.channels] {
                 let mean = plate.reduce(Complex.zero) { $0 + truth[$1] } * (1 / Double(plate.count))

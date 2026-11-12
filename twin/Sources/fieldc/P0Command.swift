@@ -62,9 +62,21 @@ enum P0Command {
             switch args.dropFirst().first {
             case "link": return try link(args, t0)
             case "job": return try job(args, t0)
+            case "matrix": return try matrix(args, t0)
+            case "body":
+                // fieldc p0 body [--out dir]: write the two reference body-response files.
+                let dir = URL(fileURLWithPath: MachineCommand.arg(args, "--out") ?? "Design/bodies")
+                try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                let enc = JSONEncoder(); enc.outputFormatting = [.sortedKeys]
+                for b in [BodyResponse.p0Identity(), BodyResponse.threeInputDemo()] {
+                    try b.validate()
+                    try enc.encode(b).write(to: dir.appendingPathComponent(b.name + ".json"))
+                    print("wrote \(dir.path)/\(b.name).json: \(b.inputs.count) inputs, \(b.patches.count) patches [\(b.provenance.status)]")
+                }
+                return 0
             case "cad": return try cad(args, t0)
             default:
-                print("usage: fieldc p0 cad [--out dir] | link | job [--port /dev/cu.usbmodem…] [--gap mm] [--out dir] [--receipt]")
+                print("usage: fieldc p0 cad [--out dir] | link | matrix | body | job [--body file.json] [--port /dev/cu.usbmodem…] [--gap mm] [--out dir] [--receipt]")
                 return 2
             }
         } catch { print("p0: \(error)"); return 1 }
@@ -102,19 +114,16 @@ enum P0Command {
         func worst(_ r: Calibration.Record) -> (Double, Double) {
             var da = 0.0, dp = 0.0
             for c in 0..<n {
-                let plate = c < n / 2 ? 0..<(n / 2) : (n / 2)..<n
-                let mean = plate.reduce(Complex.zero) { $0 + truth[$1] } * (1 / Double(plate.count))
+                let mean = truth.reduce(Complex.zero, +) * (1 / Double(n))     // a point microphone: one normalisation
                 let t = truth[c] * mean.conjugate * (1 / mean.magnitudeSquared), q = r.errors[c] * t.conjugate * (1 / t.magnitudeSquared)
                 da = max(da, abs(q.magnitude - 1)); dp = max(dp, abs(atan2(q.im, q.re)) * 180 / Double.pi)
             }
             return (da, dp)
         }
         let date = ISO8601DateFormatter().string(from: Date())
-        let calEmu = try Calibration.run(&emu, array: drawn, medium: air, probe: drawn.centre, probeGate: probeGate, velocity: calibrationVelocity, date: date)
-        let calHW = try Calibration.run(&hw, array: drawn, medium: air, probe: drawn.centre, probeGate: probeGate, velocity: calibrationVelocity, date: date)
+        let calEmu = try Calibration.run(&emu, array: drawn, medium: air, probe: drawn.centre, probeGate: probeGate, velocity: calibrationVelocity, date: date, kind: .point)
+        let calHW = try Calibration.run(&hw, array: drawn, medium: air, probe: drawn.centre, probeGate: probeGate, velocity: calibrationVelocity, date: date, kind: .point)
         let (ea, ep) = worst(calEmu), (ha, hp) = worst(calHW)
-        let lowerMean = (0..<(n / 2)).reduce(Complex.zero) { $0 + truth[$1] }, upperMean = ((n / 2)..<n).reduce(Complex.zero) { $0 + truth[$1] }
-        let between = atan2((upperMean * lowerMean.conjugate).im, (upperMean * lowerMean.conjugate).re) * 180 / Double.pi
         let sameBytes = (try FCodeWire.encode(program)) == Array(emu.frameLog.prefix(try FCodeWire.encode(program).count))
         let gates = [
             GateResult(id: "G-HW1", name: "the controller's records vs the emulated machine's, calibration program (amplitude, fraction)",
@@ -123,8 +132,8 @@ enum P0Command {
                                       n, worstDeg, 16, pulseSteps, sameBytes ? "byte for byte" : "NOT")),
             GateResult(id: "G-HW2", name: "the controller's records vs the emulated machine's (phase, degrees)", measured: worstDeg, threshold: 1.0, detail: ""),
             GateResult(id: "G-HW3", name: "calibration through the link finds each channel's phase at the probe (degrees, worst channel)", measured: hp, threshold: 1,
-                       detail: String(format: "build: %@; through the link gain within %.2f %%, phase within %.2f°; through the emulator %.2f %%, %.2f°. One microphone at one point: an element's misplacement is found as phase there, not as position. Not found: the phase between the plates, %.1f° on this build (%.2f mm of trap height)",
-                                      Self.build.text, 100 * ha, hp, 100 * ea, ep, between, abs(between) / 360 * 4.29)),
+                       detail: String(format: "build: %@; through the link gain within %.2f %%, phase within %.2f°; through the emulator %.2f %%, %.2f°. One microphone at one point: an element's misplacement is found as phase there, not as position. The link test uses a point microphone, which hears both plates",
+                                      Self.build.text, 100 * ha, hp, 100 * ea, ep)),
         ]
         for g in gates { print(g.line) }
         if args.contains("--receipt") {
@@ -169,34 +178,102 @@ enum P0Command {
         return up > 0 ? Plan(carry: c, holding: c.rig.particle.mass() * 9.81 / up) : nil
     }
 
-    /// The gentlest job the machine's own model says will carry the bead:
-    /// the model is the plates as calibrated, played through the same pulse
-    /// widths. Tried in order of drive, then of patience. nil = none does.
-    static func choose(_ ctx: MetalContext, _ plan: Plan, model: EmulatedBackend, machine m: MachineDescription)
+    /// A machine as the bench simulation needs it: the drawing, how a real
+    /// one differs from it, and what the planner may assume it has not seen.
+    struct Setup {
+        var drawn: PlateArray
+        /// One real machine (held-out truth), by seed.
+        var truth: (UInt64) -> PlateArray
+        /// A copy of the calibrated model moved by what calibration cannot
+        /// see, the upper plate turned by `turn` degrees.
+        var copy: (_ calibrated: PlateArray, _ seed: UInt64, _ turn: Double) -> PlateArray
+        /// Full drive of one channel, in the drive's unit, and the drive calibration plays.
+        var full: Double, calibration: Double
+        var pulse: (steps: Int, full: Double)?
+        var buildText: String
+
+        static func turned(_ a: PlateArray, _ degrees: Double) -> PlateArray {
+            var a = a
+            let t = Complex.expi(degrees * Double.pi / 180), n = a.driveChannels
+            if a.inputs != nil {
+                var e = a.inputs!.error ?? [Complex](repeating: .one, count: n)
+                for c in 0..<n where a.plate(of: c) == 1 { e[c] = e[c] * t }
+                a.inputs!.error = e
+            } else if var e = a.channelError {
+                for c in 0..<n where a.plate(of: c) == 1 { e[c] = e[c] * t }
+                a.channelError = e
+            }
+            return a
+        }
+
+        static func plates(_ drawn: PlateArray) -> Setup {
+            Setup(drawn: drawn, truth: { drawn.asBuilt(build, seed: $0) },
+                  copy: { cal, seed, turn in turned(seed == 0 ? cal : cal.asBuilt(unseen, seed: seed), turn) },
+                  full: fullVelocity, calibration: calibrationVelocity, pulse: (pulseSteps, fullVelocity), buildText: build.text)
+        }
+
+        /// A body file: the real body is one draw of the file's uncertainty.
+        /// A copy is another draw, each input rescaled so that at the
+        /// microphone's first point it does what calibration measured: what
+        /// stays unseen is the shape of each input's pattern, not its size.
+        static func body(_ b: BodyResponse) -> Setup {
+            let full = b.inputs.map(\.maxDrive).min() ?? 1
+            let drawn = b.array(), f = b.frequencies[0]
+            let raw = drawn.reference(frequency: f, medium: air).gateRow(at: drawn.centre + probeOffsets(drawn)[0])
+            let nominal = drawn.channelRow(raw, frequency: f)
+            return Setup(drawn: drawn, truth: { b.array(seed: $0) },
+                         copy: { cal, seed, turn in
+                             var a = seed == 0 ? cal : b.array(seed: seed)
+                             if seed != 0 {
+                                 let here = a.channelRow(raw, frequency: f), measured = cal.inputs?.error ?? [Complex](repeating: .one, count: nominal.count)
+                                 a.inputs!.error = nominal.indices.map { i in
+                                     here[i].magnitudeSquared > 0 ? measured[i] * nominal[i] * here[i].conjugate * (1 / here[i].magnitudeSquared) : measured[i]
+                                 }
+                             }
+                             return turned(a, turn)
+                         },
+                         full: full, calibration: 0.05 * full, pulse: nil,
+                         buildText: String(format: "body %@ (%@): every response entry ±%.0f %%, ±%.0f°", b.name, b.provenance.status, 100 * b.uncertainty.gain, b.uncertainty.phaseDegrees))
+        }
+    }
+
+    /// Where the microphone goes, from the centre: one point for plates; for a
+    /// body two, so that an input silent on the axis is still heard.
+    static func probeOffsets(_ a: PlateArray) -> [Vec3] { a.inputs == nil ? [Vec3(0, 0, 0)] : [Vec3(4e-3, 3e-3, 0), Vec3(0, 0, 0)] }
+
+    /// The planner's policy, frozen as "P0-planner/1" (2026-11-12). It sees
+    /// the drawing, the calibration record and these constants — never the
+    /// emulated build's own errors. It tries drive levels in this order, then
+    /// step times, and takes the first job that (a) asks no element for more
+    /// than `ceiling` of full drive, (b) carries the bead on the calibrated
+    /// model with its travel within `modelBar`, and (c) still carries it
+    /// within `copyBar` on two copies of that model moved by what the
+    /// calibration cannot see: every element ±0.2 mm, and the upper plate
+    /// turned against the lower by ±15° (±5° when a reference pass measured
+    /// the plates' ratio). No job passing all three: it plays nothing.
+    enum Planner {
+        static let name = "P0-planner/1"
+        static let levels = [4.0, 6, 8], steps = [0.04, 0.08]
+        static let modelBar = 0.25e-3, copyBar = 0.5e-3
+        static func turn(referenced: Bool) -> Double { referenced ? 5 : 15 }
+    }
+
+    static func choose(_ ctx: MetalContext, _ plan: Plan, calibrated: PlateArray, setup: Setup, machine m: MachineDescription, referenced: Bool = false)
         throws -> (job: FCodeFile, hardest: Double, level: Double, step: Double, predicted: Double)? {
-        // From 4× holding: a 2× job passed its models and lost the bead on one emulated build.
-        for level in [4.0, 6, 8] { for step in [0.04, 0.08] {
+        let turn = Planner.turn(referenced: referenced)
+        for level in Planner.levels { for step in Planner.steps {
             let c = plan.stream(m, level: level, step: step)
-            guard c.hardest < ceiling * fullVelocity else { continue }
-            // …on the model, and on two copies of it with what the calibration
-            // cannot see: the elements moved ±0.2 mm, and the upper plate
-            // 15° ahead of or behind the lower.
+            guard c.hardest < ceiling * setup.full else { continue }
             var worst = 0.0
-            for (seed, turn) in [(UInt64(0), 0.0), (101, 15), (102, -15)] {
-                var a = seed == 0 ? model.array : model.array.asBuilt(unseen, seed: seed)
-                if turn != 0, var e = a.channelError {
-                    for c in a.perPlate..<a.channels { e[c] = e[c] * Complex.expi(turn * Double.pi / 180) }
-                    a.channelError = e
-                }
-                var m2 = EmulatedBackend(array: a, band: model.band)
-                m2.pulse = model.pulse
+            for (seed, turn) in [(UInt64(0), 0.0), (101, turn), (102, -turn)] {
+                var m2 = EmulatedBackend(array: setup.copy(calibrated, seed, turn), band: m.band)
+                m2.pulse = setup.pulse
                 let r = try ride(ctx, c.job, path: plan.path, step: step, on: m2)
                 if ProcessInfo.processInfo.environment["FIELDC_VERBOSE"] != nil {
-                    print(String(format: "  plan %.0f× %.0f ms, hardest %.2f, variant %d (%+.0f°): %@", level, step * 1000, c.hardest / fullVelocity, Int(seed), turn,
+                    print(String(format: "  plan %.0f× %.0f ms, hardest %.2f, copy %d (%+.0f°): %@", level, step * 1000, c.hardest / setup.full, Int(seed), turn,
                                  r.map { String(format: "travel error %.2f mm, absolute %.2f, lag %.2f", $0.end * 1000, $0.absolute * 1000, $0.worst * 1000) } ?? "left the trap"))
                 }
-                // The model itself with margin; a copy within the acceptance bar.
-                guard let r, r.end < (seed == 0 ? 0.25e-3 : 0.5e-3) else { worst = .infinity; break }
+                guard let r, r.end < (seed == 0 ? Planner.modelBar : Planner.copyBar) else { worst = .infinity; break }
                 worst = max(worst, r.end)
             }
             if worst.isFinite { return (c.job, c.hardest, level, step, worst) }
@@ -226,7 +303,7 @@ enum P0Command {
         let rig = try PlaceRig(ctx: ctx, array: machine.array, freqs: [40_000], particle: PlaceCommand.bead(machine.array).material)
         let (fb, field) = try box(path, rig)
         let Us = sent.frames.dropLast().map { fr in
-            field.potential([fr.tones[0].drive.prefix(machine.array.channels).map(machine.pulsed)], particle: rig.particle)
+            field.potential([fr.tones[0].drive.prefix(machine.array.driveChannels).map(machine.pulsed)], particle: rig.particle)
         }
         let r = PlaceCommand.ride(Us: Us, lattice: fb, path: path, power: 1, stepTime: step, particle: rig.particle, settling: rig.settling)
         return r.escaped ? nil : (((r.end - r.start) - (path.last! - path[0])).length, r.worst, (r.end - path.last!).length)
@@ -236,7 +313,15 @@ enum P0Command {
     /// --port. The same calls either way; on the bench the camera judges.
     static func job(_ args: [String], _ t0: Date) throws -> Int32 {
         let ctx = try MetalContext()
-        let drawn = plateArray(["--array", "p0"] + args), n = drawn.channels
+        // --body file.json: a body-response file stands in for the plates.
+        let setup: Setup
+        if let path = MachineCommand.arg(args, "--body") {
+            guard let data = FileManager.default.contents(atPath: path) else { print("cannot read \(path)"); return 2 }
+            let b = try BodyResponse.read(data)
+            print("body \(b.name) [\(b.provenance.status)]: \(b.inputs.count) inputs (\(b.driveUnit)), \(b.patches.count) patches, \(b.frequencies.count) frequency; \(b.provenance.note)")
+            setup = .body(b)
+        } else { setup = .plates(plateArray(["--array", "p0"] + args)) }
+        let drawn = setup.drawn, n = drawn.driveChannels
         let date = ISO8601DateFormatter().string(from: Date())
         let out = MachineCommand.arg(args, "--out").map { URL(fileURLWithPath: $0) }
         func save(_ cal: Calibration.Record, _ job: FCodeFile) throws {
@@ -251,50 +336,173 @@ enum P0Command {
             var hw = try SerialBackend(port: port)
             let d = hw.describe()
             print("\(d.name): \(d.channels) channels, air \(d.temperature ?? .nan) °C, supply \(d.supply ?? .nan) V")
-            let cal = try Calibration.run(&hw, array: drawn, medium: air, probe: drawn.centre, probeGate: n, velocity: calibrationVelocity, date: date) { pass in
-                print(pass == 0 ? "fit the probe bar on its spacers, receiver facing DOWN, then press return"
-                                : "turn the bar over, without the spacers, receiver facing UP, then press return")
+            let cal = try Calibration.run(&hw, array: drawn, medium: air, probe: drawn.centre, probeGate: n, velocity: setup.calibration, date: date, reference: true) { pass, _ in
+                print(["fit the probe bar on its spacers, receiver facing DOWN, then press return",
+                       "turn the bar over, without the spacers, receiver facing UP, then press return",
+                       "lay the receiver on its side on the mid-plane, facing +x, then press return"][pass])
                 _ = readLine()
             }
             let worstDeg = cal.errors.map { abs(atan2($0.im, $0.re)) * 180 / Double.pi }.max() ?? 0
             print(String(format: "calibrated: gains %.2f–%.2f of their mean, phases within %.0f° of it", cal.errors.map(\.magnitude).min() ?? 0, cal.errors.map(\.magnitude).max() ?? 0, worstDeg))
             print("remove the probe, then press return to play the job"); _ = readLine()
-            var model = EmulatedBackend(array: drawn.calibrated(cal), band: d.band)
-            model.probes = [drawn.centre]; model.pulse = (pulseSteps, fullVelocity)
-            guard let pl = try plan(ctx, on: model.array), let p = try choose(ctx, pl, model: model, machine: d) else { print("no job the model carries"); return 1 }
+            let calibrated = drawn.calibrated(cal)
+            guard let pl = try plan(ctx, on: calibrated), let p = try choose(ctx, pl, calibrated: calibrated, setup: setup, machine: d, referenced: cal.plateRatio != nil) else { print("no job the model carries"); return 1 }
             try save(cal, p.job)
             _ = try hw.play(p.job)
             print(String(format: "played: %d frames at %.0f× holding, %.0f ms per step, hardest element at %.2f of full drive; the model predicts the bead %.2f mm from the drop-off. The camera record judges it (P0 acceptance protocol).",
-                         p.job.frames.count, p.level, p.step * 1000, p.hardest / fullVelocity, p.predicted * 1000))
+                         p.job.frames.count, p.level, p.step * 1000, p.hardest / setup.full, p.predicted * 1000))
             return 0
         }
-        var emu = machine(args, seed: MachineCommand.arg(args, "--seed").flatMap(UInt64.init) ?? 7)
-        let cal = try Calibration.run(&emu, array: drawn, medium: air, probe: drawn.centre, probeGate: n, velocity: calibrationVelocity, date: date)
-        var model = EmulatedBackend(array: drawn.calibrated(cal), band: emu.band)
-        model.probes = emu.probes; model.pulse = emu.pulse
-        guard let pl = try plan(ctx, on: model.array), let p = try choose(ctx, pl, model: model, machine: emu.describe()),
-              let rawPlan = try plan(ctx, on: drawn) else { print("no job the model carries"); return 1 }
-        let raw = rawPlan.stream(emu.describe(), level: p.level, step: p.step)
-        try save(cal, p.job)
-        _ = try emu.play(p.job)
-        let rode = try ride(ctx, p.job, path: pl.path, step: p.step, on: emu), rodeRaw = try ride(ctx, raw.job, path: rawPlan.path, step: p.step, on: emu)
-        func text(_ r: (end: Double, worst: Double, absolute: Double)?) -> String {
-            r.map { String(format: "travel off by %.2f mm; %.2f mm from the drawing's drop-off; worst lag %.2f mm", $0.end * 1000, $0.absolute * 1000, $0.worst * 1000) } ?? "the bead left the trap"
+        let o = Options(args)
+        guard let r = try simulate(ctx, setup, seed: MachineCommand.arg(args, "--seed").flatMap(UInt64.init) ?? 7, o, save: save) else { return 1 }
+        guard let level = r.level else { print("no job the model carries (\(Planner.name)); calibration left the plates \(String(format: "%+.1f", r.betweenPlatesError))° apart"); return 1 }
+        func text(_ t: Double?, _ a: Double?) -> String {
+            t.map { String(format: "travel off by %.2f mm; %.2f mm from the drawing's drop-off", $0 * 1000, (a ?? .nan) * 1000) } ?? "the bead left the trap"
         }
         let gates = [
             GateResult(id: "G-P0a", name: "hold, 5 mm up, 5 mm across, hold: a \(PlaceCommand.bead(drawn).name) bead on the emulated build, job compiled on its calibration (its travel vs the travel asked, mm)",
-                       measured: rode.map { $0.end * 1000 } ?? .infinity, threshold: 0.5,
-                       detail: "\(drawn.tag), build: \(Self.build.text); \(String(format: "%.0f× holding, %.0f ms per 0.25 mm (chosen on the calibrated model and two copies with the elements moved ±0.2 mm and the plates ±15° apart; worst predicted travel error %.2f mm)", p.level, p.step * 1000, p.predicted * 1000)); 16-bit wire, pulse widths of \(pulseSteps) steps; \(text(rode))"),
-            GateResult(id: "G-P0b", name: "the job's hardest-driven element ÷ the transmitter's full drive", measured: p.hardest / fullVelocity, threshold: ceiling,
-                       detail: String(format: "%.2f m/s of %.2f (the datasheet level at a 0–15 V square wave); the bar is the datasheet's −3 dB unit", p.hardest, fullVelocity)),
+                       measured: r.travel.map { $0 * 1000 } ?? .infinity, threshold: 0.5,
+                       detail: "\(drawn.tag), build: \(setup.buildText); \(o.text); \(String(format: "%.0f× holding, %.0f ms per 0.25 mm (%@; worst predicted travel error %.2f mm)", level, (r.step ?? 0) * 1000, Planner.name, (r.predicted ?? .nan) * 1000)); 16-bit wire, pulse widths of \(pulseSteps) steps; \(text(r.travel, r.absolute))"),
+            GateResult(id: "G-P0b", name: "the job's hardest-driven channel ÷ its full drive", measured: (r.hardest ?? .infinity) / setup.full, threshold: ceiling,
+                       detail: String(format: "%.2f of %.2f%@; the bar is a −3 dB unit", r.hardest ?? .nan, setup.full, drawn.inputs == nil ? " m/s (the datasheet level at a 0–15 V square wave)" : " (the body file's input limit)")),
+            GateResult(id: "P0-ABS", name: "where the bead ends against the drawing's drop-off point (mm): placement, not travel", measured: r.absolute.map { $0 * 1000 } ?? .infinity,
+                       threshold: 0.5, comparison: .informational,
+                       detail: String(format: "calibration left the plates %+.1f° apart (about %.2f mm of height); the probe sat %.2f mm off the mid-plane", r.betweenPlatesError, abs(r.betweenPlatesError) / 360 * 4.29, o.probeOff * 1000)),
             GateResult(id: "P0-RAW", name: "control: the same job compiled on the drawing, uncalibrated, on the same build (travel error, mm)",
-                       measured: rodeRaw.map { $0.end * 1000 } ?? .infinity, threshold: 0.5, comparison: .informational, detail: text(rodeRaw)),
+                       measured: r.rawTravel.map { $0 * 1000 } ?? .infinity, threshold: 0.5, comparison: .informational, detail: text(r.rawTravel, nil)),
         ]
         for g in gates { print(g.line) }
         if args.contains("--receipt") {
             writeReceipt(Receipt(name: "p0-job-\(drawn.tag)", gates: gates, durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
         }
-        return gates.allSatisfy(\.passed) ? 0 : 1
+        return gates.filter { $0.comparison != .informational }.allSatisfy(\.passed) ? 0 : 1
+    }
+
+    /// How the emulated bench differs from the ideal: what listens, and what
+    /// goes wrong while it does.
+    struct Options {
+        var probe = Calibration.Probe.can(radius: 5e-3)
+        var reference = false
+        /// Receiver noise during calibration, dB below each record; nil = none.
+        var noise: Double? = nil
+        /// Air warming over the calibration passes, K in all.
+        var drift = 0.0
+        /// The probe's true height above the mid-plane (m) and its tilt on the side pass (degrees).
+        var probeOff = 0.0, tilt = 0.0
+        init(_ args: [String]) {
+            if MachineCommand.arg(args, "--probe") == "point" { probe = .point }
+            reference = args.contains("--reference")
+            noise = MachineCommand.arg(args, "--noise").flatMap(Double.init)
+            drift = MachineCommand.arg(args, "--drift").flatMap(Double.init) ?? 0
+            probeOff = (MachineCommand.arg(args, "--probe-off").flatMap(Double.init) ?? 0) * 1e-3
+            tilt = MachineCommand.arg(args, "--tilt").flatMap(Double.init) ?? 0
+        }
+        var text: String {
+            (probe == .point ? "point microphone, one pass" : "receiver can, one pass per plate" + (reference ? " and a side reference pass" : ""))
+                + (noise.map { String(format: ", noise %.0f dB down", $0) } ?? "") + (drift != 0 ? String(format: ", air %.1f K warmer by the last pass", drift) : "")
+                + (probeOff != 0 ? String(format: ", probe %.2f mm high", probeOff * 1000) : "") + (tilt != 0 ? String(format: ", tilted %.0f°", tilt) : "")
+        }
+    }
+
+    struct Outcome {
+        var level: Double?, step: Double?, hardest: Double?, predicted: Double?
+        var travel: Double?, absolute: Double?, rawTravel: Double?
+        /// Calibrated minus true phase of the upper plate against the lower, degrees.
+        var betweenPlatesError = 0.0
+        var spread: Double?
+    }
+
+    /// One emulated bench session: build → calibrate → plan → play → the bead.
+    /// The plan sees `drawn` and the calibration record; the build's own
+    /// errors are used only to radiate and to score.
+    static func simulate(_ ctx: MetalContext, _ setup: Setup, seed: UInt64, _ o: Options,
+                         save: (Calibration.Record, FCodeFile) throws -> Void = { _, _ in }) throws -> Outcome? {
+        let drawn = setup.drawn, n = drawn.driveChannels
+        let f0: Double = drawn.tones?.first ?? drawn.inputs?.frequencies.first ?? 40_000
+        var emu = EmulatedBackend(array: setup.truth(seed), name: "\(drawn.tag) (emulated build \(seed))", band: [f0 - 1000, f0 + 1000])
+        let offs = probeOffsets(drawn)
+        emu.probes = offs.map { drawn.centre + $0 + Vec3(0, 0, o.probeOff) }
+        emu.pulse = setup.pulse
+        emu.snrDB = o.noise
+        let passes = o.probe == .point ? 1.0 : (o.reference ? 3.0 : 2.0), c0 = emu.medium.soundSpeed
+        let cal = try Calibration.run(&emu, array: drawn, medium: air, probe: drawn.centre + offs[0], probeGate: n, velocity: setup.calibration,
+                                      date: ISO8601DateFormatter().string(from: Date()), kind: o.probe, reference: o.reference,
+                                      extra: offs.dropFirst().map { drawn.centre + $0 }) { pass, b in
+            let t = o.tilt * Double.pi / 180
+            b.probeFacing = o.probe == .point ? [] : [Vec3](repeating: [Vec3(0, 0, -1), Vec3(0, 0, 1), Vec3(cos(t), 0, sin(t))][pass], count: offs.count)
+            b.medium.soundSpeed = c0 * (1 + 0.00171 * o.drift * Double(pass) / max(1, passes - 1))   // 0.17 % per kelvin
+        }
+        emu.snrDB = nil; emu.medium.soundSpeed = c0
+        // Held-out truth, for scoring only: what each channel does at the drawing's centre.
+        var builtRow: [Complex] = emu.array.reference(frequency: f0, medium: air).gateRow(at: drawn.centre)
+        if let g = emu.array.gains([f0], curve: true)?[0] { for e in builtRow.indices { builtRow[e] = builtRow[e] * g[e] } }
+        let rowB: [Complex] = emu.array.channelRow(builtRow, frequency: f0)
+        let rowD: [Complex] = drawn.channelRow(drawn.reference(frequency: f0, medium: air).gateRow(at: drawn.centre), frequency: f0)
+        var up = Complex.zero, lo = Complex.zero
+        let loudest = rowD.map(\.magnitude).max() ?? 0
+        for c in 0..<n where rowD[c].magnitude > 0.1 * loudest {       // a channel silent at the centre says nothing here
+            let truth: Complex = rowB[c] * rowD[c].conjugate * (1 / rowD[c].magnitudeSquared)
+            let q: Complex = cal.errors[c] * truth.conjugate
+            if drawn.plate(of: c) == 0 { lo += q } else { up += q }
+        }
+        var out = Outcome()
+        out.betweenPlatesError = atan2((up * lo.conjugate).im, (up * lo.conjugate).re) * 180 / Double.pi
+        out.spread = cal.plateRatioSpreadDegrees
+        let calibrated = drawn.calibrated(cal)
+        guard let pl = try plan(ctx, on: calibrated) else { return nil }
+        guard let p = try choose(ctx, pl, calibrated: calibrated, setup: setup, machine: emu.describe(),
+                                 referenced: cal.plateRatio != nil || o.probe == .point) else { return out }
+        try save(cal, p.job)
+        _ = try emu.play(p.job)
+        let rode = try ride(ctx, p.job, path: pl.path, step: p.step, on: emu)
+        out.level = p.level; out.step = p.step; out.hardest = p.hardest; out.predicted = p.predicted
+        out.travel = rode?.end; out.absolute = rode?.absolute
+        if let rawPlan = try plan(ctx, on: drawn) {
+            out.rawTravel = try ride(ctx, rawPlan.stream(emu.describe(), level: p.level, step: p.step).job, path: rawPlan.path, step: p.step, on: emu)?.end
+        }
+        return out
+    }
+
+    /// `fieldc p0 matrix --gaps 45,46,47 --reflects 0,0.5,0.9 --seeds 7-12 [--order n] [--probe point] [--reference] …`
+    /// Every case under the frozen planner policy; one CSV row each.
+    static func matrix(_ args: [String], _ t0: Date) throws -> Int32 {
+        let ctx = try MetalContext()
+        func list(_ name: String, _ d: [Double]) -> [Double] { MachineCommand.arg(args, name)?.split(separator: ",").compactMap { Double($0) } ?? d }
+        let gaps = list("--gaps", [46]), reflects = list("--reflects", [0, 0.5, 0.9]), orders = list("--orders", [3])
+        let sr = MachineCommand.arg(args, "--seeds")?.split(separator: "-").compactMap { UInt64($0) } ?? [7, 12]
+        let o = Options(args)
+        var csv = "policy,gap_mm,reflection,image_order,seed,calibration,outcome,level,step_ms,hardest_of_full,predicted_travel_mm,travel_mm,absolute_mm,between_plates_deg,pair_spread_deg\n"
+        var pass = 0, lost = 0, refused = 0, travels: [Double] = [], absolutes: [Double] = [], between: [Double] = []
+        for gap in gaps { for R in reflects { for order in orders { for seed in sr[0]...sr[sr.count - 1] {
+            var d = P0Design(); d.gap = gap; d.reflection = R
+            var drawn = PlateArray.p0(d); drawn.imageOrder = Int(order)
+            guard let r = try simulate(ctx, .plates(drawn), seed: seed, o) else { continue }
+            let outcome = r.level == nil ? "refused" : (r.travel.map { $0 < 0.5e-3 ? "pass" : "off" } ?? "lost")
+            if outcome == "pass" { pass += 1 } else if outcome == "refused" { refused += 1 } else { lost += 1 }
+            if let t = r.travel { travels.append(t * 1000) }
+            if let a = r.absolute { absolutes.append(a * 1000) }
+            between.append(abs(r.betweenPlatesError))
+            func f(_ v: Double?, _ k: Double = 1) -> String { v.map { String(format: "%.3f", $0 * k) } ?? "" }
+            let line = "\(Planner.name),\(gap),\(R),\(Int(order)),\(seed),\"\(o.text)\",\(outcome),\(f(r.level)),\(f(r.step, 1000)),\(f(r.hardest.map { $0 / fullVelocity })),\(f(r.predicted, 1000)),\(f(r.travel, 1000)),\(f(r.absolute, 1000)),\(f(r.betweenPlatesError)),\(f(r.spread))"
+            csv += line + "\n"
+            print(line); fflush(stdout)
+        } } } }
+        let total = pass + lost + refused
+        func range(_ v: [Double]) -> String { v.isEmpty ? "—" : String(format: "%.2f–%.2f (median %.2f)", v.min()!, v.max()!, v.sorted()[v.count / 2]) }
+        let summary = "\(pass) of \(total) pass, \(refused) refused by the planner, \(lost) played and failed; travel error \(range(travels)) mm; absolute \(range(absolutes)) mm; plates left \(range(between))° apart"
+        print(summary)
+        let tag = MachineCommand.arg(args, "--tag") ?? "matrix"
+        if args.contains("--receipt") {
+            try? csv.write(toFile: "Receipts/p0_\(tag).csv", atomically: true, encoding: .utf8)
+            let gates = [
+                GateResult(id: "P0-MX", name: "P0 job matrix (\(Planner.name); \(o.text)): cases that pass ÷ cases", measured: Double(pass) / Double(max(1, total)), threshold: 0,
+                           comparison: .informational, detail: "gaps \(gaps) mm × reflection \(reflects) × image order \(orders) × builds \(sr[0])–\(sr[sr.count - 1]): " + summary),
+                GateResult(id: "P0-MX2", name: "P0 job matrix: jobs played that lost the bead or missed the travel bar ÷ cases", measured: Double(lost) / Double(max(1, total)), threshold: 0,
+                           comparison: .informational, detail: "a refusal is the planner declining; this is the planner being wrong"),
+            ]
+            writeReceipt(Receipt(name: "p0-\(tag)", gates: gates, durationSeconds: Date().timeIntervalSince(t0), device: deviceName(), gitSHA: gitSHA()))
+        }
+        return 0
     }
 
     /// The frame's solids checked and written: STL per printed part, the
