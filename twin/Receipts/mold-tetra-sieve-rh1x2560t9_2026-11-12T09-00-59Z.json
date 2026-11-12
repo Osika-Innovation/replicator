@@ -1,0 +1,64 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T09:00:59Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 441.0645480155945,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 2560 elements; sieve objective, 9 tones, 1.15× holding, 0.33 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.5–13.3% (fair 10.0%), 0.0% rogue; lift contrast 1.42; particles: 97.9% on the shape after 8 s, 10\/10 sites filled (167–401)",
+      "id" : "G-M1",
+      "measured" : 0.5506428047341044,
+      "name" : "acoustic mold (tetra): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 2560 elements; sieve objective, 9 tones, 1.15× holding, 0.33 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.5–13.3% (fair 10.0%), 0.0% rogue; lift contrast 1.42; particles: 97.9% on the shape after 8 s, 10\/10 sites filled (167–401)",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999942,
+      "name" : "acoustic mold (tetra): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 255 (open-type scaled to 80.6 kHz, Ø5.0 mm): asked 1.10 m\/s at 80.6 kHz on its Ø5.0 mm face, can give 2.03; rms over the elements 0.49×",
+      "id" : "G-E1",
+      "measured" : 0.541058234175598,
+      "name" : "element drive (tetra): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "85 W electrical at the elements' efficiency, 60 W of it heat in the two plates",
+      "id" : "G-E2",
+      "measured" : 25.64834543159551,
+      "name" : "element drive (tetra): acoustic power radiated (W)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "<",
+      "detail" : "open air, 2 × 2560 elements; sieve objective, 9 tones, 1.15× holding, 0.33 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.5–13.3% (fair 10.0%), 0.0% rogue; lift contrast 1.42; particles: 97.9% on the shape after 8 s, 10\/10 sites filled (167–401)",
+      "id" : "G-B0",
+      "measured" : 0.020999999999994245,
+      "name" : "traced flow vs stepped grains: the share on the shape agrees",
+      "passed" : true,
+      "threshold" : 0.05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "3000 grains, fair share 10.0%; the 26-neighbour lattice map differs by up to 5.0%",
+      "id" : "G-B1",
+      "measured" : 0.018572207866781404,
+      "name" : "traced flow vs stepped grains, site by site (largest difference in share)",
+      "passed" : true,
+      "threshold" : 0.03
+    }
+  ],
+  "gitSHA" : "9ce6bb5",
+  "name" : "mold-tetra-sieve-rh1x2560t9"
+}

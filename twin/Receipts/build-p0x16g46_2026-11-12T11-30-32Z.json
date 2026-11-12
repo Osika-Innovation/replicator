@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T11:30:32Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 36.86769998073578,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 16 elements (Ø42 mm, 46 mm apart, R 0.9); 2\/5 placed on the support; worst gap 0.0 µm; placed beads pushed ≤ 3.99 × weight afterwards",
+      "id" : "G-B1",
+      "measured" : 0,
+      "name" : "first build between the open-air plates: 5 PLA beads in a row on the support, touching (|gap| < 30 µm), none lost or perched",
+      "passed" : false,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 0 (open-type scaled to 40.0 kHz, Ø10.0 mm): asked 0.93 m\/s at 40.0 kHz on its Ø10.0 mm face, can give 2.03; rms over the elements 0.37×",
+      "id" : "G-E1",
+      "measured" : 0.4594382005775373,
+      "name" : "element drive (building at 4.00× holding): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    }
+  ],
+  "gitSHA" : "d520be2",
+  "name" : "build-p0x16g46"
+}

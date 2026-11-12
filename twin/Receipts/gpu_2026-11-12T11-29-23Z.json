@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T11:29:23Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "343 lattice points, 48 channels, images to order 3; GPU forward + adjoint 0.003s",
+      "id" : "G-A1",
+      "measured" : 3.3728211866805844e-05,
+      "name" : "open-air plate array, matrix-free GPU potential vs CPU reference (2 × 24 elements, R 0.9, 70 kHz)",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "102 weighted points of 343",
+      "id" : "G-A3",
+      "measured" : 5.599732656670625e-05,
+      "name" : "open-air plate array, matrix-free GPU adjoint vs CPU adjoint from reference rows",
+      "passed" : true,
+      "threshold" : 0.0001
+    }
+  ],
+  "gitSHA" : "d520be2",
+  "name" : "gpu"
+}
