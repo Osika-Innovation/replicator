@@ -75,7 +75,8 @@
         "light-matter",
         "periodic-table",
         "materials",
-        "architecture"
+        "architecture",
+        "physics-to-hardware"
       ]
     },
     {
@@ -87,7 +88,7 @@
       "group": "Physics",
       "status": "Current guide",
       "owner": "Physics / materials",
-      "summary": "The adopted research framework, its mathematical scope and the path from models to measurements.",
+      "summary": "The carrier algebra, quantum dynamics and a source-generated atomic model.",
       "topics": [
         "OPH",
         "observer",
@@ -96,12 +97,13 @@
         "model validation"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Framework interpretation and engineering connections",
+      "review_scope": "Primary proof/source review at upstream revision 4483a9c; large numerical study and Lean build not rerun",
       "related": [
         "physics",
         "light-matter",
         "digital-twin",
-        "status"
+        "status",
+        "physics-to-hardware"
       ]
     },
     {
@@ -139,7 +141,7 @@
       "group": "Physics",
       "status": "Current guide",
       "owner": "Physics / materials",
-      "summary": "Elements, spectra and resonant response as inputs to material selection and machine control.",
+      "summary": "Deriving shell capacities and a screened filling order, then mapping spectra to material response.",
       "topics": [
         "periodic table",
         "tones",
@@ -148,13 +150,14 @@
         "Walter Russell"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Framework interpretation and engineering connections",
+      "review_scope": "Independent shell counts, 600-cell spectrum and exact threshold-order comparison; empirical spectra not revalidated",
       "related": [
         "physics",
         "light-matter",
         "materials",
         "acoustics",
-        "research"
+        "research",
+        "physics-to-hardware"
       ]
     },
     {
@@ -182,6 +185,36 @@
         "light-matter",
         "manufacturing",
         "acoustics",
+        "upgrades",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "physics-to-hardware",
+      "title": "From atoms to hardware",
+      "source": "docs/content/physics-to-hardware.md",
+      "url": "guides/physics-to-hardware.html",
+      "type": "guide",
+      "group": "Physics",
+      "status": "Current guide",
+      "owner": "Physics / engineering",
+      "summary": "Bonding, force constants, response operators and the first useful machine-made parts.",
+      "topics": [
+        "derivation",
+        "Hamiltonian",
+        "phonons",
+        "inverse design",
+        "response operator",
+        "self-upgrade"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Explicit harmonic models, published mechanisms and staged engineering proposal",
+      "related": [
+        "oph",
+        "periodic-table",
+        "materials",
+        "acoustics",
+        "manufacturing",
         "upgrades"
       ]
     },
@@ -231,7 +264,8 @@
         "status",
         "upgrades",
         "periodic-table",
-        "materials"
+        "materials",
+        "physics-to-hardware"
       ]
     },
     {
@@ -279,7 +313,8 @@
       "related": [
         "architecture",
         "status",
-        "upgrades"
+        "upgrades",
+        "physics-to-hardware"
       ]
     },
     {
@@ -305,7 +340,8 @@
       "related": [
         "architecture",
         "status",
-        "upgrades"
+        "upgrades",
+        "physics-to-hardware"
       ]
     },
     {
@@ -327,7 +363,8 @@
       "review_scope": "Current programme explanation",
       "related": [
         "start",
-        "agents"
+        "agents",
+        "physics-to-hardware"
       ]
     },
     {

@@ -24,17 +24,41 @@ Bonding creates new collective behavior. Molecules rotate and vibrate; crystals 
 
 These descriptions share the language of modes but use different dynamical models. Converting an optical frequency into an audible octave is a visualization convention. It does not preserve an interaction with matter or specify an acoustic drive.
 
-## The standing-wave research model
+## Deriving the shell structure
 
-Our periodic-table programme investigates whether the recurring structure of the elements can be derived from a shared geometric wave substrate. It explores shell multiplicities, spin structure, orbital ordering and spectral splitting as specific mathematical targets. The current work includes numerical matches, failed comparisons and remaining errors. The underlying identification of an element with a stable pattern of that substrate is a research hypothesis; the measured atomic spectra remain the reference against which it is tested.
+The strongest connection is a chain of spectral calculations. Geometry determines the space of possible modes; an operator determines their energies; spin and exclusion determine their capacities; interactions determine their filling order. These are distinct calculations, and we can show where each enters.
 
-This is a productive role for the model: propose a smaller set of structural principles, derive a quantitative response, and compare it with a fixed dataset. A successful shell-counting model is not yet a full material model. It must also explain the relevant energies, couplings and behavior under the machine's operating conditions before replacing measured inputs.
+**Angular structure supplies the subshell alphabet.** In a rotationally symmetric one-electron model, the angular eigenfunctions are the spherical harmonics. They satisfy
+
+`−∇²(S²) Yℓm = ℓ(ℓ+1) Yℓm`, with `m = −ℓ,…,+ℓ`.
+
+There are therefore `2ℓ+1` angular states: 1, 3, 5 and 7 for s, p, d and f. Electron spin adds two states per spatial orbital. With fermionic exclusion, a subshell holds `2(2ℓ+1)` electrons: **2, 6, 10, 14**. This is an exact counting argument under those physical assumptions.
+
+**Hydrogen supplies the principal shells.** Summing over `ℓ=0,…,n−1` gives `2Σ(2ℓ+1)=2n²`: **2, 8, 18, 32**. The nonrelativistic Coulomb problem has an additional symmetry, conventionally described by SO(4); Fock's construction relates its bound-state degeneracy to harmonics on S³. This n² count is the atomic mathematics that the geometric programme aims to recover. [Fock (1935)](https://doi.org/10.1007/BF01336904), [fish-eye and Coulomb symmetry](https://www.jetp.ras.ru/cgi-bin/dn/e_033_06_1083.pdf).
+
+The geometric programme makes a concrete connection here. The 600-cell is a regular discretization on S³, with 120 vertices corresponding to the binary icosahedral group. A fresh calculation of its nearest-neighbor graph Laplacian gives the first six multiplicities **1, 4, 9, 16, 25, 36**. The remaining bands are 9, 16 and 4: the finite lattice has a real cutoff. Relating OPH's observer screen and phase transport to the relevant nontrivial Hopf bundle is an additional physical/model identification. A sphere plus arbitrary circles does not automatically select that bundle.
+
+**Screening supplies an ordering mechanism.** The Demkov–Ostrovsky focusing family is an analytically tractable model of how radial structure changes shell onset. In our normalization, its zero-energy coupling thresholds are ordered by
+
+`λ = nᵣ + (2ℓ+1)/μ`, with `nᵣ = n−ℓ−1`.
+
+For a fixed μ, increasing λ increases the required well strength. Here μ is twice the parameter used in the original 1972 paper. The dimensionless radial shape is `r²|V| ∝ x^μ/(1+x^μ)²`, with `x=r/R`.
+
+At μ=1, `λ=n+ℓ`: subshells with equal n+ℓ share a threshold. Just above 1, larger ℓ lowers λ more strongly; within a tied group that means smaller n goes first. An exact rational comparison gives **1<μ<6/5** for the familiar first 19 subshells through 7p. At μ=6/5, 6s crosses 4f and 7s crosses 5f. The result explains the nominal filling sequence through a radial mechanism. These are thresholds of the specified potential; neutral-atom configurations and their exceptions also depend on many-electron interactions. [Demkov and Ostrovskii (1972)](https://jetp.ras.ru/cgi-bin/dn/e_035_01_0066.pdf).
+
+**The doubled rows then follow by counting.** For a diagonal `N=n+ℓ`, the allowed angular values are `ℓ=0,…,floor((N−1)/2)`. Its capacity is therefore `2 ceil(N/2)²`, giving **2, 2, 8, 8, 18, 18, 32, 32**. These are diagonal/left-step capacities. Conventional table periods are **2, 8, 8, 18, 18, 32, 32**, grouped with a different row boundary. Principal-shell capacities, diagonal capacities and conventional period lengths should not share a label.
+
+**Reproducible calculation.** The [check script](https://github.com/Osika-Innovation/replicator/blob/main/tools/check_physics_derivations.py) independently constructs the 600-cell graph, counts the shells and uses exact rational inequalities to find the strict ordering interval. Its [result record](../assets/physics/atomic-structure-check.json) contains the counts and a failing comparison just beyond μ=6/5. These checks establish the stated mathematics; atomic spectra and material response remain separate comparison targets.
 
 ## Quartz and the cymatics question
 
 Quartz connects composition, crystal symmetry and a useful electrical–mechanical response. Its atomic structure, lattice vibrations and the resonances of a cut component are three different levels of description. The [materials chapter](materials.html#quartz-and-the-cymatics-question) explains how these connect to crystal growth and the idea of field-guided assembly.
 
-## Put the spectrum into the twin
+## From atomic structure to the twin
+
+The next connection is quantitative: an electronic energy model gives bonding forces; derivatives of that energy give crystal force constants and elastic properties. Those properties enter the acoustic body model. The [atoms-to-hardware derivation](physics-to-hardware.html) follows this chain through to a manufacturing task.
+
+### Put the spectrum into the twin
 
 Each material record should carry composition, phase, microstructure, temperature, density and the response relevant to the task, together with uncertainty and source. The module adds its geometry, supports and measured transfer response. Optimization then chooses operating frequency, amplitude, phase and timing against a useful outcome: force, position, heating, joining quality or a measured optical change.
 

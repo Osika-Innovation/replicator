@@ -454,6 +454,117 @@
       "next_action": "Compare a reported assembly case with the intended feed and first useful part.",
       "engineering_task": "PHYSICS-DOCS",
       "decision": "reference for physics handbook; no hardware capability promotion"
+    },
+    {
+      "id": "P008",
+      "title": "OPH compact response-algebra selection",
+      "kind": "formal_construction",
+      "canonical_url": "https://github.com/FloatingPragma/observer-patch-holography/blob/4483a9ca4b736fa2ea7160d2ba44c2604e5f05f3/code/a5_closure/a5_compact_lie_classifier.py",
+      "identifier": "OPH 4483a9c: A5 compact Lie classifier",
+      "authors": [
+        "Pragma Research / FloatingPragma"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_classifier_premises_and_Lean_source; not rebuilt",
+      "evidence_status": "conditional mathematical construction",
+      "possible_insight": "The complete-response and inner-transport premises constrain the twelve-dimensional algebra to u(1) plus su(3) plus su(2).",
+      "scope_limit": "This selects an algebra under explicit premises; it does not alone supply physical currents, couplings or atomic interactions.",
+      "fabrication_and_precision": "No transducer count or fabrication tolerance follows from the formal carrier.",
+      "next_action": "Retain each response premise and physical identification when using the construction.",
+      "engineering_task": "PHYSICS-DERIVATIONS",
+      "decision": "reference construction and engineering model; no hardware capability promotion",
+      "related_urls": [
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/4483a9ca4b736fa2ea7160d2ba44c2604e5f05f3/Lean/Screen/A5OPH.lean",
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/4483a9ca4b736fa2ea7160d2ba44c2604e5f05f3/docs/AXIOM_REFERENCE.md"
+      ]
+    },
+    {
+      "id": "P009",
+      "title": "OPH finite Gauss atom: volume and spacing refinement",
+      "kind": "computational_study",
+      "canonical_url": "https://github.com/FloatingPragma/observer-patch-holography/blob/4483a9ca4b736fa2ea7160d2ba44c2604e5f05f3/model/openwave_atomic_refinement/PROOF.md",
+      "identifier": "OPH 4483a9c: openwave_atomic_refinement",
+      "authors": [
+        "Pragma Research / FloatingPragma"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_proof_and_numerical_record; large study not rerun",
+      "evidence_status": "upstream computed model comparison",
+      "possible_insight": "A Green potential derived from an incidence operator yields a definite bound-state Hamiltonian and an atomic refinement comparison.",
+      "scope_limit": "Mass, coupling, charge, kinetic law and boundaries are supplied. Successive-grid changes do not certify continuum error or physical hydrogen agreement.",
+      "fabrication_and_precision": "Atomic-model calculation, not a fabrication process.",
+      "next_action": "Extend the same specified model with many-electron interactions and compare identified observables.",
+      "engineering_task": "PHYSICS-DERIVATIONS",
+      "decision": "reference construction and engineering model; no hardware capability promotion",
+      "related_urls": [
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/4483a9ca4b736fa2ea7160d2ba44c2604e5f05f3/model/openwave_field_observables/PROOF.md",
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/4483a9ca4b736fa2ea7160d2ba44c2604e5f05f3/model/openwave_atomic_refinement/results.json",
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/4483a9ca4b736fa2ea7160d2ba44c2604e5f05f3/model/coherent_defect_wave/chiral_joint/interacting_charge_localization/COULOMB.md"
+      ]
+    },
+    {
+      "id": "P010",
+      "title": "n + l Filling Rule in the Periodic System and Focusing Potentials",
+      "kind": "journal_article",
+      "canonical_url": "https://jetp.ras.ru/cgi-bin/dn/e_035_01_0066.pdf",
+      "identifier": "JETP 35 (1972), 66–69",
+      "authors": [
+        "Yu. N. Demkov",
+        "V. N. Ostrovskii"
+      ],
+      "publication_date": "1972-07",
+      "checked_date": "2026-11-13",
+      "review_status": "primary_paper",
+      "evidence_status": "analytic atomic model",
+      "possible_insight": "A focusing potential produces n+l threshold degeneracy and connects radial screening to nominal filling order.",
+      "scope_limit": "Threshold structure is distinct from a complete many-electron ground-state calculation; the handbook uses twice the original parameter μ.",
+      "fabrication_and_precision": "No manufacturing process is established by orbital counting.",
+      "next_action": "Use explicitly defined threshold scores and retain known model scope when comparing spectra.",
+      "engineering_task": "PHYSICS-DERIVATIONS",
+      "decision": "reference construction and engineering model; no hardware capability promotion"
+    },
+    {
+      "id": "P011",
+      "title": "Internal Symmetry of the Maxwell Fish-Eye Problem and the Fock Group for the Hydrogen Atom",
+      "kind": "journal_article",
+      "canonical_url": "https://www.jetp.ras.ru/cgi-bin/dn/e_033_06_1083.pdf",
+      "identifier": "JETP 33 (1971), 1083–1087",
+      "authors": [
+        "Yu. N. Demkov",
+        "V. N. Ostrovskii"
+      ],
+      "publication_date": "1971-12",
+      "checked_date": "2026-11-13",
+      "review_status": "primary_paper",
+      "evidence_status": "analytic wave and atomic mathematics",
+      "possible_insight": "The wave problem relates spherical harmonics, hidden Coulomb symmetry and n-squared degeneracy.",
+      "scope_limit": "The coordinate/operator correspondence does not identify an arbitrary finite lattice with a physical atom.",
+      "fabrication_and_precision": "Potential profiles and optical/acoustic analogues require their own material implementation.",
+      "next_action": "Keep geometry, operator and energy/coupling parameter distinct in inverse design.",
+      "engineering_task": "PHYSICS-DERIVATIONS",
+      "decision": "reference construction and engineering model; no hardware capability promotion"
+    },
+    {
+      "id": "P012",
+      "title": "Quantum ESPRESSO PHonon: force constants and vibrational modes",
+      "kind": "technical_documentation",
+      "canonical_url": "https://www.quantum-espresso.org/Doc/ph_user_guide/node9.html",
+      "identifier": "Quantum ESPRESSO PHonon user guide",
+      "authors": [
+        "Quantum ESPRESSO developers"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_implementation_documentation",
+      "evidence_status": "established first-principles modeling workflow",
+      "possible_insight": "Force-constant and dynamical matrices connect an electronic-structure calculation to vibrational response.",
+      "scope_limit": "Predictions depend on the chosen electronic model, structure and numerical convergence; a phonon model does not specify a growth process.",
+      "fabrication_and_precision": "Requires composition, crystal structure and a qualified constitutive model.",
+      "next_action": "Use validated material response in coupled body design and compare with reusable metrology.",
+      "engineering_task": "PHYSICS-DERIVATIONS",
+      "decision": "reference construction and engineering model; no hardware capability promotion"
     }
   ]
 }
