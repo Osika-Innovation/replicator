@@ -2,6 +2,8 @@
 
 We design the Replicator's geometry and material structure together. The objective is to put more useful function into fewer parts: a body that guides vibration, a surface that shapes a field, a crystal that couples electrical and mechanical motion, or an optical element that performs a repeatable transformation. Every candidate earns its place through its response, manufacturing route and measured benefit to the machine.
 
+This chapter is the fabrication end of the [physics section](physics.html). Read [Periodic table and tones](periodic-table.html) for the material-response map and [Light, fields and matter](light-matter.html) for the underlying interpretation.
+
 ## Spectra across scales
 
 “Materials as tones” is a useful way to organize this work when the scale and observable are explicit. Atoms have electronic transitions with characteristic frequencies. Crystals support collective lattice vibrations. A finished component has resonances determined by its material, geometry, mounting and operating conditions. These are related descriptions of physical response, with different equations and different measurement methods. The material record therefore stores spectra and constitutive properties alongside composition, processing history and uncertainty. [Atomic spectra and energy levels](https://www.nist.gov/pml/atomic-spectra-database)

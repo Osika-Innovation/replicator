@@ -27,3 +27,5 @@ Existing direct-emitter arrays and the larger RH-1 design remain reference confi
 The handbook owns the current project explanation. Interface documents own software contracts. Code and receipts own implementation results. Papers develop mechanisms and long-term arguments; dated specifications preserve previous design instances.
 
 Use [Architecture](architecture.html) for subsystem boundaries, [Manufacturing](manufacturing.html) for the first useful output, and [Upgrades](upgrades.html) for the path toward self-replication.
+
+The [Physics section](physics.html) explains the programme's theoretical perspective and its engineering use. Follow [Observer Patch Holography](oph.html) for the framework, [Light, fields and matter](light-matter.html) for the unifying interpretation, and [Periodic table and tones](periodic-table.html) for the connection between material structure, spectra and machine control.

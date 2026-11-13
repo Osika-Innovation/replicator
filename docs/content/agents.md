@@ -10,6 +10,8 @@ Work toward one enduring modular machine that increasingly manufactures its own 
 4. The relevant subsystem guide, interface and implementation.
 5. Its owning paper and source records.
 
+For physics or material-model work, also read the [Physics overview](physics.html), [OPH framework](oph.html) and [Periodic table and tones](periodic-table.html). Preserve the distinction between a mathematical result, a physical interpretation and a measured material response. Translate a proposed connection into an observable, a coupling mechanism and a comparison the twin can perform.
+
 Use [catalog.json](../catalog.json) for stable document IDs, source paths, roles, owners, related documents and review dates. [llms.txt](../llms.txt) is the compact map; [llms-full.txt](../llms-full.txt) contains the handbook text. These are navigation aids, not substitutes for code and measurements.
 
 ## Ownership
@@ -22,6 +24,7 @@ Use [catalog.json](../catalog.json) for stable document IDs, source paths, roles
 | Feed/joining | First material and permanent part formation | Recipe, energy/material budget and inspection |
 | Metrology | Calibration and observation | Raw records, uncertainty and qualification |
 | Materials/optics/EM | Candidate processes and components | A named bottleneck removed with a feasible fabrication route |
+| Physics/model validation | Framework interpretation, response laws and their validity | A sourced prediction, defined observable and comparison against measurement |
 | Representation/learning | Module data and optional learned proposals | A validated interface and improvement over a baseline |
 | Documentation | Handbook, catalog and source connections | Clear current explanation with evidence and ownership |
 
