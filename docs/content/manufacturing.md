@@ -21,6 +21,14 @@ The part specification names its geometry, material state, required tolerance, f
 
 A field pattern is one input to this process. The material's evolving position, contact, temperature and history determine the outcome.
 
+## A candidate combined-field recipe
+
+Evaluate a composite process in one shared work volume: acoustic forces arrange particles in a liquid feedstock, magnetic fields orient suitable anisotropic inclusions, and patterned light cures a compatible matrix while imaging tracks the arrangement. The intended output has both a designed outer shape and a designed internal orientation. Actions may overlap or be sequenced as the material requires.
+
+Two parts of this route have experimental precedents. Greenhall and Raeymaekers combined ultrasound-directed particle assembly with stereolithography to make layered composites, including patterns of conductive fibers. Nagarajan and colleagues integrated magnetic particle alignment with material jetting, UV curing and thermal post-curing. [Ultrasound and stereolithography](https://doi.org/10.1002/admt.201700122), [magnetic alignment and curing](https://pmc.ncbi.nlm.nih.gov/articles/PMC8433740/).
+
+The three-field recipe is a candidate to evaluate, not an already qualified combination. Select one feedstock that supports the required acoustic contrast, magnetic torque and cure depth. Model whether streaming, heating, optical attenuation and shrinkage preserve the arrangement. Inspect the final part's geometry, orientation and useful response, then compare the benefit with a simpler recipe.
+
 ## Generate programs with designs
 
 The design system can search directly over actuator programs and process sequences. This constrains proposals to the machine's available actions and exposes their cost early.

@@ -38,18 +38,19 @@
       "group": "Start",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Purpose, first configuration and reading routes.",
+      "summary": "Purpose, coordinated fields and the first configuration.",
       "topics": [
         "prototype",
         "strategy"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "architecture",
         "status",
         "upgrades",
-        "physics"
+        "physics",
+        "electromagnetics"
       ]
     },
     {
@@ -198,7 +199,7 @@
       "group": "Physics",
       "status": "Current guide",
       "owner": "Physics / engineering",
-      "summary": "Bonding, force constants, response operators and the first useful machine-made parts.",
+      "summary": "Bonding, response operators and coordinated fields that manufacture useful parts.",
       "topics": [
         "derivation",
         "Hamiltonian",
@@ -208,14 +209,15 @@
         "self-upgrade"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Explicit harmonic models, published mechanisms and staged engineering proposal",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "oph",
         "periodic-table",
         "materials",
         "acoustics",
         "manufacturing",
-        "upgrades"
+        "upgrades",
+        "electromagnetics"
       ]
     },
     {
@@ -227,18 +229,22 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Architecture",
-      "summary": "Subsystems, interfaces and a clickable system map.",
+      "summary": "Coordinated acoustic, electric/magnetic and optical fields in one shared work volume.",
       "topics": [
         "block diagram",
         "modules",
         "3+3"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "start",
         "agents",
-        "physics"
+        "physics",
+        "acoustics",
+        "electromagnetics",
+        "digital-twin",
+        "manufacturing"
       ]
     },
     {
@@ -277,7 +283,7 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Electromagnetics and optics",
-      "summary": "Material interactions and optional process/instrument modules.",
+      "summary": "Electric/magnetic and optical contributions to coordinated material control.",
       "topics": [
         "toroid",
         "coils",
@@ -285,7 +291,7 @@
         "optical"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "architecture",
         "status",
@@ -302,19 +308,20 @@
       "group": "Build and improve",
       "status": "Current guide",
       "owner": "Manufacturing",
-      "summary": "Feed, arrange, join and inspect a useful part.",
+      "summary": "Combined-field recipes that feed, arrange, join and inspect a useful part.",
       "topics": [
         "consolidation",
         "fabrication",
         "reclaim"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "architecture",
         "status",
         "upgrades",
-        "physics-to-hardware"
+        "physics-to-hardware",
+        "electromagnetics"
       ]
     },
     {
@@ -326,7 +333,7 @@
       "group": "Build and improve",
       "status": "Current guide",
       "owner": "Digital twin",
-      "summary": "CAD, models, control and autonomous research.",
+      "summary": "CAD, coupled material state, process control and autonomous research.",
       "topics": [
         "CAD",
         "simulation",
@@ -336,7 +343,7 @@
         "holo"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "architecture",
         "status",

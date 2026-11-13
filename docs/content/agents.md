@@ -2,6 +2,8 @@
 
 Work toward one enduring modular machine that increasingly manufactures its own upgrades. Minimize human engineering and experiment time. Keep the ultimate architecture and a concrete first configuration moving together.
 
+The ultimate architecture coordinates acoustic, electric/magnetic and optical fields in one shared 3D work volume. Design subsystem contributions against a common material state, coordinate frame and process recipe. An acoustic-first hardware configuration establishes a starting subset; preserve the interfaces and access for the combined-field machine. Each proposed combination names its material couplings and improvement over a simpler baseline.
+
 ## Read in this order
 
 1. [Current state](status.html): published code, active work and evidence.

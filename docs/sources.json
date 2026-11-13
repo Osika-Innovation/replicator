@@ -565,6 +565,53 @@
       "next_action": "Use validated material response in coupled body design and compare with reusable metrology.",
       "engineering_task": "PHYSICS-DERIVATIONS",
       "decision": "reference construction and engineering model; no hardware capability promotion"
+    },
+    {
+      "id": "P013",
+      "title": "3D Printing Macroscale Engineered Materials Using Ultrasound Directed Self-Assembly and Stereolithography",
+      "kind": "journal_article",
+      "canonical_url": "https://doi.org/10.1002/admt.201700122",
+      "identifier": "10.1002/admt.201700122",
+      "authors": [
+        "John Greenhall",
+        "Bart Raeymaekers"
+      ],
+      "publication_date": "2017",
+      "checked_date": "2026-11-13",
+      "review_status": "primary_methods_and_results",
+      "evidence_status": "published experimental report",
+      "possible_insight": "Ultrasound arranges particles in resin; patterned exposure fixes successive layers into composites with designed microstructure, including conductive fiber patterns.",
+      "scope_limit": "Layered resin process, not arbitrary volumetric atomic assembly or a demonstration of combined acoustic, magnetic and optical control.",
+      "fabrication_and_precision": "Reported examples use nickel-coated carbon fibers and 0.45 mm half-wavelength line spacing; streaming and squeeze flow can disturb alignment.",
+      "next_action": "Evaluate a compatible feedstock and reusable cartridge against the first self-made part, including optical access and cure effects.",
+      "engineering_task": "FIELD-INTEGRATION",
+      "decision": "Process precedent; candidate integration study"
+    },
+    {
+      "id": "P014",
+      "title": "Development and Characterization of Field Structured Magnetic Composites",
+      "kind": "journal_article",
+      "canonical_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8433740/",
+      "identifier": "10.3390/polym13172843",
+      "authors": [
+        "Balakrishnan Nagarajan",
+        "Yingnan Wang",
+        "Maryam Taheri",
+        "Simon Trudel",
+        "Steven Bryant",
+        "Ahmed Jawad Qureshi",
+        "Pierre Mertiny"
+      ],
+      "publication_date": "2021-08-24",
+      "checked_date": "2026-11-13",
+      "review_status": "primary_abstract_and_process_description",
+      "evidence_status": "published experimental report",
+      "possible_insight": "Magnetic particle alignment is integrated with material jetting, UV curing and thermal post-curing to create anisotropic composites.",
+      "scope_limit": "Material-specific magnetic/polymer process; acoustic integration and our candidate three-field recipe are not demonstrated.",
+      "fabrication_and_precision": "Ferromagnetic fillers in a dual-cure resin; alignment, optical attenuation and final cure need joint qualification.",
+      "next_action": "Compare magnetic orientation and acoustic placement compatibility in the same candidate feedstock and verify final orientation and function.",
+      "engineering_task": "FIELD-INTEGRATION",
+      "decision": "Process precedent; candidate integration study"
     }
   ]
 }
