@@ -13,7 +13,7 @@ The Replicator coordinates acoustic, electric, magnetic and optical fields in on
 <a href="digital-twin.html#one-work-volume-and-material-state" aria-label="Coordinated control and power"><rect x="250" y="110" width="380" height="54" rx="9"/></a>
 <a href="acoustics.html" aria-label="Acoustic fields"><rect x="145" y="205" width="190" height="58" rx="9"/></a>
 <a href="electromagnetics.html" aria-label="Electric and magnetic fields"><rect x="355" y="205" width="190" height="58" rx="9"/></a>
-<a href="electromagnetics.html#optical-modules" aria-label="Optical fields"><rect x="565" y="205" width="190" height="58" rx="9"/></a>
+<a href="optics.html" aria-label="Optical fields"><rect x="565" y="205" width="190" height="58" rx="9"/></a>
 <a href="manufacturing.html" aria-label="Feedstock"><rect x="20" y="345" width="165" height="60" rx="9"/></a>
 <a href="manufacturing.html#a-candidate-combined-field-recipe" aria-label="Arrange and orient material"><rect x="220" y="345" width="190" height="60" rx="9"/></a>
 <a href="manufacturing.html" aria-label="Join and transform material"><rect x="435" y="345" width="190" height="60" rx="9"/></a>
@@ -83,4 +83,4 @@ The first configuration needs an acoustic module, drive/acquisition, metrology, 
 
 The November 13 EM branch recommendation concerns that starting configuration. It does not remove electromagnetic processing from the ultimate architecture. Integration work should preserve the shared volume and define the next combined-field recipe that improves an inspected part.
 
-Read [Acoustics](acoustics.html), [Electromagnetics](electromagnetics.html), [Manufacturing](manufacturing.html) and [Digital twin](digital-twin.html).
+Read [Acoustics](acoustics.html), [Electromagnetics](electromagnetics.html), [Optics and metamaterials](optics.html), [Manufacturing](manufacturing.html) and [Digital twin](digital-twin.html).

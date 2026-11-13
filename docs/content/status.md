@@ -11,6 +11,7 @@
 | Acoustic architecture | Few high-power inputs into optimized bodies is the preferred candidate; 3 + 3 is a comparison starting point | Resolve source/body coupling and qualify a reusable calibration setup |
 | Platform software | Active workspace studies extend backend, calibration, body-response and upgrade interfaces | Publish reviewed implementations with their receipts |
 | Electromagnetics | November 13 branch study recommends no EM process module for the first acoustic build; this is an initial-configuration recommendation within the shared-volume architecture | Select initial process/instrument modules against the first material recipe and preserve later integration access |
+| Optics and metamaterials | Dedicated architecture lane for optical-wavelength surfaces, holographic TX/RX and toroidal optical pulses; published external precedents are linked in its guide | Choose a first optical function, source/surface/readout design and fabrication/metrology route |
 | Manufacturing | Feed, joining and inspection must be selected with the first useful part | Establish one complete material transformation |
 | Material/AI representation | Module/material records and optional learned proposal policies are development work | Demonstrate one module and one bounded task |
 | Physics framework | [OPH](oph.html) supplies a theoretical framework and design inspiration; mathematical results retain their assumptions and physical interpretations retain their test status | Map a specific hypothesis to a measurable response and compare it with established models |
