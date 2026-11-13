@@ -23,7 +23,7 @@ This handbook connects the architecture, working software, manufacturing path an
 | You want to… | Start here | Then read |
 |---|---|---|
 | Understand the project in ten minutes | [Start here](guides/start.html) | [Architecture](guides/architecture.html) |
-| Design a subsystem | [Architecture](guides/architecture.html) | [Acoustics](guides/acoustics.html), [electromagnetics](guides/electromagnetics.html), [manufacturing](guides/manufacturing.html) |
+| Design a subsystem | [Architecture](guides/architecture.html) | [Acoustics](guides/acoustics.html), [electromagnetics](guides/electromagnetics.html), [optics and metamaterials](guides/optics.html), [manufacturing](guides/manufacturing.html) |
 | Understand the theoretical framework | [Physics overview](guides/physics.html) | [Observer Patch Holography](guides/oph.html) |
 | Explore light, crystals and materials as tones | [Light, fields and matter](guides/light-matter.html) | [Periodic table and tones](guides/periodic-table.html), [materials and modes](guides/materials.html) |
 | Work as an AI agent | [Agent entry point](guides/agents.html) | [Current state](guides/status.html) |

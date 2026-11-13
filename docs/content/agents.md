@@ -27,7 +27,9 @@ Use [catalog.json](../catalog.json) for stable document IDs, source paths, roles
 | Platform/control | Timing, drive, acquisition and backend | Bounded executable jobs and reproducible records |
 | Feed/joining | First material and permanent part formation | Recipe, energy/material budget and inspection |
 | Metrology | Calibration and observation | Raw records, uncertainty and qualification |
-| Materials/optics/EM | Candidate processes and components | A named bottleneck removed with a feasible fabrication route |
+| Electromagnetic control | Coils, transient/RF fields and material coupling | Field/force response, current and thermal limits, calibration and process benefit |
+| Optics / metamaterials | Holographic TX/RX, optical surfaces, structured pulses and optical fabrication | Optical response, fabrication tolerances, power limits and task-qualified readout |
+| Materials/processes | Material formulations and manufacturing routes | A named bottleneck removed with a feasible fabrication and inspection route |
 | Physics/model validation | Framework interpretation, response laws and their validity | A sourced prediction, defined observable and comparison against measurement |
 | Representation/learning | Module data and optional learned proposals | A validated interface and improvement over a baseline |
 | Documentation | Handbook, catalog and source connections | Clear current explanation with evidence and ownership |

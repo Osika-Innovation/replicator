@@ -50,7 +50,8 @@
         "status",
         "upgrades",
         "physics",
-        "electromagnetics"
+        "electromagnetics",
+        "optics"
       ]
     },
     {
@@ -130,7 +131,8 @@
         "physics",
         "oph",
         "periodic-table",
-        "electromagnetics"
+        "electromagnetics",
+        "optics"
       ]
     },
     {
@@ -187,7 +189,8 @@
         "manufacturing",
         "acoustics",
         "upgrades",
-        "physics-to-hardware"
+        "physics-to-hardware",
+        "optics"
       ]
     },
     {
@@ -217,7 +220,8 @@
         "acoustics",
         "manufacturing",
         "upgrades",
-        "electromagnetics"
+        "electromagnetics",
+        "optics"
       ]
     },
     {
@@ -244,7 +248,8 @@
         "acoustics",
         "electromagnetics",
         "digital-twin",
-        "manufacturing"
+        "manufacturing",
+        "optics"
       ]
     },
     {
@@ -276,27 +281,62 @@
     },
     {
       "id": "electromagnetics",
-      "title": "Electromagnetics and optics",
+      "title": "Electromagnetic control",
       "source": "docs/content/electromagnetics.md",
       "url": "guides/electromagnetics.html",
       "type": "guide",
       "group": "Systems",
       "status": "Current guide",
-      "owner": "Electromagnetics and optics",
-      "summary": "Electric/magnetic and optical contributions to coordinated material control.",
+      "owner": "Electromagnetic control",
+      "summary": "Coils, pulsed fields, toroidal waves and material forces in the shared work volume.",
       "topics": [
         "toroid",
         "coils",
         "MHD",
-        "optical"
+        "pulsed fields",
+        "vortex",
+        "levitation"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "review_scope": "Subsystem split and primary-source scope review; no new hardware qualification",
       "related": [
         "architecture",
         "status",
         "upgrades",
-        "light-matter"
+        "light-matter",
+        "optics",
+        "photons"
+      ]
+    },
+    {
+      "id": "optics",
+      "title": "Optics and metamaterials",
+      "source": "docs/content/optics.md",
+      "url": "guides/optics.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Optics / metamaterials",
+      "summary": "Optical-wavelength metasurfaces, holographic ports, toroidal pulses and a fabrication upgrade path.",
+      "topics": [
+        "optics",
+        "metamaterials",
+        "metasurfaces",
+        "toroidal pulses",
+        "holography",
+        "SLM",
+        "nanoimprint"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Primary-source review and subsystem direction; specific optical designs remain to qualify",
+      "related": [
+        "architecture",
+        "electromagnetics",
+        "photons",
+        "materials",
+        "digital-twin",
+        "manufacturing",
+        "research"
       ]
     },
     {
@@ -321,7 +361,8 @@
         "status",
         "upgrades",
         "physics-to-hardware",
-        "electromagnetics"
+        "electromagnetics",
+        "optics"
       ]
     },
     {
@@ -348,7 +389,8 @@
         "architecture",
         "status",
         "upgrades",
-        "physics-to-hardware"
+        "physics-to-hardware",
+        "optics"
       ]
     },
     {
@@ -421,7 +463,8 @@
         "status",
         "upgrades",
         "physics",
-        "oph"
+        "oph",
+        "optics"
       ]
     },
     {
@@ -553,11 +596,12 @@
         "optics"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "review_scope": "Targeted optical force/absorption and latency clarification plus toroidal-pulse citation correction; remaining mechanisms not fully revalidated",
       "related": [
         "architecture",
         "research",
-        "status"
+        "status",
+        "optics"
       ]
     },
     {
@@ -619,11 +663,12 @@
         "metrology"
       ],
       "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "review_scope": "Navigation and toroidal-pulse bibliographic correction; remaining technical claims not fully revalidated",
       "related": [
         "architecture",
         "research",
-        "status"
+        "status",
+        "optics"
       ]
     },
     {

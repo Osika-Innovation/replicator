@@ -18,6 +18,10 @@ The cymatics analogy suggests a research question: can carefully chosen fields g
 
 Acoustic assembly supplies a practical starting point. Published experiments have arranged microparticles into three-dimensional structures using multiple acoustic holograms, then fixed assemblies by gelation. This establishes a route from designed fields to persistent particle structures within the reported materials and conditions. It also identifies distinct jobs for the process: transport the feedstock, form the arrangement, consolidate it and inspect the result. [Holographic assembly in three dimensions](https://pmc.ncbi.nlm.nih.gov/articles/PMC9908023/)
 
+## Optical-wavelength structures
+
+Optical metamaterials and metasurfaces are a core material-design lane. The [optics guide](optics.html#fabricating-the-next-optical-module) connects their field transformation to feature dimensions, optical constants, master/replication processes and inspection. Work on this lane advances alongside the acoustic prototype; initial externally made optics or masters can seed later machine-made upgrades.
+
 ## The materials upgrade path
 
 Our materials programme follows that sequence. First qualify field-shaped assemblies and replaceable acoustic structures. Next introduce controlled texture, orientation, porosity or composition where they improve a named component. Pursue optical-grade or single-crystal modules when their required feature size, surface quality and defect limits have a credible fabrication and inspection route.
