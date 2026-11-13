@@ -70,275 +70,145 @@ architecture → <a href="replicator_architecture.html">Architecture</a> ·
 storage owner → <a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute Plan</a> ·
 build → <a href="replicator_mechanical_construction.html">Mechanical Construction</a> ·
 rulings → <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a> ·
-software → <a href="replicator_field_compiler.html">Field Compiler</a> ·
-compute → <a href="../../papers/desktop_optical_supercomputer.html">Optical Supercomputer</a>
+software → <a href="replicator_field_compiler.html">Field Compiler</a>
 </div>
 
 <h1>The Replicator at the Limit</h1>
-<p class="sub">Designing from physical bounds instead of from available parts —
-what the machine becomes when it is built by a replicator, computes with
-light, and remembers holographically.</p>
-<p class="meta">draft v0.1 · 2026-07-22 · <b>Role in the set</b>: every other
-RH-1 document starts from what can be sourced and built now. This one starts
-from the other end: <em>the bounds physics will not let us cross</em>, and
-asks what a machine looks like when it sits against them. Nothing here is a
-schedule or a promise. It is a target with its distances measured — where the
-architecture is already near a bound, where it is far, and where the bound
-itself forbids the goal.</p>
+<p class="sub">Design the machine and the path by which it improves itself.</p>
+<p class="meta">v0.2 · reviewed 2026-11-13 · Role: long-term architecture and
+bootstrap strategy. This revision replaces the earlier numerical limit tables
+with explicit design constraints and qualification requirements. Prototype
+configuration and measured performance belong to the current engineering records.</p>
 
-<h2>1 · The rule of this document</h2>
-<p>The other papers ask "what can we build?" That question silently imports
-the parts bin, and the parts bin encodes a decade of other people's
-compromises. This paper asks the inverse: <b>what would we build if the only
-constraints were the ones nature enforces?</b></p>
-<p>The method keeps the exercise honest. For each subsystem: state the
-physical bound, compute where it sits numerically, place the design
-against it. A design at a bound is finished — it cannot be improved
-without new physics. A design far from its bound is an engineering
-problem, and the distance says how much is left. And a goal on the
-<em>wrong side</em> of a bound is not a hard problem: it is a different
-machine, and saying so early is worth more than optimism.</p>
-<div class="box"><b>Which bounds are load-bearing here.</b>
-<b>Landauer</b> (kT ln 2 per irreversible bit erased ≈ 3 zJ at room
-temperature) floors the energy of computation.
-<b>Margolus–Levitin</b> floors the time per operation at given energy.
-<b>Bekenstein</b> ceilings the information in a region.
-<b>Shannon</b> ceilings a channel at <code>C = B log₂(1+SNR)</code>.
-<b>Abbe/diffraction</b> ceilings independent addressable features near λ/2 —
-which is why storage density lands near one bit per λ³.
-<b>Baryon conservation</b> forbids making matter from energy at any practical
-budget, so the machine is a rearranger; this is doctrine, not aspiration
-(<a href="transmutation.html">§1</a>).
-<b>The second law</b> requires the entropy of any ordering step to leave in
-some channel.</div>
+<h2 id="s1">1 · Start from the function</h2>
+<p>The target is a manufacturing system that turns specified feedstock into
+inspected parts, then uses those parts to expand its own capabilities. Design
+from that target backward. Remove a component when geometry, a shared physical
+process or feedback can provide its function with less total effort.</p>
+<p>The best design minimizes human setup, calibration, assembly and rework as
+well as part count. A simple-looking body can hide demanding material or
+manufacturing requirements; count those requirements in the design. Keep one
+enduring modular platform and change the modules that remove the next bottleneck.</p>
+<p>There is no single endpoint that maximizes precision, throughput, material
+range, energy efficiency and reliability simultaneously. Optimize the tradeoff
+for a defined task, then measure whether the next generation improves it.</p>
 
-<h2>2 · How much information <em>is</em> an object?</h2>
-<p>Everything downstream — file size, data rate, storage volume, whether the
-transporter is possible at all — falls out of this one number, and it is not
-a single number but a ladder. Take a 250 g steel object, roughly a mug: about
-30 cm³, about 2.7 × 10²⁴ atoms.</p>
-
+<h2 id="s2">2 · Describe what the part must do</h2>
+<p>A useful component specification records geometry, material properties,
+interfaces, tolerances and acceptance tests. It does not require the exact
+positions and quantum states of every constituent atom. Use the least detailed
+representation that predicts the function and supports its manufacture.</p>
 <div class="overflow"><table>
-<tr><th>description level</th><th>what it records</th><th>size</th><th>at 1 TB/cm³ holographic</th><th>at 1 Tbit/s</th></tr>
-<tr><td><b>Functional</b></td><td>"300 mL cylinder, 4 mm wall, stoneware" — parameters, not geometry</td><td><b>~200 B</b></td><td>invisible</td><td>instant</td></tr>
-<tr><td><b>Chord / <code>.pattern</code></b></td><td>resonance model: complex poles + port-vectors, ~100 B per chord (<a href="replicator_field_compiler.html">compiler §4</a>)</td><td><b>~1 MB</b> at 10⁴ chords</td><td>10⁻⁶ cm³</td><td>8 µs</td></tr>
-<tr><td><b>Voxel + material</b>, 100 µm</td><td>3 × 10⁷ voxels × ~20 bit (material ID + local state)</td><td><b>~75 MB</b></td><td>7 × 10⁻⁵ cm³</td><td>0.6 ms</td></tr>
-<tr><td><b>Voxel + material</b>, 10 µm</td><td>3 × 10¹⁰ voxels — the fine-finish limit</td><td><b>~75 GB</b></td><td>0.075 cm³</td><td>0.6 s</td></tr>
-<tr><td><b>Atomic microstate</b></td><td>every atom's species and place — the transporter's description</td><td><b>~3 × 10²⁴ B</b></td><td><b>3 × 10⁶ m³</b> — a cube 150 m on a side</td><td><b>~860 000 years</b></td></tr>
+<tr><th>Representation</th><th>What it carries</th><th>What qualifies it</th></tr>
+<tr><td>Geometry and material fields</td><td>Shape, composition, orientation and constitutive properties where they matter</td><td>Dimensional and material inspection at the required resolution</td></tr>
+<tr><td>Boundary response</td><td>Transfer or scattering response for specified ports, frequencies and operating conditions</td><td>Prediction of observations withheld from model fitting</td></tr>
+<tr><td>Manufacturing program</td><td>Feed, actuation, joining, sensing and recovery steps</td><td>A finished part passing its functional acceptance test</td></tr>
 </table></div>
+<p>These representations are linked, not interchangeable. A compact response
+signature can describe a task well without uniquely identifying the interior.
+An actuator program can execute correctly while its material outcome fails.
+The twin keeps both distinctions visible.</p>
 
-<div class="figure">
-<svg viewBox="0 0 740 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Information ladder for one object, log scale">
-  <text x="24" y="26" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#1c1c1c">One 250 g object — how many bits, by description level</text>
-  <!-- axis: 10^3 .. 10^27 over x 150..700  =>  22.92 px per decade -->
-  <line x1="150" y1="250" x2="700" y2="250" stroke="#1c1c1c" stroke-width="1.4"/>
-  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="9" fill="#8a8676">
-    <text x="150" y="266" text-anchor="middle">10³</text>
-    <text x="219" y="266" text-anchor="middle">10⁶</text>
-    <text x="287" y="266" text-anchor="middle">10⁹</text>
-    <text x="356" y="266" text-anchor="middle">10¹²</text>
-    <text x="425" y="266" text-anchor="middle">10¹⁵</text>
-    <text x="493" y="266" text-anchor="middle">10¹⁸</text>
-    <text x="562" y="266" text-anchor="middle">10²¹</text>
-    <text x="631" y="266" text-anchor="middle">10²⁴</text>
-    <text x="425" y="284" text-anchor="middle" font-size="10" fill="#5a6470">bits (log scale)</text>
-  </g>
-  <g stroke="#e4ded0" stroke-width="1">
-    <line x1="219" y1="52" x2="219" y2="250"/><line x1="287" y1="52" x2="287" y2="250"/>
-    <line x1="356" y1="52" x2="356" y2="250"/><line x1="425" y1="52" x2="425" y2="250"/>
-    <line x1="493" y1="52" x2="493" y2="250"/><line x1="562" y1="52" x2="562" y2="250"/>
-    <line x1="631" y1="52" x2="631" y2="250"/>
-  </g>
-  <!-- bars: width = (log10(bits) - 3) * 22.92 -->
-  <g font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10">
-    <rect x="150" y="60" width="5" height="20" fill="#5a6470"/>
-    <text x="162" y="74" fill="#5a6470">functional · 1.6 kbit</text>
+<h2 id="s3">3 · Spend control authority where it changes the outcome</h2>
+<p>For a linear operating regime, write the field as
+<code>p(f) = H(f; geometry, material, state) u(f)</code>. Geometry determines
+which patterns the inputs can reach. At one frequency a passive linear body
+cannot supply more independent command dimensions than its inputs. Frequency
+and timing can add useful patterns within the source bandwidth, ring-down,
+power and task-dynamics limits.</p>
+<p>This makes a few-input, inverse-designed acoustic body a valuable candidate:
+put repeatable spatial structure into the body and reserve electronics for the
+changes the task actually needs. Evaluate it against a direct-emitter reference
+on equal payload, workspace, electrical power and operating conditions.</p>
+<p>Choose waveform sampling, sensing and feedback rates separately. Carrier
+frequency is not automatically the required controller update rate. Derive each
+rate from observability, motion, resonant settling, drift and the error budget.
+Compute manufacturing throughput from feed, transport, capture, joining and
+inspection; the slowest necessary operation sets the useful rate.</p>
 
-    <rect x="150" y="94" width="89" height="20" fill="#2f6d5e"/>
-    <text x="247" y="108" fill="#2f6d5e" font-weight="700">.pattern chords · 8 Mbit</text>
+<h2 id="s4">4 · Compute belongs where it earns its place</h2>
+<p>The initial platform uses conventional digital compute and control to make
+models, run experiments and operate hardware. Optical or other physical compute
+modules enter when a specified workload demonstrates an advantage in latency,
+energy, precision, reliability or manufacturability.</p>
+<p>Optical geometry can encode useful transformations, but an optical component
+also depends on index contrast, loss, surface quality, material uniformity,
+alignment and read/write interfaces. A fabrication route must meet those
+requirements. Geometry alone does not establish a self-made computer.</p>
+<p>Compare complete systems: source, modulator, physical transformation,
+detector, conversion, control and calibration. Keep the module interface stable
+so a better implementation can replace an earlier one. The
+<a href="holographic_memory_and_compute_plan.html">memory and compute paper</a>
+records candidate optical routes.</p>
 
-    <rect x="150" y="128" width="132" height="20" fill="#5a7d3a"/>
-    <text x="290" y="142" fill="#3f5a28" font-weight="700">voxels @100 µm · 0.6 Gbit</text>
-
-    <rect x="150" y="162" width="201" height="20" fill="#b88a2a"/>
-    <text x="359" y="176" fill="#7a5d12" font-weight="700">voxels @10 µm · 600 Gbit</text>
-
-    <rect x="150" y="196" width="513" height="20" fill="#7a1f1f"/>
-    <text x="300" y="210" fill="#fff" font-weight="700">atomic microstate · 2.7 × 10²⁵ bit</text>
-  </g>
-  <!-- design band -->
-  <rect x="147" y="88" width="210" height="98" fill="none" stroke="#3a5a7d" stroke-width="1.6" stroke-dasharray="5 4"/>
-  <text x="365" y="232" font-family="Helvetica Neue,Helvetica,sans-serif" font-size="10" fill="#3a5a7d">dashed box = the design band: MB to tens of GB, ordinary files</text>
-</svg>
-<div class="caption"><b>Fig. 1 — The information ladder.</b> Twenty-two
-orders of magnitude separate a useful description of an object from its
-microstate. The machine lives in the dashed band. The red bar is not a
-harder version of the same problem — it is a different problem, and §7
-argues it is the wrong side of a bound.</div>
-</div>
-
-<p>The design point is therefore <b>megabytes to tens of gigabytes per
-object</b> — a video file. Every intuition that a matter compiler must
-involve astronomical data is an intuition about the red bar, which is not
-what a replicator does — a point Star Trek's own engineering documentation
-makes by putting replicators at molecular resolution and transporters at
-quantum resolution.</p>
-
-<h2>3 · What data rate does the machine actually need?</h2>
-<p>Three rates, and the interesting result is that the one everybody thinks
-of is the smallest.</p>
+<h2 id="s5">5 · Use physical limits with their assumptions</h2>
+<p>Each limit belongs to a defined model and observable. A diffraction scale
+for one aperture does not equal placement error, and a wavelength-sized mode
+count does not equal one bit per mode or a universal storage-density ceiling.</p>
 <div class="overflow"><table>
-<tr><th>loop</th><th>derivation</th><th>rate</th></tr>
-<tr><td><b>Placement</b></td><td>3 × 10⁷ voxels for a 250 g object in an hour</td><td>~10⁴ voxel/s — <em>trivial</em></td></tr>
-<tr><td><b>Field update</b> (drive)</td><td>the boundary must be restated far faster than the field settles: ~10⁶ states/s in the air band, ~10⁷ in the melt band, at ~18 channels × 32 bit (amplitude + phase) ≈ 576 bit/state</td><td><b>0.6 → 6 Gbit/s</b></td></tr>
-<tr><td><b>Sense</b> (listen)</td><td>the firehose: 12 acoustic ports at 200 MSa/s × 12 bit ≈ 29 Gbit/s; the EM listen loop at 12 ports × 10 GSa/s × 8 bit</td><td><b>~1 Tbit/s</b></td></tr>
+<tr><th>Constraint</th><th>Design consequence</th></tr>
+<tr><td>Aperture, wavelength and accessible modes</td><td>Calculate reachable fields and measurement resolution for the actual geometry, medium and noise.</td></tr>
+<tr><td>Bandwidth and signal-to-noise ratio</td><td>Allocate information rate and estimation error; count independent observations rather than repeated samples.</td></tr>
+<tr><td>Loss, heat and material response</td><td>Balance electrical input, stored energy, useful work and rejected heat over the full duty cycle.</td></tr>
+<tr><td>Material and process tolerances</td><td>Include roughness, defects, composition, stress and drift where they affect the required response.</td></tr>
+<tr><td>Conservation and thermodynamics</td><td>Track feedstock, products, residues and process energy. Rearrangement and recovery require explicit material routes.</td></tr>
 </table></div>
-<p>So the machine is not bandwidth-limited by <em>building</em>. It is
-bandwidth-limited by <em>listening</em> — and the listening is what makes the
-build correct, because every verb in this architecture is closed-loop
-(<a href="transmutation.html#s6-2">§6.2</a>). Worse, the loop has a deadline: a
-correction is only useful inside the field's coherence time, which is
-microseconds in the acoustic band and nanoseconds in the EM band.</p>
-<blockquote><b>Terabits per second in, decision in nanoseconds.</b> That is
-not a processor workload. No amount of clock speed makes a von Neumann
-machine consume a Tbit/s sensor stream and answer within a wave period —
-the data would spend its whole budget crossing a memory bus. The control
-loop is therefore the first-principles argument for computing in the
-physical layer, and it arrives without anyone having to like the idea
-aesthetically.</blockquote>
+<p>A holographic memory is assessed by measured recoverable capacity, error
+rate, access time, retention and endurance. A nominal wavelength-volume count
+is useful for scaling studies only after its assumptions are stated. The same
+rule applies to compute bounds: thermodynamic limits on irreversible erasure
+do not specify the energy or latency of a complete controller.</p>
 
-<h2>4 · Why the brain is optical — two independent arguments</h2>
-<p>The Star Trek answer to this is the isolinear optical computer. The
-first-principles answer arrives at the same place twice, by different roads.</p>
-<h3>4.1 The bandwidth–latency argument</h3>
-<p>What the control loop needs is not branchy logic but a large
-<em>linear transform</em> applied to a wide sensor vector at wave speed:
-the compile step of the field compiler is a holographic transform, the
-scan step a correlation against a dictionary — exactly what optics does
-natively and for free (a lens performs a Fourier transform in the time
-light takes to cross it; a hologram, a correlation in the same). The
-project's compute lane already owns this substrate: the
-twelve-port toroidal calculator of
-<a href="../../papers/desktop_optical_supercomputer.html">the optical supercomputer
-paper</a>, evaluated against the four-axis framework in
-<a href="../../papers/optimizing_compute.html">Optimizing Compute</a>.</p>
-<h3>4.2 The self-fabrication argument — the one that decides it</h3>
-<p>This machine is supposed to be buildable <em>by a machine like itself</em>.
-That constraint rules on the computer, and the ruling is sharp:</p>
-<blockquote><b>Transistor logic is chemistry; optical computing is
-geometry.</b> A modern processor needs doped junctions, atomic-layer films
-and lithography at a small fraction of the wavelength used to print it — a
-supply chain a replicator cannot close. An optical computer is waveguides,
-resonators, gratings and index contrast: <em>shape</em>. A machine whose
-entire purpose is to place matter to a pattern can make shape. So the
-endgame machine's brain is optical not because light is glamorous, but
-because <b>it is the only brain the machine can build for itself</b>.</blockquote>
-<div class="warn"><b>The honest limit of that argument.</b> Optics is superb
-at linear transforms, interconnect and correlation, and genuinely poor at
-what transistors are good at: cascadable nonlinear gates with gain, fan-out
-and clean signal restoration. There is no good optical transistor, and
-pretending otherwise is where optical-computing claims usually go wrong. The
-defensible architecture is therefore <b>hybrid</b> — the wide, fast, linear,
-deadline-bound work in the optical layer; the narrow housekeeping, sequencing
-and arithmetic in whatever conventional logic remains. That residue is small,
-but it is also the part of itself the machine cannot yet make (§6).</div>
+<h2 id="s6">6 · Close the manufacturing dependencies</h2>
+<p>A machine reproduces its capabilities only when it can manufacture, assemble,
+calibrate and qualify the necessary modules from its declared inputs. Track
+external components and processes explicitly. A high self-made mass fraction
+can still leave one indispensable process outside the loop.</p>
+<ol>
+<li><b>Seed.</b> Buy or outsource the components that make the first useful process possible.</li>
+<li><b>First upgrade.</b> Manufacture and inspect a component that improves the same platform.</li>
+<li><b>Precision ladder.</b> Use the improvement to unlock a more demanding part, including its metrology.</li>
+<li><b>Reproduction.</b> Produce the next working configuration, recording every external fabrication, finishing and assembly step.</li>
+</ol>
+<p>Candidate upgrades include fixtures, feed guides, field-shaping inserts,
+acoustic bodies and optical structures. Their order follows the available
+material process and the bottleneck removed. A proposed upgrade cannot depend
+on the very precision or process it is supposed to introduce.</p>
+<p>The living dependency map and the first self-made-upgrade gate are in the
+<a href="../docs/content/upgrades.md">upgrade guide</a>. The complete route,
+including human effort, matters more than a claim that only a handful of
+purchased parts will remain.</p>
 
-<h2>5 · Memory: holographic, and how close the bound is</h2>
-<p>Storage lands on the same wavelength argument as everything else.
-Volumetric holography stores on the order of <b>one bit per λ³</b>. At
-λ = 500 nm that is 8 × 10¹² bit/cm³ ≈ <b>1 TB/cm³</b>
-<span class="chip c-bound">BOUND</span>. Set against §2, a full object
-library is small:</p>
-<div class="overflow"><table>
-<tr><th>at 1 TB/cm³</th><th>objects held</th></tr>
-<tr><td>1 cm³ (a sugar cube)</td><td>~10⁴ objects at 100 MB each</td></tr>
-<tr><td>10 cm³ (a chip, an "isolinear card")</td><td>~10⁵ objects — more than a household will ever ask for</td></tr>
-<tr><td>1 cm³, atomic-microstate objects (§2 red bar)</td><td><b>3 × 10⁻⁷ of one object</b></td></tr>
-</table></div>
-<p>The current art is a long way below the bound, and the useful thing about
-the recent work is the <em>direction</em> it moves: Chen, Wang, Wu, Song,
-Yang, Lin &amp; Tan encode in <b>amplitude, phase and polarisation together</b>
-and decode with a convolutional network straight from intensity, removing the
-step-by-step reconstruction (<i>Optica</i> 13, 591–601, 2026)
-<span class="chip c-measured">MEASURED</span>, explicitly research-stage. That
-is not an attack on the λ³ bound — nothing beats it — but it is the right
-strategy for approaching it: <b>use more of light's degrees of freedom per
-site</b>. λ³ counts diffraction-limited sites, not bits per site, and
-amplitude × phase × polarisation is a larger alphabet than intensity
-alone.</p>
-<div class="box"><b>The convergence worth naming.</b> A holographic store, a
-holographic aperture (<a href="replicator_mechanical_construction.html">construction
-§3</a>), and a holographic compute step are the same mathematics —
-interference of a reference against an object wave — running on three
-different substrates. In the endgame machine, <em>memory, actuator and
-processor are one physics wearing three hats</em>. That is the strongest
-structural reason to think the architecture is natural rather than
-assembled.</div>
+<h2 id="s7">7 · Automate the search and the learning loop</h2>
+<p>Run two connected searches: work backward from the required next-generation
+capabilities, and forward from the processes the current platform can support.
+Their meeting point selects the next useful upgrade.</p>
+<p>Use inexpensive models to explore, independent higher-fidelity models to
+check promising designs, and reusable measurements to resolve consequential
+uncertainties. A learned correction model improves predictions within the
+conditions it has earned; it does not make unexplored conditions reliable.</p>
+<p>AI may propose geometry and manufacturing programs, choose informative
+measurements, analyze results and update documentation. Fixed acceptance tests
+and held-out conditions determine which proposals survive. Measure progress as
+capabilities gained and decisions resolved per human setup hour, alongside
+compute cost and elapsed time.</p>
 
-<h2>6 · Self-fabrication: how much of itself can it make?</h2>
-<p>Von Neumann's universal constructor arranges primitive parts it cannot
-synthesise — it works from a "sea of parts." The honest question is not
-whether the sea vanishes, but how far it drains.</p>
-<div class="overflow"><table>
-<tr><th>subsystem</th><th>self-fabricable?</th><th>why</th></tr>
-<tr><td>structure, enclosure, chassis</td><td><b>yes</b></td><td>bulk geometry — the machine's core competence</td></tr>
-<tr><td>phononic screens, metasurfaces, gratings</td><td><b>yes</b></td><td>patterned geometry at the design wavelength; the machine's own optical channel patterns at µm</td></tr>
-<tr><td>single-crystal transducers</td><td><b>plausible</b></td><td>directional solidification with field-programmed microstructure is already a specified capability (<a href="desktop_replicator_hardware_spec.html">spec §6.1</a>)</td></tr>
-<tr><td>optical compute elements</td><td><b>yes, if optical</b></td><td>waveguides and resonators are shape — §4.2</td></tr>
-<tr><td>holographic media</td><td><b>plausible</b></td><td>a photopolymer or doped glass volume is a bulk phase</td></tr>
-<tr><td>conventional ICs, power semiconductors</td><td><span class="chip c-open">no</span></td><td>doping and lithography chemistry outside the machine's repertoire — the irreducible residue</td></tr>
-</table></div>
-<p>So the closure fraction is high and <em>not</em> unity — the correct
-von Neumann answer, stated plainly: <b>the sea of parts shrinks to a
-handful of chips.</b> A machine that makes its own structure, transducers,
-apertures, optics and memory — and buys a controller — is the honest form
-of the claim, and the first version worth calling self-replicating without
-an asterisk.</p>
-
-<h2>7 · The line Star Trek draws, and why it is the right one</h2>
-<p>Trek separates the replicator (molecular resolution, inanimate objects)
-from the transporter (quantum resolution, living beings). It is easy to read
-that as a plot convenience. Read against §2 it is exactly where the bound
-falls:</p>
-<div class="overflow"><table>
-<tr><th></th><th>replicator — molecular</th><th>transporter — atomic/quantum</th></tr>
-<tr><td>description size</td><td>10⁷–10¹¹ bit</td><td>~3 × 10²⁵ bit</td></tr>
-<tr><td>store one object</td><td>10⁻⁶–0.1 cm³</td><td><b>3 × 10⁶ m³</b></td></tr>
-<tr><td>move at 1 Tbit/s</td><td>µs–s</td><td><b>~10⁶ years</b></td></tr>
-<tr><td>verdict</td><td>an engineering problem</td><td>a different machine — and no-cloning forbids the quantum-exact version outright</td></tr>
-</table></div>
-<p>The gap is thirteen orders of magnitude in storage and six in time, and no
-plausible improvement in either closes it: you cannot engineer your way
-across a factor of 10¹³ by being clever about encoding, because the bound is
-counting <em>distinguishable states</em>, not bytes. This is the one place in
-the document where the answer is "no, and here is the number."</p>
-<blockquote>The replicator is reachable. The transporter is not — and the
-same arithmetic that says so is what tells us the replicator's file is the
-size of a video.</blockquote>
-
-<h2>8 · The ledger — where the architecture sits against each bound</h2>
-<div class="overflow"><table>
-<tr><th>bound</th><th>where it sits</th><th>where we sit</th><th>distance</th></tr>
-<tr><td>Object description (Abbe / molecular)</td><td>~10⁷–10¹¹ bit</td><td><code>.pattern</code> chords, MB-class</td><td><b>at it</b> — the format is already the compressed form</td></tr>
-<tr><td>Storage density (1 bit/λ³)</td><td>~1 TB/cm³</td><td>current holographic art, research-stage</td><td>orders below; direction correct (multi-DOF encoding)</td></tr>
-<tr><td>Sense channel (Shannon)</td><td>set by band × SNR</td><td>~1 Tbit/s design target</td><td>near it for the aperture we have — more needs more aperture</td></tr>
-<tr><td>Compute latency (loop deadline)</td><td>wave period: ns–µs</td><td>optical/physical layer</td><td><b>at it</b> by construction — that is why the layer exists</td></tr>
-<tr><td>Compute energy (Landauer)</td><td>~3 zJ per erased bit</td><td>far above; but the linear optical transform is nearly reversible</td><td>far — and the honest headroom is reversibility, not clock tricks</td></tr>
-<tr><td>Matter (baryon conservation)</td><td>rearrangement only</td><td>rearranger by design</td><td><b>at it</b> — doctrine, §1</td></tr>
-<tr><td>Energy ledger (2nd law)</td><td>ordering exports entropy</td><td>harvest loop + entropy-routing cooling</td><td>at it in principle; efficiency is the open engineering</td></tr>
-<tr><td>Self-closure (von Neumann)</td><td>sea of parts never empties</td><td>everything but the controller</td><td>near it — residue is a handful of chips</td></tr>
-</table></div>
-
-<div class="warn"><b>Register.</b> This document is a target, not a roadmap and
-not a claim. The bounds cited are textbook <span class="chip c-bound">BOUND</span>;
-the arithmetic is arithmetic and can be checked in a minute; the holographic
-storage result is <span class="chip c-measured">MEASURED</span> and
-research-stage as its authors state. Everything about what <em>this</em>
-machine will achieve remains governed by the RH-1 papers and their evidence
-tiers. Transmutation appears nowhere here. The value of the exercise is
-narrow and real: it tells us which parts of the design are finished, which
-are engineering, and which are forbidden — and only the third kind is worth
-being certain about.</div>
-
+<h2 id="s8">8 · The next-generation design record</h2>
+<p>Every candidate generation carries a compact, reviewable record:</p>
+<ul>
+<li>Required task, payload, workspace and acceptance criteria.</li>
+<li>Geometry, material specification, interfaces and manufacturing recipe.</li>
+<li>Predicted benefit, model validity, uncertainty and independent checks.</li>
+<li>External seed components, processes and metrology.</li>
+<li>Human effort, machine time, energy, yield and rework.</li>
+<li>The smallest remaining experiment that can change the decision.</li>
+</ul>
+<blockquote><b>The design target:</b> build a machine that makes a useful part
+of its own successor, verify the gain, and repeat. Each cycle expands the set
+of parts the platform can manufacture and qualify.</blockquote>
+<p class="meta">Related: <a href="replicator_architecture.html">system architecture</a> ·
+<a href="replicator_assemble.html">assembly process</a> ·
+<a href="replicator_dissolve.html">material recovery</a> ·
+<a href="../docs/content/upgrades.md">upgrade strategy</a>.</p>
 </body>
 </html>

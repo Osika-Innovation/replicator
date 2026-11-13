@@ -1,0 +1,601 @@
+{
+  "schema_version": "1.0",
+  "title": "Etherworks Replicator Handbook",
+  "site_url": "https://osika-innovation.github.io/replicator/",
+  "repository": "https://github.com/Osika-Innovation/replicator",
+  "updated": "2026-11-13",
+  "documents": [
+    {
+      "id": "home",
+      "title": "Home",
+      "source": "docs/content/index.md",
+      "url": "index.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Build the machine that builds the next.",
+      "topics": [
+        "overview",
+        "replicator",
+        "etherworks"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "start",
+      "title": "Start here",
+      "source": "docs/content/start.md",
+      "url": "guides/start.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Purpose, first configuration and reading routes.",
+      "topics": [
+        "prototype",
+        "strategy"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "source": "docs/content/architecture.md",
+      "url": "guides/architecture.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Architecture",
+      "summary": "Subsystems, interfaces and a clickable system map.",
+      "topics": [
+        "block diagram",
+        "modules",
+        "3+3"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "start",
+        "agents"
+      ]
+    },
+    {
+      "id": "acoustics",
+      "title": "Acoustic bodies",
+      "source": "docs/content/acoustics.md",
+      "url": "guides/acoustics.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Acoustic bodies",
+      "summary": "Few-input piezo/body co-design and controllability.",
+      "topics": [
+        "piezo",
+        "Langevin",
+        "hologram",
+        "resonator"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "materials",
+      "title": "Materials and modes",
+      "source": "docs/content/materials.md",
+      "url": "guides/materials.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Materials and modes",
+      "summary": "Crystals, spectra and fabrication from first principles.",
+      "topics": [
+        "quartz",
+        "periodic table",
+        "tones",
+        "cymatics",
+        "metamaterials"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "electromagnetics",
+      "title": "Electromagnetics and optics",
+      "source": "docs/content/electromagnetics.md",
+      "url": "guides/electromagnetics.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Electromagnetics and optics",
+      "summary": "Material interactions and optional process/instrument modules.",
+      "topics": [
+        "toroid",
+        "coils",
+        "MHD",
+        "optical"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "manufacturing",
+      "title": "Manufacturing",
+      "source": "docs/content/manufacturing.md",
+      "url": "guides/manufacturing.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Manufacturing",
+      "summary": "Feed, arrange, join and inspect a useful part.",
+      "topics": [
+        "consolidation",
+        "fabrication",
+        "reclaim"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "digital-twin",
+      "title": "Digital twin",
+      "source": "docs/content/digital-twin.md",
+      "url": "guides/digital-twin.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Digital twin",
+      "summary": "CAD, models, control and autonomous research.",
+      "topics": [
+        "CAD",
+        "simulation",
+        "AI",
+        "Cadence",
+        "Prime",
+        "holo"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "upgrades",
+      "title": "Upgrade loop",
+      "source": "docs/content/upgrades.md",
+      "url": "guides/upgrades.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Upgrade loop",
+      "summary": "A dependency-aware route to self-made improvements.",
+      "topics": [
+        "self-replication",
+        "constructor",
+        "automation"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "start",
+        "agents"
+      ]
+    },
+    {
+      "id": "status",
+      "title": "Current state",
+      "source": "docs/content/status.md",
+      "url": "guides/status.html",
+      "type": "guide",
+      "group": "Project",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Published code, active studies and evidence.",
+      "topics": [
+        "status",
+        "receipts",
+        "prototype"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "start",
+        "agents"
+      ]
+    },
+    {
+      "id": "agents",
+      "title": "For agents",
+      "source": "docs/content/agents.md",
+      "url": "guides/agents.html",
+      "type": "guide",
+      "group": "Project",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Ownership, contracts and contribution workflow.",
+      "topics": [
+        "agents",
+        "Claude",
+        "Gemini",
+        "Carbon",
+        "Codex"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "research",
+      "title": "Research library",
+      "source": "docs/content/research.md",
+      "url": "guides/research.html",
+      "type": "guide",
+      "group": "Project",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Mechanism papers, source records and research directions.",
+      "topics": [
+        "papers",
+        "patents",
+        "sources"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "principles",
+      "title": "Replicator Principles",
+      "source": "papers/replicator_principles.html",
+      "url": "papers/replicator_principles.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Architecture",
+      "summary": "Programme principles and shared operating model.",
+      "topics": [
+        "architecture",
+        "holography"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Prose and claim boundaries",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "architecture-paper",
+      "title": "Replicator Architecture",
+      "source": "papers/replicator_architecture.html",
+      "url": "papers/replicator_architecture.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Design study",
+      "owner": "Architecture",
+      "summary": "The RH-1 architecture argument and topology.",
+      "topics": [
+        "RH-1",
+        "topology"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "The Replicator at the Limit",
+      "source": "papers/replicator_at_the_limit.html",
+      "url": "papers/replicator_at_the_limit.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Strategy",
+      "summary": "Design from constraints and a credible manufacturing dependency chain.",
+      "topics": [
+        "bounds",
+        "constructor",
+        "self-replication"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Prose and claim boundaries",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "phonons",
+      "title": "Phonons: the acoustic carrier",
+      "source": "papers/replicator_phonons.html",
+      "url": "papers/replicator_phonons.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Mechanism study",
+      "owner": "Mechanisms",
+      "summary": "Acoustic wave control and material manipulation.",
+      "topics": [
+        "acoustics",
+        "force"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "photons",
+      "title": "Photons: the electromagnetic carrier",
+      "source": "papers/replicator_photons.html",
+      "url": "papers/replicator_photons.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Mechanism study",
+      "owner": "Mechanisms",
+      "summary": "Electromagnetic and optical process concepts.",
+      "topics": [
+        "electromagnetics",
+        "optics"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "carriers",
+      "title": "The Two Carriers",
+      "source": "papers/the_two_carriers.html",
+      "url": "papers/the_two_carriers.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Mechanism study",
+      "owner": "Mechanisms",
+      "summary": "Roles of acoustic and electromagnetic interactions.",
+      "topics": [
+        "acoustics",
+        "electromagnetics"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "assemble",
+      "title": "Assembly",
+      "source": "papers/replicator_assemble.html",
+      "url": "papers/replicator_assemble.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Process study",
+      "owner": "Processes",
+      "summary": "Field-guided assembly concepts and process questions.",
+      "topics": [
+        "joining",
+        "assembly"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "scan",
+      "title": "Scanning",
+      "source": "papers/replicator_scan.html",
+      "url": "papers/replicator_scan.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Process study",
+      "owner": "Processes",
+      "summary": "Boundary observations and reconstruction concepts.",
+      "topics": [
+        "scan",
+        "metrology"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "dissolve",
+      "title": "Material Recovery",
+      "source": "papers/replicator_dissolve.html",
+      "url": "papers/replicator_dissolve.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Processes",
+      "summary": "Focused energy, separation, collection and reuse qualification.",
+      "topics": [
+        "recovery",
+        "recycling"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Prose and claim boundaries",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "stores",
+      "title": "Material Stores",
+      "source": "papers/replicator_stores.html",
+      "url": "papers/replicator_stores.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Design study",
+      "owner": "Processes",
+      "summary": "Feedstock storage and handling concepts.",
+      "topics": [
+        "feedstock",
+        "storage"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "memory",
+      "title": "Holographic Memory and Compute",
+      "source": "papers/holographic_memory_and_compute_plan.html",
+      "url": "papers/holographic_memory_and_compute_plan.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Research programme",
+      "owner": "Research",
+      "summary": "Optical storage/compute candidates and their qualification tasks.",
+      "topics": [
+        "optical",
+        "memory",
+        "compute"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "field-compiler",
+      "title": "Field Compiler Specification",
+      "source": "papers/replicator_field_compiler.html",
+      "url": "papers/replicator_field_compiler.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Historical specification",
+      "owner": "Reference",
+      "summary": "Historical software plan; use current code for implemented behaviour.",
+      "topics": [
+        "software",
+        "compiler"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "mechanical",
+      "title": "Mechanical Construction",
+      "source": "papers/replicator_mechanical_construction.html",
+      "url": "papers/replicator_mechanical_construction.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Historical specification",
+      "owner": "Reference",
+      "summary": "A dated RH-1 mechanical instance and manufacturing concepts.",
+      "topics": [
+        "CAD",
+        "mechanical"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "hardware",
+      "title": "Desktop Replicator Hardware Specification",
+      "source": "papers/desktop_replicator_hardware_spec.html",
+      "url": "papers/desktop_replicator_hardware_spec.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Historical specification",
+      "owner": "Reference",
+      "summary": "RH-1 rulings and historical hardware parameters.",
+      "topics": [
+        "BOM",
+        "RH-1",
+        "hardware"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    }
+  ]
+}

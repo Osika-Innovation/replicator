@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{DESCRIPTION}}">
+  <meta name="theme-color" content="#f7f7f2">
+  <title>{{TITLE}} · Etherworks</title>
+  <link rel="stylesheet" href="{{BASE}}assets/style.css">
+  <script src="{{BASE}}assets/app.js" defer></script>
+</head>
+<body data-root="{{BASE}}">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="site-header">
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Open navigation"><span aria-hidden="true">☰</span></button>
+    <a class="brand" href="{{BASE}}index.html" aria-label="Etherworks Replicator Handbook home">
+      <svg class="brand-mark" width="35" height="35" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M18 2.5 31.5 10.25v15.5L18 33.5 4.5 25.75v-15.5Z" stroke="currentColor" stroke-width="1.5"/><path d="M10 13.5h16M10 18h12M10 22.5h16M10 13.5v9" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span><strong>ETHERWORKS</strong><span class="brand-subtitle">Replicator Handbook</span></span>
+    </a>
+    <div class="search-wrap">
+      <label class="search-label" for="site-search"><span class="visually-hidden">Search the handbook</span><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input id="site-search" type="search" placeholder="Search the project…" autocomplete="off" aria-controls="search-panel" aria-expanded="false"><kbd aria-hidden="true">/</kbd></label>
+      <section id="search-panel" class="search-panel" aria-label="Search results" hidden><p id="search-status" role="status" aria-live="polite"></p><ul id="search-results"></ul></section>
+    </div>
+    <a class="repo-link" href="https://github.com/Osika-Innovation/replicator">GitHub <span aria-hidden="true">↗</span></a>
+  </header>
+  <div class="page-layout">
+    <aside id="sidebar" class="sidebar" aria-label="Handbook navigation">
+      <nav>{{SIDEBAR}}</nav>
+      <div class="sidebar-note"><span class="eyebrow">The engineering record</span><p>Architecture, experiments and the path to a machine that improves itself.</p><a href="{{BASE}}llms.txt">Agent reading map <span aria-hidden="true">↗</span></a></div>
+    </aside>
+    <div class="content-column">
+      <main id="main-content" tabindex="-1">
+        <div class="page-meta">{{META}}</div>
+        <article>{{CONTENT}}</article>
+      </main>
+      <footer class="page-footer"><p>Etherworks · Replicator Handbook</p><a href="{{SOURCE_URL}}">View this page’s source <span aria-hidden="true">↗</span></a></footer>
+    </div>
+    <aside class="page-toc" aria-label="On this page"><div><span class="eyebrow">On this page</span>{{TOC}}</div></aside>
+  </div>
+</body>
+</html>
