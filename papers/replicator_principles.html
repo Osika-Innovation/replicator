@@ -65,7 +65,6 @@ modes: <a href="replicator_scan.html">Scan</a> /
 <a href="replicator_dissolve.html">Dissolve</a> ·
 machine: <a href="replicator_architecture.html">Architecture</a> /
 <a href="replicator_stores.html">The Stores</a> ·
-science: <a href="transmutation.html">Transmutation</a> ·
 software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
 compute &amp; storage: <a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a> ·
 bounds: <a href="replicator_at_the_limit.html">At the Limit</a></div>
@@ -75,107 +74,67 @@ bounds: <a href="replicator_at_the_limit.html">At the Limit</a></div>
 principles it runs on, and where each principle is worked out in full.
 Written to be read first, and to be explainable onward to a non-technical
 reader.</p>
-<p class="meta">v1.1 · 2026-08-01 (v1.0 2026-07-28) · Changelog: instance
-content moved out to the hardware papers; the 2026-07-30 rulings (former
-§8c) integrated into the body sections they belong to; network map
-restructured to the four-layer set. · Role in the set: this paper carries no
-new results and no research-note detail. Every section states one principle,
-gives its status honestly, and links the member paper that owns it. If this
-paper and a member paper disagree, the member paper wins — then fix this one.</p>
+<p class="meta">v1.3 · reviewed 2026-11-13 · Role: public principles and
+paper map. This revision clarifies the engineering programme, control limits,
+manufacturing programs and recovery processes. Historical RH-1 illustrations
+remain design references. Current implementation results belong to the twin;
+this overview adds no bench result.</p>
 
-<h2 id="s0">0 · The machine in one paragraph</h2>
-<p>The Replicator scans, builds, and un-builds objects using shaped fields
-instead of tools: a commanded boundary enclosing a build volume, nothing
-moving inside, every surface of the boundary a computed hologram. Sound is
-the muscle — the hands: standing acoustic holograms trap particles, carry
-them, and fuse them. Light — EM from microwave to optical — is the address,
-the measure, and the energy channel, and at the finest scale the fingertips,
-placing what the hands are too coarse to hold (optical gradient traps;
-R1-b). Objects are stored as <b>holographic patterns</b> — boundary
-recordings that reconstruct the object when replayed, the way a photo stores
-an image, not a list of pixel values — natively encoded, as a JPEG is, in
-frequency coefficients: the <b>chord list</b>, the resonances the object
-rings at with the boundary drive that addresses each one; like a progressive
-photo, the object sharpens as chords arrive. Scanning is call; building is
-call-and-response repeated until the workpiece answers with the target
-chord.</p>
-<p>One realized instance (RH-1, a free-standing three-plate column) is
-specified in the <a href="desktop_replicator_hardware_spec.html">hardware
-papers</a>; a table-top single-plate device and an orbital shell are the
-same <a href="replicator_architecture.html">architecture</a> at other
-points on the family.</p>
+<h2 id="s0">0 · The machine we are building</h2>
+<p>The Replicator programme develops a modular manufacturing platform whose
+fields move material, whose process modules join it, and whose sensors verify
+the result. Its long-term functions are scan, assemble and recover. The first
+configuration establishes a useful manufacturing loop and produces parts that
+improve the same platform.</p>
+<p>Acoustics supplies candidate manipulation forces; electromagnetic and optical
+modules add sensing or processing functions when they solve a defined task.
+The digital twin connects geometry, material response, control, fabrication
+recipes and inspection. AI uses that model to explore designs, prepare
+experiments and reduce human setup and rework.</p>
+<p>Keep three records distinct: the desired part, observations of a workpiece,
+and the executable manufacturing program. A boundary response can be stored
+compactly as modes or chords; replaying that response is not a general recipe
+for recreating matter. A completed part must pass the dimensional, material and
+functional criteria its use requires.</p>
+<p>RH-1, the free-standing three-plate column, is a specified design instance
+in the <a href="desktop_replicator_hardware_spec.html">hardware papers</a>.
+The modular prototype and its progression are described in the
+<a href="../docs/content/upgrades.md">upgrade guide</a>.</p>
+<blockquote><b>The simple picture.</b> Measure the workpiece, choose the next
+useful action, apply it and check the result. Put repeatable functions into
+geometry where that simplifies the machine. Let software handle adaptation.
+Build one useful upgrade, install it and repeat.</blockquote>
 
-<blockquote><b>The campfire version.</b> Tap a wine glass and it sings — and
-the note tells you about the glass: its shape, its material, whether it is
-cracked. Every object has a voice like that. This machine is a room whose
-walls are speakers and antennas. To <b>scan</b>, it sings to the object and
-listens to how it sings back; the echo — the object's chord — is saved as a
-small file, the way sheet music is the song. To <b>build</b>, it runs the
-trick backwards: as sand on a vibrating plate jumps into patterns, the
-machine plays a chord whose sound forms an invisible mold in mid-air, powder
-falls into the mold's pockets, and light welds each grain where it sits. It
-keeps listening the whole time, and it is done when the object sings the
-same chord as the file — when it <em>rings true</em>. In four phrases:
-<b>sound is the hands, light is the eyes, the pattern is the memory, and
-heat is the price — paid only at the weld.</b></blockquote>
-
-<h2 id="s1">1 · Three parts: storage, compute, chamber</h2>
-<p>The machine decomposes into exactly three subsystems, and — a ruling that
-decides the architecture — they are <b>three separate cavities</b>, not one:</p>
+<h2 id="s1">1 · Storage, compute and the working chamber</h2>
+<p>Three functional layers organize the design. They share data and interfaces;
+their implementation can change as the platform develops.</p>
 <div class="overflow"><table>
-<tr><th>part</th><th>what it is</th><th>why it is its own cavity</th><th>owner paper</th></tr>
-<tr><td><b>storage</b></td><td><code>.pattern</code> files: an object as its
-holographic pattern, encoded as a chord list (complex resonance + 12-port
-address vector, ~100 bytes per chord); holographic phase-change store as the
-long-term medium</td>
-<td>storage density scales as bits per λ³ — optical wavelengths, not
-acoustic, are where memory is cheap</td>
-<td><a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a></td></tr>
-<tr><td><b>compute</b></td><td>the optical core (recurrent EML toroid,
-settles in nanoseconds) plus the AI-side compiler stack</td>
-<td>a cavity's mode count is V/λ³: optical exceeds acoustic by the
-wavelength ratio cubed — roughly twelve orders of magnitude. The build
-chamber is a poor computer <em>because</em> it is a good replicator</td>
-<td><a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a>,
-<a href="../../papers/desktop_optical_supercomputer.html">Optical Supercomputer</a></td></tr>
-<tr><td><b>chamber</b></td><td>the commanded boundary and the empty volume
-it commands: creates, controls, and measures photonic and phononic fields;
-the fields do all touching</td>
-<td>moving matter needs long wavelengths and real forces — exactly what
-makes a cavity information-poor and force-rich</td>
-<td><a href="replicator_architecture.html">Architecture</a>; instance
-detail in <a href="replicator_mechanical_construction.html">Mechanical
-Construction</a>,
-<a href="desktop_replicator_hardware_spec.html">Hardware Spec</a></td></tr>
+<tr><th>Layer</th><th>Function</th><th>Design reference</th></tr>
+<tr><td>Storage</td><td>Keep material inventory, part specifications, calibration records and executable jobs</td><td><a href="replicator_stores.html">The Stores</a>; <a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a></td></tr>
+<tr><td>Compute and control</td><td>Predict responses, plan process steps and adjust from observations</td><td><a href="replicator_field_compiler.html">Field Compiler</a></td></tr>
+<tr><td>Working chamber</td><td>Deliver feedstock, manipulate it, join it and inspect it through replaceable modules</td><td><a href="replicator_architecture.html">Architecture</a></td></tr>
 </table></div>
-<p>One mathematics unifies the three: interfere a reference wave with an
-object wave, store the interference, re-illuminate to reconstruct. Memory,
-processor, and actuator are that one holographic operation wearing three
-hats, sized to three wavelengths. The compiler is what makes them one
-machine.</p>
+<p>The initial platform uses conventional compute and storage. Optical compute
+and holographic memory are candidate upgrades with their own fabrication and
+qualification requirements. Their adoption follows a measured task benefit.</p>
 
-<h2 id="s2">2 · Principle: everything happens from the walls</h2>
-<p>There is no tool inside the build volume — no nozzle, no gantry, nothing
-that moves. All the machinery is in the walls: dense arrays of small
-emitters and receivers. Walls are <em>enough</em> because waves superpose:
-choose each emitter's amplitude, phase, and frequency and you have chosen
-the summed field at every point of the volume at once — exactly so, by the
-Kirchhoff–Helmholtz theorem: the field on a closed surface fully determines
-the field everywhere inside it. Control the surface and you control the
-interior; there is nothing left inside to control.</p>
-<p>Read backwards, the same statement is measurement: every wave scattering
-off the workpiece crosses the walls on its way out, so recording at the
-walls captures everything that can be known about the interior from
-outside. Command in, read out — one surface does both. And the walls buy
-parallelism no tool head can have: a mug is ~10²⁴ atoms; building it in
-minutes means ~10²² placements per second — a nozzle placing a billion
-atoms per second would need millions of years. Only a surface that patterns
-the entire volume in parallel reaches replicator rates
-(<a href="transmutation.html">Transmutation §6.9</a>).</p>
+<h2 id="s2">2 · Principle: shape fields from accessible boundaries</h2>
+<p>Choose actuator positions, geometry and drive signals together. A known
+linear medium maps boundary excitation to an interior field; an inverse design
+finds inputs that approximate the field needed for a task. Finite apertures,
+bandwidth, loss, power and independent input count determine what can be reached.</p>
+<p>A boundary representation theorem is not a guarantee of arbitrary control or
+complete imaging from a few ports. The same transfer model must account for
+unobservable regions and indistinguishable responses. Validate useful control
+and sensing on the required payload and workspace.</p>
+<p>Fields can act over a volume and support parallel operations. Manufacturing
+rate still follows the feed, transport, capture, joining and inspection process.
+The machine moves grains, droplets or other process units; counting atoms and
+multiplying by carrier frequency does not establish a build rate.</p>
 
 <h2 id="s3">3 · Principle: two carriers, one language</h2>
 <p>The chamber speaks two field types — <b>phononic</b> (sound: force-rich,
-10⁵× shorter wavelength at a given frequency, needs a medium) and
+short wavelength in the operating bands, needs a medium) and
 <b>photonic</b> (EM from microwave to optical: fast, penetrating,
 information-rich) — described by one knob list, treated by the compiler as
 one language:</p>
@@ -185,13 +144,13 @@ one language:</p>
 <tr><td>phase</td><td>✓</td><td>✓</td><td>where the pattern lands — holography lives here</td></tr>
 <tr><td>frequency</td><td>microwave→optical octaves</td><td>20–300 kHz air, MHz in melt</td><td><b>the address</b> (spectral addressing, rainbow trapping)</td></tr>
 <tr><td>direction (k)</td><td>✓</td><td>✓</td><td>aperture geometry, focus</td></tr>
-<tr><td>polarization</td><td>full Stokes state; vector beams</td><td><b>none in air</b> (longitudinal only); reappears in solids/melt</td><td>photon-only address axis in the volume</td></tr>
+<tr><td>polarization</td><td>full Stokes state; vector beams</td><td>longitudinal bulk waves in air; additional elastic modes in solids</td><td>photon-only address axis in the volume</td></tr>
 <tr><td>spin (SAM)</td><td>±ħ, circular</td><td>near-field only</td><td>chirality addressing</td></tr>
 <tr><td>orbital AM</td><td>helical wavefronts</td><td><b>yes — acoustic vortex beams</b></td><td>torque, rotation, extra address axis — shared by both carriers</td></tr>
 <tr><td>wavefront shape</td><td>computed hologram</td><td>acoustic hologram</td><td><b>the mold — the master knob</b></td></tr>
 <tr><td>time structure</td><td>single-cycle toroidal &amp; toroidal-helical pulses</td><td>bursts, chords, ramps</td><td>positioning signatures; time-domain focusing</td></tr>
 <tr><td>topology</td><td>toroidal / helical / skyrmion textures</td><td>toroidal analogs</td><td>structured addressing (the EM boundary)</td></tr>
-<tr><td>coherence</td><td colspan="2">temporal &amp; spatial, both carriers</td><td>holography's precondition; incoherent = heat</td></tr>
+<tr><td>coherence</td><td colspan="2">temporal &amp; spatial, both carriers</td><td>phase relationships for interference and field control</td></tr>
 </table></div>
 <p>Forces are <em>derived</em> quantities — quadratic, time-averaged
 combinations of the knobs: intensity, radiation pressure, the Gor'kov trap
@@ -202,29 +161,18 @@ its short wavelength, and the EM channel earns its place by speed, bandwidth
 and sensing precision, not by mode count. Full treatment:
 <a href="the_two_carriers.html">The Two Carriers</a>.</p>
 
-<p><b>Control and muscle (R1, adopted 2026-07-30).</b> Light addresses,
-measures, and calibrates; sound and induction exert force and heat;
-electrons only amplify at the boundary edge and carry DC power — never
-information. Not a preference: cross-carrier couplings in the volume are
-parametric (field compiler §17.6 bound i), so light <em>cannot</em> be
-muscle; its whole value is being the machine's independent information
-plane. Refined 2026-08-01 (R1-b): light's <em>direct</em> radiation force
-is negligible as bulk muscle but is the precision-placement channel at the
-smallest payloads — sound is the hands, light is the fingertips
-(<a href="replicator_photons.html">The Photons §3b</a>). (Full text and
-derivations for all rulings:
-<code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30.md</code>, R1–R14 +
-amendments.)</p>
+<p><b>Division of work.</b> The earlier R1/R1-b architecture explored optical
+addressing with acoustic manipulation and electromagnetic heating. The modular
+prototype uses conventional electronic control and acquisition. Select each
+carrier by its measured coupling to the payload, available sensing information
+and total implementation effort. Shared field notation does not make their
+actuators or material interactions interchangeable.</p>
 
-<p><b>The optical stem, and the topological alphabet (R2-b, R13, adopted
-2026-07-30).</b> The bore
-optical channel is one bidirectional holographic port: it speaks the caps'
-toroidal-pulse alphabet at optical frequency and reads back by state
-tomography — a density-matrix hologram in which even the loss of purity is
-information about the object. And on both carriers, field states can carry
-integer topological labels (skyrmion numbers) that survive the chamber's
-own reverberant chaos — the robust register of the machine's language.
-Full treatment: <a href="replicator_photons.html">The Photons</a>.</p>
+<p><b>Structured optical fields.</b> Polarization, phase and spatial structure
+provide candidate sensing and control channels. A topological label describes
+a field configuration; useful robustness must be checked under the losses,
+scatterers and disturbances of the actual module. These routes remain in the
+<a href="replicator_photons.html">photon research paper</a>.</p>
 
 <h2 id="s4">4 · Principle: every surface is a computed hologram</h2>
 <p>An instance's EM-plate spiral gratings, its graded phononic hex
@@ -250,7 +198,7 @@ achiral); handedness in independently fed enantiomeric substructures —
 mirrored caps, contrawound winding pairs — is a knob. Diversity is only
 useful if addressable; unaddressable diversity averages to zero.</p>
 
-<p><b>Worked example: one driver plate, dimensioned (added 2026-08-03,
+<p><b>Historical design example: one driver plate, dimensioned (added 2026-08-03,
 revised same day).</b> The principle above — hologram, not shape choice
 — is not just a claim about the abstract surface impedance equation; it
 is buildable, and working the actual numbers surfaces real corrections,
@@ -440,111 +388,41 @@ physics, not the aesthetic prior. Face view at reduced dot density (61 of
 the full 380) for legibility.</div>
 </div>
 
-<h2 id="s5">5 · Principle: three modes, one field</h2>
-<p>The machine has three operational modes, all of them the same field used
-three ways. (Each mode has its own member paper, written
-easy-first-then-technical: <a href="replicator_scan.html">Scan</a>,
-<a href="replicator_assemble.html">Assemble</a>,
-<a href="replicator_dissolve.html">Dissolve</a> — added 2026-08-01. The
-step lists below are the summaries; the mode papers own the detail.)</p>
-
+<h2 id="s5">5 · Principle: three functions, explicit process recipes</h2>
+<p>The long-term machine integrates <a href="replicator_scan.html">scan</a>,
+<a href="replicator_assemble.html">assembly</a> and
+<a href="replicator_dissolve.html">recovery</a>. Each function has its own
+qualified operating envelope.</p>
 <h3>Assemble</h3>
 <ol>
-<li><b>Slice.</b> The compiler turns the object file into a schedule of
-field states: for each build step, the points that should hold a grain and
-the boundary drive — per panel, per frequency, an amplitude and a phase —
-whose interference puts a low-pressure pocket at each of them.</li>
-<li><b>Feed.</b> Powder (grains tens of µm across), droplets, or a melt
-stream enters through the axis bore.</li>
-<li><b>Trap.</b> The boundary plays the drive; the crossing waves add into
-a three-dimensional pressure landscape. A grain in it feels a steady
-cycle-averaged force toward the nearest quiet pocket — the Gor'kov
-potential — and settles there, held from all sides like a marble in a bowl
-made of sound.</li>
-<li><b>Move.</b> The compiler ramps the phases smoothly; the pockets glide
-and the grains ride along, hundreds at once — this is where working from
-the walls pays.</li>
-<li><b>Weld.</b> When a grain reaches its final coordinate, energy —
-acoustic focus plus electromagnetic or optical heating — is concentrated
-on that one spot and the grain fuses to its neighbours. Heat is spent only
-here.</li>
-<li><b>Check.</b> Scan mode runs underneath the whole time: after each
-step the growing object's ring is compared to the target's, and the next
-step corrects before errors compound.</li>
+<li><b>Specify.</b> Define the part's material, geometry, function and acceptance test.</li>
+<li><b>Feed and position.</b> Deliver the selected material and execute a reachable manipulation sequence.</li>
+<li><b>Join.</b> Apply the material-specific bonding, curing or consolidation process, with its energy and thermal budget.</li>
+<li><b>Inspect.</b> Measure the completed result and correct or reject it against the declared criteria.</li>
 </ol>
-<p>Every step composes <span class="chip c-measured">MEASURED</span>
-primitives — acoustic levitation, holographic traps, ultrasonic welding
-(composition status: §8b).</p>
-
 <h3>Scan</h3>
-<ol>
-<li><b>Ask.</b> One gate sends a brief chord — many frequencies at once, at
-milliwatt level. Nothing in the volume moves.</li>
-<li><b>Ring.</b> The waves wash over the object; some frequencies land on
-its natural resonances and set it ringing — the wine-glass effect, at many
-pitches at once.</li>
-<li><b>Record.</b> The walls record what arrives back at every port: how
-loud, how delayed, in what phase. One gate's question, twelve ports'
-answers.</li>
-<li><b>Repeat</b> from each gate in turn, or in coded combinations. The
-collected answers are the object's full response book — the scattering
-matrix S(f).</li>
-<li><b>Compress.</b> The compiler keeps the few resonances carrying most
-of the signature, each with the port pattern that excites it — the chord
-list — and writes <code>.pattern</code>; roughly a megabyte describes a
-mug.</li>
-<li><b>Identify materials.</b> The electromagnetic sweep adds what sound
-cannot: dielectric response for material class, and optical spectroscopy
-down the bore for composition.</li>
-</ol>
+<p>Apply known probe signals and record calibrated observations. Infer only the
+properties those observations can constrain. Keep measured signals, reconstructed
+estimates and unresolved interior features distinct in the stored record and view.</p>
+<h3>Recover</h3>
+<p>Identify the material system, release or reprocess it through a specified
+mechanism, collect the outputs and qualify them for reuse. Phase reversal can
+help focus waves; it does not reverse bonding or purify material. Recovery
+carries a mass, contamination and energy ledger.</p>
 
-<h3>Dissolve</h3>
-<ol>
-<li><b>Play its echo backwards.</b> Ordinarily an object scatters most of
-what hits it. Drive from all sides with the time-reversed copy of what it
-would itself radiate and the scattering runs in reverse: nothing reflects;
-all the incoming energy lands in the object (coherent perfect absorption —
-measured physics for beams and cavities).</li>
-<li><b>Unbind.</b> The absorbed energy is steered to the welds and bonds:
-joints soften where assemble fused them, and the object comes back apart
-into grains.</li>
-<li><b>Reclaim.</b> The pockets carry the freed grains back to the
-cartridge circle; electromagnetic energy returned to the boundary is
-rectified back into the drive rail rather than lost as heat.</li>
-<li><b>Status, honestly.</b> Each individual step is measured physics or
-ordinary engineering at powder scale; running the full chain — an
-arbitrary finished object back to sorted stock — is the research frontier
-<span class="chip c-open">OPEN</span>. The deeper matter-loop sectors
-(transmutation) live entirely in the
-<a href="transmutation.html">science paper</a> under its own register.</li>
-</ol>
-
-<p>The unity: assemble and dissolve are the same drive separated by one
-sign flip, and scan is the same physics at a millionth of the power. (The
-member papers call the pair <b>ADD</b> and <b>REMOVE</b> — "the two verbs"
-— a drive-level naming kept here only as a cross-reference.)</p>
-
-<h2 id="s6">6 · Principle: call-and-response</h2>
-<p>Scan and build are one operation run in opposite directions. Scanning
-sends chords and records the ring; the collected book is the object's
-scattering matrix S(f) — its holographic pattern as seen from the gates —
-and <code>.pattern</code> its compressed, chord-encoded form. Building
-drives the field <em>and keeps listening</em>: the growing object shifts
-S(f), and the build is finished when it rings true — the chord list is at
-once the drive recipe and the acceptance criterion. Listening is milliwatt-class and always on, so every instant of
-fabrication is also a scan. Throughput is bandwidth: a resonance of quality
-Q at frequency f takes ~Q/f to ring up, so the machine parallelizes across
-the band — acoustic chords move matter slowly while the EM octaves listen
-~10⁴× faster, verification effectively continuous. Hence:
-<b>acoustic builds, EM verifies</b>. Full treatment:
-<a href="replicator_field_compiler.html">Field Compiler §2–§4.5</a>.</p>
-
-<p><b>The Q budget (R6, adopted 2026-07-30).</b> Calibration is a
-photograph of system state; its lifetime is measured in linewidths of
-drift. Damping buys calibration lifetime; continuous self-calibration buys
-back Q. Damp exactly down to the Q the calibration loop can chase, and not
-one linewidth further. Perfect manufacturing never removes calibration —
-the environment is state, not error.</p>
+<h2 id="s6">6 · Principle: observe, act and verify</h2>
+<p>The control loop compares predicted and observed responses, updates the
+state estimate and chooses the next action. A recorded scattering response
+<code>S(f)</code> describes the object as seen by specified ports and frequencies.
+It is evidence about the object, not a unique blueprint or an actuator program.</p>
+<p>Manufacturing programs include feed, actuation, joining and inspection.
+Matching an echo is useful only for the features that the measurement has been
+shown to distinguish. Part acceptance can therefore combine response measurements,
+dimensional metrology, material characterization and a functional test.</p>
+<p>Choose update rates from the process dynamics and uncertainty budget.
+Resonant gain, settling, calibration lifetime and thermal drift trade against
+one another. The digital twin and hardware use the same job interfaces so each
+measurement can improve subsequent predictions.</p>
 
 <h2 id="s7">7 · Principle: the carriers talk to each other</h2>
 <p>Sound is a density wave and density sets the refractive index, so the
@@ -562,45 +440,27 @@ design. Full treatment:
 <a href="the_two_carriers.html">The Two Carriers §6b</a> — the canonical
 home of the crossings.</p>
 
-<h2 id="s8">8 · Principle: scale-free by construction</h2>
-<p>The physics fixes ratios — aperture to volume, element pitch to
-wavelength, bore to aperture — but privileges no size. A phased boundary is
-a tiling: add area and channels and the volume grows with them, same
-compiler, same file format, same three modes. Desktop, workshop cell,
-industrial volume, orbital boundary — instances of one architecture. The
-far end of the ladder is bounded, not open: what the machine can never do
-(make matter from energy, beat Landauer, outrun Q/f) is computed against
-physical bounds in <a href="replicator_at_the_limit.html">At the
-Limit</a>.</p>
+<h2 id="s8">8 · Principle: reusable interfaces, explicit scaling</h2>
+<p>Keep geometry, material properties, ports and calibration in shared module
+records. A new body, aperture, sensor or processing head should reuse the job
+and inspection interfaces wherever possible. This supports one enduring
+platform with successive configurations.</p>
+<p>Scaling requires new calculations for force, heat, loss, bandwidth, fabrication
+and metrology. Wavelength ratios are useful design variables, but no single
+geometric scaling preserves every process. The
+<a href="replicator_at_the_limit.html">long-term architecture</a> and
+<a href="../docs/content/upgrades.md">upgrade path</a> track those dependencies.</p>
 
-<p><b>Fields, not materials (R7, adopted 2026-07-30).</b> The design
-variables are ρ(x), stiffness, loss, σ(x), ε(x), and piezo coupling e(x);
-conductors are skin-depth shells. What survives atom-placement
-manufacturing: diffraction, medium absorption, the Q budget, addressability
-rank (channels are information, not fabrication), Bode–Fano/Chu, racemic
-cancellation. Spec the invariants — angles, λ-ratios, winding numbers,
-count ratios, grading laws — and render per generation: gen-0 on mills and
-printers, gen-N as continuous fields. The milled plate is the optimum as
-pronounced by a Bridgeport; its job is to build the machine that pronounces
-it better.</p>
-
-<h2 id="s8b">8b · Register — what is claimed and what is not</h2>
-<p>The member papers tag every load-bearing claim
-<span class="chip c-measured">MEASURED</span> (published or bench-verified),
-DERIVED (arithmetic on measured quantities), or
-<span class="chip c-open">OPEN</span> (registered bet with named
-falsification). This overview inherits those tags and adds none. Two
-standing hygiene notes. (i) The machine's primitives are measured art;
-their <em>composition at machine scale</em> is design until the bench says
-otherwise — build-rate, resolution, and trap-count numbers ship with their
-measurements, not their spec-table values. (ii) The toroidal-helical pulses'
-embedded skyrmion texture is a <em>descriptor</em> of the polarization map,
-not a stability claim: optical skyrmions carry no energy barrier and their
-invariants are construction-dependent (Chen, Forbes &amp; Qiu, <i>Light
-Sci. Appl.</i> 2025). The pulses' measured robustness is space-time
-nonseparability, and pattern persistence in this machine comes from the
-commanded boundary, not from topology — which is the design's point, not a
-concession.</p>
+<h2 id="s8b">8b · Evidence that travels with the design</h2>
+<p>Use direct statements about what each record establishes: a published
+experiment, a calculation, a simulation, a project measurement or a proposed
+mechanism. Published results belong to their reported apparatus and conditions;
+project measurements identify the actual module and calibration.</p>
+<p>Keep design choices and evidence status separate. A preferred architecture
+can be pursued decisively while its qualification work remains explicit.
+Numerical results carry their configuration, model assumptions and acceptance
+criteria. Reconstructed content retains its inferred status even when it looks
+convincing or agrees with other estimates.</p>
 
 <h2 id="s9">9 · The paper network</h2>
 <div class="overflow"><table>
@@ -628,9 +488,7 @@ the machine builds</a></td><td>mode member</td><td>the assemble-mode
 narrative: slice/feed/trap/move/weld/check, hands-and-fingertips placement
 ladder, why it must be parallel</td></tr>
 <tr><td><b>1</b></td><td><a href="replicator_dissolve.html">Dissolve — how
-the machine unbuilds</a></td><td>mode member</td><td>the dissolve-mode
-narrative: time reversal, CPA drain, the unbind ladder, reclaim — and the
-honest status (least demonstrated mode)</td></tr>
+the machine unbuilds</a></td><td>mode member</td><td>material-specific recovery, process selection, mass and energy accounting, and reuse qualification</td></tr>
 <tr><td><b>2</b></td><td><a href="replicator_architecture.html">The
 Replicator — Architecture</a></td><td>machine member</td><td>the machine
 topology, size-free: commanded boundary, three cavities, the instance
@@ -639,17 +497,9 @@ family</td></tr>
 Stores</a></td><td>machine member</td><td>what the machine keeps and in
 what form: bulk stores, the salt/ash rule, trace rack, the storage
 chamber as instrument, mass bookkeeping</td></tr>
-<tr><td><b>3</b></td><td><a href="transmutation.html">Transmutation as
-Consensus Repair</a></td><td>science member (research note)</td><td>the OPH
-frame, the transmutation sector and its sim ladder, pre-registered
-experiments, honest ledger</td></tr>
-<tr><td><b>3</b></td><td><a href="creating_gold.html">Creating
-Gold</a></td><td>applied companion of
-<a href="transmutation.html">Transmutation</a></td><td>the applied
-transmutation case worked end-to-end</td></tr>
 <tr><td><b>3</b></td><td><a href="replicator_field_compiler.html">Field
 Compiler RSW-1</a></td><td>software &amp; control member</td><td>the
-12-gate machine model, chords and <code>.pattern</code>, the
+original machine model, chords and <code>.pattern</code>, the
 emulator-is-the-API law, build milestones and acceptance gates</td></tr>
 <tr><td><b>3</b></td><td><a href="holographic_memory_and_compute_plan.html">Memory
 &amp; Compute in the Holographic Machine</a></td><td>compute &amp; storage
@@ -657,16 +507,9 @@ member</td><td>the three-cavities ruling, the optical EML core, the
 holographic store, mode-count arithmetic</td></tr>
 <tr><td><b>3</b></td><td><a href="replicator_at_the_limit.html">The
 Replicator at the Limit</a></td><td>bounds member</td><td>designing from
-physical bounds; information content of objects; what is forbidden vs
-merely hard</td></tr>
-<tr><td><b>3</b></td><td><a href="replicator_as_alchemy.html">The
-Replicator as Alchemy</a></td><td>mapping member (dictionary, firewalled
-off the deck)</td><td>tria prima = source/propagator/boundary = R1; four
-elements = the coupling ladder; the 12-cell verb matrix; two candidate
-sign-mappings with pre-registered gates — a lens until the gates say
-otherwise</td></tr>
+end-state design, physical constraints and successive self-made upgrades</td></tr>
 <tr><td><b>4</b></td><td><a href="desktop_replicator_hardware_spec.html">Hardware
-Specification RH-1</a></td><td>instance member (one realized instance, not
+Specification RH-1</a></td><td>instance member (one specified design, not
 the subject)</td><td>frozen instance decisions, the datasheet, channel
 architecture, product staging</td></tr>
 <tr><td><b>4</b></td><td><a href="replicator_mechanical_construction.html">Mechanical
