@@ -1,0 +1,161 @@
+{
+  "purpose": "Exact counting, finite geometry, and threshold-order checks; no empirical validation claimed.",
+  "method": {
+    "geometry": "Standard regular 600-cell; nearest-neighbor unweighted graph Laplacian",
+    "spectral_clustering_tolerance": 1e-07,
+    "threshold_arithmetic": "exact rational inequalities",
+    "external_atomic_data": false
+  },
+  "subshell_capacities": [
+    2,
+    6,
+    10,
+    14
+  ],
+  "principal_shell_capacities": [
+    2,
+    8,
+    18,
+    32,
+    50,
+    72
+  ],
+  "diagonal_capacities": [
+    2,
+    2,
+    8,
+    8,
+    18,
+    18,
+    32,
+    32
+  ],
+  "cell600": {
+    "vertices": 120,
+    "degrees": [
+      12
+    ],
+    "laplacian_multiplicities": [
+      1,
+      4,
+      9,
+      16,
+      25,
+      36,
+      9,
+      16,
+      4
+    ],
+    "first_six_match_s3": true
+  },
+  "threshold_order": {
+    "analytic_label": "lambda=n_r+(2*l+1)/mu; n_r=n-l-1",
+    "exact_open_interval": [
+      "1",
+      "6/5"
+    ],
+    "candidate_states": 78,
+    "expected": [
+      "1s",
+      "2s",
+      "2p",
+      "3s",
+      "3p",
+      "4s",
+      "3d",
+      "4p",
+      "5s",
+      "4d",
+      "5p",
+      "6s",
+      "4f",
+      "5d",
+      "6p",
+      "7s",
+      "5f",
+      "6d",
+      "7p"
+    ],
+    "at_mu_103_over_100": [
+      "1s",
+      "2s",
+      "2p",
+      "3s",
+      "3p",
+      "4s",
+      "3d",
+      "4p",
+      "5s",
+      "4d",
+      "5p",
+      "6s",
+      "4f",
+      "5d",
+      "6p",
+      "7s",
+      "5f",
+      "6d",
+      "7p"
+    ],
+    "at_mu_1199_over_1000": [
+      "1s",
+      "2s",
+      "2p",
+      "3s",
+      "3p",
+      "4s",
+      "3d",
+      "4p",
+      "5s",
+      "4d",
+      "5p",
+      "6s",
+      "4f",
+      "5d",
+      "6p",
+      "7s",
+      "5f",
+      "6d",
+      "7p"
+    ],
+    "at_mu_1201_over_1000": [
+      "1s",
+      "2s",
+      "2p",
+      "3s",
+      "3p",
+      "4s",
+      "3d",
+      "4p",
+      "5s",
+      "4d",
+      "5p",
+      "4f",
+      "6s",
+      "5d",
+      "6p",
+      "5f",
+      "7s",
+      "6d",
+      "5g"
+    ],
+    "boundary_crossings": [
+      {
+        "pair": [
+          "6s",
+          "4f"
+        ],
+        "score_at_boundary": "35/6",
+        "equal_at_boundary": true
+      },
+      {
+        "pair": [
+          "7s",
+          "5f"
+        ],
+        "score_at_boundary": "41/6",
+        "equal_at_boundary": true
+      }
+    ]
+  }
+}

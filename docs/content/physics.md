@@ -17,6 +17,8 @@ For the Replicator, that question becomes practical. A shaped elastic body distr
 
 ## One chain from an idea to a machine
 
+The chain is now worked through in detail: [OPH's carrier algebra and field-to-atom calculation](oph.html#from-carrier-geometry-to-an-interaction-algebra), [shell capacities and filling order](periodic-table.html#deriving-the-shell-structure), and [bonding through to a manufactured upgrade](physics-to-hardware.html). The last chapter shows how a printed body, its source and the surrounding medium physically implement the response operator we optimize.
+
 | Stage | Question | Replicator example |
 |---|---|---|
 | Structure | What is present, and how is it arranged? | Piezo material, preload, printed body, mounts and surrounding air |
