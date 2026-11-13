@@ -1,6 +1,8 @@
 # Electromagnetic and optical modules
 
-Select fields by the interaction they provide with the chosen material. A coil shape, optical pattern or patent becomes useful when it solves a defined task with an acceptable power, thermal and manufacturing budget.
+Electromagnetic and optical fields are part of the Replicator's coordinated-field architecture. They act on the same material and share the acoustic system's work volume, coordinates, process timing and feedback. Design their combined contribution to the finished part: forces and torques, energy delivery, material transformation and observation.
+
+Select each interaction against the chosen material and process. A coil shape, optical pattern or patent becomes useful when it solves a defined task with an acceptable power, thermal and manufacturing budget. Optics is electromagnetic physics; the separate module names identify different sources, operating bands and engineering models.
 
 ## Electromagnetic control
 
@@ -14,7 +16,9 @@ Candidate applications include contactless resonance measurement, transport of a
 
 The engineering EM study has evaluated the RH-1 windings and several closer-coupled alternatives. Its November 13 second pass recommends keeping an EM manufacturing module out of the initial acoustic build. It proposes contactless excitation/measurement of an acoustic disc as an instrument candidate.
 
-These are branch-study recommendations, not a change already integrated into the published twin. The [current-state page](status.html) records that distinction. Future material and process choices can reopen the integration decision.
+That recommendation concerns the initial hardware configuration. The long-term architecture remains coordinated acoustic, electric/magnetic and optical control in one work volume. The first material recipe determines the useful starting combination, and later modules expand it.
+
+These are branch-study recommendations, not a change already integrated into the published twin. The [current-state page](status.html) records that distinction.
 
 ## Optical modules
 
@@ -24,7 +28,9 @@ Passive optical structures and optical computation are longer-term upgrade candi
 
 ## A shared software boundary
 
-Represent each module with typed ports, geometry, material laws, frequency response, operating limits and measurement records. Acoustic and optical solvers can share this infrastructure while retaining their distinct equations and validity ranges.
+Represent each module with typed ports, geometry, material laws, frequency response, operating limits and measurement records. Register field maps and sensors to the same coordinates and connect their actions through a shared material state. Acoustic, electromagnetic and optical solvers retain their distinct equations while exchanging forces, torque, temperature, orientation and process state where those affect the job.
+
+Common process timing permits simultaneous or deliberately sequenced actions. It does not require phase locking an acoustic carrier to an optical carrier. Include interference and phase where the actual interaction requires them. Compare a combined recipe with its best simpler baseline on the finished part, power, throughput and human effort.
 
 A forward-propagation optical model is appropriate for the structures it resolves. Extending it to a resonant cavity requires the relevant feedback, boundary and loss model.
 

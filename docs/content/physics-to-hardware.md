@@ -28,6 +28,8 @@ Here q is displacement, u is the vector of drive amplitudes, B couples drives in
 
 ## 3. Optimize the action on matter
 
+The acoustic response operator is one part of the full architecture. Acoustic, electric/magnetic and optical modules act within the same work volume, coupled through the material's evolving state. The target twin jointly plans force, torque, energy delivery, joining and observation, with simultaneous or deliberately sequenced actions. The [combined-field manufacturing example](manufacturing.html#a-candidate-combined-field-recipe) connects these functions to a candidate composite part.
+
 For a sufficiently small particle in the usual acoustic-radiation approximation, force follows F = −∇U_G, where U_G depends on time-averaged pressure and fluid velocity squared and the particle's density/compressibility contrast. Thus a bright pressure image is not automatically a trap. Optimize force, stiffness, unwanted wells, heat and stress directly. Different-frequency contributions require the appropriate averaging or transient dynamics.
 
 This route has experimental precedent. Melde and colleagues combined passive holograms and ultrasound sources to assemble microparticles, hydrogel beads and cells into three-dimensional structures, including fixation by gelation. Their calculation explicitly constrains attainable spatial frequencies by wavelength and source aperture. [Melde et al., 2023](https://pmc.ncbi.nlm.nih.gov/articles/PMC9908023/).

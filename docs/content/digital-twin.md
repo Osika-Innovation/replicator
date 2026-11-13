@@ -13,6 +13,14 @@ The twin connects CAD, physical models, control programs and evidence. It is the
 
 Exact CAD and spatial material fields are complementary. Preserve STEP and other manufacturing exports where they carry useful geometry and tolerances. A module package links representations rather than claiming they are interchangeable.
 
+## One work volume and material state
+
+The target architecture coordinates acoustic, electric/magnetic and optical actions in the same three-dimensional region. Field maps, material geometry and sensors share a calibrated coordinate frame. A process program defines which actions overlap, which follow one another and which observations trigger the next step.
+
+Couple the models through the material's evolving position, orientation, temperature and phase or cure state. For example, optical heating can change viscosity and acoustic response; curing can immobilize particles that an earlier field moved. Optimize the finished part and process against a simpler baseline. Separate field visualizations alone do not implement this coupled control loop.
+
+This is an integration requirement for the twin. The published implementation and active studies retain the status described below.
+
 ## Existing software
 
 The published repository contains a native Swift/Metal implementation with field calculation, optimization, particle models, scanning studies, parametric CAD and recorded numerical checks. Start from the [twin README](https://github.com/Osika-Innovation/replicator/blob/main/twin/README.md) for the commands supported by the checked-out revision.
