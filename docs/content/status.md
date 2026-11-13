@@ -12,6 +12,7 @@
 | Electromagnetics | November 13 branch study recommends no EM process module for the first acoustic build; contactless disc metrology remains a candidate | Accept or decline the instrument against the acoustic measurement need |
 | Manufacturing | Feed, joining and inspection must be selected with the first useful part | Establish one complete material transformation |
 | Material/AI representation | Module/material records and optional learned proposal policies are development work | Demonstrate one module and one bounded task |
+| Physics framework | [OPH](oph.html) supplies a theoretical framework and design inspiration; mathematical results retain their assumptions and physical interpretations retain their test status | Map a specific hypothesis to a measurable response and compare it with established models |
 | Hardware evidence | No integrated Replicator bench demonstration has been established in this documentation review | Produce calibrated physical receipts |
 
 Detailed branch results retain their original scope. A proposed configuration, passing simulation or exported STEP assembly does not release hardware for ordering.

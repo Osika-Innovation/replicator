@@ -12,11 +12,11 @@ The [public source catalog](../sources.json) contains selected primary papers an
 
 <!-- SOURCE_TABLE -->
 
-## Materials as tones
+## Physics and materials as tones
 
 The materials research programme explores the relationship between structure and response across scales. Atomic transition frequencies, lattice vibrations and component resonances each provide useful information. The [materials guide](materials.html) connects those descriptions to fabrication and inspection.
 
-The broader periodic-table research proposes an underlying standing-wave interpretation of the elements. That is a research model, distinct from the measured spectra and established crystal structure used in component design. Its private source paper is not copied into this public site.
+The [physics section](physics.html) connects [Observer Patch Holography](oph.html), [light and matter](light-matter.html), and the [periodic-table research model](periodic-table.html). It explains why these ideas inform the programme and how they connect to quantitative machine design. Public primary sources are linked at each claim; the broader private research corpus remains outside this build.
 
 ## Source reports and design questions
 

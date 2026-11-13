@@ -297,6 +297,163 @@
       "next_action": "Benchmark the inner solver against a published trap shape if a case with full geometry is found.",
       "engineering_task": "AC-03a",
       "decision": "reference for the AC-03a reduced model; no architecture adoption"
+    },
+    {
+      "id": "P001",
+      "title": "Observer Patch Holography: programme, basis and formal library",
+      "kind": "research_programme",
+      "canonical_url": "https://github.com/FloatingPragma/observer-patch-holography",
+      "identifier": "FloatingPragma/observer-patch-holography",
+      "authors": [
+        "FloatingPragma / Pragma Research"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_README_basis_axiom_reference_and_ledger",
+      "evidence_status": "formal and computational research programme",
+      "possible_insight": "Interfaces, shared records and geometry suggest compact module representations and feedback.",
+      "scope_limit": "The upstream programme states that full agreement with observed measurement statistics is not established; formal results retain their premises.",
+      "fabrication_and_precision": "No component recipe follows solely from a formal carrier or port count.",
+      "next_action": "Attach any proposed physical mechanism to a specific response model, observable and independent comparison.",
+      "engineering_task": "PHYSICS-DOCS",
+      "decision": "reference for physics handbook; no hardware capability promotion",
+      "related_urls": [
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/main/docs/BASIS.md",
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/main/docs/AXIOM_REFERENCE.md",
+        "https://github.com/FloatingPragma/observer-patch-holography/blob/main/docs/POSTDICTION_LEDGER.md"
+      ]
+    },
+    {
+      "id": "P002",
+      "title": "NIST Atomic Spectra Database",
+      "kind": "reference_database",
+      "canonical_url": "https://www.nist.gov/pml/atomic-spectra-database",
+      "identifier": "10.18434/T4W30F",
+      "authors": [
+        "NIST"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_database_description",
+      "evidence_status": "critically evaluated reference data",
+      "possible_insight": "Element and ion spectra provide quantitative identification and interaction data.",
+      "scope_limit": "A spectrum is a set of transitions; it is not a universal audible note or a manufacturing recipe.",
+      "fabrication_and_precision": "Specify species, ionization state, transition, environment and instrument.",
+      "next_action": "Select transitions and coupling data for a named sensing or optical process.",
+      "engineering_task": "PHYSICS-DOCS",
+      "decision": "reference for physics handbook; no hardware capability promotion"
+    },
+    {
+      "id": "P003",
+      "title": "Atomic Spectroscopy — Spectral Lines",
+      "kind": "technical_reference",
+      "canonical_url": "https://www.nist.gov/pml/atomic-spectroscopy-compendium-basic-ideas-notation-data-and-formulas/atomic-spectroscopy",
+      "identifier": "NIST spectral-line compendium",
+      "authors": [
+        "NIST"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_reference",
+      "evidence_status": "established spectroscopy",
+      "possible_insight": "Transition probabilities and selection rules explain why frequency matching alone is insufficient.",
+      "scope_limit": "Atomic transition models do not describe the elastic response of a macroscopic component.",
+      "fabrication_and_precision": "Use the physical state and interaction appropriate to the process.",
+      "next_action": "Include coupling strength and linewidth with every proposed spectral control.",
+      "engineering_task": "PHYSICS-DOCS",
+      "decision": "reference for physics handbook; no hardware capability promotion"
+    },
+    {
+      "id": "P004",
+      "title": "The Universal One",
+      "kind": "historical_book",
+      "canonical_url": "https://www.unariunwisdom.com/wp-content/uploads/2022/04/The-Universal-One-by-Walter-Russell.pdf",
+      "identifier": "Walter Russell, The Universal One (1926)",
+      "authors": [
+        "Walter Russell"
+      ],
+      "publication_date": "1926",
+      "checked_date": "2026-11-13",
+      "review_status": "primary_text_excerpt_Book_II_chapter_I_and_bibliographic_record",
+      "evidence_status": "historical philosophical cosmology",
+      "possible_insight": "A unified picture of form and organized motion motivates questions about geometry and stable patterns.",
+      "scope_limit": "Russell uses light in a metaphysical sense; the book does not validate element-to-tone machine settings.",
+      "fabrication_and_precision": "No fabrication specification inferred from the historical chart.",
+      "next_action": "Translate a proposed correspondence into a quantitative observable before using it as a design input.",
+      "engineering_task": "PHYSICS-DOCS",
+      "decision": "reference for physics handbook; no hardware capability promotion",
+      "related_urls": [
+        "https://www.loc.gov/resource/gdc.27004508/?st=gallery"
+      ]
+    },
+    {
+      "id": "P005",
+      "title": "Kilogram: Mass and Planck’s Constant",
+      "kind": "technical_exposition",
+      "canonical_url": "https://www.nist.gov/si-redefinition/kilogram/kilogram-mass-and-plancks-constant",
+      "identifier": "NIST SI redefinition: mass and Planck constant",
+      "authors": [
+        "NIST"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_institutional_exposition",
+      "evidence_status": "established energy relations",
+      "possible_insight": "Clarifies the relations between photon energy, frequency and rest energy.",
+      "scope_limit": "An energy-equivalent frequency is not automatically a material resonance.",
+      "fabrication_and_precision": "A usable process still requires a coupling, bandwidth and energy budget.",
+      "next_action": "Use frequency conversions only for explicitly identified physical quantities.",
+      "engineering_task": "PHYSICS-DOCS",
+      "decision": "reference for physics handbook; no hardware capability promotion"
+    },
+    {
+      "id": "P006",
+      "title": "The Standard Model",
+      "kind": "technical_exposition",
+      "canonical_url": "https://home.cern/science/physics/standard-model",
+      "identifier": "CERN Standard Model overview",
+      "authors": [
+        "CERN"
+      ],
+      "publication_date": null,
+      "checked_date": "2026-11-13",
+      "review_status": "primary_institutional_exposition",
+      "evidence_status": "established particle classification",
+      "possible_insight": "Distinguishes electromagnetic radiation from ordinary matter particles in the physical model.",
+      "scope_limit": "The overview does not validate a common-substrate ontology or a Replicator process.",
+      "fabrication_and_precision": "No fabrication route is specified by this classification.",
+      "next_action": "Retain the relevant interaction physics when translating unifying ideas into module models.",
+      "engineering_task": "PHYSICS-DOCS",
+      "decision": "reference for physics handbook; no hardware capability promotion"
+    },
+    {
+      "id": "P007",
+      "title": "Compact holographic sound fields enable rapid one-step assembly of matter in 3D",
+      "kind": "journal_article",
+      "canonical_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9908023/",
+      "identifier": "10.1126/sciadv.adf6182",
+      "authors": [
+        "Kai Melde",
+        "Heiner Kremer",
+        "Minghui Shi",
+        "Senne Seneca",
+        "Christoph Frey",
+        "Ilia Platzman",
+        "Christian Degel",
+        "Daniel Schmitt",
+        "Bernhard Schölkopf",
+        "Peer Fischer"
+      ],
+      "publication_date": "2023-02-08",
+      "checked_date": "2026-11-13",
+      "review_status": "primary_experimental_article",
+      "evidence_status": "published experimental report",
+      "possible_insight": "Multiple acoustic holograms arrange particles into three-dimensional structures, with fixation routes.",
+      "scope_limit": "Reported material and apparatus scope applies; particle assembly is distinct from atomic crystal growth.",
+      "fabrication_and_precision": "Hologram geometry, acoustic medium, feedstock and consolidation require qualification.",
+      "next_action": "Compare a reported assembly case with the intended feed and first useful part.",
+      "engineering_task": "PHYSICS-DOCS",
+      "decision": "reference for physics handbook; no hardware capability promotion"
     }
   ]
 }

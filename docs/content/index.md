@@ -15,6 +15,7 @@ This handbook connects the architecture, working software, manufacturing path an
 <a class="card" href="guides/architecture.html"><span class="eyebrow">01 / UNDERSTAND</span><h2>The whole machine</h2><p>Subsystems, interfaces and the first prototype.</p></a>
 <a class="card" href="guides/digital-twin.html"><span class="eyebrow">02 / BUILD</span><h2>The engineering twin</h2><p>Geometry, solvers, control and reproducible results.</p></a>
 <a class="card" href="guides/upgrades.html"><span class="eyebrow">03 / IMPROVE</span><h2>The upgrade loop</h2><p>From purchased seed parts to a machine-made improvement.</p></a>
+<a class="card" href="guides/physics.html"><span class="eyebrow">04 / EXPLORE</span><h2>The physics</h2><p>OPH, light, material spectra and the mechanisms we use.</p></a>
 </div>
 
 ## Choose a route
@@ -23,7 +24,8 @@ This handbook connects the architecture, working software, manufacturing path an
 |---|---|---|
 | Understand the project in ten minutes | [Start here](guides/start.html) | [Architecture](guides/architecture.html) |
 | Design a subsystem | [Architecture](guides/architecture.html) | [Acoustics](guides/acoustics.html), [electromagnetics](guides/electromagnetics.html), [manufacturing](guides/manufacturing.html) |
-| Explore crystals and materials as tones | [Materials and modes](guides/materials.html) | [Research library](guides/research.html) |
+| Understand the theoretical framework | [Physics overview](guides/physics.html) | [Observer Patch Holography](guides/oph.html) |
+| Explore light, crystals and materials as tones | [Light, fields and matter](guides/light-matter.html) | [Periodic table and tones](guides/periodic-table.html), [materials and modes](guides/materials.html) |
 | Work as an AI agent | [Agent entry point](guides/agents.html) | [Current state](guides/status.html) |
 | Find a paper or patent | [Research library](guides/research.html) | Search by topic or source ID |
 

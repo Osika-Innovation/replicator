@@ -25,7 +25,8 @@
       "related": [
         "architecture",
         "status",
-        "upgrades"
+        "upgrades",
+        "physics"
       ]
     },
     {
@@ -47,6 +48,140 @@
       "related": [
         "architecture",
         "status",
+        "upgrades",
+        "physics"
+      ]
+    },
+    {
+      "id": "physics",
+      "title": "Physics overview",
+      "source": "docs/content/physics.md",
+      "url": "guides/physics.html",
+      "type": "guide",
+      "group": "Physics",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "Theoretical perspective, physical mechanisms and their role in the Replicator.",
+      "topics": [
+        "physics",
+        "framework",
+        "waves",
+        "OPH"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "oph",
+        "light-matter",
+        "periodic-table",
+        "materials",
+        "architecture"
+      ]
+    },
+    {
+      "id": "oph",
+      "title": "Observer Patch Holography",
+      "source": "docs/content/oph.md",
+      "url": "guides/oph.html",
+      "type": "guide",
+      "group": "Physics",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "The adopted research framework, its mathematical scope and the path from models to measurements.",
+      "topics": [
+        "OPH",
+        "observer",
+        "holography",
+        "boundary",
+        "model validation"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "physics",
+        "light-matter",
+        "digital-twin",
+        "status"
+      ]
+    },
+    {
+      "id": "light-matter",
+      "title": "Light, fields and matter",
+      "source": "docs/content/light-matter.md",
+      "url": "guides/light-matter.html",
+      "type": "guide",
+      "group": "Physics",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "The everything-is-light perspective, field descriptions and material interactions.",
+      "topics": [
+        "light",
+        "Walter Russell",
+        "fields",
+        "matter",
+        "energy"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "physics",
+        "oph",
+        "periodic-table",
+        "electromagnetics"
+      ]
+    },
+    {
+      "id": "periodic-table",
+      "title": "Periodic table and tones",
+      "source": "docs/content/periodic-table.md",
+      "url": "guides/periodic-table.html",
+      "type": "guide",
+      "group": "Physics",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "Elements, spectra and resonant response as inputs to material selection and machine control.",
+      "topics": [
+        "periodic table",
+        "tones",
+        "frequencies",
+        "spectra",
+        "Walter Russell"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "physics",
+        "light-matter",
+        "materials",
+        "acoustics",
+        "research"
+      ]
+    },
+    {
+      "id": "materials",
+      "title": "Materials and modes",
+      "source": "docs/content/materials.md",
+      "url": "guides/materials.html",
+      "type": "guide",
+      "group": "Physics",
+      "status": "Current guide",
+      "owner": "Materials and modes",
+      "summary": "Crystals, spectra and fabrication from first principles.",
+      "topics": [
+        "quartz",
+        "periodic table",
+        "tones",
+        "cymatics",
+        "metamaterials"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "physics",
+        "periodic-table",
+        "light-matter",
+        "manufacturing",
+        "acoustics",
         "upgrades"
       ]
     },
@@ -69,7 +204,8 @@
       "review_scope": "Current programme explanation",
       "related": [
         "start",
-        "agents"
+        "agents",
+        "physics"
       ]
     },
     {
@@ -93,32 +229,9 @@
       "related": [
         "architecture",
         "status",
-        "upgrades"
-      ]
-    },
-    {
-      "id": "materials",
-      "title": "Materials and modes",
-      "source": "docs/content/materials.md",
-      "url": "guides/materials.html",
-      "type": "guide",
-      "group": "Systems",
-      "status": "Current guide",
-      "owner": "Materials and modes",
-      "summary": "Crystals, spectra and fabrication from first principles.",
-      "topics": [
-        "quartz",
-        "periodic table",
-        "tones",
-        "cymatics",
-        "metamaterials"
-      ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
-      "related": [
-        "architecture",
-        "status",
-        "upgrades"
+        "upgrades",
+        "periodic-table",
+        "materials"
       ]
     },
     {
@@ -142,7 +255,8 @@
       "related": [
         "architecture",
         "status",
-        "upgrades"
+        "upgrades",
+        "light-matter"
       ]
     },
     {
@@ -235,7 +349,8 @@
       "review_scope": "Current programme explanation",
       "related": [
         "start",
-        "agents"
+        "agents",
+        "oph"
       ]
     },
     {
@@ -260,7 +375,9 @@
       "related": [
         "architecture",
         "status",
-        "upgrades"
+        "upgrades",
+        "physics",
+        "oph"
       ]
     },
     {
@@ -283,7 +400,9 @@
       "related": [
         "architecture",
         "status",
-        "upgrades"
+        "upgrades",
+        "physics",
+        "periodic-table"
       ]
     },
     {
