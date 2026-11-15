@@ -1,6 +1,6 @@
 # Current state
 
-**Reviewed November 13, 2026.** This is the navigation checkpoint for the programme, not a hardware release.
+**Reviewed November 15, 2026.** This is the navigation checkpoint for the programme, not a hardware release.
 
 ## Published code and active studies
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | Public engineering code | This handbook was prepared against published revision `1b708a2`; its twin includes simulation, CAD and numerical checks | Review later engineering branches for integration |
 | Ultimate architecture | Operator direction: coordinated acoustic, electric/magnetic and optical fields in the same 3D work volume | Define shared coordinates, material state and a combined-field recipe with a measurable advantage |
-| Acoustic architecture | Few high-power inputs into optimized bodies is the preferred candidate; 3 + 3 is a comparison starting point | Resolve source/body coupling and qualify a reusable calibration setup |
+| Acoustic architecture | `3 + 3` low-inertia thin broadband piezo ports (`τ_inertia = L / v_D`, supersonic plate / replaceable SLA scatterer, simultaneous two-terminal `HAPTIC` self-sensing, sparse chord lists; Langevin retained as CW reference) | Bench-verify adaptive `C_0` H-bridge self-sensing and coupled-cavity calibration in twin & fixture |
 | Platform software | Active workspace studies extend backend, calibration, body-response and upgrade interfaces | Publish reviewed implementations with their receipts |
 | Electromagnetics | November 13 branch study recommends no EM process module for the first acoustic build; this is an initial-configuration recommendation within the shared-volume architecture | Select initial process/instrument modules against the first material recipe and preserve later integration access |
 | Optics and metamaterials | Dedicated architecture lane for optical-wavelength surfaces, holographic TX/RX and toroidal optical pulses; published external precedents are linked in its guide | Choose a first optical function, source/surface/readout design and fabrication/metrology route |

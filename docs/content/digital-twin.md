@@ -43,7 +43,7 @@ For every question choose among a cheap search, a higher-fidelity calculation an
 
 ## Learning and control
 
-Use compact observations when they preserve information needed for the task. Keep raw records available for diagnosis. An optional learner can propose actions or initialize optimization; compare it with the existing planner on held-out targets and disturbances.
+The digital twin mirrors the machine's physical state variables directly: differential piezoelectric drive/sense state (`V(t)`, `I(t)`, `C_0 dV/dt`, `Θ ẋ(t)`), `τ_inertia = L / v_D` broadband crystal timing, passive cavity gain (`Q_cav`), and sparse harmonic `.pattern` chord lists rather than raw voxel-video sequences. Keep raw two-terminal bridge captures available for calibration and fault diagnosis. An optional neural warm-start or learner (such as physics-constrained encoder candidates under review) can propose chord updates or initialize optimization; compare it with the existing `NOWS` physics optimizer on held-out targets, coupled-cavity dense-inclusion loads, and thermal disturbances.
 
 Pin library versions and benchmark the actual equations and workloads before replacing a solver or buying hardware for it. Representation, rendering speed and physical accuracy have separate checks.
 

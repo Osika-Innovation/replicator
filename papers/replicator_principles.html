@@ -74,9 +74,11 @@ bounds: <a href="replicator_at_the_limit.html">At the Limit</a></div>
 principles it runs on, and where each principle is worked out in full.
 Written to be read first, and to be explainable onward to a non-technical
 reader.</p>
-<p class="meta">v1.3 · reviewed 2026-11-13 · Role: public principles and
-paper map. This revision clarifies the engineering programme, control limits,
-manufacturing programs and recovery processes. Historical RH-1 illustrations
+<p class="meta">v1.4 · reviewed 2026-11-15 (previous v1.3 · 2026-11-13) · Role: public principles and
+paper map. This revision adds simultaneous two-terminal piezo <code>HAPTIC</code>
+self-sensing, crystal transit-inertia bounds, coupled-cavity holding power,
+and the Acoustic Hologram paper to the public paper map while retaining all
+control limits and qualification boundaries. Historical RH-1 illustrations
 remain design references. Current implementation results belong to the twin;
 this overview adds no bench result.</p>
 
@@ -411,18 +413,32 @@ help focus waves; it does not reverse bonding or purify material. Recovery
 carries a mass, contamination and energy ledger.</p>
 
 <h2 id="s6">6 · Principle: observe, act and verify</h2>
-<p>The control loop compares predicted and observed responses, updates the
-state estimate and chooses the next action. A recorded scattering response
-<code>S(f)</code> describes the object as seen by specified ports and frequencies.
-It is evidence about the object, not a unique blueprint or an actuator program.</p>
-<p>Manufacturing programs include feed, actuation, joining and inspection.
-Matching an echo is useful only for the features that the measurement has been
-shown to distinguish. Part acceptance can therefore combine response measurements,
-dimensional metrology, material characterization and a functional test.</p>
-<p>Choose update rates from the process dynamics and uncertainty budget.
-Resonant gain, settling, calibration lifetime and thermal drift trade against
-one another. The digital twin and hardware use the same job interfaces so each
-measurement can improve subsequent predictions.</p>
+<p>Every piezoelectric actuator–sensor is driven and observed continuously across
+both terminals through a differential H-bridge (<b>HAPTIC</b> self-sensing;
+published <code>MEASURED</code> art: Dosch, Inman &amp; Garcia 1992). From the
+coupled Butterworth–Van Dyke relations (<code>DERIVED</code>),
+<code>I(t) = C<sub>0</sub> dV/dt + &Theta; x&#775;(t)</code> and
+<code>m x&#776; + c x&#775; + k x = &Theta; V(t) + F<sub>echo</sub>(t)</code>:
+subtracting the known capacitive slewing current
+<code>C<sub>0</sub> dV/dt</code> recovers crystal velocity
+<code>x&#775;(t)</code>, deflection state <code>x(t)</code>, and chamber echo
+loading <code>F<sub>echo</sub>(t)</code> simultaneously during drive with zero
+blind TX/RX dead time, provided electrical sample rate and switching timing
+keep 10–50&times; headroom above the mechanical band.</p>
+<p>A physical crystal cannot switch faster than its longitudinal acoustic
+transit inertia <code>&tau;<sub>inertia</sub> = L / v<sub>D</sub></code>
+(~90–285 ns for a 1 mm thin piezo/composite plate), whereas air-cavity
+ring-down <code>T<sub>60</sub> &approx; 20–50 ms</code> sets passive stored
+energy gain <code>Q<sub>cav</sub></code> rather than an actuator frame clock.
+Once feedback converges <code>x&#775;(t)</code> onto the target
+object–chamber harmonic chord, zero mechanical work is done at equilibrium
+(<code>F &middot; z&#775; = 0</code>) and drive relaxes to the coupled-cavity
+loss floor <code>P<sub>hold</sub> = &omega; E<sub>stored</sub> / Q<sub>cav</sub></code>.
+Targets are therefore compact sparse chord lists rather than raw waveform streams
+or dense voxel videos. Matching a scattering signature <code>S(f)</code> remains
+evidence only within distinguished modes; part acceptance still pairs response
+measurements with dimensional metrology, material characterization and a
+functional test under shared digital-twin job interfaces.</p>
 
 <h2 id="s7">7 · Principle: the carriers talk to each other</h2>
 <p>Sound is a density wave and density sets the refractive index, so the
@@ -472,6 +488,10 @@ lives</td></tr>
 <tr><td><b>1</b></td><td><a href="the_two_carriers.html">The Two
 Carriers</a></td><td>carrier member</td><td>the full degrees-of-freedom
 inventory (the knob table in full) and the cross-carrier couplings</td></tr>
+<tr><td><b>1</b></td><td><a href="replicator_acoustic_hologram.html">The
+Acoustic Hologram</a></td><td>transducer &amp; cavity member</td><td>crystal
+transit inertia, simultaneous two-terminal HAPTIC self-sensing, 3+3 SIMO
+dispersive heads, coupled-cavity holding, and aperture bounds</td></tr>
 <tr><td><b>1</b></td><td><a href="replicator_phonons.html">The
 Phonons</a></td><td>carrier member</td><td>sound as muscle: trapping,
 moving, welding — the force side worked out</td></tr>

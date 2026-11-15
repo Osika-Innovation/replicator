@@ -1,33 +1,42 @@
 # Acoustic bodies
 
-Use geometry to obtain useful acoustic control with few electrical channels. The leading candidate is a coupled piezoelectric source and an optimized elastic body, with two bodies facing the work volume.
+Use dispersive geometry plus electrical timing headroom to obtain full 3D acoustic control with few electrical channels. The leading candidate is two opposed thin broadband piezoelectric plates (`3 + 3` asymmetric inputs, `≤ 5 mm` patches or annuli bonded to a `1–1.5 mm` low-loss supersonic glass or aluminum plate and/or a replaceable thin-walled SLA chaotic "pinecone" scatterer around a coaxial `Ø12 mm` optical/material bore) governed by continuous two-terminal self-sensing.
 
-## Co-design the source and the body
+## First-principles crystal inertia vs. cavity Q
 
-The design variables include actuator location, front-body shape, supports, contact, radiating regions, gap, operating frequencies and drive sequence. Folded paths, ribs, local resonators and lattices are available tools. Compare them with simple solid bodies and separate horns.
+Physical piezoelectric switching is bounded by longitudinal acoustic transit across the crystal thickness (`τ_inertia = L / v_D`), not by room-air cavity decay (`T_60 ≈ 20–50 ms`). For a `1 mm` thin plate, `τ_inertia` spans `~91 ns` (`AlN/ScAlN`), `~136–174 ns` (`LiNbO3` / quartz), `~217–245 ns` (`PMN-PT` / `PZT`), and `~255–285 ns` (`1–3` piezocomposite). Air `T_60` sets passive chamber energy storage (`Q_cav`) rather than an actuator frame clock.
 
-A Langevin transducer's reaction mass and preload belong to its resonant structure. Start with intact preloaded cartridges and co-design their coupling to the custom body. An integrated replacement is a new transducer design with its own impedance, stress and thermal requirements.
+Avoid bolt-clamped `Q ≈ 500` steel Langevin dumbbells as the multi-tone holographic default (`~4.5 ms` narrowband ring-down); retain preloaded Langevin stacks only as historical or single-tone CW power comparison hardware.
 
-## Optimize the manufacturing task
+## Simultaneous two-terminal HAPTIC self-sensing
 
-Score reachable positions, force and stiffness margin, unwanted traps, settling time, electrical power, temperature, fatigue and tolerance sensitivity. A high surface amplitude or a large mode count alone does not demonstrate control of the material.
+Drive and sense continuously across both terminals of every piezoelectric element through a differential H-bridge (`+V_bus` expand, `-V_bus` contract, `0 V` brake, `Hi-Z` float) with `10–50×` electrical timing and sample-rate headroom. From coupled Butterworth–Van Dyke dynamics:
 
-Compare candidates on the same payload, work volume, trajectory, power limits and disturbance envelope. Retain failed cases: they identify the change that could remove the bottleneck.
+- `m ẍ + c ẋ + k x = Θ V(t) + F_echo(t)`
+- `I(t) = C_0 dV/dt + Θ ẋ(t)`
+
+Subtracting the dielectric slewing current `C_0 dV/dt` (via matched `C_ref` bridge, synchronous `V/I` shunt sampling, or `Hi-Z` slew timing) recovers strain `x(t)`, crystal velocity `ẋ(t)`, and returning chamber echo loading `F_echo(t)` simultaneously during drive with zero blind TX/RX switching gap.
+
+## Coupled-cavity equilibrium and sparse chords
+
+Design variables include actuator layout, supersonic plate dispersion, replaceable SLA chaotic scatterers, gap, harmonic comb spacing (`f_0 ≈ 25 kHz`), and closed-loop gain. Folded paths, asymmetric patches, and perforated thin shells trade electrical bandwidth headroom for thousands of spatial degrees of freedom in one SIMO body.
+
+Stationary holding does zero mechanical work (`F · ż = 0`). High air–solid impedance mismatch (`415 Rayl` vs. `46 MRayl`, `99.996%` reflection) means dense inclusions (such as steel at `7.85 g/cm³`) resonate in coupled chamber-plus-object air modes rather than internal solid modes. Once `ẋ(t)` locks onto the target harmonic chord, continuous feedback settles near passive chamber loss (`P_hold = ω E_stored / Q_cav`). Objects are therefore represented as compact sparse `.pattern` chord lists (kilobytes to sub-megabyte in Rung 1) rather than raw voxel-video frames; extending single-axis standing-wave dense-metal levitation to closed-loop 3D dispersive holding remains open.
 
 ## Response as the handover
 
 For a linear operating regime, write the field as **p(f) = H(f)u(f)**. The response connects the input drives to the observable field or radiating surface. It belongs to a specific geometry, mounting, medium and operating state.
 
-The engineering body-response contract separates physical input channels from sampled radiating patches. A thousand patches do not become a thousand independent controls. Multitone operation also needs loaded source response, amplifier limits and transients.
+The engineering body-response contract separates physical input channels from sampled radiating patches. A thousand patches do not become a thousand independent controls without multi-tone dispersion across the calibrated `H(f)` response and amplifier headroom.
 
 ## Compute and measurement
 
-Use reduced models for broad search and independent structural/acoustic models for finalists. When the models disagree about the best design, identify the missing coupling or measurement before expanding the same sweep.
+Use reduced models (and optional physics-constrained neural warm-starts evaluated against `NOWS`) for broad search and independent structural/acoustic models for finalists. When models disagree, identify the missing coupling or measurement before expanding the sweep.
 
-The reusable calibration fixture should measure source impedance, resonance and damping, mounting repeatability and spatial response. Feed those observations back into the model with uncertainty.
+The reusable calibration fixture measures electrical impedance, adaptive `C_0` bridge balance, mounting repeatability, and spatial pressure response. Feed those observations back into the digital twin with uncertainty.
 
 ## First useful output
 
-The first manipulation gate is repeatable hold, move and release. The manufacturing gate additionally requires controlled feed, joining and inspection. A replaceable field-shaping insert, fixture or feed component becomes an upgrade only when its measured effect improves the machine.
+The first manipulation gate is repeatable hold, move and release under simultaneous two-terminal `HAPTIC` closed-loop regulation. The manufacturing gate additionally requires controlled feed, joining and inspection. A replaceable field-shaping faceplate, fixture or feed component becomes an upgrade only when its measured effect improves the machine.
 
-See [Manufacturing](manufacturing.html), [Materials](materials.html) and the acoustic papers in the [library](research.html).
+See [The Acoustic Hologram](../papers/replicator_acoustic_hologram.html), [The Phonons](../papers/replicator_phonons.html), [Manufacturing](manufacturing.html), [Materials](materials.html) and the full acoustic library in [research](research.html).

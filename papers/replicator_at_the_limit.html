@@ -37,6 +37,7 @@
     background:var(--wash); color:var(--slate); border:1px solid var(--rule);
     vertical-align:.14em; white-space:nowrap}
   .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-derived{color:#fff;background:var(--amber);border-color:var(--amber)}
   .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
   .chip.c-bound{color:#fff;background:var(--blood);border-color:var(--blood)}
   table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
@@ -54,12 +55,6 @@
   a{color:var(--steel)}
   .overflow{overflow-x:auto}
   ol li,ul li{margin:.3rem 0}
-  .figure{margin:1.8rem 0; text-align:center}
-  .figure svg{max-width:100%; height:auto; background:#fdfcf8;
-    border:1px solid var(--rule); border-radius:3px}
-  .caption{font-size:.85rem; color:var(--soft); font-style:italic;
-    margin-top:.5rem; text-align:left}
-  .caption b{font-style:normal; font-family:"Helvetica Neue",Helvetica,sans-serif; color:#555}
 </style>
 </head>
 <body>
@@ -67,6 +62,7 @@
 <div class="banner">
 Read first → <a href="replicator_principles.html">Replicator Principles</a> ·
 architecture → <a href="replicator_architecture.html">Architecture</a> ·
+hologram limit → <a href="replicator_acoustic_hologram.html">Acoustic Hologram</a> ·
 storage owner → <a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute Plan</a> ·
 build → <a href="replicator_mechanical_construction.html">Mechanical Construction</a> ·
 rulings → <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a> ·
@@ -74,17 +70,23 @@ software → <a href="replicator_field_compiler.html">Field Compiler</a>
 </div>
 
 <h1>The Replicator at the Limit</h1>
-<p class="sub">Design the machine and the path by which it improves itself.</p>
-<p class="meta">v0.2 · reviewed 2026-11-13 · Role: long-term architecture and
-bootstrap strategy. This revision replaces the earlier numerical limit tables
-with explicit design constraints and qualification requirements. Prototype
-configuration and measured performance belong to the current engineering records.</p>
+<p class="sub">Design the machine and the path by which it improves itself from first-principles bounds.</p>
+<p class="meta">v0.3 · reviewed 2026-11-15 (previous v0.2 · 2026-11-13) · Role: long-term
+architecture, physical bounds, and bootstrap strategy. Building on v0.2's
+qualification cleanup, this revision explicitly ties acoustic actuator dynamics
+to crystal transit inertia (<code>τ_inertia = L/v_D</code>), simultaneous
+two-terminal <code>HAPTIC</code> dielectric subtraction, coupled-cavity holding
+power (<code>P_hold = ω·E_stored/Q_cav</code>), and compact sparse
+<code>.pattern</code> chord lists (retiring arbitrary 20 ms frame clocks,
+bolted <code>Q ≈ 500</code> Langevin defaults, gigabyte voxel files, and
+<code>Tbit/s</code> open-loop listening streams).</p>
 
 <h2 id="s1">1 · Start from the function</h2>
 <p>The target is a manufacturing system that turns specified feedstock into
 inspected parts, then uses those parts to expand its own capabilities. Design
-from that target backward. Remove a component when geometry, a shared physical
-process or feedback can provide its function with less total effort.</p>
+from that target backward. Remove a component, frame timer, or separate sensor
+when geometry, a shared physical process, or closed-loop state feedback can
+provide its function with less total effort.</p>
 <p>The best design minimizes human setup, calibration, assembly and rework as
 well as part count. A simple-looking body can hide demanding material or
 manufacturing requirements; count those requirements in the design. Keep one
@@ -93,51 +95,83 @@ enduring modular platform and change the modules that remove the next bottleneck
 range, energy efficiency and reliability simultaneously. Optimize the tradeoff
 for a defined task, then measure whether the next generation improves it.</p>
 
-<h2 id="s2">2 · Describe what the part must do</h2>
+<h2 id="s2">2 · Describe what the part must do — sparse chords, not gigabyte voxels</h2>
 <p>A useful component specification records geometry, material properties,
 interfaces, tolerances and acceptance tests. It does not require the exact
-positions and quantum states of every constituent atom. Use the least detailed
-representation that predicts the function and supports its manufacture.</p>
+positions and quantum states of every constituent atom, nor brute-force
+<code>100 MB–75 GB</code> voxel videos where compact modal coefficients suffice.
+Use the least detailed representation that predicts function and supports
+manufacture and verification.</p>
 <div class="overflow"><table>
-<tr><th>Representation</th><th>What it carries</th><th>What qualifies it</th></tr>
-<tr><td>Geometry and material fields</td><td>Shape, composition, orientation and constitutive properties where they matter</td><td>Dimensional and material inspection at the required resolution</td></tr>
-<tr><td>Boundary response</td><td>Transfer or scattering response for specified ports, frequencies and operating conditions</td><td>Prediction of observations withheld from model fitting</td></tr>
-<tr><td>Manufacturing program</td><td>Feed, actuation, joining, sensing and recovery steps</td><td>A finished part passing its functional acceptance test</td></tr>
+<tr><th>Representation</th><th>What it carries</th><th>Typical scale &amp; what qualifies it</th></tr>
+<tr><td><b>Sparse chord list (<code>.pattern</code>)</b></td><td>Coupled chamber–object eigenfrequencies (<code>f<sub>n</sub></code>, linewidths) and <code>K</code>-port complex <code>HAPTIC</code> vectors</td><td>Kilobytes to sub-MB in Rung 1 few-channel hardware; prediction of observations withheld from model fitting (<a href="replicator_scan.html">Scan §3, §6</a>)</td></tr>
+<tr><td><b>Geometry and material fields</b></td><td>Shape, composition, orientation and constitutive properties where they matter</td><td>Dimensional and material inspection at the required resolution</td></tr>
+<tr><td><b>Full-aperture optical pages (Rung 2)</b></td><td>2-D complex plate amplitude/phase maps (~3 Mbit per 200 kHz comb plate pair)</td><td>Optically stored in photorefractive/PCM media (~10⁵–10⁶ pages/cm³; <a href="replicator_acoustic_hologram.html#s8">Acoustic Hologram §8</a>)</td></tr>
+<tr><td><b>Manufacturing program</b></td><td>Feed, actuation, joining, sensing and recovery steps</td><td>A finished part passing its functional acceptance test</td></tr>
 </table></div>
 <p>These representations are linked, not interchangeable. A compact response
-signature can describe a task well without uniquely identifying the interior.
-An actuator program can execute correctly while its material outcome fails.
-The twin keeps both distinctions visible.</p>
+signature can guide closed-loop holding without uniquely identifying an
+unobserved interior. An actuator program can execute correctly while its
+material outcome fails. The twin keeps both distinctions visible.</p>
 
-<h2 id="s3">3 · Spend control authority where it changes the outcome</h2>
-<p>For a linear operating regime, write the field as
-<code>p(f) = H(f; geometry, material, state) u(f)</code>. Geometry determines
-which patterns the inputs can reach. At one frequency a passive linear body
-cannot supply more independent command dimensions than its inputs. Frequency
-and timing can add useful patterns within the source bandwidth, ring-down,
-power and task-dynamics limits.</p>
-<p>This makes a few-input, inverse-designed acoustic body a valuable candidate:
-put repeatable spatial structure into the body and reserve electronics for the
-changes the task actually needs. Evaluate it against a direct-emitter reference
-on equal payload, workspace, electrical power and operating conditions.</p>
-<p>Choose waveform sampling, sensing and feedback rates separately. Carrier
-frequency is not automatically the required controller update rate. Derive each
-rate from observability, motion, resonant settling, drift and the error budget.
-Compute manufacturing throughput from feed, transport, capture, joining and
+<h2 id="s3">3 · Crystal transit inertia and simultaneous two-terminal HAPTIC sensing</h2>
+<p>Conflating chamber reverberation with actuator latency led earlier versions to
+treat ~20 ms cycles and 1 Tbit/s raw firehoses as unavoidable constraints. Two
+distinct physical timescales govern an acoustic chamber:</p>
+<ul>
+<li><b>Crystal acoustic transit inertia (actuator ceiling):</b> A thin bare or
+lightly backed piezoelectric element of thickness <em>L</em> and stiffened sound
+speed <em>v</em><sub>D</sub> switches mechanical strain/velocity on
+<code>τ_inertia = L / v_D ≈ 90–285 ns</code> at <em>L</em> = 1 mm
+(<code>AlN</code> ~91 ns, <code>LiNbO₃</code> ~136 ns, <code>PMN-PT</code> ~217 ns,
+<code>PZT-4/5H</code> ~220–245 ns, <code>1–3</code> piezocomposite ~255–285 ns;
+<span class="chip c-derived">DERIVED</span>;
+<a href="replicator_acoustic_hologram.html#s4-1">Acoustic Hologram §4.1</a>).
+Heavy bolt-clamped <code>Q ≈ 500</code> steel Langevin slugs create the
+~4.5 ms ring-down and ~1–2 kHz bandwidth ceiling; thin broadband elements on
+supersonic dispersive plates (<code>f<sub>c</sub> ≈ 6–12 kHz</code>) or
+chaotic diffusers transfer electrical data-rate headroom directly into spatial
+modes across a harmonic comb (<code>p(f) = H(f)u(f)</code>).</li>
+<li><b>Chamber reverberation (<code>T₆₀</code>) as passive storage gain:</b>
+Room-air <code>T₆₀</code> (~20–50 ms at 100–200 kHz) is passive reactive energy
+storage (<code>Q_cav</code> gain), <b>not</b> an actuator frame clock.</li>
+<li><b>Simultaneous two-terminal <code>HAPTIC</code> state bridge:</b> Under
+coupled Butterworth–Van Dyke dynamics
+(<code>m·ẍ + c·ẋ + k·x = Θ·V(t) + F_echo(t)</code>,
+<code>I(t) = C₀·dV/dt + Θ·ẋ(t)</code>), driving both piezo pins with a
+differential H-bridge (<code>+V_bus</code>, <code>−V_bus</code>,
+<code>0 V</code> brake, <code>Hi-Z</code> float) and subtracting
+<code>C₀·dV/dt</code> recovers crystal displacement <em>x</em>(<em>t</em>),
+velocity <em>ẋ</em>(<em>t</em>), and returning force <code>F_echo(t)</code>
+continuously during TX with zero switching dead time
+(<span class="chip c-measured">MEASURED</span> self-sensing bridge art, Dosch,
+Inman &amp; Garcia 1992).</li>
+<li><b>Zero excess holding power:</b> Stationary holding against gravity does
+zero mechanical work (<em>F</em>·d<em>z</em> = 0). Air–solid impedance mismatch
+(~415 Rayl vs. ~46 MRayl) reflects 99.996% at dense boundaries, so airborne
+resonant holding of heavy spheres up to steel (7.85 g/cm³) and iridium
+(22.6 g/cm³; <span class="chip c-measured">MEASURED</span> Xie et al. 2006)
+resonates inside the <b>coupled chamber + sphere cavity</b>. Locking the
+<code>HAPTIC</code> autodyne/PLL loop onto that coupled chord throttles
+steady-state power down to cavity dissipation
+<code>P_hold = ω·E_stored / Q_cav</code> once velocity error nears zero
+(multi-tone 3-D dense-metal holding on thin dispersive plates remains
+<span class="chip c-open">OPEN</span>).</li>
+</ul>
+<p>Compute manufacturing throughput from feed, transport, capture, joining and
 inspection; the slowest necessary operation sets the useful rate.</p>
 
 <h2 id="s4">4 · Compute belongs where it earns its place</h2>
-<p>The initial platform uses conventional digital compute and control to make
-models, run experiments and operate hardware. Optical or other physical compute
-modules enter when a specified workload demonstrates an advantage in latency,
-energy, precision, reliability or manufacturability.</p>
+<p>The initial platform uses conventional digital compute and high-headroom
+differential H-bridge drivers (PIO/FPGA or multi-MSa/s DAC/ADC) to run coupled
+models, track <code>HAPTIC</code> residuals, and operate hardware. Optical or
+other physical compute modules enter when a specified workload (such as Rung 2
+~10⁵-pixel optical plate addressing) demonstrates a measured advantage in
+latency, energy, precision, reliability or manufacturability.</p>
 <p>Optical geometry can encode useful transformations, but an optical component
 also depends on index contrast, loss, surface quality, material uniformity,
 alignment and read/write interfaces. A fabrication route must meet those
-requirements. Geometry alone does not establish a self-made computer.</p>
-<p>Compare complete systems: source, modulator, physical transformation,
-detector, conversion, control and calibration. Keep the module interface stable
-so a better implementation can replace an earlier one. The
+requirements. Compare complete systems and keep module interfaces stable. The
 <a href="holographic_memory_and_compute_plan.html">memory and compute paper</a>
 records candidate optical routes.</p>
 
@@ -147,10 +181,10 @@ for one aperture does not equal placement error, and a wavelength-sized mode
 count does not equal one bit per mode or a universal storage-density ceiling.</p>
 <div class="overflow"><table>
 <tr><th>Constraint</th><th>Design consequence</th></tr>
-<tr><td>Aperture, wavelength and accessible modes</td><td>Calculate reachable fields and measurement resolution for the actual geometry, medium and noise.</td></tr>
-<tr><td>Bandwidth and signal-to-noise ratio</td><td>Allocate information rate and estimation error; count independent observations rather than repeated samples.</td></tr>
-<tr><td>Loss, heat and material response</td><td>Balance electrical input, stored energy, useful work and rejected heat over the full duty cycle.</td></tr>
-<tr><td>Material and process tolerances</td><td>Include roughness, defects, composition, stress and drift where they affect the required response.</td></tr>
+<tr><td>Aperture, wavelength and accessible modes</td><td>Calculate reachable fields and measurement resolution for the actual geometry, medium and noise (pressure λ/2, force pixel ~λ/4, placement ~λ/100).</td></tr>
+<tr><td>Crystal transit inertia and bandwidth</td><td>Mechanical switching ≥ <code>τ_inertia = L/v_D</code> (~90–285 ns at 1 mm); trade electrical comb bandwidth against cavity linewidth rather than imposing artificial ms frames.</td></tr>
+<tr><td>Loss, stored energy and steady hold</td><td>Balance electrical input, reactive cavity storage <code>E_stored</code>, minimal holding dissipation <code>ω·E_stored/Q_cav</code>, and rejected heat over the duty cycle.</td></tr>
+<tr><td>Material and process tolerances</td><td>Include roughness, defects, composition, stress and thermal drift where they affect the coupled response.</td></tr>
 <tr><td>Conservation and thermodynamics</td><td>Track feedstock, products, residues and process energy. Rearrangement and recovery require explicit material routes.</td></tr>
 </table></div>
 <p>A holographic memory is assessed by measured recoverable capacity, error
@@ -171,9 +205,9 @@ can still leave one indispensable process outside the loop.</p>
 <li><b>Reproduction.</b> Produce the next working configuration, recording every external fabrication, finishing and assembly step.</li>
 </ol>
 <p>Candidate upgrades include fixtures, feed guides, field-shaping inserts,
-acoustic bodies and optical structures. Their order follows the available
-material process and the bottleneck removed. A proposed upgrade cannot depend
-on the very precision or process it is supposed to introduce.</p>
+chaotic scatterer faceplates, dispersive bodies and optical structures. A
+proposed upgrade cannot depend on the very precision or process it is supposed
+to introduce.</p>
 <p>The living dependency map and the first self-made-upgrade gate are in the
 <a href="../docs/content/upgrades.md">upgrade guide</a>. The complete route,
 including human effort, matters more than a claim that only a handful of
@@ -183,10 +217,11 @@ purchased parts will remain.</p>
 <p>Run two connected searches: work backward from the required next-generation
 capabilities, and forward from the processes the current platform can support.
 Their meeting point selects the next useful upgrade.</p>
-<p>Use inexpensive models to explore, independent higher-fidelity models to
-check promising designs, and reusable measurements to resolve consequential
-uncertainties. A learned correction model improves predictions within the
-conditions it has earned; it does not make unexplored conditions reliable.</p>
+<p>Use inexpensive models and physics-informed warm-starts to explore,
+independent higher-fidelity models to check promising designs, and reusable
+<code>HAPTIC</code>/field measurements to resolve consequential uncertainties.
+A learned correction model improves predictions within the conditions it has
+earned; it does not make unexplored conditions reliable.</p>
 <p>AI may propose geometry and manufacturing programs, choose informative
 measurements, analyze results and update documentation. Fixed acceptance tests
 and held-out conditions determine which proposals survive. Measure progress as
@@ -206,7 +241,8 @@ compute cost and elapsed time.</p>
 <blockquote><b>The design target:</b> build a machine that makes a useful part
 of its own successor, verify the gain, and repeat. Each cycle expands the set
 of parts the platform can manufacture and qualify.</blockquote>
-<p class="meta">Related: <a href="replicator_architecture.html">system architecture</a> ·
+<p class="meta">Related: <a href="replicator_acoustic_hologram.html">acoustic hologram limit</a> ·
+<a href="replicator_architecture.html">system architecture</a> ·
 <a href="replicator_assemble.html">assembly process</a> ·
 <a href="replicator_dissolve.html">material recovery</a> ·
 <a href="../docs/content/upgrades.md">upgrade strategy</a>.</p>

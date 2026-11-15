@@ -20,9 +20,9 @@ The long-term programme also includes scanning objects and recovering material f
 
 ## The first machine
 
-The preferred acoustic candidate is two opposed, optimized elastic bodies with a few high-power piezo inputs. Three inputs per body is the starting comparison. The number, geometry and operating band are selected against force, controllability, heat, fatigue and calibration requirements. The platform also preserves the access, datums and timing needed for coordinated electromagnetic and optical modules; the first material recipe selects which are installed initially.
+The preferred acoustic candidate is two opposed, low-inertia broadband piezoelectric plates (`3 + 3` asymmetric inputs driving a thin supersonic plate and/or replaceable SLA chaotic scatterer with a coaxial `Ø12 mm` bore) governed by simultaneous two-terminal H-bridge (`HAPTIC`) self-sensing (`I = C_0 dV/dt + Θ ẋ`). The number, geometry and harmonic comb are selected against force, controllability, electrical timing headroom above crystal transit inertia (`τ_inertia = L / v_D`), heat, fatigue and calibration requirements. The platform also preserves the access, datums and timing needed for coordinated electromagnetic and optical modules; the first material recipe selects which are installed initially.
 
-Existing direct-emitter arrays and the larger RH-1 design remain reference configurations. They help compare architectures without fixing the first build to an old part count.
+Existing direct-emitter arrays, bolt-clamped Langevin dumbbells (for narrowband CW comparison), and the larger RH-1 design remain reference configurations. They help compare architectures without fixing the first build to an old part count.
 
 ## How to read the handbook
 
