@@ -67,9 +67,9 @@ The twin shares coordinates, timing, sensor calibration and material state acros
 
 ## The acoustic candidate
 
-Two opposed bodies provide a compact acoustic starting point within this architecture. Geometry is optimized with the source and its mounting: preload, contact, structural modes, radiation and temperature all affect the useful response. The current starting hypothesis is three inputs per body.
+Two opposed bodies provide a compact acoustic starting point within this architecture. The default baseline avoids bolt-clamped `Q ≈ 500` Langevin dumbbells in favor of thin broadband piezoelectric elements (`≤ 5 mm` asymmetric patches or annuli, transit inertia `τ_inertia = L / v_D ≈ 90–285 ns` at `1 mm` thickness) bonded to a `1–1.5 mm` low-loss supersonic plate (borosilicate glass or aluminum) and/or a replaceable thin-walled SLA chaotic scatterer around a coaxial `Ø12 mm` optical/material bore. Preload, contact, bond compliance, structural dispersion and temperature all affect the useful response. The current starting hypothesis is three independent inputs per body (`3 + 3`).
 
-At one frequency in a linear model, six inputs span at most six independent complex field patterns. Geometry can make those patterns useful for the chosen task. Frequency and time provide additional choices within bandwidth, settling and motion constraints.
+At one fixed frequency in a linear model, six inputs span at most six independent complex field patterns. Combining dispersive/chaotic boundary geometry with a multi-tone harmonic comb (`f_0 ≈ 25 kHz` spacing) multiplies independent spatial modes across frequency with `10–50×` electrical bandwidth headroom, while room-air cavity decay (`T_60 ≈ 20–50 ms`) sets passive `Q_cav` gain rather than an actuator frame clock. Each electrical channel is driven and observed continuously through two-terminal differential H-bridge (`HAPTIC`) self-sensing (`I(t) = C_0 dV/dt + Θ ẋ(t)`), eliminating TX/RX switching dead time and settling onto a low-dissipation coupled-cavity equilibrium chord (`P_hold = ω E_stored / Q_cav`). Bolt-clamped Langevin stacks remain useful reference hardware for narrowband CW power tests.
 
 ## Interfaces that survive upgrades
 

@@ -83,7 +83,17 @@ carrier's element-level content; the hardware papers keep only instance recipes
 appear here only as clearly-marked instance examples pointing at those papers.
 The complete degrees-of-freedom inventory lives in
 <a href="the_two_carriers.html">The Two Carriers</a> and is linked, not
-duplicated.</p>
+duplicated. <b>Updated 2026-11-15:</b> the acoustic-hologram <em>limit
+architecture</em> — aperture completeness, MIMO/rank counting, crystal
+transit-inertia ceiling (<code>τ_inertia = L/v_D ≈ 90–285 ns</code>),
+simultaneous two-terminal piezo <code>HAPTIC</code> self-sensing,
+coupled-cavity harmonic chord lock (<code>P_hold = ω·E_stored/Q_cav</code>),
+and fibre/holographic storage — is owned by
+<a href="replicator_acoustic_hologram.html">The Acoustic Hologram</a>
+(draft v0.2, candidate R17); it specifies that the horn + gyroid front end of
+§2 is optional above plate coincidence and that hologram drives are thin
+crystal-inertia-limited broadband elements rather than bolt-clamped
+<code>Q ≈ 500</code> Langevin slugs.</p>
 
 <h2 id="s1">1 · Sound as muscle — why the force carrier is acoustic</h2>
 <p>Ruling R1, the division of labor the whole machine runs on: <b>light
@@ -193,6 +203,32 @@ is aperiodic <em>with a diffuse spectrum</em> (no Bragg peaks), which is why
 it works — it is not a quasicrystal. The named untested follow-up for
 volumetric layouts is 3D blue-noise / Poisson-disk point sets — random's
 diffuse spectrum plus a minimum-spacing guarantee.</div>
+
+<h3>2.4 First-principles crystal state: transit inertia and two-terminal HAPTIC self-sensing</h3>
+<p>When a thin bare or lightly backed piezoelectric crystal (0.5–1.5 mm
+<code>PZT</code>, <code>1–3</code> piezocomposite, <code>PMN-PT</code>,
+<code>LiNbO₃</code>, or <code>AlN</code>) drives a low-loss supersonic plate
+or chaotic diffuser rather than a heavy bolt-clamped <code>Q ≈ 500</code>
+steel Langevin dumbbell, its intrinsic mechanical switching ceiling is the
+acoustic transit time across its thickness
+<code>τ_inertia = L / v_D ≈ 90–285 ns</code>
+(<span class="chip c-derived">DERIVED</span> from published elastic constants;
+five orders of magnitude faster than a 20 ms frame and free of the ~4.5 ms
+Langevin ring-down bottleneck). Room-air <code>T₆₀</code> (~20–50 ms) is
+passive chamber storage (<code>Q_cav</code> gain), not an actuator
+clock.</p>
+<p>Wiring a differential H-bridge (<code>+V_bus</code>, <code>−V_bus</code>,
+<code>0 V</code> active brake, <code>Hi-Z</code> float) across both crystal
+terminals with 10–50× electrical data-rate headroom allows dielectric-current
+subtraction (<code>I_mot = I − C₀·dV/dt = Θ·ẋ</code>) directly during
+continuous drive, recovering instantaneous strain <code>x(t)</code>, velocity
+vector <code>ẋ(t)</code>, and chamber echo <code>F_echo(t)</code> with
+<b>zero TX/RX switching dead time</b>
+(<span class="chip c-measured">MEASURED</span> Dosch–Inman bridge art; see
+<a href="replicator_acoustic_hologram.html#s4">The Acoustic Hologram §4.1–§4.2</a>).
+Once the chamber locks onto a workpiece's coupled eigen-chord, steady-state
+holding throttles down to pure cavity dissipation
+<code>P_hold = ω·E_stored / Q_cav</code>.</p>
 
 <h2 id="s3">3 · The wall element — the phononic panel (plan B)</h2>
 <p><em>Status (R3 amendment, 2026-07-30): the plate assemblies of §2 are the
@@ -342,6 +378,19 @@ traps and near-field holograms</td><td>measured (acoustic tweezers)</td></tr>
 R1's "sound <em>and induction</em> exert force." The table is a
 force-carrier assignment and sound is its default: everything not
 conductive and not charged is the acoustic channel's to hold.</p>
+<p>Even dense metallic inclusions (for example steel at
+7.85&nbsp;g/cm<sup>3</sup>, and up to 22.6&nbsp;g/cm<sup>3</sup> iridium in
+published single-axis ultrasonic <code>MEASURED</code> art: Xie et al.,
+<em>PRL</em> 97, 174301, 2006) reflect 99.996% of incident air-borne sound at
+the 415&nbsp;Rayl / 46&nbsp;MRayl air–steel boundary and therefore resonate as a
+<b>coupled air-chamber + exterior-boundary mode</b> rather than by driving solid
+internal body modes. Stationary holding requires zero mechanical work
+(<code>F &middot; z&#775; = 0</code>), so a phase- and chord-locked loop
+sustains the external pressure node at the cavity dissipation floor
+<code>P<sub>hold</sub> = &omega; E<sub>stored</sub> / Q<sub>cav</sub></code>
+once equilibrium is reached; extending single-axis standing-wave metal
+levitation to closed-loop 3D multi-tone dispersive holding in the twin's chamber
+remains <code>OPEN</code>.</p>
 
 <h2 id="s4b">4b · Athermal softening — flow without melt (R15)</h2>
 <p><b>"Soften with sound or current; shape with fields; flow without

@@ -77,7 +77,7 @@ Bridge document · compute lane →
 <h1>Memory and Compute in the Holographic Machine</h1>
 <p class="sub">A conceptual plan — where the bits live, where the arithmetic
 happens, and why those are not the same cavity.</p>
-<p class="meta">draft v0.1 · 2026-07-22 · <b>Role</b>: this document connects
+<p class="meta">draft v0.2 · 2026-11-15 (previous v0.1 · 2026-07-22; sparse chord lists and simultaneous two-terminal <code>HAPTIC</code> residual tracking retire the early ~100 MB object and ~1 Tbit/s raw sensor stream assumptions) · <b>Role</b>: this document connects
 two lanes that were built separately. The compute lane has a prototype (a
 twelve-port EML toroid, $10 BOM) and a measurement framework (the Osika and
 its four axes). The replicator lane has a boundary-controlled chamber and a
@@ -245,10 +245,7 @@ needed. <b>Write the chords.</b></blockquote>
 M# budget, because what degrades with load is precisely the ability to tell
 stored patterns apart. Capacity in bits is a sanity check on the object
 library; capacity in chords is what the architecture actually spends.</p>
-<p>It also settles §5's second return. "Which stored chord does this echo
-match?" is not a search over a database — it is <em>one illumination</em>,
-answered by every page simultaneously. That is why a holographic correlator
-belongs in the Tbit/s scan loop and a lookup table does not.</p>
+<p>It also settles §5's second return. For Rung 1 few-channel hardware, simultaneous two-terminal <code>HAPTIC</code> piezo self-sensing (<a href="replicator_acoustic_hologram.html#s4">Acoustic Hologram §4.1</a>) extracts the motional velocity residual <code>I_mot = I − C₀·dV/dt = Θ·ẋ</code> directly at the driven crystal terminals—eliminating an artificial <code>1 Tbit/s</code> raw waveform stream by tracking coupled-cavity chord lock instead of open-loop voxel streaming. When full-aperture optical Rung 2 addressing (~10⁵ pixels) is reached, "Which stored chord does this optical plate frame match?" is not a search over a database — it is <em>one illumination</em>, answered by every stored page simultaneously in the holographic correlator.</p>
 <div class="warn"><b>Two honest limits on associative recall.</b> First, it
 returns a <em>ranked correlation</em>, not an exact match — several pages
 answer, and the answer is "these, in this order, with these strengths." That
@@ -357,15 +354,23 @@ standard division of labour, just physical.</b></div>
 <h2>5 · What this gives the replicator</h2>
 <p>Three concrete returns, in increasing order of how much they matter:</p>
 <ol>
-<li><b>A store for the pattern library.</b> From the
-<a href="replicator_at_the_limit.html">limit paper</a>, an object costs
-~100 MB; per §3.1, <b>1 cm³ holds ~32 TB ≈ 320 000 objects</b>, rewritable
-in place. The number that will actually bind is not capacity but M#.</li>
-<li><b>A solution to the Tbit/s problem.</b> The machine's binding
-constraint is not building but <em>listening</em>: ~1 Tbit/s of sensor
-stream, with corrections due inside one wave period. A holographic
-correlator answers "which stored chord does this echo match?" in the time
-light crosses it — which is the shape of the scan problem, not a coincidence.</li>
+<li><b>A store for the sparse pattern library.</b> Under the
+<a href="replicator_at_the_limit.html">limit paper</a> and
+<a href="replicator_acoustic_hologram.html">acoustic hologram</a>
+architecture, target states are stored as compact sparse harmonic chord lists
+(kilobytes to sub-megabyte in Rung&nbsp;1 rather than dense voxel-video
+streams), so a cm<sup>3</sup> volume-holographic store indexes far more
+eigen-chords than static capacity requires; what binds is Bragg selectivity
+and M# dynamic range.</li>
+<li><b>A correlator matched to crystal transit inertia.</b> The active loop
+does not process an open-loop raw waveform firehose: two-terminal HAPTIC
+self-sensing extracts the differential motional residual
+<code>&Theta; x&#775; = I &minus; C<sub>0</sub> dV/dt</code> directly on
+each piezo port with 10–50&times; electrical headroom above
+<code>&tau;<sub>inertia</sub> = L / v<sub>D</sub></code>. Where multi-channel
+harmonic correlation outgrows conventional DSP latency, a holographic
+correlator answers "which stored eigen-chord matches this state residual?" in
+one optical transit.</li>
 <li><b>A brain the machine can build.</b> Per the limit paper's §4.2:
 transistor logic is chemistry, optical computing is geometry, and geometry is
 what a replicator makes. The compute cavity and the memory volume are both

@@ -76,7 +76,7 @@ instance build: <a href="replicator_mechanical_construction.html">Mechanical Con
 surfaces, how many channels, in what arrangement, and why — counts, ratios,
 and ladders rather than millimetres. Millimetre numbers appear only as
 clearly-marked instance examples pointing at the hardware spec.</p>
-<p class="meta">draft v1.0 · 2026-08-01 · extracted from
+<p class="meta">draft v1.1 · 2026-11-15 (previous v1.0 · 2026-08-01) · first-principles crystal-inertia &amp; two-terminal <code>HAPTIC</code> piezo self-sensing update; extracted 2026-08-01 from
 <code>the_replicator.html</code> §6 (v0.7) and
 <code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30</code>. Register chips
 (<span class="chip c-measured">MEASURED</span> /
@@ -310,16 +310,20 @@ orientation by the phase winding <span class="chip c-measured">MEASURED</span>.
 Six chosen (angle, azimuth) cone-modes form a six-element basis — Russell's
 six-cones-from-the-cube (his BB/DD panels) as the plate's eigenbasis rather
 than an imposed pattern (provenance only, never load-bearing).</p>
-<p>We standardize on <b>twelve drive channels = six cones × two</b>, two
-hardware-real readings composing: an <b>I/Q pair</b> gives each cone an
-arbitrary complex weight (twelve real channels = six complex degrees of
-freedom), and a <b>differential pair</b> gives push–pull drive natively on
-dual-H-bridge hardware — the ± polarity axis as circuit topology. Six
-complex axes are the icosahedron's twelve vertices in antipodal pairs:
-<em>the plate is the projected twelve-port screen</em>, and twelve channels
-is the port count the existing chamber firmware stack (per-port PIO
-arrays, twelve-channel drivers) already speaks. One module, every
-topology:</p>
+<p>We standardize on <b>bidirectional two-terminal differential drives</b>
+across all active acoustic ports: an <b>I/Q pair</b> supplies each port's
+complex weight while a <b>differential H-bridge</b> across both crystal
+terminals (<code>+V_bus</code>, <code>−V_bus</code>, <code>0 V</code> brake,
+<code>Hi-Z</code> float) with 10–50× electrical data-rate headroom enables
+simultaneous <code>HAPTIC</code> self-sensing (subtracting dielectric current
+<code>C₀·dV/dt</code> to recover motional velocity <code>ẋ(t)</code> and echo
+<code>F_echo(t)</code> during drive without TX/RX dead time;
+<a href="replicator_acoustic_hologram.html#s4">Acoustic Hologram §4.1</a>).
+On Rung 1 prototypes with thin crystal-inertia-limited broadband ports on
+dispersive plates, three asymmetric elements per opposed head (6 ports total)
+exploit harmonic-comb SIMO multiplexing; in the full bullseye plate geometry,
+<b>twelve drive channels = six cones × two</b> span the antipodal cone basis
+on the same dual-H-bridge PIO architecture across every aperture topology:</p>
 <div class="overflow"><table>
 <tr><th>tiles</th><th>machine</th><th>verbs available</th></tr>
 <tr><td>1 plate</td><td>table replicator</td><td>ADD at full strength; REMOVE partial (only the returning channel is controllable) — assembler-grade</td></tr>

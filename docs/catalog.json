@@ -3,7 +3,7 @@
   "title": "Etherworks Replicator Handbook",
   "site_url": "https://osika-innovation.github.io/replicator/",
   "repository": "https://github.com/Osika-Innovation/replicator",
-  "updated": "2026-11-13",
+  "updated": "2026-11-15",
   "documents": [
     {
       "id": "home",
@@ -43,7 +43,7 @@
         "prototype",
         "strategy"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "architecture",
@@ -239,7 +239,7 @@
         "modules",
         "3+3"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "start",
@@ -261,17 +261,20 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Acoustic bodies",
-      "summary": "Few-input piezo/body co-design and controllability.",
+      "summary": "Crystal-inertia-limited SIMO piezo bodies, two-terminal HAPTIC self-sensing, and coupled-cavity control.",
       "topics": [
         "piezo",
-        "Langevin",
+        "HAPTIC",
+        "crystal inertia",
         "hologram",
         "resonator"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "reviewed": "2026-11-15",
+      "review_scope": "First-principles piezo and control-loop update",
       "related": [
         "architecture",
+        "acoustic-hologram",
+        "phonons",
         "status",
         "upgrades",
         "periodic-table",
@@ -383,7 +386,7 @@
         "Prime",
         "holo"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "architecture",
@@ -431,7 +434,7 @@
         "receipts",
         "prototype"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Current programme explanation",
       "related": [
         "start",
@@ -482,7 +485,7 @@
         "patents",
         "sources"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Current programme explanation",
       "related": [
         "architecture",
@@ -506,7 +509,7 @@
         "architecture",
         "holography"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Prose and claim boundaries",
       "related": [
         "architecture",
@@ -528,7 +531,7 @@
         "RH-1",
         "topology"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Navigation and document role; not a full technical audit",
       "related": [
         "architecture",
@@ -551,7 +554,7 @@
         "constructor",
         "self-replication"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Prose and claim boundaries",
       "related": [
         "architecture",
@@ -573,9 +576,34 @@
         "acoustics",
         "force"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Navigation and document role; not a full technical audit",
       "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "acoustic-hologram",
+      "title": "The Acoustic Hologram",
+      "source": "papers/replicator_acoustic_hologram.html",
+      "url": "papers/replicator_acoustic_hologram.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Acoustics",
+      "summary": "Crystal-inertia-limited transducers, two-terminal HAPTIC self-sensing, coupled-cavity holding and aperture bounds.",
+      "topics": [
+        "acoustics",
+        "hologram",
+        "HAPTIC",
+        "piezo"
+      ],
+      "reviewed": "2026-11-15",
+      "review_scope": "First-principles transducer and control-loop update",
+      "related": [
+        "acoustics",
         "architecture",
         "research",
         "status"
@@ -662,7 +690,7 @@
         "scan",
         "metrology"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Navigation and toroidal-pulse bibliographic correction; remaining technical claims not fully revalidated",
       "related": [
         "architecture",
@@ -730,7 +758,7 @@
         "memory",
         "compute"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-15",
       "review_scope": "Navigation and document role; not a full technical audit",
       "related": [
         "architecture",
