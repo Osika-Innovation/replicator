@@ -162,18 +162,21 @@ steady-state power down to cavity dissipation
 inspection; the slowest necessary operation sets the useful rate.</p>
 
 <h2 id="s4">4 · Compute belongs where it earns its place</h2>
-<p>The initial Rung 1 platform replaces multi-MSa/s DAC/ADC cards with collocated
+<p>In the <b>bootstrap prototype (<code>P0</code> / <code>HA-0</code>, Rung 1)</b>, collocated
 <code>RP2350B</code> acoustic and optical ganglia running 75&nbsp;MSa/s 1-bit
 sigma-delta <code>HAPTIC</code> piezo self-sensing and AC-coupled self-mixing
 interferometry (<code>SMI</code>) locked onto a shared <code>XIN + SYNC</code>
-spinal bus, paired with a swappable Brain Slot carrying block-sparse
+spinal bus feed a swappable Brain Slot carrying block-sparse
 (5–10% nonzero, &lt;&nbsp;60&nbsp;kB) complex-valued <code>Cadence</code> in SRAM
-(<a href="../docs/content/compute-control.md">Compute, sensing and control</a>).
-An <code>SoC-FPGA</code> Brain Slot enters only where sub-5&nbsp;µs settling,
-wideband comb ADC readout, or <code>~10⁵</code>-pixel SLM addressing earns its
-complexity, and optical or other physical compute modules enter when a
-specified workload demonstrates a measured advantage in latency, energy,
-precision, reliability or manufacturability.</p>
+(<a href="../docs/content/compute-control.md">Compute, sensing and control</a>),
+with an optional Rung&nbsp;1.5 <code>SoC-FPGA</code> slot for sub-5&nbsp;µs
+settling or high-rate comb readout. Those silicon boards are strictly
+<b>prototype scaffolding</b>: in the <b>ultimate architecture</b>, boundary
+addressing, memory, and equilibrium compute move directly into continuous
+optical/wave-addressed apertures, reciprocal <code>Sb₂S₃</code> PCM/crystal
+holograms, threshold laser-diode cavities, and candidate minimal-electricity
+physical / soft-matter wave substrates (<span class="chip c-open">OPEN</span>;
+<a href="../docs/content/cadence-memory.md">Cadence, memory and wave compute</a>).</p>
 <p>Optical geometry can encode useful transformations, but an optical component
 also depends on index contrast, loss, surface quality, material uniformity,
 alignment and read/write interfaces. A fabrication route must meet those

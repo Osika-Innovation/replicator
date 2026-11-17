@@ -1,31 +1,31 @@
 # The engineering twin
 
-The twin connects CAD, physical models, control programs and evidence. It is the place where candidate machines are compared, jobs are prepared and measurements improve the next design.
+The digital twin connects CAD geometry, first-principles physics solvers, neural warm-starts (`Cadence`), machine wire programs (`.fcode`, `.pattern`), and experimental receipts into one versioned system of truth.
 
 ## Four linked descriptions
 
 | Description | Contents |
 |---|---|
-| Module | Geometry, constitutive properties, datums, ports and revision |
-| Response | Model or measurement, frequency band, loading, uncertainty and validity |
-| Process | Feedstock, actions, joining, state transitions and acceptance |
-| Evidence | Source, code revision, calibration, inputs, outputs and decision |
+| **Module (`CAD` &amp; `body-response/0.1`)** | Geometry, constitutive properties, locating datums, ports, frequency response `H(f)`, and revision ID |
+| **Response** | Analytical/FEM model or bench measurement, band, thermal drift, uncertainty, and provenance |
+| **Process** | Feedstock state, `.fcode` actions, joining/consolidation recipe, and inspection criteria |
+| **Evidence** | Git revision, numerical gate oracle, calibration matrix, and measured vs. inferred split |
 
-Exact CAD and spatial material fields are complementary. Preserve STEP and other manufacturing exports where they carry useful geometry and tolerances. A module package links representations rather than claiming they are interchangeable.
+Exact parametric CAD (`STEP` / `STL`) and spatial continuum fields remain complementary—never interchangeable.
 
-## One work volume and material state
+---
 
-The target architecture coordinates acoustic, electric/magnetic and optical actions in the same three-dimensional region. Field maps, material geometry and sensors share a calibrated coordinate frame. A process program defines which actions overlap, which follow one another and which observations trigger the next step.
+## Charter, linear-first solver and verification gates (`twin/`)
 
-Couple the models through the material's evolving position, orientation, temperature and phase or cure state. For example, optical heating can change viscosity and acoustic response; curing can immobilize particles that an earlier field moved. Optimize the finished part and process against a simpler baseline. Separate field visualizations alone do not implement this coupled control loop.
+Designed under strict software minimalism (`twin/CHARTER.md`, `twin/ENGINE.md`, `twin/CAD.md` — inspired by single-address-space discipline with an explicit line-count ceiling targeting `< 17,500` lines of dependency-free Swift and Metal):
 
-This is an integration requirement for the twin. The published implementation and active studies retain the status described below.
-
-## Existing software
-
-The published repository contains a native Swift/Metal implementation with field calculation, optimization, particle models, scanning studies, parametric CAD and recorded numerical checks. Start from the [twin README](https://github.com/Osika-Innovation/replicator/blob/main/twin/README.md) for the commands supported by the checked-out revision.
-
-Build from the repository's twin directory:
+1. **One linear-first physical insight:** The fluid between plates is linear, so acoustic pressure is linear in complex drive (`p = H(f)u`), time-averaged Gor'kov radiation force is a pure **quadratic form (`U(x) = Σ_f g_fᴴ K_f(x) g_f`)**, overdamped powder settling follows steepest-descent **basins (`BasinMap` &amp; `FlowMap`)**, and scanning is the transposed matched filter. Inverse compiles turn from billion-evaluation grid searches into compact generalized eigenvalue and quadratic optimizations.
+2. **Matrix-free Metal GPU kernels gated by `Double` CPU oracles:** No gate passes on self-agreement alone:
+   * `G-A1` (`OpenAirField` vs. CPU reference `< 1e-4`), `G-A2` (piston element vs. numerical Rayleigh integral `< 1%`), `G-A3` (matrix-free gradient `< 1e-3`), `G-A4` (`PartFieldGPU` scattered bead adjoint `~8e-7`).
+   * `G-P1` / `G-P2` (`carry` and `fly` with steer-first continuation holding `≥ 99%` trap depth across `0.25 mm` steps; `build` and `build --shape tetra` touching placement under `15.4×` bead weight force limits in `G-B1` / `G-B2`).
+   * **Solid structural coupling (`acbody` / `AC-03a`):** Coupled PZT + horn/disc solid finite elements (Gmsh / CalculiX) cross-checked against reduced plate approximations prior to machining `K-PORT+`.
+3. **CAD-to-physics identity (`G-CAD9` &amp; `G-STEP`):** The simulation engine's radiating site list (`PlateArray`) and the CAD model's hole geometry derive from the exact same parametric coordinates within `< 1e-6 mm` (`G-CAD9`), while OpenCascade exact B-rep volumes cross-check every Swift solid mesh (`G-STEP`).
+4. **Emulator = hardware (`MachineBackend`):** Both virtual runs (`EmulatedBackend`) and physical bench links (`SerialBackend` streaming to Prototype `RP2350B` hardware) consume identical binary `FCD1`/`.fcode` streams without special-case simulation code paths.
 
 ```sh
 swift build -c release
@@ -33,24 +33,30 @@ swift build -c release
 ./.build/release/fieldc cad check --rules
 ```
 
-Additional platform/backend and body-response work exists in active engineering branches. The [current-state page](status.html) distinguishes it from the published code; this handbook does not merge those branches implicitly.
+Additional active-branch work covers coupled solid bodies, contactless exciter sweeps (`X-EM`), and prototype controller firmware (`p0`); see [Current state](status.html) for what is published vs. in active bench qualification.
 
-## Around-the-clock research
+---
 
-Maintain a durable queue of questions, designs, runs and decisions. Cache unchanged responses, checkpoint long work, avoid duplicate jobs and bound compute resources.
+## Around-the-clock co-design and multi-island optimization (`holo/`)
 
-For every question choose among a cheap search, a higher-fidelity calculation and a reusable measurement. Evaluate expected decision value per human setup hour, along with elapsed time and cost. More samples of an incomplete model do not supply a missing material law.
+To reduce human design iteration time, autonomous research runs (`holo/autoresearch.py`) optimize disparate plate and chamber topologies in parallel on Apple Silicon GPU memory (`bare_borosilicate`, `toroidal_coprime`, `toroidal_369`, `vogel`, `cartesian`, `icosa_12port`, `ha0_boro12`) against simultaneous **5-waypoint carry error, streaming vortex stability, `6`-stroke Platonic `SO(3)` form-drawing, ring mold contrast, and SVD effective rank**, validating champions cleanly on uncached `48³` / `13³` grids before exporting `body-response/0.1` packages.
+
+---
 
 ## Learning and control
 
-The digital twin mirrors the machine's physical state variables directly: differential piezoelectric drive/sense state (`V(t)`, `I(t)`, `C_0(T) dV/dt`, `Θ ẋ(t)`), `τ_inertia = L / v_D` broadband crystal timing, passive cavity gain (`Q_cav`), sightline-true Beer-Lambert optical opacity plus `LightRead` acoustic phase over co-designed diffractive facets, and sparse harmonic `.pattern` chord lists rather than raw voxel-video sequences or synthetic X-ray pixel cameras. Keep raw two-terminal bridge and `SMI` captures available for calibration and fault diagnosis.
+The twin mirrors real machine observables directly: differential BVD piezo states (`V(t)`, `I(t)`, `C₀(T) dV/dt`, `Θ ẋ(t)`), `τ_inertia = L / v_D` crystal bandwidth, passive cavity `Q_cav`, true Beer–Lambert opacity + `LightRead` acoustic phase across valid `HA-0` sightlines, and sparse `.pattern` chords (no artificial X-ray Radon cameras or brute-force `1 Tbit/s` streams).
 
-An optional neural warm-start or learner (`Cadence`, implemented as a `5%–10%` block-sparse, event-driven complex Hermitian Equilibrium Propagation graph `W_fb = W_fwdᴴ`, `||W||₂ ≤ 1`, fitting under `60 kB` `int8` SRAM for `~8–15 ms` `RP2350B` settles vs. `~220–300 ms` dense) is benchmarked against the existing `NOWS` physics optimizer across four hardware-realism tiers (`ideal_fp32`, `rp2350_ganglia_q8` simulating `75 MSa/s` `1-bit ΣΔ` + `C_0` drift + `SMI`, `fpga_int8_sparse`, and `optical_pcm_analog`) and validates bench coupons `K-HAPTIC-PZT` and `K-MOSQUITO-SMI` prior to hardware assembly ([Compute, sensing and control](compute-control.html)).
+Complex Hermitian `Cadence` connectomes (`W_fb = W_fwdᴴ`, `||W||₂ ≤ 1`, fitting `< 60 kB` `5%–10%` sparse `int8` in Prototype `RP2350B` SRAM for `~8–15 ms` settles vs. `~220–300 ms` dense) are benchmarked head-to-head against the direct physics solver (`NOWS`) across **four hardware-realism tiers**—`ideal_fp32`, `rp2350_ganglia_q8` (`75 MSa/s` `1-bit ΣΔ` + `C₀(T)` drift + `SMI` noise), `fpga_int8_sparse`, and `optical_pcm_analog`—validating prototype bench coupons `K-HAPTIC-PZT` and `K-MOSQUITO-SMI` prior to soldering ([Cadence, memory and wave compute](cadence-memory.html); [Compute, sensing and control](compute-control.html)).
 
-Pin library versions and benchmark the actual equations and workloads before replacing a solver or buying hardware for it. Representation, rendering speed and physical accuracy have separate checks.
+---
 
-## Show what is known
+## Show what is known (the three-layer epistemic viewport)
 
-The viewer distinguishes design intent, simulated predictions, raw observations, reconstructed estimates and residuals. Sensor agreement can support an estimate; it does not make an unobserved interior directly measured.
+Every visualization and exported report separates three layers strictly (`Field Compiler §16.2`):
 
-An imported response or a simulation receipt never becomes hardware evidence merely because it is displayed beside CAD.
+1. **Design intent:** Target STL geometry and ideal boundary tolerances.
+2. **Simulated predictions (`SIMULATED`):** Model-derived pressure, Gor'kov force, flow basins, and temperature carrying explicit solver assumptions.
+3. **Measured vs. Inferred (`MEASURED` / `INFERRED`):** Raw boundary observations tagged distinct from interior reconstructions synthesized by neural or geometric priors (`inferredBy`). An imported response or passing simulation receipt never substitutes for bench verification.
+
+Read [Compute, sensing and control](compute-control.html), [Cadence, memory and wave compute](cadence-memory.html), [Scan, recover and matter stores](matter-loop.html), and [Current state](status.html).

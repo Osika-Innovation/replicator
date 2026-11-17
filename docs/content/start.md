@@ -1,33 +1,44 @@
 # Start here
 
-We are building a manufacturing platform that improves its own ability to manufacture. The first configuration establishes a reliable material operation. Each upgrade expands its precision, performance or process range while retaining the platform around it.
+We are building a field-controlled manufacturing machine that manufactures increasingly demanding upgrades for itself. The **Engineering Handbook** is the canonical, self-contained technical specification for the entire programme, separating what defines the **Ultimate Architecture** from how we build the **Bootstrap Prototype (`P0` / `HA-0`)** today.
 
 ## What the Replicator does
 
-A manufacturing job has four physical stages: supply material, arrange it, consolidate it and inspect it. The long-term architecture coordinates acoustic, electric, magnetic and optical fields in the same three-dimensional work volume. The digital twin designs their combined action on material: position, orientation, energy delivery, joining and observation, with feedback throughout the process.
+Every build closes four physical steps inside one shared three-dimensional work volume: **supply feedstock, arrange and orient it by fields, consolidate/join it, and inspect/recover the output**. Optical, acoustic, and electric/magnetic fields act together on a shared material state—with **zero internal moving tools and zero object turntables (`Plan A`)**.
 
-This is our route toward the “Star Trek” ambition: increasingly broad material control, precision, speed and autonomy in one machine. The first configuration establishes a useful subset of that architecture; each upgrade adds a proven capability in the same platform. See the [shared work volume](architecture.html#one-work-volume-coordinated-fields) for how the fields cooperate.
-
-The long-term programme also includes scanning objects and recovering material from finished parts. Each function has a process and acceptance test. A scan provides observations for reconstruction; a build requires an executable process; recovery requires a material-specific separation route.
+1. **Scan:** Probe an unknown or partially built object from the walls (`S(f)` + optical sightlines) into a provenance-tagged `.pattern` chord representation ([Scan, recover and matter stores](matter-loop.html)).
+2. **Assemble:** Synthesize holographic traps (`sound as hands`, `light as fingertips`, induction where conductive), glide payloads into position, consolidate via ultrasonic clamping and addressed energy, and check continuously until the structure *rings true* ([Manufacturing](manufacturing.html)).
+3. **Recover:** Disassemble or reprocess parts along least-costly physical/chemical routes back into safe, oxidized **Salt / Ash / Carbon / Water** stores ([Scan, recover and matter stores](matter-loop.html#recover-dissolve-material-specific-separation-and-reuse)).
 
 ## Three design commitments
 
-**One enduring platform.** Use stable mechanical datums, interchangeable process modules and shared control interfaces. A module replacement should preserve the surrounding investment.
+**One enduring platform.** Stable mechanical datums, replaceable boundary cartridges, and shared `.fcode` / `.pattern` contracts preserve the machine frame as hardware modules upgrade.
 
-**Minimum human engineering time.** AI handles design search, code, simulation, experiment preparation and analysis. Reusable calibration tools make the physical work informative and repeatable. Compare buying, outsourcing and making by total human effort as well as cost and time.
+**Minimum human engineering time.** Digital twins (`Swift/Metal` + `MLX/Cadence`) search geometry, tolerances, and drive chords ahead of hardware fabrication; reusable bench fixtures (`K-PORT+`, `K-HAPTIC-PZT`, `K-MOSQUITO-SMI`) become permanent service instrumentation.
 
-**More function per part.** Co-design geometry, material structure, drive and sensing. A shaped body may route waves, transform impedance and support a radiating surface. Keep a feature when it improves the task.
+**More function per part.** Dispersive plates, chaotic faceplates, diffractive facets, and two-terminal crystals execute multiplexing, beam shaping, and sensing natively in physics.
 
-## The first machine
+## Ultimate architecture and the bootstrap prototype
 
-The preferred acoustic candidate is two opposed, low-inertia broadband piezoelectric plates (`3 + 3` asymmetric inputs driving a thin supersonic plate and/or replaceable SLA chaotic scatterer with a coaxial `Ø12 mm` bore) governed by collocated `RP2350B` `75 MSa/s` `1-bit` sigma-delta `HAPTIC` self-sensing (`I = C_0 dV/dt + Θ ẋ`), paired over a shared `XIN`/`SYNC` spinal bus with self-mixing optical readout across sightlines and `< 60 kB` sparse complex `Cadence` (`EqProp`) in SRAM for standalone or host-tethered control ([Compute, sensing and control](compute-control.html)). The number, geometry and harmonic comb are selected against force, controllability, electrical timing headroom above crystal transit inertia (`τ_inertia = L / v_D`), heat, fatigue and calibration requirements. The platform also preserves the access, datums and timing needed for coordinated electromagnetic and optical modules; the first material recipe selects which are installed initially.
+It is essential not to mistake temporary workshop electronics for the architecture of the machine itself. Every subsystem in this handbook separates these two horizons explicitly:
 
-Existing direct-emitter arrays, bolt-clamped Langevin dumbbells (for narrowband CW comparison), and the larger RH-1 design remain reference configurations. They help compare architectures without fixing the first build to an old part count.
+| Dimension | Ultimate architecture (physical limit) | Bootstrap prototype (`P0` / `HA-0` workshop seed) |
+|---|---|---|
+| **Boundaries & actuation** | Continuous optically-addressed photoconductive-piezo films (`~10⁵` pixels) over phase-conjugate multimode fibers, graded phononic tapers, and tonotopic dispersive plates ([Acoustics](acoustics.html)) | Opposed thin broadband `3 + 3` or `6 + 6` PZT elements on `1–1.5 mm` borosilicate/aluminum supersonic plates + SLA phase ring + `1.2 mm` PCB backing absorber |
+| **Optical observation & fingertips** | Full bidirectional toroidal-pulse stem (`space ⊗ polarization ⊗ spectrum` density-matrix RX), `756 nm` optically-addressed metasurface SLMs, `OAM`/skyrmion registers, and optical gradient tweezers ([Optics](optics.html)) | Nanoimprinted `TiO₂` diffractive facets along `270°` clear radial windows + `Ø12 mm` bore feeding 3-pin TO-can laser diodes (`SMI` + `SOT-23 ×200` AC stage) |
+| **Electromagnetic coupling** | Coordinated containerless `J × B` melt shaping, `m/q` sorting, and traveling-wave axial bore lift ([Electromagnetics](electromagnetics.html)) | Contactless modal exciter (`X-EM`) for bench blank characterization; process EM windings deferred past first acoustic build |
+| **Compute, sensing & memory** | Minimal-electricity wave-equilibrium compute: threshold `EML` diode cavities, reciprocal `Sb₂S₃`/`Sb₂Se₃` holographic chord memory (`η = (M#/M)²`), and candidate passive optical or excitable neural-gel substrates (`Open`) ([Cadence and memory](cadence-memory.html)) | **Prototype scaffolding:** collocated `RP2350B` `75 MSa/s` `1-bit ΣΔ` ganglia on shared `XIN + SYNC`, `< 60 kB` `5–10%` sparse complex `int8` `Cadence` (`EqProp`) or optional `SoC-FPGA`, trained offline on workstation `MLX/Metal` GPU ([Compute, sensing and control](compute-control.html)) |
+| **Matter & stores loop** | Mirrored three-plate active stack (`R9`): upper build chamber + lower acoustophoretic sorting and QC storage chamber fed from Salt/Ash/Carbon/Water/Air/Noble-Gas stores ([Matter loop](matter-loop.html)) | Indexed septum vials (`ha0_septum_cap`), calibrated dispenser feeds, single-material test payloads, and reusable bench phantoms |
 
 ## How to read the handbook
 
-The handbook owns the current project explanation. Interface documents own software contracts. Code and receipts own implementation results. Papers develop mechanisms and long-term arguments; dated specifications preserve previous design instances.
+This handbook is self-contained and supersedes the older standalone HTML papers as the primary engineering authority. Use:
 
-Use [Architecture](architecture.html) for subsystem boundaries, [Compute, sensing and control](compute-control.html) for the `RP2350B` ganglionic controller and self-mixing optical readout, [Manufacturing](manufacturing.html) for the first useful output, and [Upgrades](upgrades.html) for the path toward self-replication.
+1. [Architecture](architecture.html) for coordinated fields, two-carrier physics (`λ`, momentum, crossings), and subsystem contracts.
+2. [Compute, sensing and control](compute-control.html) for the timescale split, wire contracts (`.fcode`, `.pattern`, `MachineBackend`), and Prototype `RP2350B` / `SoC-FPGA` details.
+3. [Cadence, memory and wave compute](cadence-memory.html) for the `8πV / 3λ³` mode theorem, `Sb₂S₃` chord memory, complex Hermitian `EqProp`, and the low-electricity compute ladder.
+4. [Manufacturing](manufacturing.html) and [Scan, recover and matter stores](matter-loop.html) for the complete `Scan → Assemble → Recover → Store` loop.
+5. [Upgrade loop](upgrades.html) and [Digital twin](digital-twin.html) for simulation gates, CAD contracts, and the path to self-upgrading.
+6. [Physics overview](physics.html) for [OPH](oph.html), [Light, fields and matter](light-matter.html), [Periodic table and tones](periodic-table.html), and [From atoms to hardware](physics-to-hardware.html).
 
-The [Physics section](physics.html) explains the programme's theoretical perspective and its engineering use. Follow [Observer Patch Holography](oph.html) for the framework, [Light, fields and matter](light-matter.html) for the unifying interpretation, and [Periodic table and tones](periodic-table.html) for the connection between material structure, spectra and machine control.
+Legacy HTML papers remain accessible via the [research library](research.html) for historical traceability and long-form derivations.

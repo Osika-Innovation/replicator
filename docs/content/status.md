@@ -1,24 +1,25 @@
 # Current state
 
-**Reviewed November 17, 2026.** This is the navigation checkpoint for the programme, not a hardware release.
+**Reviewed November 17, 2026.** This checkpoint separates the **Ultimate Architecture (long-horizon physical limits)**, the **Bootstrap Prototype (`P0` / `HA-0` workshop seed)**, and **verified code vs. pending bench gates**. No passing simulation or CAD export constitutes a hardware procurement or physical proof.
 
-## Published code and active studies
+## Programme tracks: Ultimate targets vs. Prototype bootstrap
 
-| Area | Current record | Next decision |
-|---|---|---|
-| Public engineering code | This handbook was prepared against published revision `1b708a2`; its twin includes simulation, CAD and numerical checks | Review later engineering branches for integration |
-| Ultimate architecture | Operator direction: coordinated acoustic, electric/magnetic and optical fields in the same 3D work volume | Define shared coordinates, material state and a combined-field recipe with a measurable advantage |
-| Acoustic architecture | `3 + 3` low-inertia thin broadband piezo ports (`τ_inertia = L / v_D`, supersonic plate / replaceable SLA scatterer, collocated `75 MSa/s` `1-bit ΣΔ` `HAPTIC` + `XOR` lock-in, sparse chord lists; Langevin retained as CW reference) | Simulate `75 MSa/s` `1-bit ΣΔ` under `0.3%/°C` `C_0` drift and `-70 dB` echoes, then bench-verify coupon `K-HAPTIC-PZT` |
-| Compute, sensing and control | Collocated `RP2350B` ganglia locked via shared `XIN`/`SYNC` bus (`50–150 Mbit/s` PIO/`HSTX`), `< 60 kB` `5–10%` sparse complex `int8` `Cadence` (`EqProp`, `~8–15 ms` settle) behind a swappable Brain Slot (`RP2350B` → optional `SoC-FPGA` → optical PCM), identical standalone or tethered `.fcode` protocol | Validate `K-HAPTIC-PZT` and `K-MOSQUITO-SMI` in simulation and bench coupons before PCB freeze |
-| Platform software | Active workspace studies extend backend, calibration, body-response and upgrade interfaces | Publish reviewed implementations with their receipts |
-| Electromagnetics | November 13 branch study recommends no EM process module for the first acoustic build; this is an initial-configuration recommendation within the shared-volume architecture | Select initial process/instrument modules against the first material recipe and preserve later integration access |
-| Optics and metamaterials | Dedicated architecture lane for optical-wavelength surfaces, holographic TX/RX, toroidal pulses and self-mixing (`SMI`) diffractive-facet readout (`3-pin` monitor-PD + SOT-23 `×200` AC gain + `1-bit ΣΔ`); published precedents linked | Simulate `0.1 rad` `LightRead` phase recovery and bench-verify coupon `K-MOSQUITO-SMI` |
-| Manufacturing | Feed, joining and inspection must be selected with the first useful part | Establish one complete material transformation |
-| Material/AI representation | Module/material records and `< 60 kB` `5–10%` sparse complex Hermitian `Cadence` (`EqProp`) across four hardware-realism tiers (`ideal_fp32`, `rp2350_ganglia_q8`, `fpga_int8_sparse`, `optical_pcm_analog`) | Demonstrate sightline-true `Cadence` + `1-bit ΣΔ` benchmark on held-out targets |
-| Physics framework | [OPH](oph.html) supplies a theoretical framework and design inspiration; mathematical results retain their assumptions and physical interpretations retain their test status | Map a specific hypothesis to a measurable response and compare it with established models |
-| Hardware evidence | No integrated Replicator bench demonstration has been established in this documentation review | Produce calibrated physical receipts |
+| Area | Ultimate architecture target | Prototype bootstrap (`P0` / `HA-0`) &amp; current record | Next physical / verification gate |
+|---|---|---|---|
+| **Engineering handbook &amp; code** | Self-contained canonical architecture across coordinated physics and closed manufacturing loops | `docs/content/*.md` owns current specifications (superseding standalone HTML papers); public `twin/` baseline at `1b708a2` with active branches for solid bodies (`acbody`), `X-EM`, and firmware (`p0`) | Keep handbook, `catalog.json`, and active receipts synchronized across releases |
+| **System architecture** | Coordinated 3D acoustic, EM, and optical wavefields with zero moving parts and zero internal tools | Two-carrier contract (`p(f) = H(f)u(f)`), `Ø12 mm` bore + `270°` clear radial sightlines, identical `.fcode`/`.pattern` wire protocol | Validate coordinated module datums on initial assembly (`CAD-01`) |
+| **Acoustics** | Continuous optically-addressed `PMN-PT`/photoconductor film (`~10⁵` pixels) over phase-conjugate multimode fiber; graded phononic tapers; argon rung to `1 MHz` | `3 + 3` / `6 + 6` low-inertia broadband PZT patches (`τ_inertia = L / v_D`) on supersonic plates + SLA modulo-`2π` phase ring + `1.2 mm` PCB backing absorber; Langevin retained as CW comparator | Bench-measure cartridge + `Ø10` horn + `Ø120` Al blank against solid finite elements (`K-PORT+`); test `K-HAPTIC-PZT` |
+| **Compute, sensing &amp; control** | Passive optical facets, fiber tomography, and near-zero-electricity wave compute (`EML` diodes + `Sb₂S₃` holograms + `Open` excitable neural-gel wave substrates) | **Prototype scaffolding only:** collocated `RP2350B` `75 MSa/s` `1-bit ΣΔ` + `XOR` lock-in ganglia on shared `XIN`/`SYNC`, `< 60 kB` `5–10%` sparse `int8` SRAM Brain Slot (or optional `SoC-FPGA`), Ring-0 bare-metal executive | Simulate `75 MSa/s` `1-bit ΣΔ` under `0.3%/°C` `C₀` drift &amp; `−70 dB` echoes, then bench-verify `K-HAPTIC-PZT` &amp; `K-MOSQUITO-SMI` |
+| **Cadence &amp; holographic memory** | `W_fb = Wᴴ` physical reciprocity (`ε = εᵀ`), 2-beam interference `ΔW`, volumetric `Sb₂S₃`/`Sb₂Se₃` chord memory (`η = (M#/M)²`) | Complex Hermitian `EqProp` trained offline on Apple Silicon (`MLX` + chaotic Metal kernels) against `NOWS` and Core-13 / `HA-0` STL parts with 2D OPH quarantine | Pass `rp2350_ganglia_q8` &amp; `optical_pcm_analog` benchmarks; verify `Sb₂S₃` `M#` &amp; write endurance |
+| **Optics &amp; metamaterials** | Bidirectional toroidal-pulse stem (`space ⊗ pol ⊗ spectrum` tomography), `756 nm` metasurface SLM, `OAM`/skyrmion modes, optical tweezer fingertips | Nanoimprinted `TiO₂` diffractive facets + `3`-pin TO-can `SMI` laser diodes (`SOT-23 ×200` AC gain + `1-bit ΣΔ`) across `HA-0` clear sightlines | Verify `0.1 rad` `LightRead` ultrasonic phase SNR alongside `Ø1 mm` DC occlusion on `K-MOSQUITO-SMI` |
+| **Electromagnetics** | Containerless `J × B` melt shaping, magnetic inclusion orientation, `m/q` ion sort, and traveling-wave axial bore lift (`R10`) | `em-integration` study recommends no EM process coil in first acoustic seed build (`9 × 10⁸×` short at `0.3 m` standoff); lossless flat-coil exciter `X-EM` proposed for blank metrology | Run `X-EM` calibration sweep on `K-PORT+` aluminum disc blank |
+| **Manufacturing, scan &amp; stores** | Non-moving full-sphere `S(f)`, combined-field recipes, mirrored `R9` active sort/reclaim chamber fed by Salt/Ash/C/H₂O/Air/Noble-Gas stores | `95%` CF / `5%` Golomb-FM + `SMI` scans validated via `G17` (`measured`/`inferred`), `G18` held-out gates, `G19` static phantoms; indexed `ha0_septum_cap` vials | Demonstrate repeatable hold/move/release, then build &amp; qualify first upgrade part (`FAB-01`) |
+| **Physics framework** | Unifying [OPH](oph.html) &amp; material response chain from atomic spectra to continuous field operators | Formal OPH carrier algebra + refined Gauss/Green atomic checks (`check_physics_derivations.py`) | Map candidate wave-substrate hypotheses cleanly to measurable response laws |
+| **Hardware evidence** | — | No integrated multi-carrier Replicator bench demonstration is established yet in this review | Execute `K-PORT+`, `K-HAPTIC-PZT`, `K-MOSQUITO-SMI`, and `FAB-01` receipts |
 
-Detailed branch results retain their original scope. A proposed configuration, passing simulation or exported STEP assembly does not release hardware for ordering.
+Detailed simulation receipts and branch studies retain their exact scope; nothing in the active table clears physical purchasing or hardware release without review.
+
+---
 
 ## Evidence vocabulary
 
@@ -31,14 +32,14 @@ Detailed branch results retain their original scope. A proposed configuration, p
 | Bench measured | A project measurement with apparatus, calibration and raw records |
 | Research hypothesis | A proposed mechanism or explanatory model with a discriminating test |
 
-Writing should be direct: state the design, the result and the next action. Put qualifications where they identify a real dependency or limit.
+Writing should be direct: state whether an item belongs to the **Ultimate Architecture** or the **Prototype Bootstrap**, name its evidence class, and identify its decisive next test.
 
 ## Promotion gates
 
-A source enters the library with its identity and review depth. A model earns use through comparison and validity checks. Hardware earns a capability through a repeatable task and inspection. An upgrade earns adoption through a measured improvement.
+A source enters the library with its identity and review depth. A model earns use through independent verification (`G-A1`–`G-B2`, `NOWS` comparisons). Hardware earns a capability through repeatable manipulation and metrology (`G17–G19`, `FAB-01`). An upgrade earns adoption through a before-and-after measured improvement on the same machine task.
 
-Published experimental results remain attributed to their authors. Source reports and physical measurements are not interchangeable.
+Published experimental results remain strictly attributed to their external authors; literature demonstrations and internal bench measurements are never interchangeable.
 
 ## Maintenance
 
-Update this page when a decision or integration changes. Use a source revision and review date; do not copy transient test counts into the homepage. The [agent guide](agents.html) defines ownership and the [catalog](../catalog.json) gives every document a stable ID.
+Update this page whenever a subsystem milestone or prototype-vs-ultimate boundary changes. The [agent guide](agents.html) defines lane ownership, and [catalog.json](../catalog.json) assigns every document a stable ID.

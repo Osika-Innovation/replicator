@@ -1,8 +1,12 @@
 # Research library
 
-The library connects mechanisms and evidence to engineering decisions. Read the current handbook first; use papers for their owning arguments and detailed derivations.
+<div class="callout">
+<strong>Handbook first:</strong> This <strong>Engineering Handbook</strong> is now the canonical, self-contained technical specification across both the <strong>Ultimate Architecture</strong> and the <strong>Bootstrap Prototype (`P0` / `HA-0`)</strong>. Every surviving mechanism, derivation, wire contract, and limitation from earlier papers has been consolidated directly into the handbook guides—especially <a href="architecture.html">Architecture</a>, <a href="compute-control.html">Compute, sensing and control</a>, <a href="cadence-memory.html">Cadence, memory and wave compute</a>, <a href="manufacturing.html">Manufacturing</a>, and <a href="matter-loop.html">Scan, recover and matter stores</a>.
+</div>
 
-## Paper network
+The indexed **Paper Library** below preserves the original standalone HTML essays and dated instance specifications (`RH-1`, `Field Compiler`, `The Phonons`, `The Photons`) for mechanism lineage and historical context. Where a historical paper conflicts with a current guide, the guide governs.
+
+## Paper network (preserved historical &amp; mechanism archive)
 
 <!-- PAPER_TABLE -->
 

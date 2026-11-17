@@ -23,8 +23,12 @@
       "reviewed": "2026-11-17",
       "review_scope": "Current programme explanation",
       "related": [
+        "start",
         "architecture",
         "compute-control",
+        "cadence-memory",
+        "manufacturing",
+        "matter-loop",
         "status",
         "upgrades",
         "physics"
@@ -39,16 +43,20 @@
       "group": "Start",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Purpose, coordinated fields and the first configuration.",
+      "summary": "Canonical handbook overview separating the Ultimate Architecture from the Bootstrap Prototype (P0 / HA-0).",
       "topics": [
+        "ultimate architecture",
         "prototype",
         "strategy"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "review_scope": "Self-contained handbook framing across Ultimate Architecture and Prototype Bootstrap",
       "related": [
         "architecture",
         "compute-control",
+        "cadence-memory",
+        "manufacturing",
+        "matter-loop",
         "status",
         "upgrades",
         "physics",
@@ -235,14 +243,16 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Architecture",
-      "summary": "Coordinated acoustic, electric/magnetic and optical fields in one shared work volume.",
+      "summary": "Coordinated fields, two-carrier wavelength/momentum physics, volume crossings, and Ultimate vs. Prototype comparison.",
       "topics": [
         "block diagram",
         "modules",
+        "two carriers",
+        "ultimate vs prototype",
         "3+3"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "review_scope": "Coordinated-field architecture, two-carrier physics, and Ultimate vs. Prototype subsystem table",
       "related": [
         "start",
         "agents",
@@ -251,8 +261,10 @@
         "electromagnetics",
         "optics",
         "compute-control",
+        "cadence-memory",
         "digital-twin",
-        "manufacturing"
+        "manufacturing",
+        "matter-loop"
       ]
     },
     {
@@ -264,19 +276,22 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Acoustic bodies",
-      "summary": "Crystal-inertia-limited SIMO piezo bodies, 75 MSa/s 1-bit sigma-delta HAPTIC self-sensing, and coupled-cavity control.",
+      "summary": "Ultimate optical-piezo apertures vs. prototype PZT plates, harmonic comb closure, HAPTIC self-sensing, and resolution bounds.",
       "topics": [
         "piezo",
         "HAPTIC",
         "crystal inertia",
+        "harmonic comb",
         "hologram",
         "resonator"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "First-principles piezo and 1-bit sigma-delta control-loop update",
+      "review_scope": "Ultimate vs. Prototype apertures, 25 kHz harmonic comb closure, resolution ladder, and prototype 1-bit sigma-delta bridge",
       "related": [
         "architecture",
         "compute-control",
+        "cadence-memory",
+        "matter-loop",
         "acoustic-hologram",
         "phonons",
         "status",
@@ -295,23 +310,25 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Electromagnetic control",
-      "summary": "Coils, pulsed fields, toroidal waves and material forces in the shared work volume.",
+      "summary": "Ultimate J x B melt/sorting vs. Prototype P0 omission and X-EM modal exciter; toroidal classification and patent audits.",
       "topics": [
         "toroid",
         "coils",
+        "X-EM",
         "MHD",
         "pulsed fields",
         "vortex",
         "levitation"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Subsystem split and primary-source scope review; no new hardware qualification",
+      "reviewed": "2026-11-17",
+      "review_scope": "Ultimate vs. Prototype EM scope alignment, R5 winding correction, and EM-CTL study summary",
       "related": [
         "architecture",
         "status",
         "upgrades",
         "light-matter",
         "optics",
+        "manufacturing",
         "photons"
       ]
     },
@@ -324,21 +341,23 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Optics / metamaterials",
-      "summary": "Optical-wavelength metasurfaces, holographic ports, toroidal pulses and a fabrication upgrade path.",
+      "summary": "Ultimate toroidal stem, metasurfaces and optical tweezers vs. Prototype SMI mosquito-eye facets and nanoimprint bootstrap.",
       "topics": [
         "optics",
         "metamaterials",
         "metasurfaces",
         "toroidal pulses",
+        "SMI",
         "holography",
         "SLM",
         "nanoimprint"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Primary-source review and subsystem direction; includes self-mixing optical readout; bench coupon K-MOSQUITO-SMI pending",
+      "review_scope": "Ultimate vs. Prototype optical subsystem summary, toroidal pulse physics, and K-MOSQUITO-SMI gate",
       "related": [
         "architecture",
         "compute-control",
+        "cadence-memory",
         "electromagnetics",
         "photons",
         "materials",
@@ -356,9 +375,11 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Platform / control",
-      "summary": "Collocated RP2350B 1-bit sigma-delta ganglia, self-mixing optical facets, sparse complex EqProp and the standalone/tethered appliance.",
+      "summary": "Invariant .fcode/MachineBackend timescale contract across Ultimate wave boundaries and Prototype RP2350B 1-bit sigma-delta / SMI boards.",
       "topics": [
-        "RP2350",
+        "MachineBackend",
+        "fcode",
+        "prototype RP2350",
         "PIO",
         "sigma-delta",
         "HAPTIC",
@@ -369,16 +390,53 @@
         "optical compute"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "First-principles volts/dB/cycles control and sensing architecture; bench coupons K-HAPTIC-PZT and K-MOSQUITO-SMI pending",
+      "review_scope": "Invariant wire contract plus Ultimate continuous wave control vs. Prototype RP2350B/FPGA bootstrap classification",
       "related": [
         "architecture",
+        "cadence-memory",
         "acoustics",
         "optics",
         "digital-twin",
+        "matter-loop",
         "status",
         "upgrades",
         "acoustic-hologram",
         "photons",
+        "memory"
+      ]
+    },
+    {
+      "id": "cadence-memory",
+      "title": "Cadence, memory and wave compute",
+      "source": "docs/content/cadence-memory.md",
+      "url": "guides/cadence-memory.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Intelligence / Cadence",
+      "summary": "Three-cavity 8piV/3lambda^3 bound, Sb2S3 chord memory, complex Hermitian EqProp Cadence, and minimal-electricity wave substrate ladder.",
+      "topics": [
+        "Cadence",
+        "EqProp",
+        "Hermitian",
+        "holographic memory",
+        "Sb2S3",
+        "EML",
+        "ThoracicMotorCompiler",
+        "AssociativeChordBank",
+        "TRELLIS",
+        "wave compute"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Synthesis of holographic_memory_and_compute_plan, holo/ EqProp architecture, and minimal-electricity Ultimate substrate ladder",
+      "related": [
+        "compute-control",
+        "architecture",
+        "optics",
+        "digital-twin",
+        "matter-loop",
+        "status",
+        "agents",
         "memory"
       ]
     },
@@ -391,21 +449,60 @@
       "group": "Build and improve",
       "status": "Current guide",
       "owner": "Manufacturing",
-      "summary": "Combined-field recipes that feed, arrange, join and inspect a useful part.",
+      "summary": "Six-step Assemble loop, hands-vs-fingertips ladder, transport phases, R15 softening, combined-field recipes, and FAB-01.",
       "topics": [
+        "assemble",
+        "Gorkov",
+        "athermal softening",
         "consolidation",
         "fabrication",
-        "reclaim"
+        "FAB-01"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "reviewed": "2026-11-17",
+      "review_scope": "Consolidated Assemble loop, placement/transport ladders, R15 softening, and Prototype vs. Ultimate fabrication",
       "related": [
         "architecture",
-        "status",
+        "matter-loop",
         "upgrades",
+        "status",
         "physics-to-hardware",
         "electromagnetics",
-        "optics"
+        "optics",
+        "assemble"
+      ]
+    },
+    {
+      "id": "matter-loop",
+      "title": "Scan, recover and matter stores",
+      "source": "docs/content/matter-loop.md",
+      "url": "guides/matter-loop.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Processes / metrology",
+      "summary": "Non-moving S(f) tomography (G17-G19), material recovery hierarchy, and oxidized Salt/Ash/Noble-Gas stores across Prototype and Ultimate stacks.",
+      "topics": [
+        "scan",
+        "tomography",
+        "provenance",
+        "recover",
+        "dissolve",
+        "stores",
+        "salt and ash",
+        "noble gas"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Consolidated Scan, Dissolve, and Stores chapters with Biosonar FM/Golomb prototype and R9 active-store Ultimate stack",
+      "related": [
+        "architecture",
+        "manufacturing",
+        "compute-control",
+        "cadence-memory",
+        "digital-twin",
+        "upgrades",
+        "scan",
+        "dissolve",
+        "stores"
       ]
     },
     {
@@ -417,20 +514,24 @@
       "group": "Build and improve",
       "status": "Current guide",
       "owner": "Digital twin",
-      "summary": "CAD, coupled material state, process control and autonomous research.",
+      "summary": "Charter minimalism, linear-first Gor'kov solver, Metal/CPU gates, G-CAD9/G-STEP, holo/ co-design, and hardware realism tiers.",
       "topics": [
         "CAD",
+        "Charter",
+        "Metal",
+        "G-CAD9",
         "simulation",
         "AI",
         "Cadence",
-        "Prime",
         "holo"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Coordinated-field architecture, sparse complex EqProp and four hardware-realism tiers; initial configurations retain their evidence status",
+      "review_scope": "Consolidated CHARTER/ENGINE/CAD discipline, multi-island autoresearch, and 4 hardware-realism tiers",
       "related": [
         "architecture",
         "compute-control",
+        "cadence-memory",
+        "matter-loop",
         "status",
         "upgrades",
         "physics-to-hardware",
@@ -446,16 +547,22 @@
       "group": "Build and improve",
       "status": "Current guide",
       "owner": "Upgrade loop",
-      "summary": "A dependency-aware route to self-made improvements.",
+      "summary": "Acyclic dependency graph joining Prototype seed coupons and FAB-01 to Ultimate wave apertures and self-improvement.",
       "topics": [
         "self-replication",
+        "upgrade graph",
+        "FAB-01",
+        "META-01",
         "constructor",
         "automation"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "reviewed": "2026-11-17",
+      "review_scope": "Two-ended search joining P0/HA-0 seed coupons to META-01 and Ultimate physical convergence",
       "related": [
         "start",
+        "manufacturing",
+        "matter-loop",
+        "cadence-memory",
         "agents",
         "physics-to-hardware"
       ]
@@ -469,17 +576,20 @@
       "group": "Project",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Published code, active studies and evidence.",
+      "summary": "Separated Ultimate Architecture targets, Bootstrap Prototype (P0 / HA-0) records, and open bench gates.",
       "topics": [
         "status",
         "receipts",
+        "ultimate vs prototype",
         "prototype"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Ultimate vs. Prototype programme checkpoint",
       "related": [
         "start",
         "compute-control",
+        "cadence-memory",
+        "matter-loop",
         "agents",
         "oph"
       ]
@@ -493,7 +603,7 @@
       "group": "Project",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Ownership, contracts and contribution workflow.",
+      "summary": "Canonical handbook reading order, Ultimate vs. Prototype discipline, lane ownership, and CI checks.",
       "topics": [
         "agents",
         "Claude",
@@ -502,10 +612,12 @@
         "Codex"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Updated ownership and handbook-primary documentation rules",
       "related": [
         "architecture",
         "compute-control",
+        "cadence-memory",
+        "matter-loop",
         "status",
         "upgrades",
         "physics",
@@ -522,17 +634,19 @@
       "group": "Project",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Mechanism papers, source records and research directions.",
+      "summary": "Archived HTML paper network, primary source catalog, and handbook-first navigation note.",
       "topics": [
         "papers",
         "patents",
         "sources"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Current programme explanation",
+      "review_scope": "Handbook-first framing over preserved HTML paper archive",
       "related": [
         "architecture",
         "compute-control",
+        "cadence-memory",
+        "matter-loop",
         "status",
         "upgrades",
         "physics",

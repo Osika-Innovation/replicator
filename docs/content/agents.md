@@ -1,54 +1,43 @@
 # Agent entry point
 
-Work toward one enduring modular machine that increasingly manufactures its own upgrades. Minimize human engineering and experiment time. Keep the ultimate architecture and a concrete first configuration moving together.
+Work toward one enduring modular machine that increasingly manufactures its own upgrades with minimum human engineering time. Keep two horizons clear in every document, simulation, and design: the **Ultimate Architecture** (tool-free coordinated wavefields, continuous optical/wave apertures, and minimal-electricity physical equilibrium compute) and the **Bootstrap Prototype (`P0` / `HA-0`)** (purchasable `RP2350B`, `SMI`, and `PZT`/SLA seed modules). **Never conflate temporary prototype scaffolding silicon with the final architecture of the Replicator.**
 
-The ultimate architecture coordinates acoustic, electric/magnetic and optical fields in one shared 3D work volume. Design subsystem contributions against a common material state, coordinate frame and process recipe. An acoustic-first hardware configuration establishes a starting subset; preserve the interfaces and access for the combined-field machine. Each proposed combination names its material couplings and improvement over a simpler baseline.
+This **Engineering Handbook (`docs/content/*.md`) is the canonical, self-contained technical specification**, superseding older standalone HTML essays in `papers/`.
 
 ## Read in this order
 
-1. [Current state](status.html): published code, active work and evidence.
-2. [Architecture](architecture.html): subsystem boundaries and interfaces.
-3. [Compute, sensing and control](compute-control.html): `RP2350B` `1-bit ΣΔ` ganglia, `SMI` optical facets, sparse complex `EqProp` and the swappable Brain Slot.
-4. [Upgrade loop](upgrades.html): objectives and acceptance.
-5. The relevant subsystem guide, interface and implementation.
-6. Its owning paper and source records.
+1. [Current state](status.html): Ultimate vs. Prototype tracks, published code, and open bench gates.
+2. [Architecture](architecture.html): Two-carrier physics (`λ`, momentum, crossings) and Ultimate vs. Prototype system boundaries.
+3. [Compute, sensing and control](compute-control.html): Invariant `.fcode` / `MachineBackend` contract, Ultimate continuous wave boundaries, and Prototype `RP2350B` `1-bit ΣΔ` / `SMI` hardware.
+4. [Cadence, memory and wave compute](cadence-memory.html): `8πV / 3λ³` three-cavity theorem, `Sb₂S₃` chord memory, complex Hermitian `EqProp`, and the compute substrate ladder.
+5. [Manufacturing](manufacturing.html) and [Scan, recover and matter stores](matter-loop.html): `Slice → Feed → Trap → Move → Weld → Check`, non-moving `S(f)` tomography (`G17–G19`), material recovery, and Salt/Ash/Noble-Gas stores.
+6. [Upgrade loop](upgrades.html) and [Digital twin](digital-twin.html): `upgrade_graph.json`, Charter/solver gates, and pre-solder simulation realism tiers.
+7. The specific physics/subsystem guide ([Acoustics](acoustics.html), [Optics](optics.html), [Electromagnetics](electromagnetics.html), [Physics overview](physics.html), [Research library](research.html)).
 
-For physics or material-model work, also read the [Physics overview](physics.html), [OPH framework](oph.html) and [Periodic table and tones](periodic-table.html). Preserve the distinction between a mathematical result, a physical interpretation and a measured material response. Translate a proposed connection into an observable, a coupling mechanism and a comparison the twin can perform.
+For foundational physics and atomic-to-hardware work, read [Observer Patch Holography](oph.html), [Light, fields and matter](light-matter.html), [Periodic table and tones](periodic-table.html), and [From atoms to hardware](physics-to-hardware.html). Verify the small shell/geometry suite with `python3 tools/check_physics_derivations.py`.
 
-The [atoms-to-hardware derivation](physics-to-hardware.html) identifies the operators passed between these scales. Reproduce the small shell/geometry check with `python3 tools/check_physics_derivations.py`; upstream atomic refinements and Lean results retain their separate source and execution status.
-
-Use [catalog.json](../catalog.json) for stable document IDs, source paths, roles, owners, related documents and review dates. [llms.txt](../llms.txt) is the compact map; [llms-full.txt](../llms-full.txt) contains the handbook text. These are navigation aids, not substitutes for code and measurements.
+Use [catalog.json](../catalog.json) for stable document IDs, [llms.txt](../llms.txt) as the compact agent map, and [llms-full.txt](../llms-full.txt) for complete plaintext ingestion.
 
 ## Ownership
 
 | Lane | Owns | Delivers |
 |---|---|---|
-| System integration | Architecture, interfaces and decisions | Compatible modules and a complete manufacturing route |
-| Acoustics | Source/body/radiation co-design | Geometry, response, limits and calibration task |
-| Platform/control | Shared `XIN`/`SYNC` spinal bus, `RP2350B` `1-bit ΣΔ` ganglia, Brain Slot, `.fcode`/`.pattern` backend | Bounded executable jobs, standalone/tethered parity and reproducible records |
-| Feed/joining | First material and permanent part formation | Recipe, energy/material budget and inspection |
-| Metrology | Calibration and observation | Raw records, uncertainty and qualification |
-| Electromagnetic control | Coils, transient/RF fields and material coupling | Field/force response, current and thermal limits, calibration and process benefit |
-| Optics / metamaterials | Holographic TX/RX, optical surfaces, structured pulses and optical fabrication | Optical response, fabrication tolerances, power limits and task-qualified readout |
-| Materials/processes | Material formulations and manufacturing routes | A named bottleneck removed with a feasible fabrication and inspection route |
-| Physics/model validation | Framework interpretation, response laws and their validity | A sourced prediction, defined observable and comparison against measurement |
-| Representation/learning | Module data and optional learned proposals | A validated interface and improvement over a baseline |
-| Documentation | Handbook, catalog and source connections | Clear current explanation with evidence and ownership |
+| **System integration** | Architecture, Ultimate vs. Prototype framing, cross-field contracts | Compatible modules, invariant `.fcode`/`.pattern` schemas, complete manufacturing loop |
+| **Acoustics** | Coupled piezo/plate/scatterer/radiation co-design, harmonic comb closure | `body-response/0.1` `H(f)`, `K-PORT+` solid FEM agreement, thermal/force limits |
+| **Platform / control** | Timescale split, `MachineBackend`, Ring-0 firmware, prototype `RP2350B` `1-bit ΣΔ` &amp; `XIN`/`SYNC` bus, Brain Slot | Bounded executable jobs, standalone/tethered parity, `K-HAPTIC-PZT` bench receipts |
+| **Intelligence / Cadence** | Sparse complex Hermitian `EqProp`, `AssociativeChordBank`, `ThoracicMotorCompiler`, multi-teacher distillation | Validated `holo/` benchmarks across `ideal_fp32`, `rp2350_ganglia_q8`, `fpga_int8_sparse`, `optical_pcm_analog` |
+| **Optics / metamaterials** | Metasurface facets, toroidal stem, `SMI` mosquito-eye readout, nanoimprint replication, optical tweezers | Sightline-true `K-MOSQUITO-SMI` receipts, phase tolerances (`δh`), PCM `M#` &amp; endurance specs |
+| **Electromagnetic control** | Coils, transient/RF fields, `J × B` melt shaping, `m/q` sort, contactless `X-EM` exciter | Calibrated field/force maps, current/thermal limits, `X-EM` disc modal response |
+| **Feed, join &amp; stores** | `Assemble`, `Recover`, consolidation state machine (`R15`), Salt/Ash/Noble-Gas stores, active `R9` chamber | Qualified process recipes, mass/energy balance ledger, `FAB-01` first upgrade part |
+| **Metrology &amp; Scan** | Non-moving `S(f)` (`G17`–`G19`), `measured` vs. `inferred` tagging, calibration phantoms | Reproducible raw sensor captures, uncertainty bounds, phantom ground-truth checks |
+| **Physics / documentation** | OPH &amp; material-tone links, canonical Markdown handbook maintenance | Clear current explanations preserving epistemic status and public-scope firewall |
 
 ## Working rules
 
-Inspect repository status and active branches before editing. Use an isolated branch for concurrent work. Preserve other sessions' changes and keep research proposals distinct from integrated configurations.
+Inspect git status and active branches before editing. Use isolated branches for concurrent work. Never touch running experiment logs or overwrite uncommitted local hardware edits without explicit check.
 
-For each task, state the input revision, target observable, constraints, baseline and completion test. Keep acceptance criteria fixed during the comparison; record a changed criterion as a new decision.
-
-Use independent checks and held-out cases where they can reveal a model error. A model must not certify its own invented observations as physical evidence.
-
-Do not turn every question into a new rig. Reuse mounts, sensors and calibration software. Prepare concrete designs and order packs before requesting an operator decision. Purchases and hardware operation require their applicable authorization.
+Every engineering change declares its input revision, target observable, baseline comparison, and discriminating gate. Keep simulation predictions (`SIMULATED`), analytical calculations (`DERIVED`), external literature (`Published`), and project hardware receipts (`Bench measured`) strictly separate. Do not approve parts ordering or push public deployments without operator authorization.
 
 ## Documentation changes
 
-Lead with what the system does or what we are building. Replace repeated hedging with a precise evidence label and a named next step. Preserve source-specific uncertainty.
-
-Each guide has one canonical topic. Papers explain mechanisms or retain historical arguments; they must link back to the current guide. Do not copy private notes, intake attachments, local paths or credentials into a public build.
-
-When a change affects a design, update its guide, catalog relations and status in the same change. Run the documentation build and link check before publication.
+Lead cleanly with both **Ultimate Architecture** and **Prototype Bootstrap** context whenever describing hardware or compute. Update the owning guide, [Status](status.html), [catalog.json](../catalog.json), and cross-links together so the handbook remains self-contained without relying on legacy HTML papers. Never introduce private intake attachments, local filesystem paths, sibling private studies, or unverified internal codenames into public builds. Always run `python3 tools/build_docs.py` and `python3 tools/check_docs.py` before committing.

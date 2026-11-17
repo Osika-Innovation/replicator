@@ -2,35 +2,37 @@
 
 **One modular machine that gains the ability to manufacture its own upgrades.**
 
-We develop field-controlled manufacturing through acoustic and electromagnetic research, twin-native CAD, simulation and reusable physical measurements. The long-term objective is a machine that can build increasing portions of its successors. The first milestone is an inspected, useful part that improves the same platform.
+We develop field-controlled manufacturing through acoustic, electromagnetic, and optical wave research, twin-native CAD, wave-equilibrium modeling, and reusable physical measurements. The **Engineering Handbook (`docs/`)** is the self-contained canonical technical reference tracking both the **Ultimate Architecture** and the **Bootstrap Prototype (`P0` / `HA-0`)**, superseding standalone legacy `papers/`.
 
 **[Read the Replicator Handbook →](https://osika-innovation.github.io/replicator/)**
 
 | Start with | What it answers |
 |---|---|
-| [Architecture](docs/content/architecture.md) | Subsystems, interfaces and the preferred first acoustic candidate |
-| [Compute, sensing and control](docs/content/compute-control.md) | `RP2350B` `1-bit` sigma-delta ganglia, `SMI` optical readout and sparse `EqProp` Brain Slot |
-| [Manufacturing](docs/content/manufacturing.md) | Feed, arrange, join, inspect and upgrade |
-| [Materials and modes](docs/content/materials.md) | Crystals, spectral response and fabrication requirements |
-| [Digital twin](docs/content/digital-twin.md) | CAD, simulation, control and autonomous research |
-| [Upgrade loop](docs/content/upgrades.md) | How the first platform leads toward self-replication |
-| [Current state](docs/content/status.md) | Published code, active studies and evidence |
-| [Agent entry point](docs/content/agents.md) | Ownership, reading order and contribution rules |
+| [Start here](docs/content/start.md) | Purpose, Ultimate Architecture vs. Bootstrap Prototype, and reading route |
+| [Architecture](docs/content/architecture.md) | Subsystems, two-carrier physics, volume crossings, and Ultimate vs. Prototype map |
+| [Compute, sensing and control](docs/content/compute-control.md) | Timescale split, `.fcode` wire contract, Ultimate wave boundary, and Prototype `RP2350B` `1-bit ΣΔ` / `SMI` electronics |
+| [Cadence, memory and wave compute](docs/content/cadence-memory.md) | `8πV/3λ³` three-cavity theorem, `Sb₂S₃` chord stores, `Cadence` Hermitian `EqProp`, and substrate ladder |
+| [Manufacturing](docs/content/manufacturing.md) | Six-step Assemble loop, hands-vs-fingertips ladder, consolidation, and first useful part |
+| [Scan, recover and matter stores](docs/content/matter-loop.md) | Non-moving `S(f)` tomography, material recovery, and Salt/Ash/Noble-Gas stores |
+| [Digital twin](docs/content/digital-twin.md) | Swift/Metal quadratic solver, CAD gates, `holo/` co-design, and hardware-realism tiers |
+| [Upgrade loop](docs/content/upgrades.md) | How the purchased seed prototype bootstrap leads toward self-upgrading |
+| [Current state](docs/content/status.md) | Published code, active prototype vs. long-term studies, and evidence gates |
+| [Agent entry point](docs/content/agents.md) | Ownership, contracts, and contribution rules |
 
 ## Repository
 
 - [twin/](twin/) — native Swift/Metal engineering software and numerical records.
 - [cad/](cad/) — manufacturing geometry and exports.
-- [papers/](papers/) — mechanism papers and dated architecture studies, indexed in the handbook.
+- [docs/](docs/) — canonical handbook sources, catalog, and public source selection.
+- [papers/](papers/) — archived mechanism studies and dated hardware specifications, indexed from the handbook.
 - [sims/](sims/) — simulation studies.
-- [docs/](docs/) — canonical handbook sources, catalog and public source selection.
 - [tools/build_docs.py](tools/build_docs.py) — reproducible static documentation build.
 
-Design decisions, calculations, simulations, published experiments and project bench measurements have distinct labels. A CAD export or simulation pass is not a hardware release.
+Design decisions, calculations, simulations, published experiments, and project bench measurements have distinct labels. A CAD export or simulation pass is not a hardware release.
 
 ## Contribute
 
-Read [AGENTS.md](AGENTS.md) and the [agent guide](docs/content/agents.md). Make each change answer an engineering question, preserve reproducible evidence and update the relevant guide.
+Read [AGENTS.md](AGENTS.md) and the [agent guide](docs/content/agents.md). Make each change answer an engineering question, preserve reproducible evidence, and update the relevant guide.
 
 ## Licensing
 

@@ -1,64 +1,56 @@
 # Electromagnetic control
 
-This subsystem owns electric and magnetic forces, torques, induction, pulsed-field interactions and RF/microwave launch and sensing. It coordinates with [acoustic bodies](acoustics.html) and the separately owned [optics and metamaterials subsystem](optics.html) in one shared three-dimensional work volume.
+This subsystem owns electric, magnetic, induction, RF/microwave, and pulsed electromagnetic interactions in the shared three-dimensional work volume, coordinating with [acoustic bodies](acoustics.html) and [optics and optical metamaterials](optics.html) on one coordinate frame and material state.
 
-Design the field at the material and the material's response together. The required outputs are a useful force, orientation, flow, temperature or observation, together with the power and timing needed to produce it.
+## Ultimate vs. prototype electromagnetic role
 
-## Levitation, heating and material shaping
+| Aspect | Ultimate architecture (coordinated fields) | Prototype bootstrap plan (`P0` / `HA-0`, `2026-11-13` EM audit) |
+|---|---|---|
+| **Process manipulation &amp; heating** | Containerless `J × B` inductive levitation/melting of conductive drops (comparable to the [ESA MSL-EML facility](https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/International_Space_Station/Material_Science_Laboratory_Electromagnetic_Levitator_MSL-EML)), magnetic torque orientation of anisotropic inclusions in combined cure recipes, `m/q` ion sorting, and traveling-wave axial bore lift (`R10`) | **Omitted as a `P0` process actuator:** the `2026-11-13` second-pass EM branch study (`em-integration`, `Simulated` + `Derived`) showed `0.3 m`-standoff RH-1 coil pairs deliver `~8.5 × 10⁻⁵` steel-bead weights (`9 × 10⁸×` short of levitating limestone), external planar coils cannot bring steel spheres into contact (`26` weights mutual dipole repulsion vs. `0.28` command authority), and induction efficiency on `Ø0.76 mm` solder is `0.6–5%` |
+| **Instrumentation &amp; metrology** | Integrated non-contact modal sensing, dielectric spectroscopy across sweep bands, and active EM shielding | **Proposed `X-EM` calibration instrument:** a flat coil + `Ø20 mm` magnet `0.5 mm` behind the `Ø120` aluminum disc delivers `0.13–0.21 N/A` (`100–119 dB` at `1 A`, `< 1 W`), mapping `99.4%` of axisymmetric blank modes (`≤ 45 kHz`) for `K-PORT+` before mounting piezos |
+| **Acoustic element coupling rule** | Baseline stays directly electromechanical (`k² ≈ 0.5–0.9` piezo); **Direct EMAT** (eddy-current Lorentz face launch) is **rejected** as primary muscle because tens-of-dB efficiency loss dumps heat inside a sealed chamber; cordless RF-rectenna power + local piezo stays a valid sealed-wall upgrade option | Direct wired H-bridge piezo drive on prototype heads |
 
-Electromagnetic fields already provide a practical route to containerless processing of conductive material. The ESA/DLR electromagnetic levitator uses coil-generated fields to position and heat samples, including melting and solidification. This gives the programme a concrete starting point for investigating controlled melt processing. [ESA facility](https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/International_Space_Station/Material_Science_Laboratory_Electromagnetic_Levitator_MSL-EML).
+Retaining EM geometry access and synchronized datums ensures future combined-field recipes—such as [magnetic inclusion alignment + acoustic shaping + optical curing](manufacturing.html#a-candidate-combined-field-recipe)—plug directly into the platform once their feed material requires magnetic torque or melt containment.
 
-For a conducting fluid, the Lorentz-force density includes `J × B`; the current distribution also determines resistive heating. The coupled model needs conductivity, induced currents, field gradients, flow, surface tension and thermal history. Magnetic or dielectric particles have their own force and torque laws. Coil topology, return paths, standoff and frequency determine how effectively the source reaches the work volume.
+---
 
-Treat “soft molding” as a process question: what changes the material's flow or yield behavior, what stress shapes it, and what fixes the final shape? Distinguish heating/melting, mechanical deformation and any proposed change in constitutive behavior. Record temperature, strain and the final part's properties so the mechanism can be identified.
+## Levitation, heating and softening experiments
+
+In conductive fluids, Lorentz force `J × B` shapes and positions melts while resistive losses govern temperature; dielectric and magnetic powders obey dipolar force/torque laws (`−∇(m·B)` and `m × B`).
+
+Treat any claimed **non-thermal "soft molding"** mechanism quantitatively (`Design discipline`): distinguish conventional inductive heating/melting, plastic yield change (`electroplasticity`, [Manufacturing](manufacturing.html#consolidation-and-athermal-softening-r15)), and any anomalous field hypothesis by measuring flow stress against matched temperature/thermal-history controls.
+
+---
 
 ## Toroidal and pulsed fields
 
-The existing [photon mechanism paper](../papers/replicator_photons.html#s2) includes spiral launchers, structured pulses, spectral addressing and position sensing. Preserve that design work while selecting the mechanism for a particular task.
+Preserving precise distinctions across identically named shapes prevents conceptual mixing across papers and twin models:
 
-| Concept | What is specified | Engineering question |
+| Concept | Physical description | Engineering question &amp; status |
 |---|---|---|
-| Toroidal coil or magnetic circuit | Source geometry, winding and return path | What external field, gradient and force reach the material? |
-| Rotating or vortex-like field pattern | Vector field in space and time | What currents, torques, flow and heating does it produce in the selected material? |
-| Toroidal electromagnetic pulse | A space–time structured propagating field | What source, bandwidth and detector generate and resolve the required waveform? |
-| Proposed gravito-magnetic effect | An additional claimed force or coupling | What quantitative prediction distinguishes it from electromagnetic and mechanical forces? |
+| **Toroidal coil / winding (`R5`)** | Contrawound copper pair on a hollow former (`44 + 44` turns); equal currents form a 2-turn ring dipole, opposite currents form an 88-turn confined toroid (`cad` verified; fixes earlier inverted text in `Architecture`) | What usable field reaches the work zone? At `0.3 m` standoff, passes `12–18%` ring mode above `1 kHz` through Al plates; unsuitable for small-payload levitation (`Simulated`) |
+| **Vortex / rotating field pattern** | Azimuthal phased drive applying `J × B` stirring or torque inside conductive melt/particles | What eddy currents, stirring flow, and heating are measured vs. Biot–Savart + Navier–Stokes models? |
+| **Propagating toroidal EM pulse** | Space–time nonseparable electromagnetic wave packet (`Optical/THz` [Zdagkas et al., 2022](https://doi.org/10.1038/s41566-022-01028-5); microwave cm-ranging [Wang et al., 2024](https://doi.org/10.1038/s42005-024-01850-z)) | What source bandwidth, launcher, and RX density-matrix tomography recover target structure? ([Optics](optics.html#toroidal-optical-pulses)) |
+| **Exploratory propulsion / gravity claims** | Speculative couplings beyond Biot–Savart / Maxwell equations | What predicted force exceeds Lorentz, corona wind, thermal plume, and cable artifacts under closed controls? |
 
-A toroidal winding can concentrate flux inside its magnetic path. A propagating toroidal pulse is a different field solution. Wang and colleagues demonstrated toroidal-pulse-based positioning at microwave frequencies; Zdagkas and colleagues demonstrated optical/THz pulse generation. These establish specific launch and sensing results, with their own apparatus and bands. [Microwave positioning](https://doi.org/10.1038/s42005-024-01850-z), [optical/THz pulses](https://doi.org/10.1038/s41566-022-01028-5).
-
-For a pulsed-field candidate, record the measured current waveform, spatial field map, induced-current distribution, force/torque, thermal response and energy per operation. Compare the useful response with a simpler drive and geometry. Pulse rise time or a vortex-shaped field alone does not specify its material effect.
+---
 
 ## Patent-led and exploratory mechanisms
 
-Retain named patent mechanisms as research leads with their exact publication number, claimed effect and next discriminating observation. A patent's description supplies a proposed apparatus; its performance requires experimental evidence. Keep documented electromagnetic levitation and processing, structured-wave demonstrations and proposed gravity-related effects as separately testable mechanisms.
+Named patent disclosures are retained with explicit claim attribution and discriminating falsifiers rather than unverified adoption or blind dismissal:
 
-John St. Clair's applications are retained as specific research leads:
+| Primary source | Claimed connection to investigate | Evidence &amp; twin check status |
+|---|---|---|
+| [Magnetic vortex wormhole generator, US20030197093A1](https://patents.google.com/patent/US20030197093A1/en) | Proposed lift/mass effects and crystal joining via vortex coil coupling | Coil geometry checked against Biot–Savart (`windings`); no anomalous force in linear EM solver; sustained effect `Open` pending sealed weight/EMI test |
+| [Water energy generator, US20060180473A1](https://patents.google.com/patent/US20060180473A1/en) | Proposed rotating magnetic vortex + constitutive softening | Claims only; no calibrated mechanical flow vs. matched thermal control published |
+| [Full body teleportation system, US20060071122A1](https://patents.google.com/patent/US20060071122A1/en) | Related high-voltage/vortex waveguide claims (plus `1:3` ratio sweep `k = −8/9` tested monotonically through `1:3` in `S-SC3`—not a special resonance) | Monotonic dial confirmed in twin (`S-SC3`); `15 GHz` / kV spike claims outside quasi-static model (`Open`, unverified safety/EMC cost) |
 
-| Primary source | Claimed connection to investigate |
-|---|---|
-| [Magnetic vortex wormhole generator, US20030197093A1](https://patents.google.com/patent/US20030197093A1/en) | Proposed lift/mass effects; claim 6 also describes crystal joining through its proposed mechanism |
-| [Water energy generator, US20060180473A1](https://patents.google.com/patent/US20060180473A1/en) | Its description connects a rotating magnetic vortex to proposed material softening; the identity of that separately named device remains to resolve |
-| [Full body teleportation system, US20060071122A1](https://patents.google.com/patent/US20060071122A1/en) | A related proposed vortex/waveguide mechanism; retained for source traceability |
+An organizer-hosted summary of Jarod Yates's 2024 **Graviflyer replication experiments** ([Replication account](https://www.altsci.net/graviflyer-replication-experiments/)) documents horizontal deflection with sustained vertical lift unachieved; force claims require balanced, shielded, battery-only unpowered controls, and private laboratory reports remain outside public capability claims.
 
-The reviewed texts establish what the inventor proposed, without calibrated measurements establishing those effects. For material-softening research, measure stress–strain or flow behavior at matched temperature and thermal history. For a proposed additional force, specify its predicted magnitude and scaling and separate it from ordinary electromagnetic forces, airflow, vibration, cable forces and measurement interference.
-
-Graviflyer replication reports are another retained lead. An organizer-hosted account of Jarod Yates's 2024 experiments reports horizontal deflection while sustained vertical lift remained unachieved. It documents that particular attempt, not the outcome of every reported replication. A successful gravitational interpretation requires the corresponding force record and controls; this account alone does not establish it. [Replication account](https://www.altsci.net/graviflyer-replication-experiments/).
-
-The research register preserves source identities and review status. Private laboratory reports stay outside public capability claims. An exploratory result becomes part of a process model when its observable, controls and uncertainty support that use.
-
-## Current integration direction
-
-The engineering EM study evaluated the RH-1 windings and closer-coupled alternatives. Its November 13 second pass recommends keeping an EM manufacturing module out of the initial acoustic build and proposes contactless excitation/measurement of an acoustic disc as an instrument candidate.
-
-That recommendation concerns the initial hardware configuration. The ultimate architecture includes coordinated electromagnetic processing and optical metamaterials. The first material recipe selects the starting combination; later modules expand it. These branch-study recommendations retain their [current-state status](status.html).
+---
 
 ## Twin and integration contract
 
-Deliver typed ports, geometry, constitutive laws, field maps, frequency/transient response, current and voltage limits, thermal limits and calibration records. Register actuators and sensors to the same work-volume coordinates as acoustics and optics. Couple the solvers through material position, orientation, temperature, flow and process state where those affect the job.
+Every electromagnetic module exports coil geometry, winding sense, constitutive laws (`σ`, `μ`, `χ`), frequency/transient impedance, current/thermal limits, and cross-volume stray fields onto the shared acoustic/optical grid—benchmarking every combined process against its best simpler single-field baseline ([Manufacturing](manufacturing.html)).
 
-Common process timing permits simultaneous or deliberately sequenced actions. Phase coherence is included where the actual interaction needs it. Compare a combined recipe with its best simpler baseline on the finished part, power, throughput and human effort.
-
-## Optical modules
-
-The optical-wavelength programme now has its own [Optics and optical metamaterials](optics.html) chapter, covering holographic ports, metasurfaces, optical toroidal pulses, fabrication and readout. This link preserves the former combined chapter's entry point.
-
-Read [Architecture](architecture.html), [Manufacturing](manufacturing.html), [Optics](optics.html) and [Research library](research.html).
+Read [Architecture](architecture.html), [Optics and optical metamaterials](optics.html), [Manufacturing](manufacturing.html), and [Research library](research.html).
