@@ -42,10 +42,16 @@ For each candidate, specify master accuracy, feature dimensions, index and absor
 
 The first useful optical upgrade might be a qualified beam-shaping insert, replicated holographic surface or calibration optic. Select it by the human effort saved and capability gained, with seed fabrication and metrology explicitly included.
 
+## Coherent self-mixing optical readout
+
+Conventional `60–1,000 fps` CMOS cameras miss `24–200 kHz` ultrasonic oscillations, and bare photodiodes detect intensity (`|E|²`) rather than pure acousto-optic refractive-index phase modulation (`Δφ(t) = k_L ((n_0 − 1)/(γ P_0)) ∫ p dx`) without external Mach-Zehnder reference arms or knife-edge optics.
+
+Pairing passive replicated diffractive facets across the chamber's radial windows and coaxial `Ø12 mm` bore with threshold-biased commodity laser diodes uses **Self-Mixing / Optical Feedback Interferometry (`SMI`)** inside the laser cavity to read both DC Beer-Lambert matter shadows and `24–200 kHz` ultrasonic wave phase simultaneously ([Bertling et al., 2014](https://doi.org/10.1364/OE.22.030346), `Published experiment`). Because weak `50 mm` air-path retro-reflection modulates diode terminal voltage by only `~50 µV – 1 mV` per `2π` fringe (`~5–100 µV` at `0.1 rad`; [Giuliani et al., 2002](https://doi.org/10.1088/1464-4258/4/6/371)), bare MCU Schmitt GPIOs (`~200 mV` hysteresis, `6.67 ns` ticks) cannot resolve air-path fringes directly. Reading the 3-pin diode's built-in monitor photodiode (or AC-coupled anode) through one SOT-23 AC op-amp (`×200` gain) and a `75 MSa/s` `1-bit` sigma-delta comparator into an `RP2350B` PIO (`XIN`/`SYNC` locked to the acoustic comb) retains zero beam splitters and zero cameras while complementing acoustic `HAPTIC` sensing inside optically opaque powder ([Compute, sensing and control](compute-control.html#optical-mosquito-eye-diffractive-facets-and-self-mixing-interferometry); bench coupon `K-MOSQUITO-SMI` open).
+
 ## Twin and integration contract
 
 Publish geometry, optical constants over the operating band, input/output field conventions, illumination, power limits, calibrated response and fabrication tolerances. Register the optical aperture and observations to the acoustic and electromagnetic coordinate frame. The process controller schedules exposure, field-driven arrangement and readout against the same evolving material state.
 
 A forward-propagation model is appropriate for the structures it resolves. Resonant, near-field or strongly scattering structures need their corresponding boundary, feedback and loss models. Co-design source, surface, detector and material interaction around the [combined manufacturing recipe](manufacturing.html#a-candidate-combined-field-recipe).
 
-Read [Architecture](architecture.html), [Materials and modes](materials.html), [Digital twin](digital-twin.html) and the [photon mechanism paper](../papers/replicator_photons.html).
+Read [Architecture](architecture.html), [Compute, sensing and control](compute-control.html), [Materials and modes](materials.html), [Digital twin](digital-twin.html) and the [photon mechanism paper](../papers/replicator_photons.html).

@@ -1,6 +1,6 @@
 # Current state
 
-**Reviewed November 15, 2026.** This is the navigation checkpoint for the programme, not a hardware release.
+**Reviewed November 17, 2026.** This is the navigation checkpoint for the programme, not a hardware release.
 
 ## Published code and active studies
 
@@ -8,12 +8,13 @@
 |---|---|---|
 | Public engineering code | This handbook was prepared against published revision `1b708a2`; its twin includes simulation, CAD and numerical checks | Review later engineering branches for integration |
 | Ultimate architecture | Operator direction: coordinated acoustic, electric/magnetic and optical fields in the same 3D work volume | Define shared coordinates, material state and a combined-field recipe with a measurable advantage |
-| Acoustic architecture | `3 + 3` low-inertia thin broadband piezo ports (`τ_inertia = L / v_D`, supersonic plate / replaceable SLA scatterer, simultaneous two-terminal `HAPTIC` self-sensing, sparse chord lists; Langevin retained as CW reference) | Bench-verify adaptive `C_0` H-bridge self-sensing and coupled-cavity calibration in twin & fixture |
+| Acoustic architecture | `3 + 3` low-inertia thin broadband piezo ports (`τ_inertia = L / v_D`, supersonic plate / replaceable SLA scatterer, collocated `75 MSa/s` `1-bit ΣΔ` `HAPTIC` + `XOR` lock-in, sparse chord lists; Langevin retained as CW reference) | Simulate `75 MSa/s` `1-bit ΣΔ` under `0.3%/°C` `C_0` drift and `-70 dB` echoes, then bench-verify coupon `K-HAPTIC-PZT` |
+| Compute, sensing and control | Collocated `RP2350B` ganglia locked via shared `XIN`/`SYNC` bus (`50–150 Mbit/s` PIO/`HSTX`), `< 60 kB` `5–10%` sparse complex `int8` `Cadence` (`EqProp`, `~8–15 ms` settle) behind a swappable Brain Slot (`RP2350B` → optional `SoC-FPGA` → optical PCM), identical standalone or tethered `.fcode` protocol | Validate `K-HAPTIC-PZT` and `K-MOSQUITO-SMI` in simulation and bench coupons before PCB freeze |
 | Platform software | Active workspace studies extend backend, calibration, body-response and upgrade interfaces | Publish reviewed implementations with their receipts |
 | Electromagnetics | November 13 branch study recommends no EM process module for the first acoustic build; this is an initial-configuration recommendation within the shared-volume architecture | Select initial process/instrument modules against the first material recipe and preserve later integration access |
-| Optics and metamaterials | Dedicated architecture lane for optical-wavelength surfaces, holographic TX/RX and toroidal optical pulses; published external precedents are linked in its guide | Choose a first optical function, source/surface/readout design and fabrication/metrology route |
+| Optics and metamaterials | Dedicated architecture lane for optical-wavelength surfaces, holographic TX/RX, toroidal pulses and self-mixing (`SMI`) diffractive-facet readout (`3-pin` monitor-PD + SOT-23 `×200` AC gain + `1-bit ΣΔ`); published precedents linked | Simulate `0.1 rad` `LightRead` phase recovery and bench-verify coupon `K-MOSQUITO-SMI` |
 | Manufacturing | Feed, joining and inspection must be selected with the first useful part | Establish one complete material transformation |
-| Material/AI representation | Module/material records and optional learned proposal policies are development work | Demonstrate one module and one bounded task |
+| Material/AI representation | Module/material records and `< 60 kB` `5–10%` sparse complex Hermitian `Cadence` (`EqProp`) across four hardware-realism tiers (`ideal_fp32`, `rp2350_ganglia_q8`, `fpga_int8_sparse`, `optical_pcm_analog`) | Demonstrate sightline-true `Cadence` + `1-bit ΣΔ` benchmark on held-out targets |
 | Physics framework | [OPH](oph.html) supplies a theoretical framework and design inspiration; mathematical results retain their assumptions and physical interpretations retain their test status | Map a specific hypothesis to a measurable response and compare it with established models |
 | Hardware evidence | No integrated Replicator bench demonstration has been established in this documentation review | Produce calibrated physical receipts |
 

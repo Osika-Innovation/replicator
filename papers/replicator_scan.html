@@ -73,7 +73,7 @@ instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a></div
 the machine looks at an object — first in plain words, then in the terms
 the engineering uses. Size-free — the physics privileges ratios, not
 dimensions.</p>
-<p class="meta">draft v1.0 · 2026-08-01 · mode paper — owns the scan-mode
+<p class="meta">draft v1.1 · 2026-11-17 (previous v1.0 · 2026-08-01) · mode paper — owns the scan-mode
 narrative; element detail lives in the carrier papers, solver detail in the
 Field Compiler. Sibling mode papers:
 <a href="replicator_assemble.html">Assemble</a> and
@@ -247,7 +247,15 @@ a laser pulse absorbed on any visible surface, including the workpiece,
 launches ultrasound from that spot with nothing moving — and
 <em>reads</em> sound (schlieren/vibrometry). Owners:
 <a href="the_two_carriers.html">The Two Carriers §6b</a>,
-<a href="replicator_field_compiler.html">Field Compiler §17.6</a>.</p>
+<a href="replicator_field_compiler.html">Field Compiler §17.6</a>.
+In the Rung 1 "optical mosquito eye" architecture, passive diffractive
+metasurface facets and 3-pin TO-can laser diodes performing Self-Mixing
+Interferometry (<code>SMI</code>; built-in monitor photodiode or AC-coupled
+anode → SOT-23 <code>×200</code> AC stage → <code>75 MSa/s</code> 1-bit
+<code>ΣΔ</code> PIO locked on <code>XIN + SYNC</code>) read DC Beer–Lambert
+matter occlusion and <code>24–200 kHz</code> air-phase sound simultaneously
+with zero cameras or beam splitters (<a href="replicator_photons.html#s3">The Photons §3</a>;
+<a href="../docs/content/compute-control.md#optical-mosquito-eye-diffractive-facets-and-self-mixing-interferometry">Compute, sensing and control</a>).</p>
 
 <h2 id="s3">3 · Call-and-response — the formal object a scan builds</h2>
 <p>Formally, a scan measures the object's <b>scattering matrix S(f)</b>:

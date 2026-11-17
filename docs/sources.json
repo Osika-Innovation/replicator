@@ -833,13 +833,13 @@
         "Ephrahim Garcia"
       ],
       "publication_date": "1992-01-01",
-      "checked_date": "2026-11-15",
+      "checked_date": "2026-11-17",
       "review_status": "primary_indexed_abstract",
       "evidence_status": "published experimental report",
       "possible_insight": "Two-terminal reference-capacitor bridge subtracts dielectric slewing current C0 dV/dt across a driven piezoelectric crystal to recover motional strain x(t) and velocity dx/dt simultaneously during actuation without TX/RX switching dead time.",
-      "scope_limit": "Analog bridge balance drifts as piezo clamped capacitance C0 shifts with temperature and drive level unless tracked digitally in the closed loop.",
-      "fabrication_and_precision": "Requires differential two-terminal access plus matched reference capacitor or synchronous V(t), I(t) shunt sampling with multi-MSa/s / PIO timing headroom.",
-      "next_action": "Implement digital C0-adaptive two-terminal HAPTIC bridge and bench-verify motional velocity residual during multi-tone drive.",
+      "scope_limit": "Analog bridge balance drifts as piezo clamped capacitance C0 shifts with temperature (~0.3%/C, -50 dB) and drive level unless tracked digitally; a 2 mm airborne droplet echo (-60 to -80 dB) captures a bare zero-crossing comparator across a 5-tone comb.",
+      "fabrication_and_precision": "Requires differential two-terminal access plus matched reference capacitor (such as the cartridge's uncoupled C0 reference piezo) with a 75 MSa/s 1-bit sigma-delta PIO loop (1 comparator + 2R/1C, OSR = 250 over 150 kHz -> 12-16 ENOB / 74-96 dB dynamic range, multiplier-free XOR + popcount lock-in) or synchronous multi-MSa/s ADCs.",
+      "next_action": "Simulate 75 MSa/s 1-bit sigma-delta + XOR lock-in under C0 drift and -70 dB echoes, then run bench coupon K-HAPTIC-PZT across the 24-120 kHz harmonic comb.",
       "engineering_task": "AC-03a",
       "decision": "Primary precedent for simultaneous two-terminal piezo HAPTIC self-sensing"
     },
@@ -969,6 +969,76 @@
       "next_action": "Obtain full methods and test whether an SRAH-style physics-constrained generator can co-optimize sparse 3+3 multi-tone drives plus passive scatterer geometry against sidelobe bounds.",
       "engineering_task": "AC-03a",
       "decision": "Candidate solver and aperture co-design reference; no architecture adoption"
+    },
+    {
+      "id": "P030",
+      "title": "Imaging of acoustic fields using optical feedback interferometry",
+      "kind": "journal_article",
+      "canonical_url": "https://doi.org/10.1364/OE.22.030346",
+      "identifier": "10.1364/OE.22.030346",
+      "authors": [
+        "Karl Bertling",
+        "Julien Perchoux",
+        "Thomas Taimre",
+        "Robert Malkin",
+        "Daniel Robert",
+        "Aleksandar D. Rakić",
+        "Thierry Bosch"
+      ],
+      "publication_date": "2014-12-01",
+      "checked_date": "2026-11-17",
+      "review_status": "primary_indexed_abstract",
+      "evidence_status": "published experimental report",
+      "possible_insight": "Self-mixing / optical feedback interferometry (OFI) inside a laser diode cavity measures airborne ultrasonic pressure fields via acousto-optic refractive-index modulation without external photodiodes, beam splitters, or Mach-Zehnder reference arms.",
+      "scope_limit": "Published OFI ultrasound imaging uses analog amplification; weak air-path fringes (~50 uV - 1 mV per 2pi fringe, P031) cannot trigger 200 mV Schmitt MCU GPIOs directly, and opaque objects still block line-of-sight rays.",
+      "fabrication_and_precision": "Standard 3-pin laser diode using built-in monitor photodiode (or AC-coupled anode) + 1 SOT-23 op-amp (~200x AC gain) + 1-bit sigma-delta comparator into RP2350B PIO, XIN/SYNC phase-locked to the acoustic comb.",
+      "next_action": "Simulate 0.1 rad LightRead phase recovery in the 1-bit sigma-delta front-end and run bench coupon K-MOSQUITO-SMI for simultaneous DC bead occlusion and 40 kHz ultrasonic phase SNR.",
+      "engineering_task": "AC-03a",
+      "decision": "Primary precedent for beam-splitter-free self-mixing optical wave/matter readout"
+    },
+    {
+      "id": "P031",
+      "title": "Laser diode self-mixing technique for sensing applications",
+      "kind": "journal_article",
+      "canonical_url": "https://doi.org/10.1088/1464-4258/4/6/371",
+      "identifier": "10.1088/1464-4258/4/6/371",
+      "authors": [
+        "Guido Giuliani",
+        "Michele Norgia",
+        "Silvano Donati",
+        "Thierry Bosch"
+      ],
+      "publication_date": "2002-11-01",
+      "checked_date": "2026-11-17",
+      "review_status": "primary_indexed_abstract",
+      "evidence_status": "published review and experimental characterization",
+      "possible_insight": "Establishes quantitative laser-diode self-mixing interferometry (SMI) equations and signal amplitudes (~50 uV to ~1 mV per 2pi fringe across weak/moderate feedback) via built-in rear monitor photodiode or junction terminal voltage.",
+      "scope_limit": "Microvolt-to-millivolt air-path fringe voltages shift digital Schmitt timing by ~0.1 ps versus 6.67 ns PIO ticks, requiring an AC gain stage (~200x) before 1-bit sigma-delta quantization.",
+      "fabrication_and_precision": "3-pin TO-can laser diode + SOT-23 AC op-amp + 2R/1C comparator feeding 75 MSa/s 1-bit sigma-delta PIO.",
+      "next_action": "Size AC-gain and sigma-delta comparator thresholds for bench coupon K-MOSQUITO-SMI.",
+      "engineering_task": "AC-03a",
+      "decision": "Quantitative device-physics reference sizing the SMI optical front-end"
+    },
+    {
+      "id": "P032",
+      "title": "Equilibrium Propagation: Bridging the Gap between Energy-Based Models and Backpropagation",
+      "kind": "journal_article",
+      "canonical_url": "https://doi.org/10.3389/fncom.2017.00024",
+      "identifier": "10.3389/fncom.2017.00024",
+      "authors": [
+        "Benjamin Scellier",
+        "Yoshua Bengio"
+      ],
+      "publication_date": "2017-05-04",
+      "checked_date": "2026-11-17",
+      "review_status": "primary_indexed_abstract",
+      "evidence_status": "published theoretical and numerical formulation",
+      "possible_insight": "Computes exact energy-based recurrent network gradients from two physical settles (free and weakly nudged) and local contrastive outer products without a backpropagation activation tape, enabling < 60 kB 5-10% sparse complex Hermitian SRAM adaptation on RP2350B (~8-15 ms settle) and reciprocal optical plasticity via Helmholtz symmetry.",
+      "scope_limit": "Exact gradient guarantee requires symmetric/Hermitian reciprocal coupling and contractive fixed-point settling; physical optical/PCM endurance, 4-6 bit quantization, and thermal phase drift remain unmeasured on our bench.",
+      "fabrication_and_precision": "Tied Hermitian weights (||W||_2 <= 1) quantized to 5-10% sparse int8 (< 60 kB) on RP2350B SRAM or FPGA dual-port BRAM now; reciprocal Sb2S3/Sb2Se3 PCM + threshold laser-diode somas as future hardware.",
+      "next_action": "Benchmark 5-10% sparse complex Hermitian wave-somas across ideal_fp32, rp2350_ganglia_q8, fpga_int8_sparse, and optical_pcm_analog simulation tiers.",
+      "engineering_task": "META-01",
+      "decision": "Foundational learning-rule precedent for sparse SRAM adaptation and reciprocal optical plasticity"
     }
   ]
 }

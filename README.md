@@ -9,6 +9,7 @@ We develop field-controlled manufacturing through acoustic and electromagnetic r
 | Start with | What it answers |
 |---|---|
 | [Architecture](docs/content/architecture.md) | Subsystems, interfaces and the preferred first acoustic candidate |
+| [Compute, sensing and control](docs/content/compute-control.md) | `RP2350B` `1-bit` sigma-delta ganglia, `SMI` optical readout and sparse `EqProp` Brain Slot |
 | [Manufacturing](docs/content/manufacturing.md) | Feed, arrange, join, inspect and upgrade |
 | [Materials and modes](docs/content/materials.md) | Crystals, spectral response and fabrication requirements |
 | [Digital twin](docs/content/digital-twin.md) | CAD, simulation, control and autonomous research |

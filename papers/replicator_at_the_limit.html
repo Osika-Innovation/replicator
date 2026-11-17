@@ -71,7 +71,7 @@ software → <a href="replicator_field_compiler.html">Field Compiler</a>
 
 <h1>The Replicator at the Limit</h1>
 <p class="sub">Design the machine and the path by which it improves itself from first-principles bounds.</p>
-<p class="meta">v0.3 · reviewed 2026-11-15 (previous v0.2 · 2026-11-13) · Role: long-term
+<p class="meta">v0.4 · reviewed 2026-11-17 (previous v0.3 · 2026-11-15) · Role: long-term
 architecture, physical bounds, and bootstrap strategy. Building on v0.2's
 qualification cleanup, this revision explicitly ties acoustic actuator dynamics
 to crystal transit inertia (<code>τ_inertia = L/v_D</code>), simultaneous
@@ -162,12 +162,18 @@ steady-state power down to cavity dissipation
 inspection; the slowest necessary operation sets the useful rate.</p>
 
 <h2 id="s4">4 · Compute belongs where it earns its place</h2>
-<p>The initial platform uses conventional digital compute and high-headroom
-differential H-bridge drivers (PIO/FPGA or multi-MSa/s DAC/ADC) to run coupled
-models, track <code>HAPTIC</code> residuals, and operate hardware. Optical or
-other physical compute modules enter when a specified workload (such as Rung 2
-~10⁵-pixel optical plate addressing) demonstrates a measured advantage in
-latency, energy, precision, reliability or manufacturability.</p>
+<p>The initial Rung 1 platform replaces multi-MSa/s DAC/ADC cards with collocated
+<code>RP2350B</code> acoustic and optical ganglia running 75&nbsp;MSa/s 1-bit
+sigma-delta <code>HAPTIC</code> piezo self-sensing and AC-coupled self-mixing
+interferometry (<code>SMI</code>) locked onto a shared <code>XIN + SYNC</code>
+spinal bus, paired with a swappable Brain Slot carrying block-sparse
+(5–10% nonzero, &lt;&nbsp;60&nbsp;kB) complex-valued <code>Cadence</code> in SRAM
+(<a href="../docs/content/compute-control.md">Compute, sensing and control</a>).
+An <code>SoC-FPGA</code> Brain Slot enters only where sub-5&nbsp;µs settling,
+wideband comb ADC readout, or <code>~10⁵</code>-pixel SLM addressing earns its
+complexity, and optical or other physical compute modules enter when a
+specified workload demonstrates a measured advantage in latency, energy,
+precision, reliability or manufacturability.</p>
 <p>Optical geometry can encode useful transformations, but an optical component
 also depends on index contrast, loss, surface quality, material uniformity,
 alignment and read/write interfaces. A fabrication route must meet those

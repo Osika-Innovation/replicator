@@ -3,7 +3,7 @@
   "title": "Etherworks Replicator Handbook",
   "site_url": "https://osika-innovation.github.io/replicator/",
   "repository": "https://github.com/Osika-Innovation/replicator",
-  "updated": "2026-11-15",
+  "updated": "2026-11-17",
   "documents": [
     {
       "id": "home",
@@ -20,10 +20,11 @@
         "replicator",
         "etherworks"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-17",
       "review_scope": "Current programme explanation",
       "related": [
         "architecture",
+        "compute-control",
         "status",
         "upgrades",
         "physics"
@@ -43,10 +44,11 @@
         "prototype",
         "strategy"
       ],
-      "reviewed": "2026-11-15",
+      "reviewed": "2026-11-17",
       "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "architecture",
+        "compute-control",
         "status",
         "upgrades",
         "physics",
@@ -239,7 +241,7 @@
         "modules",
         "3+3"
       ],
-      "reviewed": "2026-11-15",
+      "reviewed": "2026-11-17",
       "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
       "related": [
         "start",
@@ -247,9 +249,10 @@
         "physics",
         "acoustics",
         "electromagnetics",
+        "optics",
+        "compute-control",
         "digital-twin",
-        "manufacturing",
-        "optics"
+        "manufacturing"
       ]
     },
     {
@@ -261,7 +264,7 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Acoustic bodies",
-      "summary": "Crystal-inertia-limited SIMO piezo bodies, two-terminal HAPTIC self-sensing, and coupled-cavity control.",
+      "summary": "Crystal-inertia-limited SIMO piezo bodies, 75 MSa/s 1-bit sigma-delta HAPTIC self-sensing, and coupled-cavity control.",
       "topics": [
         "piezo",
         "HAPTIC",
@@ -269,10 +272,11 @@
         "hologram",
         "resonator"
       ],
-      "reviewed": "2026-11-15",
-      "review_scope": "First-principles piezo and control-loop update",
+      "reviewed": "2026-11-17",
+      "review_scope": "First-principles piezo and 1-bit sigma-delta control-loop update",
       "related": [
         "architecture",
+        "compute-control",
         "acoustic-hologram",
         "phonons",
         "status",
@@ -330,16 +334,52 @@
         "SLM",
         "nanoimprint"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Primary-source review and subsystem direction; specific optical designs remain to qualify",
+      "reviewed": "2026-11-17",
+      "review_scope": "Primary-source review and subsystem direction; includes self-mixing optical readout; bench coupon K-MOSQUITO-SMI pending",
       "related": [
         "architecture",
+        "compute-control",
         "electromagnetics",
         "photons",
         "materials",
         "digital-twin",
         "manufacturing",
         "research"
+      ]
+    },
+    {
+      "id": "compute-control",
+      "title": "Compute, sensing and control",
+      "source": "docs/content/compute-control.md",
+      "url": "guides/compute-control.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Platform / control",
+      "summary": "Collocated RP2350B 1-bit sigma-delta ganglia, self-mixing optical facets, sparse complex EqProp and the standalone/tethered appliance.",
+      "topics": [
+        "RP2350",
+        "PIO",
+        "sigma-delta",
+        "HAPTIC",
+        "self-mixing interferometry",
+        "Cadence",
+        "EqProp",
+        "FPGA",
+        "optical compute"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "First-principles volts/dB/cycles control and sensing architecture; bench coupons K-HAPTIC-PZT and K-MOSQUITO-SMI pending",
+      "related": [
+        "architecture",
+        "acoustics",
+        "optics",
+        "digital-twin",
+        "status",
+        "upgrades",
+        "acoustic-hologram",
+        "photons",
+        "memory"
       ]
     },
     {
@@ -386,10 +426,11 @@
         "Prime",
         "holo"
       ],
-      "reviewed": "2026-11-15",
-      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "reviewed": "2026-11-17",
+      "review_scope": "Coordinated-field architecture, sparse complex EqProp and four hardware-realism tiers; initial configurations retain their evidence status",
       "related": [
         "architecture",
+        "compute-control",
         "status",
         "upgrades",
         "physics-to-hardware",
@@ -434,10 +475,11 @@
         "receipts",
         "prototype"
       ],
-      "reviewed": "2026-11-15",
+      "reviewed": "2026-11-17",
       "review_scope": "Current programme explanation",
       "related": [
         "start",
+        "compute-control",
         "agents",
         "oph"
       ]
@@ -459,10 +501,11 @@
         "Carbon",
         "Codex"
       ],
-      "reviewed": "2026-11-13",
+      "reviewed": "2026-11-17",
       "review_scope": "Current programme explanation",
       "related": [
         "architecture",
+        "compute-control",
         "status",
         "upgrades",
         "physics",
@@ -485,10 +528,11 @@
         "patents",
         "sources"
       ],
-      "reviewed": "2026-11-15",
+      "reviewed": "2026-11-17",
       "review_scope": "Current programme explanation",
       "related": [
         "architecture",
+        "compute-control",
         "status",
         "upgrades",
         "physics",
@@ -509,10 +553,11 @@
         "architecture",
         "holography"
       ],
-      "reviewed": "2026-11-15",
+      "reviewed": "2026-11-17",
       "review_scope": "Prose and claim boundaries",
       "related": [
         "architecture",
+        "compute-control",
         "research",
         "status"
       ]
@@ -531,10 +576,11 @@
         "RH-1",
         "topology"
       ],
-      "reviewed": "2026-11-15",
+      "reviewed": "2026-11-17",
       "review_scope": "Navigation and document role; not a full technical audit",
       "related": [
         "architecture",
+        "compute-control",
         "research",
         "status"
       ]
@@ -554,10 +600,11 @@
         "constructor",
         "self-replication"
       ],
-      "reviewed": "2026-11-15",
+      "reviewed": "2026-11-17",
       "review_scope": "Prose and claim boundaries",
       "related": [
         "architecture",
+        "compute-control",
         "research",
         "status"
       ]
@@ -600,10 +647,11 @@
         "HAPTIC",
         "piezo"
       ],
-      "reviewed": "2026-11-15",
-      "review_scope": "First-principles transducer and control-loop update",
+      "reviewed": "2026-11-17",
+      "review_scope": "First-principles transducer and 1-bit sigma-delta control-loop update",
       "related": [
         "acoustics",
+        "compute-control",
         "architecture",
         "research",
         "status"
@@ -623,10 +671,11 @@
         "electromagnetics",
         "optics"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Targeted optical force/absorption and latency clarification plus toroidal-pulse citation correction; remaining mechanisms not fully revalidated",
+      "reviewed": "2026-11-17",
+      "review_scope": "Targeted optical force/absorption, self-mixing optical mosquito-eye sensing and toroidal-pulse citation update; remaining mechanisms not fully revalidated",
       "related": [
         "architecture",
+        "compute-control",
         "research",
         "status",
         "optics"
@@ -690,10 +739,11 @@
         "scan",
         "metrology"
       ],
-      "reviewed": "2026-11-15",
-      "review_scope": "Navigation and toroidal-pulse bibliographic correction; remaining technical claims not fully revalidated",
+      "reviewed": "2026-11-17",
+      "review_scope": "Navigation, self-mixing optical readout cross-reference and toroidal-pulse bibliographic update; remaining technical claims not fully revalidated",
       "related": [
         "architecture",
+        "compute-control",
         "research",
         "status",
         "optics"
@@ -758,10 +808,11 @@
         "memory",
         "compute"
       ],
-      "reviewed": "2026-11-15",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-17",
+      "review_scope": "Helmholtz-reciprocal EqProp, sparse SRAM Cadence and ganglionic Brain Slot update; PCM M# and endurance remain open",
       "related": [
         "architecture",
+        "compute-control",
         "research",
         "status"
       ]

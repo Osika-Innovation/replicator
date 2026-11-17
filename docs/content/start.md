@@ -20,7 +20,7 @@ The long-term programme also includes scanning objects and recovering material f
 
 ## The first machine
 
-The preferred acoustic candidate is two opposed, low-inertia broadband piezoelectric plates (`3 + 3` asymmetric inputs driving a thin supersonic plate and/or replaceable SLA chaotic scatterer with a coaxial `Ø12 mm` bore) governed by simultaneous two-terminal H-bridge (`HAPTIC`) self-sensing (`I = C_0 dV/dt + Θ ẋ`). The number, geometry and harmonic comb are selected against force, controllability, electrical timing headroom above crystal transit inertia (`τ_inertia = L / v_D`), heat, fatigue and calibration requirements. The platform also preserves the access, datums and timing needed for coordinated electromagnetic and optical modules; the first material recipe selects which are installed initially.
+The preferred acoustic candidate is two opposed, low-inertia broadband piezoelectric plates (`3 + 3` asymmetric inputs driving a thin supersonic plate and/or replaceable SLA chaotic scatterer with a coaxial `Ø12 mm` bore) governed by collocated `RP2350B` `75 MSa/s` `1-bit` sigma-delta `HAPTIC` self-sensing (`I = C_0 dV/dt + Θ ẋ`), paired over a shared `XIN`/`SYNC` spinal bus with self-mixing optical readout across sightlines and `< 60 kB` sparse complex `Cadence` (`EqProp`) in SRAM for standalone or host-tethered control ([Compute, sensing and control](compute-control.html)). The number, geometry and harmonic comb are selected against force, controllability, electrical timing headroom above crystal transit inertia (`τ_inertia = L / v_D`), heat, fatigue and calibration requirements. The platform also preserves the access, datums and timing needed for coordinated electromagnetic and optical modules; the first material recipe selects which are installed initially.
 
 Existing direct-emitter arrays, bolt-clamped Langevin dumbbells (for narrowband CW comparison), and the larger RH-1 design remain reference configurations. They help compare architectures without fixing the first build to an old part count.
 
@@ -28,6 +28,6 @@ Existing direct-emitter arrays, bolt-clamped Langevin dumbbells (for narrowband 
 
 The handbook owns the current project explanation. Interface documents own software contracts. Code and receipts own implementation results. Papers develop mechanisms and long-term arguments; dated specifications preserve previous design instances.
 
-Use [Architecture](architecture.html) for subsystem boundaries, [Manufacturing](manufacturing.html) for the first useful output, and [Upgrades](upgrades.html) for the path toward self-replication.
+Use [Architecture](architecture.html) for subsystem boundaries, [Compute, sensing and control](compute-control.html) for the `RP2350B` ganglionic controller and self-mixing optical readout, [Manufacturing](manufacturing.html) for the first useful output, and [Upgrades](upgrades.html) for the path toward self-replication.
 
 The [Physics section](physics.html) explains the programme's theoretical perspective and its engineering use. Follow [Observer Patch Holography](oph.html) for the framework, [Light, fields and matter](light-matter.html) for the unifying interpretation, and [Periodic table and tones](periodic-table.html) for the connection between material structure, spectra and machine control.

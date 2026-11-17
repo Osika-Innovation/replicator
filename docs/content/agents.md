@@ -8,9 +8,10 @@ The ultimate architecture coordinates acoustic, electric/magnetic and optical fi
 
 1. [Current state](status.html): published code, active work and evidence.
 2. [Architecture](architecture.html): subsystem boundaries and interfaces.
-3. [Upgrade loop](upgrades.html): objectives and acceptance.
-4. The relevant subsystem guide, interface and implementation.
-5. Its owning paper and source records.
+3. [Compute, sensing and control](compute-control.html): `RP2350B` `1-bit ΣΔ` ganglia, `SMI` optical facets, sparse complex `EqProp` and the swappable Brain Slot.
+4. [Upgrade loop](upgrades.html): objectives and acceptance.
+5. The relevant subsystem guide, interface and implementation.
+6. Its owning paper and source records.
 
 For physics or material-model work, also read the [Physics overview](physics.html), [OPH framework](oph.html) and [Periodic table and tones](periodic-table.html). Preserve the distinction between a mathematical result, a physical interpretation and a measured material response. Translate a proposed connection into an observable, a coupling mechanism and a comparison the twin can perform.
 
@@ -24,7 +25,7 @@ Use [catalog.json](../catalog.json) for stable document IDs, source paths, roles
 |---|---|---|
 | System integration | Architecture, interfaces and decisions | Compatible modules and a complete manufacturing route |
 | Acoustics | Source/body/radiation co-design | Geometry, response, limits and calibration task |
-| Platform/control | Timing, drive, acquisition and backend | Bounded executable jobs and reproducible records |
+| Platform/control | Shared `XIN`/`SYNC` spinal bus, `RP2350B` `1-bit ΣΔ` ganglia, Brain Slot, `.fcode`/`.pattern` backend | Bounded executable jobs, standalone/tethered parity and reproducible records |
 | Feed/joining | First material and permanent part formation | Recipe, energy/material budget and inspection |
 | Metrology | Calibration and observation | Raw records, uncertainty and qualification |
 | Electromagnetic control | Coils, transient/RF fields and material coupling | Field/force response, current and thermal limits, calibration and process benefit |

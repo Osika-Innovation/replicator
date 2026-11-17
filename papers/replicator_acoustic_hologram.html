@@ -77,7 +77,7 @@ plate must and must not be, why the harmonic comb, what resolution may
 honestly be claimed, what the hologram records, how it is stored, and how it
 is scored. The architecture that cannot be improved further — and the
 prototype that is the same architecture with a smaller brain.</p>
-<p class="meta">draft v0.2 · 2026-11-15 (previous v0.1 · 2026-08-18) · <b>status: proposal toward a ruling
+<p class="meta">draft v0.3 · 2026-11-17 (previous v0.2 · 2026-11-15; v0.1 · 2026-08-18) · <b>status: proposal toward a ruling
 (candidate R17)</b> — not yet folded into the rulings file. Single-home: this
 paper owns the <em>acoustic-hologram limit architecture</em> (aperture
 completeness, channel/rank arithmetic, band ladder, comb, resolution
@@ -333,19 +333,35 @@ Butterworth–Van Dyke equations:
 I(t) = C₀·dV/dt + Θ·ẋ(t)   [charge form: q(t) = C₀·V(t) + Θ·x(t)]</pre>
 <p>Wiring a differential full H-bridge (+V<sub>bus</sub> expand,
 −V<sub>bus</sub> contract, 0 V active brake, Hi-Z float) across
-<b>both terminals</b> (V<sub>+</sub>, V<sub>−</sub>) with 10–50×
-electrical data-rate headroom (25–150 MHz PIO/FPGA timing or 5–20 MSa/s
-DAC/ADC) turns every drive pin into its own sensor simultaneously.
-Subtracting the known dielectric term C₀·dV/dt (via a matched reference
-capacitor C<sub>ref</sub> ≈ C₀ bridge, synchronous V(t)/I(t) shunt
-sampling, or Hi-Z slew readout) directly exposes the motional current
-I<sub>mot</sub>(t) = Θ·ẋ(t), crystal displacement x(t), and returning
-chamber force F<sub>echo</sub>(t) <b>continuously during TX with no blind
-switching window</b> (<span class="chip c-measured">MEASURED</span> self-sensing
-bridge art: Dosch, Inman &amp; Garcia 1992). Continuous tracking keeps high-Q
-chamber modes locked across 1 °C thermal drift; discrete chirped TX/RX gates
-remain optional for baseline empty-chamber H mapping rather than a
-frame-rate bottleneck.</p>
+<b>both terminals</b> (V<sub>+</sub>, V<sub>−</sub>) of a collocated
+<code>RP2350B</code> head (&lt;&nbsp;2&nbsp;pF trace capacitance vs.
+<code>C₀ ≈ 171&nbsp;pF</code>) turns every drive pin into a continuous sensor
+without TX/RX dead time. On multi-tone harmonic combs, bare zero-crossing
+timing fails: airborne echoes from a 2&nbsp;mm droplet arrive at
+<code>−60 to −80&nbsp;dB</code> below the drive current, <code>PZT-8</code>
+dielectric capacitance <code>C₀(T)</code> drifts by <code>~0.3%/°C</code>
+(<code>−50&nbsp;dB</code>, 10–30× larger than the scatter echo), and a
+single comparator crossing captures the dominant tone within &lt;&nbsp;0.2&nbsp;ns
+while failing to invert <code>5</code> comb harmonics (10 I/Q unknowns).
+Adding <code>1</code> fast comparator plus a <code>2R/1C</code> feedback
+loop across <code>2</code> PIO pins against an uncoupled <code>C₀</code>
+reference piezo runs an ADC-free <code>75&nbsp;MSa/s</code> 1-bit sigma-delta
+(<code>ΣΔ</code>) bridge (<code>OSR = 250</code> over <code>150&nbsp;kHz</code>
+→ <code>12–16</code> ENOB / <code>74–96&nbsp;dB</code> linear dynamic range)
+paired with multiplier-free <code>XOR + popcount</code> lock-in across
+<code>1</code> 12-pin drive SM and <code>1–2</code> banked <code>ΣΔ</code>
+SMs out of <code>12</code> PIO state machines on a shared
+<code>XIN + SYNC</code> clock/phase bus (<code>6.67&nbsp;ns</code> /
+<code>~0.1°</code>). That subtracts <code>C₀·dV/dt</code> and local
+efference copies directly in hardware to expose motional velocity
+<code>ẋ(t)</code> and echo force <code>F_echo(t)</code> continuously during
+TX (<span class="chip c-measured">MEASURED</span> self-sensing bridge art:
+Dosch, Inman &amp; Garcia 1992, <code>10.1177/1045389X9200300109</code>;
+bench coupon <code>K-HAPTIC-PZT</code>;
+<a href="../docs/content/compute-control.md#acoustic-lamina-75-msas-1-bit-sigma-delta-piezo-haptic">Compute, sensing and control</a>).
+Continuous tracking keeps high-Q chamber modes locked across 1 °C thermal
+drift; discrete chirped TX/RX gates remain optional for baseline
+empty-chamber H mapping rather than a frame-rate bottleneck.</p>
 
 <h3 id="s4-2">4.2 Coupled-cavity harmony and minimum holding power</h3>
 <p>Holding a stationary mass against gravity performs zero mechanical work
@@ -551,8 +567,8 @@ paper §6).</p>
 <div class="overflow"><table>
 <tr><th></th><th>rung 1 — bench / RH-1 (now)</th><th>rung 2 — final form</th></tr>
 <tr><td>plates</td><td colspan="2"><b>same</b>: two ~1 mm borosilicate (or 2 mm Al) plates, aperiodic diffuse face (R4), free-ish edge, facing across the chamber; 3-plate stack per R9</td></tr>
-<tr><td>drive</td><td>3 (bench) → 6 (two plates) thin crystal-inertia-limited broadband elements per §4.1 (<code>0.5–1.5 mm</code> PZT / <code>1–3</code> composite / PMN-PT / AlN; <code>τ_inertia ≈ 90–285 ns</code>, optional replaceable thin-walled SLA chaotic scatterer faceplate with Ø12 mm bore); differential two-terminal <code>HAPTIC</code> H-bridges with 10–50× electrical headroom; zero TX/RX switching dead time allows tracking high-Q coupled-cavity bins even on Rung 1</td><td><b>optically-addressed piezo film</b>: continuous thin piezo layer with photoconductive (a-Si) electrode; global carriers on four interleaved comb electrodes at 0°/90°/180°/270°; light selects per pixel which phase and how much is gated → full complex control at ~10⁵ pixels, no per-pixel wiring; electricity is the muscle, light the data (R1). Photoconductor response µs → carriers to hundreds of kHz; pattern rate = writer frame rate (kHz), ample for hologram updates</td></tr>
-<tr><td>hologram source</td><td>computer: measured H + continuous differential <code>HAPTIC</code> chord-lock residual; steady holding throttles to <code>P_hold = ω·E_stored/Q_cav</code></td><td>holographic medium read out as light, through multimode fibre, phase-conjugate (§8)</td></tr>
+<tr><td>drive</td><td>3 (bench) → 6 (two plates) thin crystal-inertia-limited broadband elements per §4.1 (<code>0.5–1.5 mm</code> PZT / <code>1–3</code> composite / PMN-PT / AlN; <code>τ_inertia ≈ 90–285 ns</code>, optional replaceable thin-walled SLA chaotic scatterer faceplate with Ø12 mm bore); collocated <code>RP2350B</code> two-terminal differential H-bridges running <code>75 MSa/s</code> 1-bit <code>ΣΔ</code> + <code>XOR</code> lock-in against an uncoupled <code>C₀</code> reference on a shared <code>XIN + SYNC</code> spinal bus (<code>K-HAPTIC-PZT</code>; optional Card 2 <code>SoC-FPGA</code>) so TX/RX has zero dead time</td><td><b>optically-addressed piezo film</b>: continuous thin piezo layer with photoconductive (a-Si) electrode; global carriers on four interleaved comb electrodes at 0°/90°/180°/270°; light selects per pixel which phase and how much is gated → full complex control at ~10⁵ pixels, no per-pixel wiring; electricity is the muscle, light the data (R1). Photoconductor response µs → carriers to hundreds of kHz; pattern rate = writer frame rate (kHz), ample for hologram updates</td></tr>
+<tr><td>hologram source</td><td>swappable Brain Slot: measured H + <code>RP2350B</code> <code>C₀</code>-cancelled <code>HAPTIC</code> + <code>SMI</code> innovation bus (~128–256 complex axons, &lt; 1 kB/stroke) feeding Card 1 <code>5–10%</code> block-sparse complex <code>int8</code> <code>Cadence</code> (&lt; 60 kB SRAM, ~8–15 ms settle) or optional Card 2 <code>SoC-FPGA</code> (&lt; 5 µs settle); steady holding throttles to <code>P_hold = ω·E_stored/Q_cav</code></td><td>holographic medium read out as light, through multimode fibre, phase-conjugate (§8)</td></tr>
 <tr><td>N<sub>eff</sub></td><td>~10³ (plate) – ~10⁴ (chamber)</td><td>→ N<sub>SBP</sub>, diffraction-limited</td></tr>
 <tr><td>band</td><td>comb f₀ 25 kHz, harmonics to 8 (200 kHz), ordinary air</td><td>same in air; argon rung to 1 MHz (0.17 mm) — needs this rung's pixel density, since a one-pass field has no reverberation to lend a few channels</td></tr>
 <tr><td>storage</td><td>compact sparse <code>.pattern</code> chord lists (KB to sub-MB; Scan §3, §6)</td><td>optical holographic pages: (plate view) × (comb line), ~10⁵–10⁶ frames/cm³</td></tr>

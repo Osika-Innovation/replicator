@@ -15,7 +15,9 @@ Drive and sense continuously across both terminals of every piezoelectric elemen
 - `m ẍ + c ẋ + k x = Θ V(t) + F_echo(t)`
 - `I(t) = C_0 dV/dt + Θ ẋ(t)`
 
-Subtracting the dielectric slewing current `C_0 dV/dt` (via matched `C_ref` bridge, synchronous `V/I` shunt sampling, or `Hi-Z` slew timing) recovers strain `x(t)`, crystal velocity `ẋ(t)`, and returning chamber echo loading `F_echo(t)` simultaneously during drive with zero blind TX/RX switching gap.
+Subtracting the dielectric slewing current `C_0 dV/dt` against a matched `C_ref` capacitor (such as the cartridge's uncoupled `C_0` reference piezo) recovers strain `x(t)`, crystal velocity `ẋ(t)`, and returning chamber echo loading `F_echo(t)` simultaneously during drive with zero blind TX/RX switching gap.
+
+On a multi-tone harmonic comb (`24–200 kHz`), a `2 mm` airborne droplet echo lies `−60 to −80 dB` below baseline drive while `PZT-8` `C_0(T)` drifts `~0.3% / °C` (`−50 dB`), which captures a bare zero-crossing comparator (`< 0.2 ns` crossing shift; two crossings per period cannot invert ten I/Q comb unknowns). Closing a **`75 MSa/s` `1-bit` sigma-delta (`ΣΔ`) feedback loop** (`1` comparator + `2` resistors + `1` capacitor across two `RP2350B` PIO pins, `OSR = 250` over `150 kHz` → `12–16` ENOB / `74–96 dB` dynamic range) with multiplier-free bitwise `XOR` + `popcount` lock-in demodulates all comb lines simultaneously; collocating one `RP2350B` ganglion per 6-port head keeps trace capacitance below `2 pF` (`1` synchronous 12-pin drive SM + `1–2` banked `ΣΔ` SMs out of `12`, clock-locked via shared `XIN`/`SYNC`; [Compute, sensing and control](compute-control.html#acoustic-lamina-75-msas-1-bit-sigma-delta-piezo-haptic)). Bench coupon `K-HAPTIC-PZT` remains open.
 
 ## Coupled-cavity equilibrium and sparse chords
 
@@ -39,4 +41,4 @@ The reusable calibration fixture measures electrical impedance, adaptive `C_0` b
 
 The first manipulation gate is repeatable hold, move and release under simultaneous two-terminal `HAPTIC` closed-loop regulation. The manufacturing gate additionally requires controlled feed, joining and inspection. A replaceable field-shaping faceplate, fixture or feed component becomes an upgrade only when its measured effect improves the machine.
 
-See [The Acoustic Hologram](../papers/replicator_acoustic_hologram.html), [The Phonons](../papers/replicator_phonons.html), [Manufacturing](manufacturing.html), [Materials](materials.html) and the full acoustic library in [research](research.html).
+See [Compute, sensing and control](compute-control.html), [The Acoustic Hologram](../papers/replicator_acoustic_hologram.html), [The Phonons](../papers/replicator_phonons.html), [Manufacturing](manufacturing.html), [Materials](materials.html) and the full acoustic library in [research](research.html).

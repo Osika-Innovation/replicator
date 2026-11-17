@@ -10,7 +10,7 @@ The Replicator coordinates acoustic, electric, magnetic and optical fields in on
 <rect x="205" y="300" width="650" height="125" rx="12" fill="#e2ede5" stroke="#186b60" stroke-width="1.5"/>
 <g fill="#f2f5ef" stroke="#186b60" stroke-width="1.5">
 <a href="digital-twin.html" aria-label="Digital twin and planner"><rect x="220" y="20" width="440" height="62" rx="9"/></a>
-<a href="digital-twin.html#one-work-volume-and-material-state" aria-label="Coordinated control and power"><rect x="250" y="110" width="380" height="54" rx="9"/></a>
+<a href="compute-control.html" aria-label="Coordinated control and power"><rect x="250" y="110" width="380" height="54" rx="9"/></a>
 <a href="acoustics.html" aria-label="Acoustic fields"><rect x="145" y="205" width="190" height="58" rx="9"/></a>
 <a href="electromagnetics.html" aria-label="Electric and magnetic fields"><rect x="355" y="205" width="190" height="58" rx="9"/></a>
 <a href="optics.html" aria-label="Optical fields"><rect x="565" y="205" width="190" height="58" rx="9"/></a>
@@ -59,8 +59,8 @@ The twin shares coordinates, timing, sensor calibration and material state acros
 | Acoustic bodies | Convert a few electrical inputs into useful fields in the shared volume | Geometry, frequency response, drive limits, uncertainty and calibration points |
 | Electric and magnetic fields | Apply material-dependent forces, torques, excitation or heating | Field maps, material coupling, access, limits and calibration |
 | Optical fields | Supply observation, patterned exposure and selected material processing | Optical access, wavelength/dose, resolution, material coupling and calibration |
-| Control and power | Coordinate waveforms, acquisition and process sequences | Channel map, timing, voltage/current limits and job records |
-| Metrology | Observe fields, material and process quality | Raw measurements, shared coordinates, calibration, reconstruction and uncertainty |
+| Control and power | Collocated `RP2350B` ganglia locked via shared `XIN`/`SYNC` bus (`50–150 Mbit/s` PIO/`HSTX`); `75 MSa/s` `1-bit ΣΔ` + `XOR` comb lock-in; swappable Central Complex (`< 60 kB` sparse complex `Cadence` in SRAM; optional `SoC-FPGA` or optical PCM core); identical standalone or host-tethered `.fcode` contract | Channel map, timing, voltage/current limits, multi-tone SFDR (`K-HAPTIC-PZT`) and job records |
+| Metrology | Observe fields, material and process quality (`XIN`/`SYNC`-locked self-mixing `SMI` diffractive facets with SOT-23 `×200` AC gain + `1-bit ΣΔ` alongside acoustic `HAPTIC`) | Raw measurements, shared coordinates, calibration, `K-MOSQUITO-SMI` validation, reconstruction and uncertainty |
 | Feed and consolidation | Supply and permanently join the selected material | Process recipe, material/energy budget and inspection criteria |
 | Frame and utilities | Preserve alignment and operating conditions | Datums, mounts, access, cooling and replaceable connections |
 | Twin and planner | Co-design modules and their combined action; simulate, compile and compare jobs | Versioned module records, coupled material state, programs, receipts and upgrade dependencies |
@@ -83,4 +83,4 @@ The first configuration needs an acoustic module, drive/acquisition, metrology, 
 
 The November 13 EM branch recommendation concerns that starting configuration. It does not remove electromagnetic processing from the ultimate architecture. Integration work should preserve the shared volume and define the next combined-field recipe that improves an inspected part.
 
-Read [Acoustics](acoustics.html), [Electromagnetics](electromagnetics.html), [Optics and metamaterials](optics.html), [Manufacturing](manufacturing.html) and [Digital twin](digital-twin.html).
+Read [Acoustics](acoustics.html), [Electromagnetics](electromagnetics.html), [Optics and metamaterials](optics.html), [Compute, sensing and control](compute-control.html), [Manufacturing](manufacturing.html) and [Digital twin](digital-twin.html).

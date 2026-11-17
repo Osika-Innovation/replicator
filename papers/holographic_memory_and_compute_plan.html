@@ -39,6 +39,7 @@
   .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
   .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
   .chip.c-bound{color:#fff;background:var(--blood);border-color:var(--blood)}
+  .chip.c-derived{color:#fff;background:var(--amber);border-color:var(--amber)}
   table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
   th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
   th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
@@ -77,7 +78,7 @@ Bridge document · compute lane →
 <h1>Memory and Compute in the Holographic Machine</h1>
 <p class="sub">A conceptual plan — where the bits live, where the arithmetic
 happens, and why those are not the same cavity.</p>
-<p class="meta">draft v0.2 · 2026-11-15 (previous v0.1 · 2026-07-22; sparse chord lists and simultaneous two-terminal <code>HAPTIC</code> residual tracking retire the early ~100 MB object and ~1 Tbit/s raw sensor stream assumptions) · <b>Role</b>: this document connects
+<p class="meta">draft v0.3 · 2026-11-17 (previous v0.2 · 2026-11-15; v0.1 · 2026-07-22; sparse chord lists, 5–10% block-sparse complex EqProp &amp; ganglionic RP2350B spinal bus update; earlier versions retired ~100 MB object and ~1 Tbit/s raw stream assumptions) · <b>Role</b>: this document connects
 two lanes that were built separately. The compute lane has a prototype (a
 twelve-port EML toroid, $10 BOM) and a measurement framework (the Osika and
 its four axes). The replicator lane has a boundary-controlled chamber and a
@@ -336,10 +337,17 @@ for training.</li>
 <li><b>PCM endurance is finite</b> (order 10⁶–10⁹ cycles): fine for a store
 that updates rarely, disqualifying at activation rates. Precisely why it is
 the store and not the working layer.</li>
-<li><b>In-situ training remains unsolved.</b> Inference through a written
-transform is straightforward; computing gradients inside the medium is not.
-Assume transforms are fitted elsewhere and written here until shown
-otherwise.</li>
+<li><b>In-situ training remains gated on PCM endurance, though the backward transpose is free.</b>
+(<span class="chip c-measured">MEASURED</span> EqProp learning rule: Scellier &amp; Bengio 2017,
+<code>10.3389/fncom.2017.00024</code>; <span class="chip c-derived">DERIVED</span> optical mapping.)
+Because lossless/reciprocal dielectric permittivity satisfies <code>ε = εᵀ</code>,
+Helmholtz reciprocity supplies the exact complex conjugate-transpose feedback
+<code>Wᴴ</code> physically on reverse propagation, while contrastive two-beam
+interference between free and nudged equilibrium states encodes local
+outer-product <code>ΔW</code> updates alongside threshold laser-diode
+<code>O-E-O</code>/<code>EML</code> gain-restoring somas. Offline digital fitting
+and external verification remain mandatory until <code>Sb₂S₃</code>/<code>Sb₂Se₃</code>
+rewrite endurance passes bench qualification.</li>
 </ul></div>
 <div class="box"><b>And the two compute modes cover each other.</b> This plan
 contains <em>both</em> stories: a <b>passive holographic transform</b> (§4 —
@@ -350,6 +358,35 @@ available as the nonlinearity for a holographic matmul that lacks one. The
 honest architecture is not "optics plus an unsolved problem." It is <b>a
 linear transform in the medium and a nonlinear primitive at the device — the
 standard division of labour, just physical.</b></div>
+
+<h3 id="s4-2">4.2 · One ganglionic bus from RP2350 SRAM to the optical core</h3>
+<p>Acoustic and optical peripheral heads (collocated <code>RP2350B</code> ganglia
+running <code>75 MSa/s</code> 1-bit sigma-delta <code>HAPTIC</code> and AC-coupled
+<code>SMI</code> lock-in on a shared <code>XIN + SYNC</code> clock) subtract dielectric
+<code>C₀(T)</code> and local efference copies before transmitting ~128–256 complex
+innovation axons (&lt;&nbsp;1&nbsp;kB/stroke over a <code>50–150&nbsp;Mbit/s</code>
+PIO/<code>HSTX</code> spinal bus) into a swappable Brain Slot
+(<span class="chip c-derived">DERIVED</span>;
+<a href="../docs/content/compute-control.md#central-complex-sparse-complex-hermitian-cadence-and-the-swappable-brain-slot">Compute, sensing and control</a>):</p>
+<ul>
+<li><b>Card 1 (Rung 1 default — <code>RP2350B</code> Brain Slot):</b> A dense
+<code>192 → 512 → 180</code> complex <code>int8</code> recurrent network
+(<code>372&nbsp;kB</code> weights) needs <code>~1.52M</code> real MACs per step
+(<code>~45M</code> MACs for 30 EqProp steps ≈ <code>220–300&nbsp;ms</code> on dual
+<code>150&nbsp;MHz</code> Cortex-M33 cores). Restricting <code>Cadence</code> to
+<b>5–10% block-sparse, event-driven (<code>Δz</code>) complex <code>int8</code></b>
+shrinks active weights below <code>60&nbsp;kB</code> SRAM and settles in
+<code>~8–15&nbsp;ms</code> while running local outer-product EqProp calibration for
+thermal drift on-chip.</li>
+<li><b>Card 2 (optional Rung 1.5 — <code>SoC-FPGA</code> Brain Slot):</b> Keeps the
+same <code>XIN + SYNC</code> spinal packet contract while placing dual-port BRAM and
+parallel DSPs on the slot for sub-<code>5&nbsp;µs</code> settle, wideband multi-tone
+linear ADC capture, and <code>~10⁵</code>-pixel SLM scan generation.</li>
+<li><b>Card 3 (Rung 2–3 — Optical core):</b> Replaces the digital matrix inside the
+slot with reciprocal <code>Sb₂S₃</code>/<code>Sb₂Se₃</code> PCM holographic transforms
+and threshold laser-diode <code>O-E-O</code>/<code>EML</code> gain-restoring somas
+on the identical ganglionic bus and sparse equilibrium contract.</li>
+</ul>
 
 <h2>5 · What this gives the replicator</h2>
 <p>Three concrete returns, in increasing order of how much they matter:</p>
