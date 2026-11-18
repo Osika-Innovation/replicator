@@ -6,7 +6,10 @@ from pathlib import Path
 import re
 from urllib.parse import unquote, urlsplit
 
+import canon
+
 ROOT = Path(__file__).resolve().parents[1]
+PRIVATE = canon.private_terms()
 OUT = ROOT / '_site'
 
 
@@ -54,7 +57,7 @@ def main():
     for p in OUT.rglob('*'):
         if p.is_file() and p.suffix in {'.html', '.json', '.txt', '.md'}:
             t = p.read_text()
-            if re.search(r'file://|/Users/|/private/tmp/|\.codex/attachments|research/intake/', t):
+            if re.search(r'file://|/Users/|/private/tmp/|\.codex/attachments|research/intake/', t) or (PRIVATE and PRIVATE.search(t)):
                 errors.append('Private/local provenance in public output: ' + p.name)
     index = json.loads((OUT / 'document-index.json').read_text())
     if {d['id'] for d in index} != known: errors.append('Search index differs from catalog')

@@ -1,64 +1,108 @@
 # Electromagnetic control
 
-This subsystem owns electric and magnetic forces, torques, induction, pulsed-field interactions and RF/microwave launch and sensing. It coordinates with [acoustic bodies](acoustics.html) and the separately owned [optics and metamaterials subsystem](optics.html) in one shared three-dimensional work volume.
+This chapter covers electric and magnetic fields used to act on material: coils, induction and pulsed fields. Its message has two parts. Large coils acting across the chamber do not work, and the project's own models show why. A small pulsed ring coil at a crucible is a different case and remains open. The [Desktop Replicator](desktop-replicator.html) contains no electromagnetic process module, and nothing here has been built or measured.
 
-Design the field at the material and the material's response together. The required outputs are a useful force, orientation, flow, temperature or observation, together with the power and timing needed to produce it.
+Light is treated in [Optics](optics.html). The piezo discs that drive the plates are electrical parts, but they belong to [Acoustics](acoustics.html).
 
-## Levitation, heating and material shaping
+## The physics that matters
 
-Electromagnetic fields already provide a practical route to containerless processing of conductive material. The ESA/DLR electromagnetic levitator uses coil-generated fields to position and heat samples, including melting and solidification. This gives the programme a concrete starting point for investigating controlled melt processing. [ESA facility](https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/International_Space_Station/Material_Science_Laboratory_Electromagnetic_Levitator_MSL-EML).
+A coil can act on matter in three ways.
 
-For a conducting fluid, the Lorentz-force density includes `J × B`; the current distribution also determines resistive heating. The coupled model needs conductivity, induced currents, field gradients, flow, surface tension and thermal history. Magnetic or dielectric particles have their own force and torque laws. Coil topology, return paths, standoff and frequency determine how effectively the source reaches the work volume.
+- **Force on a magnetic or magnetised body.** A body with magnetic moment m feels a force ∇(m·B) and a torque m × B. The force needs a field gradient, not just a field.
+- **Force and heat in a conductor.** A changing field induces a current density J in a conductor. The current heats it and, with the field, produces the force density J × B. This is how induction heating and electromagnetic levitation of molten metal work.
+- **Induced electric field.** A changing magnetic flux Φ produces an electric field around it (Faraday's law):
 
-Treat “soft molding” as a process question: what changes the material's flow or yield behavior, what stress shapes it, and what fixes the final shape? Distinguish heating/melting, mechanical deformation and any proposed change in constitutive behavior. Record temperature, strain and the final part's properties so the mechanism can be identified.
+      ∮ E · dl = −dΦ/dt
+
+Two geometric facts decide what is feasible.
+
+**Reach.** Below about 100 kHz the wavelength is kilometres, so a coil's field is quasi-static. It cannot form detail finer than its distance from the work, however many circuits it has. A quasi-static coil acts usefully only on matter that fills or links its flux path within about one coil radius (Derived, with simulated examples below).
+
+**Linking.** A toroidal winding keeps its magnetic field inside the ring. Outside the ring the magnetic field is zero and the induced electric field is curl-free. Such a field drives a sustained current only around a closed conducting path that passes through the hole of the ring. An isolated object only polarises: its charges shift until the field inside it is cancelled.
+
+## What does not work: large coils across the chamber
+
+An earlier design, now retired, carried pairs of large contrawound copper coils (about 290 mm across, 44 + 44 turns) roughly 300 mm from the work. Driven with equal currents a pair acts as a two-turn ring; driven with opposite currents it acts as an 88-turn toroid whose field stays inside the winding. Two project studies in November 2026 modelled what these coils, and frame coils around the chamber, could do to millimetre-scale payloads. All results below are Simulated or Derived, in reduced models, at frequencies from zero to 100 kHz.
+
+| Task | Result |
+|---|---|
+| Hold a Ø1 mm steel ball with the large coil pairs | Force is 8.5 × 10⁻⁵ of the ball's weight |
+| Levitate a stone-like, non-magnetic grain | Short by seven to nine orders of magnitude |
+| Position a steel ball with frame coils of 2 to 8 circuits | Short by a factor of about 1,000 |
+| Bring two steel balls into contact from outside | Not possible: they repel with 26 weights against 0.28 weights of command |
+| Melt a Ø0.76 mm solder ball by induction at a distance | 0.6 to 5 % efficient, and the field lifts the ball as it melts |
+| Weaken a chemical bond with a static field | Magnetic energy per spin is about 10⁻⁸ eV; a silicon–oxygen bond is 4.7 eV |
+
+Three further results explain the table.
+
+- **Coupling depends on distance.** A pin inside a solenoid absorbs 91 % of the power. A ball 1.3 mm from a flat coil absorbs 1 %. At 300 mm no change of winding helps.
+- **The toroid mode reaches only matter that links the winding.** With opposite currents, leakage outside the winding is at most one part in a thousand. Material in the work volume does not link the winding and feels nothing.
+- **The plate in front blocked most of the rest.** In the retired design an aluminium face plate passed only 12 to 18 % of the ring-mode field above 1 kHz.
+
+**What this rules out.** Levitating, placing, heating or chemically altering millimetre-scale material with coils that sit outside the chamber. Non-conductive, non-magnetic feedstock such as polymer beads offers no handle in any case. The large coils are therefore omitted from the prototype.
+
+**What it does not rule out.** A coil within about one radius of its target, or an induced electric field acting on matter that links a small ring. The studies above did not model either.
+
+## What remains open: a small pulsed ring coil at a crucible
+
+The candidate is a compact toroidal coil, with an inner diameter of {{c:dissolve_and_toroidal.compact_toroid_collar_id_mm_range|range}} mm, placed around the throat of a single crucible. It is Derived in principle and Open in the chamber. It is not in the CAD model and has not been simulated.
+
+**Principle.** The winding keeps the magnetic field inside the ring, so nearby electronics and laser diodes see almost none of it. When the current changes, the flux in the ring changes and an electric field appears along the axis through the hole. In terms of the vector potential A this is E = −∂A/∂t. The coil is a transformer whose secondary is whatever closed conducting path threads the ring.
+
+**Worked number.** By analogy with the magnetic field at the centre of a current loop, the electric field at the centre of a flux ring of mean radius R is
+
+    E = (dΦ/dt) / (2R)
+
+Take illustrative values, which are not design values: a core cross-section of 1 cm², a flux density swing of 0.3 T in 1 µs and R = 10 mm. Then dΦ/dt is 30 V, which is the voltage around any single loop through the ring, and the axial field at the centre is about 1.5 kV/m. Air at atmospheric pressure breaks down near 3 MV/m, some two thousand times higher (Derived).
+
+**Candidate uses.** Both are for recovering material, as described in [Matter loop](matter-loop.html).
+
+- *Electroplastic softening.* Passing a pulsed current through a metal can lower the stress at which it flows, with less heating than melting. The programme's working figure is {{c:dissolve_and_toroidal.electroplastic_energy_reduction_vs_melt_x|range}} times less energy than melting. No primary source for that figure is registered yet, and separating a true current effect from ordinary resistive heating requires a matched temperature control.
+- *Plasma breakdown.* A closed loop of ionised gas through the ring can be driven like a transformer secondary and used to break residue down to elements. No primary source for inductively coupled plasma at this scale is registered yet. The worked number above shows that breakdown in open air is far from assured.
+
+**The limit that must be respected.** The induced field does work only on matter that forms a closed conducting path through the ring. A metal ring, a wire loop or a closed plasma loop qualifies. A single joint, a grain or a droplet sitting in the throat does not: the field there is curl-free, so the object merely polarises. Softening an addressed joint with this coil is therefore not established. It would need the joint to be part of a conducting loop that links the ring, and the current would flow around the whole loop, not only through the joint.
+
+**Anapole.** A related idea combines a toroidal current with an electric dipole of matched amplitude and phase (p = ikT, with k the wavenumber and T the toroidal dipole moment). Their radiated fields cancel far away, so energy stays stored near the source instead of radiating. The principle is established electrodynamics. Its use here is Open, it is not modelled, and no primary source is registered yet.
 
 ## Toroidal and pulsed fields
 
-The existing [photon mechanism paper](../papers/replicator_photons.html#s2) includes spiral launchers, structured pulses, spectral addressing and position sensing. Preserve that design work while selecting the mechanism for a particular task.
+Four different things share the word "toroidal" or "vortex". They must not be mixed.
 
-| Concept | What is specified | Engineering question |
+| Name | What it is | Status here |
 |---|---|---|
-| Toroidal coil or magnetic circuit | Source geometry, winding and return path | What external field, gradient and force reach the material? |
-| Rotating or vortex-like field pattern | Vector field in space and time | What currents, torques, flow and heating does it produce in the selected material? |
-| Toroidal electromagnetic pulse | A space–time structured propagating field | What source, bandwidth and detector generate and resolve the required waveform? |
-| Proposed gravito-magnetic effect | An additional claimed force or coupling | What quantitative prediction distinguishes it from electromagnetic and mechanical forces? |
+| Large toroidal coil pair | Contrawound winding on a hollow former, far from the work | Ruled out as an actuator (Simulated) |
+| Small pulsed ring coil | Compact toroid at a crucible throat, acting through the induced electric field | Derived in principle, Open in the chamber |
+| Propagating toroidal pulse | A short free-space electromagnetic pulse with ring-shaped field lines | Documented in optics and microwaves; see [Optics](optics.html#toroidal-optical-pulses) |
+| Rotating field pattern | Phased coils that stir or turn a conductive melt | Long-term only; no model yet |
 
-A toroidal winding can concentrate flux inside its magnetic path. A propagating toroidal pulse is a different field solution. Wang and colleagues demonstrated toroidal-pulse-based positioning at microwave frequencies; Zdagkas and colleagues demonstrated optical/THz pulse generation. These establish specific launch and sensing results, with their own apparatus and bands. [Microwave positioning](https://doi.org/10.1038/s42005-024-01850-z), [optical/THz pulses](https://doi.org/10.1038/s41566-022-01028-5).
+## In the Desktop Replicator
 
-For a pulsed-field candidate, record the measured current waveform, spatial field map, induced-current distribution, force/torque, thermal response and energy per operation. Compare the useful response with a simpler drive and geometry. Pulse rise time or a vortex-shaped field alone does not specify its material effect.
+The prototype has no coils, magnets or induction stage acting on the work. The piezo discs are driven directly by wire. Three electromagnetic items exist only as options:
 
-## Patent-led and exploratory mechanisms
+- **Spiral conductor on the glass.** A CAD placeholder, off by default, described in [Optics](optics.html#toroidal-optical-pulses).
+- **Small pulsed ring coil.** The candidate above. It is not in the CAD model.
+- **Eddy-current plate exciter (X-EM).** A flat coil and a small magnet held 0.5 mm from a metal plate shake the plate and sense its motion without contact. It was proposed for the aluminium plates of the earlier design, where the model gives 0.13 to 0.21 N per ampere at under 1 W and detects 99.4 % of axisymmetric modes up to 45 kHz (Simulated). Borosilicate glass does not conduct, so it does not apply to the active wafers. It is an optional diagnostic for conductive plates only.
 
-Retain named patent mechanisms as research leads with their exact publication number, claimed effect and next discriminating observation. A patent's description supplies a proposed apparatus; its performance requires experimental evidence. Keep documented electromagnetic levitation and processing, structured-wave demonstrations and proposed gravity-related effects as separately testable mechanisms.
+## Long-term direction
 
-John St. Clair's applications are retained as specific research leads:
+Electromagnetic fields earn a place once the feedstock gives them something to hold.
 
-| Primary source | Claimed connection to investigate |
+- **Conductive melts.** Induction can levitate, shape and heat a molten metal drop without a container, as the European Space Agency's [electromagnetic levitator](https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/International_Space_Station/Material_Science_Laboratory_Electromagnetic_Levitator_MSL-EML) does in orbit (Documented). The coil surrounds the drop, consistent with the reach rule above.
+- **Magnetic inclusions.** A uniform field can orient magnetic or anisotropic particles while sound positions them and light cures the matrix. See [Manufacturing](manufacturing.html).
+- **Sound generation.** Launching sound in a plate directly by eddy currents is rejected as the main drive: it is tens of decibels less efficient than a piezo element, and the loss becomes heat next to the chamber.
+
+## Unverified claims
+
+Several patents and replication accounts assert lift, softening or other effects from vortex coils and high-voltage toroids. They are recorded in the [Research library](research.html) as Claims. They are not design inputs. Where a claimed geometry could be checked against standard electromagnetism, the model showed ordinary behaviour and no anomalous force.
+
+## Open questions
+
+| Question | Who answers it |
 |---|---|
-| [Magnetic vortex wormhole generator, US20030197093A1](https://patents.google.com/patent/US20030197093A1/en) | Proposed lift/mass effects; claim 6 also describes crystal joining through its proposed mechanism |
-| [Water energy generator, US20060180473A1](https://patents.google.com/patent/US20060180473A1/en) | Its description connects a rotating magnetic vortex to proposed material softening; the identity of that separately named device remains to resolve |
-| [Full body teleportation system, US20060071122A1](https://patents.google.com/patent/US20060071122A1/en) | A related proposed vortex/waveguide mechanism; retained for source traceability |
+| What axial field, stray field and pulse energy does a ring coil of this size deliver? | Electrodynamic model, which does not exist yet |
+| Is there a recoverable part or residue that forms a closed conducting path through the ring? | Matter-loop design |
+| Does pulsed current soften a metal joint beyond what its heating explains? | Literature search, then a temperature-controlled bench test |
+| Can a plasma loop be struck at the crucible, and at what pressure? | Literature search, then model |
+| Do the levitation shortfalls of 10⁷ and 9 × 10⁸ quoted by the two studies refer to the same case? | Simulation |
 
-The reviewed texts establish what the inventor proposed, without calibrated measurements establishing those effects. For material-softening research, measure stress–strain or flow behavior at matched temperature and thermal history. For a proposed additional force, specify its predicted magnitude and scaling and separate it from ordinary electromagnetic forces, airflow, vibration, cable forces and measurement interference.
-
-Graviflyer replication reports are another retained lead. An organizer-hosted account of Jarod Yates's 2024 experiments reports horizontal deflection while sustained vertical lift remained unachieved. It documents that particular attempt, not the outcome of every reported replication. A successful gravitational interpretation requires the corresponding force record and controls; this account alone does not establish it. [Replication account](https://www.altsci.net/graviflyer-replication-experiments/).
-
-The research register preserves source identities and review status. Private laboratory reports stay outside public capability claims. An exploratory result becomes part of a process model when its observable, controls and uncertainty support that use.
-
-## Current integration direction
-
-The engineering EM study evaluated the RH-1 windings and closer-coupled alternatives. Its November 13 second pass recommends keeping an EM manufacturing module out of the initial acoustic build and proposes contactless excitation/measurement of an acoustic disc as an instrument candidate.
-
-That recommendation concerns the initial hardware configuration. The ultimate architecture includes coordinated electromagnetic processing and optical metamaterials. The first material recipe selects the starting combination; later modules expand it. These branch-study recommendations retain their [current-state status](status.html).
-
-## Twin and integration contract
-
-Deliver typed ports, geometry, constitutive laws, field maps, frequency/transient response, current and voltage limits, thermal limits and calibration records. Register actuators and sensors to the same work-volume coordinates as acoustics and optics. Couple the solvers through material position, orientation, temperature, flow and process state where those affect the job.
-
-Common process timing permits simultaneous or deliberately sequenced actions. Phase coherence is included where the actual interaction needs it. Compare a combined recipe with its best simpler baseline on the finished part, power, throughput and human effort.
-
-## Optical modules
-
-The optical-wavelength programme now has its own [Optics and optical metamaterials](optics.html) chapter, covering holographic ports, metasurfaces, optical toroidal pulses, fabrication and readout. This link preserves the former combined chapter's entry point.
-
-Read [Architecture](architecture.html), [Manufacturing](manufacturing.html), [Optics](optics.html) and [Research library](research.html).
+Related reading: [Architecture](architecture.html), [Optics](optics.html), [Manufacturing](manufacturing.html) and [Research library](research.html).

@@ -76,7 +76,7 @@ instance build: <a href="replicator_mechanical_construction.html">Mechanical Con
 surfaces, how many channels, in what arrangement, and why — counts, ratios,
 and ladders rather than millimetres. Millimetre numbers appear only as
 clearly-marked instance examples pointing at the hardware spec.</p>
-<p class="meta">draft v1.1 · 2026-11-15 (previous v1.0 · 2026-08-01) · first-principles crystal-inertia &amp; two-terminal <code>HAPTIC</code> piezo self-sensing update; extracted 2026-08-01 from
+<p class="meta">draft v1.2 · 2026-11-17 (previous v1.1 · 2026-11-15; v1.0 · 2026-08-01) · collocated RP2350B 75 MSa/s 1-bit sigma-delta HAPTIC &amp; XIN/SYNC spinal bus update; extracted 2026-08-01 from
 <code>the_replicator.html</code> §6 (v0.7) and
 <code>REPLICATOR_CAP_STACK_RULINGS_2026-07-30</code>. Register chips
 (<span class="chip c-measured">MEASURED</span> /
@@ -319,11 +319,15 @@ simultaneous <code>HAPTIC</code> self-sensing (subtracting dielectric current
 <code>C₀·dV/dt</code> to recover motional velocity <code>ẋ(t)</code> and echo
 <code>F_echo(t)</code> during drive without TX/RX dead time;
 <a href="replicator_acoustic_hologram.html#s4">Acoustic Hologram §4.1</a>).
-On Rung 1 prototypes with thin crystal-inertia-limited broadband ports on
+On Rung 1 <b>bootstrap prototypes</b> with thin crystal-inertia-limited broadband ports on
 dispersive plates, three asymmetric elements per opposed head (6 ports total)
-exploit harmonic-comb SIMO multiplexing; in the full bullseye plate geometry,
+exploit harmonic-comb SIMO multiplexing powered by temporary seed electronics—a collocated <code>RP2350B</code>
+ganglion (&lt;&nbsp;2&nbsp;pF stray interconnect vs. <code>C₀ ≈ 171&nbsp;pF</code>)
+running a 75&nbsp;MSa/s 1-bit sigma-delta bridge and shared <code>XIN + SYNC</code>
+clock/phase spinal bus (<a href="../docs/content/compute-control.md#acoustic-lamina-75-msas-1-bit-sigma-delta-piezo-haptic">Compute, sensing and control</a>)—whereas the <b>ultimate architecture</b> transitions the boundary to continuous wave-addressed apertures and minimal-electricity physical wave substrates (<a href="../docs/content/cadence-memory.md">Cadence, memory and wave compute</a>);
+in the full bullseye plate geometry,
 <b>twelve drive channels = six cones × two</b> span the antipodal cone basis
-on the same dual-H-bridge PIO architecture across every aperture topology:</p>
+on the same invariant phase contract across every aperture topology:</p>
 <div class="overflow"><table>
 <tr><th>tiles</th><th>machine</th><th>verbs available</th></tr>
 <tr><td>1 plate</td><td>table replicator</td><td>ADD at full strength; REMOVE partial (only the returning channel is controllable) — assembler-grade</td></tr>

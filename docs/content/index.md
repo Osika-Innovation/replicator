@@ -5,38 +5,42 @@
 
 # Build the machine that builds the next.
 
-<div class="lead">One enduring modular platform. Geometry that does more. A digital twin that turns each experiment into the next useful upgrade.</div>
+<div class="lead">The Replicator holds, moves and joins material with sound, light and electromagnetic fields in one chamber with no tools inside it. This handbook is the working engineering reference for the programme.</div>
 
-The Replicator programme develops field-controlled manufacturing: feed material, arrange it, join it and verify the result. Its long-term objective is to manufacture increasing portions of its own successors. Our first target is a useful part that improves the same platform.
+The first machine is the [Desktop Replicator](guides/desktop-replicator.html), a benchtop chamber designed from parts that can be bought today. It exists as a CAD model and a set of simulations. **No hardware has been built, ordered or measured yet.** The long-term aim is a machine that makes an increasing share of the parts of its own successor.
 
-This handbook connects the architecture, working software, manufacturing path and research. Start with the system, follow a subsystem, then inspect the source and the evidence behind its decisions.
+<div class="diagram">
+<img src="assets/desktop/desktop_iso.jpg" alt="CAD render of the Desktop Replicator: a rounded-square base and head joined by a rear tower, with an open chamber between them and a round glass plate at the chamber floor." width="1200" height="900">
+<p>The Desktop Replicator, {{c:desktop_geometry.envelope_mm|x}} mm. CAD render of the current design.</p>
+</div>
 
 <div class="cards">
-<a class="card" href="guides/architecture.html"><span class="eyebrow">01 / UNDERSTAND</span><h2>The whole machine</h2><p>Subsystems, interfaces and the first prototype.</p></a>
-<a class="card" href="guides/digital-twin.html"><span class="eyebrow">02 / BUILD</span><h2>The engineering twin</h2><p>Geometry, solvers, control and reproducible results.</p></a>
-<a class="card" href="guides/upgrades.html"><span class="eyebrow">03 / IMPROVE</span><h2>The upgrade loop</h2><p>From purchased seed parts to a machine-made improvement.</p></a>
-<a class="card" href="guides/physics.html"><span class="eyebrow">04 / EXPLORE</span><h2>The physics</h2><p>OPH, light, material spectra and the mechanisms we use.</p></a>
+<a class="card" href="guides/desktop-replicator.html"><span class="eyebrow">01 / THE MACHINE</span><h2>Desktop Replicator</h2><p>What is being designed first, how it works, and what is still open.</p></a>
+<a class="card" href="guides/status.html"><span class="eyebrow">02 / TODAY</span><h2>Current state</h2><p>What exists, the evidence behind it, and what blocks each next step.</p></a>
+<a class="card" href="guides/architecture.html"><span class="eyebrow">03 / THE SYSTEM</span><h2>Architecture</h2><p>How sound, light and electromagnetic fields share one work volume, now and in the long-term design.</p></a>
+<a class="card" href="guides/insights.html"><span class="eyebrow">04 / WHAT WE LEARNED</span><h2>Insight register</h2><p>The findings that changed the design and how far each has been carried into code.</p></a>
 </div>
 
 ## Choose a route
 
-| You want to… | Start here | Then read |
+| You want to | Start with | Then read |
 |---|---|---|
-| Understand the project in ten minutes | [Start here](guides/start.html) | [Architecture](guides/architecture.html) |
-| Design a subsystem | [Architecture](guides/architecture.html) | [Acoustics](guides/acoustics.html), [electromagnetics](guides/electromagnetics.html), [optics and metamaterials](guides/optics.html), [manufacturing](guides/manufacturing.html) |
-| Understand the theoretical framework | [Physics overview](guides/physics.html) | [Observer Patch Holography](guides/oph.html) |
-| Explore light, crystals and materials as tones | [Light, fields and matter](guides/light-matter.html) | [Periodic table and tones](guides/periodic-table.html), [materials and modes](guides/materials.html) |
-| Work as an AI agent | [Agent entry point](guides/agents.html) | [Current state](guides/status.html) |
-| Find a paper or patent | [Research library](guides/research.html) | Search by topic or source ID |
+| Understand the project in ten minutes | [Start here](guides/start.html) | [Desktop Replicator](guides/desktop-replicator.html), [Current state](guides/status.html) |
+| Design or review a subsystem | [Architecture](guides/architecture.html) | [Acoustic bodies](guides/acoustics.html), [Optics and metamaterials](guides/optics.html), [Electromagnetic control](guides/electromagnetics.html), [Compute, sensing and control](guides/compute-control.html) |
+| Follow material through a build | [Manufacturing](guides/manufacturing.html) | [Scan, recover and matter stores](guides/matter-loop.html) |
+| Understand the pattern network and wave computing | [Cadence, memory and wave compute](guides/cadence-memory.html) | [Digital twin](guides/digital-twin.html) |
+| See how the machine improves itself | [Upgrade loop](guides/upgrades.html) | [Insight register](guides/insights.html) |
+| Look up a term | [Glossary](guides/glossary.html) | |
+| Work as an engineer or AI agent | [Agent entry point](guides/agents.html) | [Current state](guides/status.html) |
+| Find a paper or patent | [Research library](guides/research.html) | |
+| Read the theoretical framework | [Physics overview](guides/physics.html) | [From atoms to hardware](guides/physics-to-hardware.html) |
 
-## The operating principle
+## How the programme works
 
-Spend computation to remove unnecessary parts and human work. Use small, reusable measurements to resolve the uncertainties that computation cannot settle. Preserve the frame, interfaces, calibration tools and software as the machine gains capabilities.
+Computation is spent to remove parts and human work. The digital twin searches geometry and tolerances before anything is made. Small, reusable measurements settle what computation cannot. The frame, the calibration tools and the file formats stay fixed while modules are replaced, increasingly by parts the machine makes.
 
-The enduring prototype and the ultimate architecture advance together. A candidate earns a place through a named function, a manufacturing route and a measurable benefit.
+Two things are kept strictly apart throughout: the first machine, built from purchasable electronics, and the long-term architecture it is a step towards.
 
-## Where the work stands
+## How to trust what you read
 
-The project has executable simulations, parametric CAD and research studies. The next physical milestone is calibrated operation of the selected acoustic module; the first manufacturing milestone adds feed, joining and inspection. Full-machine self-replication is the programme objective.
-
-The [current-state page](guides/status.html) distinguishes published code, active engineering studies and hardware evidence. The [paper library](guides/research.html) preserves the deeper arguments and historical designs, with their roles visible.
+Every claim is labelled as a design decision, documented published work, a derivation, a simulation result, a project measurement, an open question or an unverified claim. The numbers that describe the Desktop Replicator are quoted from the shared engineering constants, and the build of this site fails if they drift. Known disagreements inside the design are listed openly in [Current state](guides/status.html#known-inconsistencies-in-the-design).

@@ -73,7 +73,7 @@ described at the level of its elements and verbs: the radiating face, the
 optical stem, the fingertips (optical placement at the finest scale),
 the sensing ladder, the topological alphabet, and the energy
 loop. Size-free — the physics privileges ratios, not dimensions.</p>
-<p class="meta">draft v1.0 · 2026-08-01 · extracted from
+<p class="meta">draft v1.1 · 2026-11-17 (previous v1.0 · 2026-08-01; revised optical mosquito eye &amp; SMI sensing) · extracted from
 replicator_mechanical_construction.html / desktop_replicator_hardware_spec.html
 / replicator_field_compiler.html / REPLICATOR_CAP_STACK_RULINGS_2026-07-30.
 <b>Single-home rule</b>: this paper is now the canonical home for the photon
@@ -260,6 +260,30 @@ photoacoustics, single-pixel imaging). And light <em>reads</em> sound
 ports and becomes photographed — an independent calibration path. Both
 verbs owned in detail by
 <a href="replicator_field_compiler.html">Field Compiler §17.6</a>.</li>
+<li><b>Optical "mosquito eye" — diffractive facets plus laser Self-Mixing Interferometry (<code>SMI</code>).</b>
+Instead of slow CMOS cameras or external Mach–Zehnder reference arms,
+passive replicated diffractive metasurface facets
+(<span class="chip c-open">OPEN</span> for this chamber) pair with 3-pin
+TO-can laser diodes operating in optical feedback interferometry
+(<span class="chip c-measured">MEASURED</span> SMI ultrasonic &amp; diode
+tomography art: Giuliani et al., <i>J. Opt. A</i> 4:S283, 2002,
+<code>10.1088/1464-4258/4/6/371</code>; Bertling et al., <i>Opt. Express</i>
+22:30346, 2014, <code>10.1364/OE.22.030346</code>) to read both DC
+Beer–Lambert matter shadow and <code>24–200 kHz</code> acoustic air phase
+(<code>Δφ(t) = k_L ((n₀−1)/(γ P₀)) ∫ p dx</code>) in one single-pixel chain.
+<span class="chip c-derived">DERIVED</span> audit: weak feedback across
+50&nbsp;mm of air shifts laser terminal voltage by only
+<code>ΔV ≈ 50&nbsp;µV–1&nbsp;mV</code> per <code>2π</code> fringe
+(<code>~5–100&nbsp;µV</code> at <code>0.1&nbsp;rad</code>, corresponding to
+<code>~0.1&nbsp;ps</code> Hi-Z slew change vs. <code>6.67&nbsp;ns</code>
+PIO ticks and <code>~200&nbsp;mV</code> GPIO hysteresis), so bare 2-pin
+GPIO driving fails; instead, the diode's built-in monitor photodiode (or
+AC-coupled anode) feeds <code>1</code> SOT-23 op-amp (<code>×200</code> AC
+gain) + a <code>75&nbsp;MSa/s</code> 1-bit sigma-delta comparator into
+<code>RP2350B</code> PIO locked onto the shared acoustic
+<code>XIN + SYNC</code> clock (<code>~0.1°</code> at 40&nbsp;kHz; bench coupon
+<code>K-MOSQUITO-SMI</code>;
+<a href="../docs/content/compute-control.md#optical-mosquito-eye-diffractive-facets-and-self-mixing-interferometry">Compute, sensing and control</a>).</li>
 <li><span class="chip c-open">OPEN</span>: <b>anapole spectroscopy</b>
 (toroidal pulses engage non-radiating charge-current configurations
 ordinary light cannot — a candidate composition channel); and
