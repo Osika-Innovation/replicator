@@ -13,6 +13,8 @@ from urllib.parse import quote, unquote, urlsplit, urljoin
 
 import markdown
 
+import canon
+
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / '_site'
 CAT = json.loads((ROOT / 'docs/catalog.json').read_text())
@@ -55,7 +57,7 @@ def shell(title, description, content, url, source, toc='', status='Current guid
     values = {'TITLE': esc(title), 'DESCRIPTION': esc(description),
               'BASE': './' if '/' not in url else '../', 'CONTENT': content,
               'SIDEBAR': sidebar(url), 'TOC': toc,
-              'META': f'<span class="status">{esc(status)}</span><span>Reviewed {CAT["updated"]}</span>',
+              'META': f'<span class="status">{esc(status)}</span><span>Reviewed {next((d["reviewed"] for d in DOCS if d["url"] == url), CAT["updated"])}</span>',
               'SOURCE_URL': esc(f'{REPO}/blob/main/{source}')}
     rendered = TEMPLATE
     for key, value in values.items():
@@ -137,6 +139,8 @@ def build():
         source_hashes[d['source']] = hashlib.sha256(raw.encode()).hexdigest()
         if d['type'] == 'guide':
             raw = re.sub(r'^---\n.*?\n---\n', '', raw, count=1, flags=re.S)
+            # Shared numbers and the insight register come from docs/canon.json.
+            raw = canon.expand(raw).replace('<!-- INSIGHT_TABLE -->', canon.insight_table())
             if d['id'] == 'research':
                 rows = ['| Paper | Role | Current use |', '|---|---|---|']
                 for paper in [p for p in DOCS if p['type'] == 'paper']:

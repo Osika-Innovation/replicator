@@ -1,12 +1,12 @@
 # Research library
 
 <div class="callout">
-<strong>Handbook first:</strong> This <strong>Engineering Handbook</strong> is now the canonical, self-contained technical specification across both the <strong>Ultimate Architecture</strong> and the <strong>Bootstrap Prototype (`P0` / `HA-0`)</strong>. Every surviving mechanism, derivation, wire contract, and limitation from earlier papers has been consolidated directly into the handbook guides—especially <a href="architecture.html">Architecture</a>, <a href="compute-control.html">Compute, sensing and control</a>, <a href="cadence-memory.html">Cadence, memory and wave compute</a>, <a href="manufacturing.html">Manufacturing</a>, and <a href="matter-loop.html">Scan, recover and matter stores</a>.
+<strong>Handbook first:</strong> the handbook is the current explanation of the programme, and the <a href="desktop-replicator.html">Desktop Replicator</a> chapter describes the machine being designed now. The papers below are historical references for individual mechanisms. Consolidation is ongoing: not every derivation in the papers has been carried into a chapter, and not every paper has been updated to the current design.
 </div>
 
-The indexed **Paper Library** below preserves the original standalone HTML essays and dated instance specifications (`RH-1`, `Field Compiler`, `The Phonons`, `The Photons`) for mechanism lineage and historical context. Where a historical paper conflicts with a current guide, the guide governs.
+The paper library keeps the original standalone essays and dated design specifications so that the origin of each mechanism can be traced. Several describe earlier machines that have been replaced. Where a paper and a current chapter disagree, the chapter governs.
 
-## Paper network (preserved historical &amp; mechanism archive)
+## Paper network (historical mechanism archive)
 
 <!-- PAPER_TABLE -->
 
@@ -20,16 +20,14 @@ The [public source catalog](../sources.json) contains selected primary papers an
 
 The materials research programme explores the relationship between structure and response across scales. Atomic transition frequencies, lattice vibrations and component resonances each provide useful information. The [materials guide](materials.html) connects those descriptions to fabrication and inspection.
 
-The [physics section](physics.html) connects [Observer Patch Holography](oph.html), [light and matter](light-matter.html), and the [periodic-table research model](periodic-table.html). It explains why these ideas inform the programme and how they connect to quantitative machine design. Public primary sources are linked at each claim; the broader private research corpus remains outside this build.
+The [physics section](physics.html) connects [Observer Patch Holography](oph.html), [light and matter](light-matter.html), and the [periodic-table research model](periodic-table.html). It explains why these ideas inform the programme and how they connect to quantitative machine design. The library lists public sources only, and each is linked where it is used.
 
 ## Source reports and design questions
 
-Reports of highly ordered or unusual materials can motivate a search for simple geometry and useful material structure. Turn such a lead into an attributable source, a specific composition or microstructure, a measurement and a manufacturing question.
-
-Confidence in the programme belongs in its objectives and execution. Claims about the composition or origin of a reported artifact require their own evidence; they do not set a fabrication specification by repetition.
+A report of an unusual or highly ordered material is a lead, not a specification. To use it, turn it into an attributable source, a specific composition or microstructure, a measurement and a manufacturing question.
 
 ## How a source becomes engineering
 
-Record the DOI, patent number or versioned source; distinguish a screenshot lead, abstract and full-method review. Identify the mechanism, task, required precision, material/process dependencies and next discriminating check.
+Record the DOI, patent number or versioned source. Note how deeply it was read: a lead only, the abstract, or the full method. Identify the mechanism, the task it would serve, the precision it requires, the materials and processes it depends on, and the next check that would confirm or rule it out.
 
-Retain negative findings and unresolved leads with reasons. Promote a source into a module only through a concrete design and acceptance test.
+Keep negative findings and unresolved leads, with reasons. A source becomes part of a module only through a concrete design and an acceptance test.

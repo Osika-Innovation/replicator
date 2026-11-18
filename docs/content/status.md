@@ -1,45 +1,75 @@
 # Current state
 
-**Reviewed November 17, 2026.** This checkpoint separates the **Ultimate Architecture (long-horizon physical limits)**, the **Bootstrap Prototype (`P0` / `HA-0` workshop seed)**, and **verified code vs. pending bench gates**. No passing simulation or CAD export constitutes a hardware procurement or physical proof.
+**No hardware has been built, ordered or measured.** What exists today is a parametric CAD model of the [Desktop Replicator](desktop-replicator.html), simulations of its acoustics, sensing and control, and this handbook. Every statement about what the machine does is a design decision, a calculation or a simulation result, and is labelled as such.
 
-## Programme tracks: Ultimate targets vs. Prototype bootstrap
+## State at a glance
 
-| Area | Ultimate architecture target | Prototype bootstrap (`P0` / `HA-0`) &amp; current record | Next physical / verification gate |
+| Area | What exists | Evidence | What blocks the next step |
 |---|---|---|---|
-| **Engineering handbook &amp; code** | Self-contained canonical architecture across coordinated physics and closed manufacturing loops | `docs/content/*.md` owns current specifications (superseding standalone HTML papers); public `twin/` baseline at `1b708a2` with active branches for solid bodies (`acbody`), `X-EM`, and firmware (`p0`) | Keep handbook, `catalog.json`, and active receipts synchronized across releases |
-| **System architecture** | Coordinated 3D acoustic, EM, and optical wavefields with zero moving parts and zero internal tools | Two-carrier contract (`p(f) = H(f)u(f)`), `Ø12 mm` bore + `270°` clear radial sightlines, identical `.fcode`/`.pattern` wire protocol | Validate coordinated module datums on initial assembly (`CAD-01`) |
-| **Acoustics** | Continuous optically-addressed `PMN-PT`/photoconductor film (`~10⁵` pixels) over phase-conjugate multimode fiber; graded phononic tapers; argon rung to `1 MHz` | `3 + 3` / `6 + 6` low-inertia broadband PZT patches (`τ_inertia = L / v_D`) on supersonic plates + SLA modulo-`2π` phase ring + `1.2 mm` PCB backing absorber; Langevin retained as CW comparator | Bench-measure cartridge + `Ø10` horn + `Ø120` Al blank against solid finite elements (`K-PORT+`); test `K-HAPTIC-PZT` |
-| **Compute, sensing &amp; control** | Passive optical facets, fiber tomography, and near-zero-electricity wave compute (`EML` diodes + `Sb₂S₃` holograms + `Open` excitable neural-gel wave substrates) | **Prototype scaffolding only:** collocated `RP2350B` `75 MSa/s` `1-bit ΣΔ` + `XOR` lock-in ganglia on shared `XIN`/`SYNC`, `< 60 kB` `5–10%` sparse `int8` SRAM Brain Slot (or optional `SoC-FPGA`), Ring-0 bare-metal executive | Simulate `75 MSa/s` `1-bit ΣΔ` under `0.3%/°C` `C₀` drift &amp; `−70 dB` echoes, then bench-verify `K-HAPTIC-PZT` &amp; `K-MOSQUITO-SMI` |
-| **Cadence &amp; holographic memory** | `W_fb = Wᴴ` physical reciprocity (`ε = εᵀ`), 2-beam interference `ΔW`, volumetric `Sb₂S₃`/`Sb₂Se₃` chord memory (`η = (M#/M)²`) | Complex Hermitian `EqProp` trained offline on Apple Silicon (`MLX` + chaotic Metal kernels) against `NOWS` and Core-13 / `HA-0` STL parts with 2D OPH quarantine | Pass `rp2350_ganglia_q8` &amp; `optical_pcm_analog` benchmarks; verify `Sb₂S₃` `M#` &amp; write endurance |
-| **Optics &amp; metamaterials** | Bidirectional toroidal-pulse stem (`space ⊗ pol ⊗ spectrum` tomography), `756 nm` metasurface SLM, `OAM`/skyrmion modes, optical tweezer fingertips | Nanoimprinted `TiO₂` diffractive facets + `3`-pin TO-can `SMI` laser diodes (`SOT-23 ×200` AC gain + `1-bit ΣΔ`) across `HA-0` clear sightlines | Verify `0.1 rad` `LightRead` ultrasonic phase SNR alongside `Ø1 mm` DC occlusion on `K-MOSQUITO-SMI` |
-| **Electromagnetics** | Containerless `J × B` melt shaping, magnetic inclusion orientation, `m/q` ion sort, and traveling-wave axial bore lift (`R10`) | `em-integration` study recommends no EM process coil in first acoustic seed build (`9 × 10⁸×` short at `0.3 m` standoff); lossless flat-coil exciter `X-EM` proposed for blank metrology | Run `X-EM` calibration sweep on `K-PORT+` aluminum disc blank |
-| **Manufacturing, scan &amp; stores** | Non-moving full-sphere `S(f)`, combined-field recipes, mirrored `R9` active sort/reclaim chamber fed by Salt/Ash/C/H₂O/Air/Noble-Gas stores | `95%` CF / `5%` Golomb-FM + `SMI` scans validated via `G17` (`measured`/`inferred`), `G18` held-out gates, `G19` static phantoms; indexed `ha0_septum_cap` vials | Demonstrate repeatable hold/move/release, then build &amp; qualify first upgrade part (`FAB-01`) |
-| **Physics framework** | Unifying [OPH](oph.html) &amp; material response chain from atomic spectra to continuous field operators | Formal OPH carrier algebra + refined Gauss/Green atomic checks (`check_physics_derivations.py`) | Map candidate wave-substrate hypotheses cleanly to measurable response laws |
-| **Hardware evidence** | — | No integrated multi-carrier Replicator bench demonstration is established yet in this review | Execute `K-PORT+`, `K-HAPTIC-PZT`, `K-MOSQUITO-SMI`, and `FAB-01` receipts |
+| Machine design | Parametric CAD model, exact geometry export, drawings, parts list with candidate part numbers, power estimate | Derived | Simulation gates below; operator approval before anything is ordered |
+| Plate acoustics | A reduced plate model used for planning, and a three-dimensional solid finite-element model that contradicts it | Simulated | The two models disagree; a measured plate response is required; all results repeated at the new {{c:desktop_geometry.gap_mm}} mm plate spacing |
+| Drive and receive electronics | Circuit concept with candidate parts. No circuit board layout | Derived | The {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test in simulation; drive voltage and receive band reconciled with the plan |
+| Optical ring | Geometry in the CAD model and a signal model in simulation | Simulated | Signal model checked against the present {{c:mosquito_smi.total_ommatidia}}-laser layout; amplifier design; laser safety for an open chamber |
+| Pattern network (Cadence) | Trained and tested in simulation at full size | Simulated | The reduced form that fits the controller has not been shown at its target size |
+| Firmware | None for the Desktop Replicator. Firmware for a retired earlier array still compiles as a regression case | — | Writing it, starting from a cycle budget |
+| Assembly and joining | A transport model in simulation. No joining recipe without adhesive | Open | A joining step with its energy source; placing one bead beside another |
+| Removal and recovery | The correct physical sequence is specified. The code still uses two shortcuts known to be wrong | Derived | Implementing the sequence and tracking mass |
+| Scanning | Acoustic and optical scan models that pass their checks on simulated data | Simulated | Repeating them for the present geometry |
+| Electromagnetic control | Large coils across the chamber are ruled out by simulation. A small pulsed coil is a candidate | Simulated; Open | A model of the small coil that respects what it can and cannot reach |
+| Long-term architecture | Design studies resting on published component physics | Documented; Open | Demonstrations of the components at useful scale |
+| Bench evidence | None | — | A built machine |
 
-Detailed simulation receipts and branch studies retain their exact scope; nothing in the active table clears physical purchasing or hardware release without review.
+The detailed chapters are [Acoustic bodies](acoustics.html), [Compute, sensing and control](compute-control.html), [Optics and metamaterials](optics.html), [Manufacturing](manufacturing.html), [Scan, recover and matter stores](matter-loop.html) and [Electromagnetic control](electromagnetics.html).
 
----
+## Known inconsistencies in the design
 
-## Evidence vocabulary
+A review of the engineering record on 17 November 2026 found places where two parts of the design disagree. Each is registered, has an owner and is listed in the [insight register](insights.html). The ones that matter most:
+
+1. **Drive voltage.** Planning assumes up to 40 V per source. The drive stage as specified supplies about 11 V. Force scales with the square of voltage, so planned forces are about ten times too high. A solid finite-element model has since put the voltage needed to hold a solid polystyrene bead at roughly 900 V per source at the best tone, far beyond either figure. Drive strength is the limiting factor for levitation.
+2. **Receive band.** The converter figures are stated for a {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz band, yet the highest drive tone is above that. A cycle-by-cycle simulation of the simple one-bit converter then reached about 61 dB on the six-tone test and cannot pass. The written fallback is a conventional converter chip.
+3. **Plate model resolution.** The file that describes how the plates radiate samples them far more coarsely than half a wavelength of sound in air. The solid finite-element model confirms it: the plates ring instead of damping out, and the file does not match the solid model at all. The plate response has to be measured in the chamber for each plate.
+4. **Air temperature.** The sound path between the plates changes by about 50° of phase per kelvin at the highest tone. The parts list has no air temperature sensor.
+5. **Open chamber.** The glass wall was removed on 17 November 2026. The chamber now has no shield against draughts, no enclosure around the laser beams and no interlock.
+6. **Joining.** Sound cannot supply the heat to join grains. With hand-applied adhesive retired, there is no joining recipe.
+
+## What must exist before hardware is ordered
+
+Hardware may be released for purchase only when all five of these exist:
+
+1. A frozen revision of the design with file hashes.
+2. A parts list with quantities, part numbers, live stock and prices.
+3. Exact CAD geometry, drawings, tolerances, wiring and a thermal budget.
+4. Passed simulation gates: the {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test and agreement between the solid finite-element model and the plate model. Both currently fail.
+5. A fixed acceptance procedure to run in the chamber once the machine is built.
+
+None of the five is complete. Ordering parts or contacting suppliers also requires explicit approval from the operator.
+
+## Evidence labels
+
+Every claim in this handbook carries one of these labels, stated or implied by its section.
 
 | Label | Meaning |
 |---|---|
-| Design decision | The direction or requirement the programme has chosen |
+| Design decision | A direction or requirement the programme has chosen |
+| Documented | A result reported by an identified external source |
 | Derived | A calculation with stated assumptions and units |
-| Simulated | A result from a specified numerical model |
-| Published experiment | A result reported by an identified external source |
-| Bench measured | A project measurement with apparatus, calibration and raw records |
-| Research hypothesis | A proposed mechanism or explanatory model with a discriminating test |
+| Simulated | A result from a specified project model |
+| Measured | A project bench result with apparatus, calibration and raw records. None exist yet |
+| Open | Not yet settled by calculation, simulation or measurement |
+| Claim | Asserted by a source and not verified |
 
-Writing should be direct: state whether an item belongs to the **Ultimate Architecture** or the **Prototype Bootstrap**, name its evidence class, and identify its decisive next test.
+A result reported in the literature stays attributed to its authors. It is never presented as something this project has measured.
 
-## Promotion gates
+Scan data uses a separate pair of words. A value is *measured* when a sensor reported it and *inferred* when a model filled it in. That describes where a number in a data file came from. It is not an evidence label.
 
-A source enters the library with its identity and review depth. A model earns use through independent verification (`G-A1`–`G-B2`, `NOWS` comparisons). Hardware earns a capability through repeatable manipulation and metrology (`G17–G19`, `FAB-01`). An upgrade earns adoption through a before-and-after measured improvement on the same machine task.
+## How something moves up
 
-Published experimental results remain strictly attributed to their external authors; literature demonstrations and internal bench measurements are never interchangeable.
+A source enters the [research library](research.html) with its identity and how deeply it was read. A model earns use when an independent calculation agrees with it. A design earns hardware when it passes the five conditions above. Hardware earns a capability through repeatable measurement. An upgrade earns adoption through a measured before-and-after improvement on the same task, as described in the [upgrade loop](upgrades.html).
 
-## Maintenance
+## Retired designs
 
-Update this page whenever a subsystem milestone or prototype-vs-ultimate boundary changes. The [agent guide](agents.html) defines lane ownership, and [catalog.json](../catalog.json) assigns every document a stable ID.
+Three earlier baselines are retired and appear in this handbook only as history: an array of sixteen 40 kHz transducers, a design with drilled wafers and single-purpose test rigs, and joining by hand-applied adhesive. The table of what was retired and why is in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced).
+
+## Keeping this page true
+
+The numbers on this page are quoted from the shared engineering constants, and the handbook build fails if they drift or if a retired design is described as current. Update this page whenever a row of the table changes.

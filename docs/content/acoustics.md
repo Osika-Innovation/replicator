@@ -1,69 +1,131 @@
-# Acoustic bodies
+# Acoustics
 
-Sound is the Replicator's **muscle**: at fixed power, a phonon carries `~10⁵–10⁶×` more momentum than a photon (`E/v` vs. `E/c`) while fitting millimeter wavelengths into kilohertz–megahertz electronics. Using dispersive geometry and electrical bandwidth headroom extracts thousands of effective field degrees of freedom from few physical inputs.
+The acoustic subsystem makes the force that holds and moves material. Two facing plates radiate ultrasound into the chamber, the sound forms a standing pattern, and small objects settle into its quiet pockets. The same sources also listen, so the subsystem senses what it is holding. Everything here is design, derivation or simulation. Nothing has been built or measured.
 
-## Ultimate vs. prototype acoustic apertures
+## The physics that matters
 
-| Feature | Ultimate architecture (`Rung 2+`) | Bootstrap prototype (`P0` / `HA-0` / `AC-03`) |
-|---|---|---|
-| **Radiating aperture** | Continuous thin piezo film + amorphous-silicon photoconductive gate electrode; global quadrature electrical buses (`0°/90°/180°/270°`) gated spatially by light across `~10⁵` pixels with zero per-pixel copper wires ([Acoustic Hologram §10](../papers/replicator_acoustic_hologram.html#s10)) | Opposed `3 + 3` or `6 + 6` thin broadband piezoelectric elements (`≤ 5 mm` patches/annuli) bonded onto `1–1.5 mm` borosilicate/aluminum supersonic plates + replaceable SLA modulo-`2π` phase ring / chaotic scatterer around `Ø12 mm` coaxial bore |
-| **Acoustic backbone &amp; matching** | Single-crystal relaxors (`PMN-PT` / `PIN-PMN-PT`, `k² ≈ 0.9`), graded phononic impedance tapers overcoming the `−42 dB` piezo-to-air reflection cliff (`30 MRayl → 415 Rayl`) without narrowband `λ/4` layers, and tonotopic "reverse-cochlea" plates (`λ_B ∝ 1/√f`); argon rung up to `1 MHz` (`λ = 0.17 mm`) | Purchased/stock `PZT-8` / `1–3` piezocomposite / `AlN` elements (`τ_inertia ≈ 90–285 ns`); `1.2 mm` 10-resonator moth-scale FR-4 metamaterial backing absorber (`biosonar` suppressing ghost reflections); preloaded Langevin horns retained only as CW baseline (`K-PORT+`) |
-| **Signal transport &amp; sensing** | Bidirectional phase-conjugate **multimode optical fiber** (`0.4–1 mm` core carries `~7×10⁴–4×10⁵` spatial modes, unscrambling bending distortion by optical reciprocity; interferometric strain readout) | Prototype collocated `RP2350B` head PCB (`< 2 pF` trace vs. `C₀ ≈ 171 pF`) running `75 MSa/s` `1-bit ΣΔ` `HAPTIC` self-sensing (`K-HAPTIC-PZT` pending) over shared `XIN`/`SYNC` bus |
+### Why sound carries the force
 
-### Hardware scaling reality check (`ENGINE.md` &amp; `AC-03a`)
+An absorbed wave pushes with a force equal to its power divided by its speed. One watt of sound in air pushes with 2.9 mN, one watt of light with 3.3 nN (Derived). Sound also has millimetre wavelengths at frequencies that ordinary electronics handle easily. [Architecture](architecture.html#two-carriers-five-wavelength-decades-and-volume-crossings) compares the two carriers.
 
-Early simulations driving ideal velocity pistons made few-channel direct discs look easier than physical hardware permits (`Simulated` + `Derived`):
+### Bending waves in a plate
 
-* **Direct non-resonant discs hit an electro-mechanical ceiling:** A bare `Ø5 × 2 mm` `PZT-8` disc driven directly across `50–100 kHz` sits far below its fundamental thickness resonance (`~468 kHz`), moving only `d₃₃·V ≈ 0.16 m/s` at `97 kHz` vs. `4.75 m/s` required for the open-air ring mold (`310×` short on hardware gate `G-E1`).
-* **Single-tone resonant array alternative vs. dispersive SIMO plates:** Packing individual `40 kHz`-style scaled bimorphs (one tone per element) into the full RH-1 annulus requires `~1,536–2,560` separately wired channels to bring `G-E1` below `1` (`0.96` at `1,536` elements, `~159 W` electrical), deleting slots and complicating wiring. That physical check motivated evaluating **supersonic dispersive plates** (`f_c ≈ 6–12 kHz`), **replaceable SLA scatterers**, and **multi-tone harmonic combs** on a compact `3 + 3` / `6 + 6` head before freezing prototype hardware.
-* **Next decisive bench test (`K-PORT+`):** Measure one real preloaded cartridge, a `Ø10` stud horn, and a plain `Ø120 mm` aluminum blank against solid-element finite-element models before committing custom discs.
+A small piezoelectric disc bonded to a thin plate does not radiate much sound itself. It bends the plate, and the bending (flexural) wave spreads across the plate and radiates from the whole face. For a thin plate of thickness h, density ρ and bending stiffness D, the bending wavenumber k at angular frequency ω is
 
----
+    k⁴ = ρ h ω² / D        D = E h³ / 12(1 − ν²)
 
-## First-principles crystal inertia vs. cavity Q
+so the wave speed rises with the square root of frequency. That frequency dependence is called dispersion.
 
-Physical piezoelectric switching is bounded by longitudinal acoustic transit across the crystal thickness (`τ_inertia = L / v_D`), **not** by room-air cavity decay (`T_60 ≈ 20–50 ms`). For a `1 mm` thin plate, `τ_inertia` spans `~91 ns` (`AlN/ScAlN`), `~136–174 ns` (`LiNbO₃` / quartz), `~217–245 ns` (`PMN-PT` / `PZT`), and `~255–285 ns` (`1–3` piezocomposite). Air `T_60` sets passive chamber energy storage (`Q_cav`) rather than an actuator frame clock.
+Worked numbers for a {{c:desktop_geometry.wafer_thickness_mm}} mm borosilicate plate (D about 5.5 N·m, 2.23 kg/m², thin-plate theory, Derived):
 
-Bolt-clamped `Q ≈ 500` steel Langevin dumbbells (`~4.5 ms` ring-down, `~1–2 kHz` usable band) remain useful reference hardware for narrowband CW power comparison (`K-PORT+`), not the broadband multi-tone holographic default.
-
----
-
-## Simultaneous two-terminal HAPTIC self-sensing
-
-Drive and observe continuously across both terminals of every piezoelectric element through a differential bridge (`+V_bus` expand, `−V_bus` contract, `0 V` brake, `Hi-Z` float) with `10–50×` electrical timing headroom ([Dosch, Inman &amp; Garcia, 1992](https://doi.org/10.1177/1045389X9200300109)). From linear coupled Butterworth–Van Dyke dynamics:
-
-    m ẍ + c ẋ + k x = Θ V(t) + F_echo(t)
-    I(t) = C₀(T) · dV/dt + Θ · ẋ(t)
-
-Subtracting dielectric slewing current `C₀(T) dV/dt` against a matched uncoupled **`C₀` reference piezo** recovers strain `x(t)`, crystal velocity `ẋ(t)`, and returning echo loading `F_echo(t)` continuously during drive with zero blind TX/RX switching dead time.
-
-**Prototype electronic bridge (`RP2350B` `1-bit ΣΔ`, `K-HAPTIC-PZT` pending):** Across a `24–200 kHz` harmonic comb, a `2 mm` droplet echo sits `−60 to −80 dB` below drive current while `PZT-8` `C₀(T)` drifts `~0.3% / °C` (`−50 dB`), defeating bare zero-crossing comparators (`< 0.2 ns` shift; `2` crossings/period cannot separate `5` tones = `10` I/Q unknowns). In the bootstrap prototype, closing a **`75 MSa/s` `1-bit ΣΔ` loop** (`1` comparator + `2R/1C` across two `RP2350B` PIO pins, `OSR = 250` → `12–16` ENOB / `74–96 dB` dynamic range) with multiplier-free bitwise `XOR + popcount` lock-in demodulates all comb lines simultaneously at `< 2 pF` trace capacitance ([Compute, sensing and control](compute-control.html#acoustic-lamina-75-msas-1-bit-sigma-delta-piezo-haptic)).
-
----
-
-## Harmonic comb closure and the resolution honesty ladder
-
-Driving at high SPL makes air nonlinear, generating intermodulation (`f_a ± f_b`). An arbitrary carrier set spreads energy across dense intermodulation noise, whereas a **harmonic comb `f₀, 2f₀, 3f₀, …`** (`f₀ ≈ 25 kHz`, harmonics `1–8` spanning `25–200 kHz` in `3` octaves) stays **closed under mixing** (`nf₀ ± mf₀` lands back on the comb). Time-averaged Gor'kov cross terms between distinct comb lines integrate to multiples of `f₀` rather than DC, so individual tone traps add cleanly (`Derived`).
-
-Sweep width in air does **not** sharpen pressure features finer than the shortest wavelength (`λ_min / 2`); wideband chirps instead add axial range resolution (`c / 2B`), speckle averaging, and spatial DOF across `Q × B`:
-
-| Physical observable (`200 kHz` air) | Governing bound | Value at `200 kHz` | What governs it (`Derived`) |
+| Tone | Bending wavelength | Bending wave speed | Wavelength in air |
 |---|---|---|---|
-| **Pressure field feature** | `λ_min / 2` | `0.85 mm` | Linear acoustic diffraction limit |
-| **Gor'kov force pixel** | `~λ_min / 4` | `~0.4 mm` | Quadratic pressure/velocity energy (`⟨p²⟩`, `⟨v²⟩`) doubles spatial bandwidth |
-| **Axial range resolution** | `c / 2B` | `~1 mm` | Chirp bandwidth `B ≈ 160–175 kHz` |
-| **Continuous trap placement** | `~λ / 100` (SNR-limited) | `~10 µm` | Smooth boundary phase ramping shifts trapped particles continuously below wavelength scale |
+| 32 kHz | 17.5 mm | 560 m/s | 10.7 mm |
+| 96 kHz | 10.1 mm | 970 m/s | 3.6 mm |
+| 160 kHz | 7.8 mm | 1,250 m/s | 2.1 mm |
 
-Finer *features* (not just finer placement) require raising carrier frequency—via millimeter-scale work distances, dense arrays, or an **argon rung (`1 MHz`, `λ ≈ 0.17 mm`)**.
+Above about 12 kHz the bending wave in this plate is faster than sound in air. Such a wave radiates efficiently, at an angle from the plate normal whose sine is the ratio of the two speeds: about 38° at 32 kHz and 16° at 160 kHz.
 
----
+### Why a few sources give many patterns
 
-## Coupled-cavity equilibrium and sparse chords
+Each source sets up a standing bending pattern over the whole plate, shaped by reflections from the rim. Because of dispersion, the pattern at 64 kHz is not the 32 kHz pattern scaled down. Each tone radiates a differently shaped sound field. Flats cut into the wafer rim and off-centre source positions break the symmetry that would otherwise make sources redundant. Six sources and five tones on one plate therefore give thirty distinct radiated fields rather than six.
 
-Stationary levitation against gravity performs zero mechanical work (`F · ż = 0`). High air–solid impedance mismatch (`415 Rayl` vs. `46 MRayl`, `99.996%` reflection) means dense inclusions (such as steel at `7.85 g/cm³`, up to `22.6 g/cm³` iridium in published 1-D art) resonate in **coupled chamber-plus-object air eigenmodes** rather than internal solid modes. Locking onto the target harmonic chord allows continuous feedback to throttle toward passive cavity loss (`P_hold = ω E_stored / Q_cav`). Objects are represented cleanly as compact sparse `.pattern` chord lists (`kB` scale) rather than raw gigabyte voxel streams ([Matter loop](matter-loop.html)); extending 1-D dense-metal resonant holding to closed-loop 3-D multi-tone dispersive plates remains `Open`.
+Distinct is not the same as sufficient; see [Known limits](#known-limits).
 
-## Response as the handover (`p(f) = H(f) u(f)`)
+### The radiation force and where traps sit
 
-Every acoustic module exposes its calibrated frequency-dependent linear operator `H(f)` mapping accessible physical drives `u(f)` to chamber pressure/patches, separating input channel count from output grid count and transferring directly into `body-response/0.1` for `Cadence` and `NOWS` optimization ([Digital twin](digital-twin.html)).
+A particle much smaller than the wavelength feels a time-averaged force that is the downhill slope of the Gor'kov potential (Gor'kov, 1962):
 
-See [Compute, sensing and control](compute-control.html), [Cadence, memory and wave compute](cadence-memory.html), [Manufacturing](manufacturing.html), [Scan, recover and matter stores](matter-loop.html), and [The Acoustic Hologram](../papers/replicator_acoustic_hologram.html).
+    U = 2π a³ [ f₁ ⟨p²⟩ / (3 ρ₀ c₀²) − f₂ ρ₀ ⟨v²⟩ / 2 ]        F = −∇U
+
+Here a is the particle radius, ⟨p²⟩ and ⟨v²⟩ are the mean-square sound pressure and air velocity, and ρ₀ and c₀ are the density and sound speed of air. The factors f₁ and f₂ compare the particle's stiffness and density with the air's. For any solid or liquid in air both are close to 1.
+
+The first term is positive, so the particle is pushed away from loud places. The second is negative, so it is drawn to where the air moves most. In a standing wave those are the same places: the pressure nodes. Nodes along the axis between the plates are half a wavelength apart, 5.4 mm at 32 kHz and 1.1 mm at 160 kHz.
+
+Three consequences shape the design.
+
+- **The force depends on squared amplitudes.** Reversing the sign or the phase of a holding pattern gives the same force. It cannot push material out or take a joined part apart. Removal needs a different mechanism, described in [Scan, recover and matter stores](matter-loop.html).
+- **Tones add as forces, not as pressures (Derived).** The cross terms between two different tones oscillate at their difference frequency and average to zero. The total potential is the sum of one potential per tone. The tones are whole multiples of 32 kHz so that the mixing products created by nonlinear air at high level fall on multiples of 32 kHz instead of spreading between the tones.
+- **The formula has a size limit (Derived).** It assumes a particle much smaller than the wavelength. At 160 kHz the wavelength is 2.1 mm, so the Ø1 to 2 mm calibration spheres are outside that assumption at the upper tones. Forces on them need a full scattering calculation (Open).
+
+Holding a stationary object does no mechanical work. The power needed is what the chamber loses: stored energy times angular frequency divided by the chamber's quality factor.
+
+### How fine the field can be
+
+At the top tone of 160 kHz the smallest pressure feature is half a wavelength, 1.1 mm. The smallest force feature is about half of that, 0.5 mm, because force follows squared pressure (Derived). A trap can still be moved in steps much smaller than a wavelength, because its position follows the drive phases continuously. How small in practice depends on calibration and noise (Open). Finer features, as opposed to finer placement, need a higher frequency.
+
+<a id="simultaneous-two-terminal-haptic-self-sensing"></a>
+
+### Self-sensing on the same two wires
+
+A piezoelectric disc that pushes on the plate is pushed back by it, and that reaction appears in its current. The disc can therefore be a sensor while it is a source, with no separate listening interval ([Dosch, Inman &amp; Garcia, 1992](https://doi.org/10.1177/1045389X9200300109), Documented). In the standard lumped model of a piezo element:
+
+    m ẍ + c ẋ + k x = Θ V(t) + F_echo(t)
+    I(t) = C₀ dV/dt + Θ ẋ(t)
+
+V is the drive voltage, I the current, x the displacement of the disc face, Θ the electromechanical coupling, C₀ the capacitance of the disc and F_echo the force returned by the plate and chamber. The first part of the current charges the capacitance and carries no information. The second is proportional to face velocity and contains the echo.
+
+The difficulty is the ratio. The echo from a 2 mm droplet is estimated at 60 to 80 dB below the drive current, and C₀ drifts by about {{c:haptic_pzt.c0_tempco_pct_per_c}} % per kelvin, a larger change than the echo (Derived). The design subtracts the current of an identical disc that is bonded to nothing, which drifts the same way and hears nothing, then measures the remainder at all five tones at once. The converter is described in [Desktop Replicator](desktop-replicator.html#electronics). Whether it reaches the required dynamic range with five tones present is an open simulation gate.
+
+## In the Desktop Replicator
+
+The prototype has two identical acoustic bodies, one in the floor of the chamber and one in the ceiling, {{c:desktop_geometry.gap_mm}} mm apart. The full description is in [Desktop Replicator](desktop-replicator.html).
+
+- **Plates.** Each is an undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} × {{c:desktop_geometry.wafer_thickness_mm}} mm borosilicate wafer ({{c:desktop_geometry.wafer_material}}) held only at its rim in a soft silicone ring, with Ø{{c:desktop_geometry.clear_glass_diameter_mm}} mm of glass free to vibrate.
+- **Sources.** {{c:desktop_geometry.ports_per_plate}} discs of the hard piezoceramic PZT-8, Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm, are bonded to the back of each wafer at different radii. There are 12 in total.
+- **Tones.** {{c:desktop_geometry.comb_tones_hz|khz}} kHz, driven together.
+- **Surface.** Bare glass by default. A printed phase lens on the chamber face is an option.
+- **Behind the plate.** A {{c:desktop_geometry.moth_absorber_thickness_mm}} mm absorbing layer damps reflections from the cavity behind the wafer. The drive and sense electronics sit within millimetres of the discs.
+- **Small preset.** `boro12` uses Ø{{c:desktop_geometry.boro12_reducer_wafer_mm}} mm wafers {{c:desktop_geometry.boro12_gap_mm}} mm apart with Ø{{c:desktop_geometry.boro12_pzt_diameter_mm}} mm discs and tones of {{c:desktop_geometry.boro12_comb_tones_hz|khz}} kHz.
+
+The plate spacing is 17 wavelengths at 32 kHz and 84 at 160 kHz.
+
+**What the rest of the machine sees.** The acoustic bodies are handed to the planner as a response: at each frequency f, the sound pressure p in the chamber is a fixed linear map H of the drive amplitudes u,
+
+    p(f) = H(f) u(f)
+
+The map is stored in a response file ([Architecture](architecture.html#interfaces-that-survive-upgrades)). Today it comes from a reduced thin-plate model. It will be replaced by measurement once a machine exists.
+
+**Why plates and not an array of emitters.** In an earlier simulated study of a larger design, small ceramic discs radiating directly into air reached 0.16 m/s of face velocity where the field needed 4.75 m/s. Closing that gap with resonant emitters took about 1,500 separately wired elements (Simulated and Derived). Plates driven in bending give a large radiating face from few wires. Bolt-clamped Langevin horn transducers are parked: they are narrow-band, so they cannot play several tones or change pattern quickly.
+
+## Known limits
+
+None of these limits is yet resolved for the Desktop Replicator.
+
+**Control rank (Derived).** At one frequency the field is p = H·u, so N sources give at most N independent field patterns, whatever the plate does. A plate with many vibration modes does not add controls. The prototype has 12 sources and 5 tones, which is 60 complex amplitudes. Across tones the fields do not add coherently: the force is a sum of one squared term per tone, which is more constrained than adding pressures. Sixty controls is the budget for every trap, every unwanted well and every correction.
+
+**Parasitic wells (Simulated, earlier six-source study).** Single-frequency fields from six sources held one foam bead well but left 8 to 26 unwanted wells in the working region. That is single-bead manipulation. It is not powder handling, several independent traps or fabrication. Whether 12 sources and 5 tones remove the unwanted wells in the Desktop Replicator is Open.
+
+**Source size (Derived).** A bonded disc drives bending efficiently only if it is smaller than half the bending wavelength. Beyond that, parts of the disc push against each other. For the {{c:desktop_geometry.wafer_thickness_mm}} mm wafer, half the bending wavelength is about 4.4 mm at 128 kHz and 3.9 mm at 160 kHz. The Ø{{c:desktop_geometry.pzt_diameter_mm}} mm disc is slightly too large for the top two tones. How much drive this costs is Open, to be confirmed in the solid finite-element model.
+
+**Air temperature (Derived).** The speed of sound changes by about 0.17 % per kelvin. Across the {{c:desktop_geometry.gap_mm}} mm spacing at 160 kHz that is roughly 50° of phase per kelvin, and about 10° at 32 kHz. A calibration therefore goes stale at the top tone when the air changes by a few tenths of a kelvin. The estimated rise of the air inside the enclosure is about 5 K, and how much of that reaches the open chamber is not modelled. Temperature tracking is part of calibration, not an extra.
+
+**Ring-down bounds time-sharing (Simulated, earlier study).** Switching between patterns faster than the source and plate ring down loses the held object. In the earlier study, sources with a quality factor near 500 rang for 4.5 ms and dropped the bead at every switch. Sources with a quality factor near 50 worked, at about ten times the power. The ceramic itself responds in well under a microsecond, so the structure sets the limit. The ring-down time of the prototype wafer is Open.
+
+**Plate spacing changed (Open).** The spacing was raised from 120 to {{c:desktop_geometry.gap_mm}} mm. Simulated results for the earlier spacing do not carry over, and the field at the new spacing has not been studied.
+
+**Reduced plate model (Open).** The plate response used for planning is thin-plate theory with idealised sources and rim. A three-dimensional solid finite-element model of wafer, discs and rim seal (Gmsh and CalculiX) is in progress. Hardware may not be released for purchase until the two agree. No result from the solid model is available yet.
+
+<a id="ultimate-vs-prototype-acoustic-apertures"></a>
+
+## Long-term direction
+
+The long-term acoustic surface is not a plate with a few discs. The comparison with the prototype is in [Architecture](architecture.html#long-term-architecture-and-the-desktop-replicator). The main elements, all Open as an integrated design:
+
+- **Optically addressed aperture.** A continuous piezoelectric film carries a few shared drive lines at fixed phases. A light-sensitive electrode layer selects which phase reaches each of about 100,000 small regions, so no region needs its own wire. This lifts the control-rank limit above. See [The Acoustic Hologram](../papers/replicator_acoustic_hologram.html#s10).
+- **Impedance matching.** A piezoceramic has an acoustic impedance near 30 MRayl and air about 415 Rayl, so only about 0.006 % of the power crosses a bare interface (Derived). Structures that taper the impedance gradually are the intended remedy.
+- **Higher frequency.** Working near 1 MHz, where half a wavelength in gas is under 0.2 mm, is a candidate for finer features.
+
+## Open questions
+
+| Question | Who answers it |
+|---|---|
+| Does the solid finite-element model agree with the thin-plate model for the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer? | Simulation |
+| At the {{c:desktop_geometry.gap_mm}} mm spacing, do 12 sources and 5 tones hold one object without unwanted wells nearby? | Simulation, then in-chamber calibration |
+| How much drive is lost at 128 and 160 kHz because the disc is oversized? | Simulation |
+| How long does the wafer ring, and how fast can patterns change? | Simulation, then in-chamber calibration |
+| How is air temperature tracked during a job, and how often is recalibration needed? | Control design |
+| What is the force on a sphere comparable in size to the wavelength? | Simulation |
+| Does self-sensing resolve the echo with five tones present? | Simulation |
+
+Related: [Compute, sensing and control](compute-control.html), [Digital twin](digital-twin.html) and the [Glossary](glossary.html).

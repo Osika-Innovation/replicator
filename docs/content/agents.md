@@ -1,43 +1,68 @@
 # Agent entry point
 
-Work toward one enduring modular machine that increasingly manufactures its own upgrades with minimum human engineering time. Keep two horizons clear in every document, simulation, and design: the **Ultimate Architecture** (tool-free coordinated wavefields, continuous optical/wave apertures, and minimal-electricity physical equilibrium compute) and the **Bootstrap Prototype (`P0` / `HA-0`)** (purchasable `RP2350B`, `SMI`, and `PZT`/SLA seed modules). **Never conflate temporary prototype scaffolding silicon with the final architecture of the Replicator.**
+This page is for engineers and AI agents who will change the design, the code or this handbook. Several agents work on the project at the same time in one shared working copy, so the rules below exist to keep their work from colliding and to keep findings from being lost.
 
-This **Engineering Handbook (`docs/content/*.md`) is the canonical, self-contained technical specification**, superseding older standalone HTML essays in `papers/`.
+## The goal you are working toward
+
+One modular machine that lasts and that increasingly makes its own upgrades, reached with the least human hands-on time. Two things must never be confused in anything you write: the [Desktop Replicator](desktop-replicator.html), which is the first machine and is built from purchasable parts, and the long-term architecture it leads to. **No hardware has been built, ordered or measured.**
 
 ## Read in this order
 
-1. [Current state](status.html): Ultimate vs. Prototype tracks, published code, and open bench gates.
-2. [Architecture](architecture.html): Two-carrier physics (`λ`, momentum, crossings) and Ultimate vs. Prototype system boundaries.
-3. [Compute, sensing and control](compute-control.html): Invariant `.fcode` / `MachineBackend` contract, Ultimate continuous wave boundaries, and Prototype `RP2350B` `1-bit ΣΔ` / `SMI` hardware.
-4. [Cadence, memory and wave compute](cadence-memory.html): `8πV / 3λ³` three-cavity theorem, `Sb₂S₃` chord memory, complex Hermitian `EqProp`, and the compute substrate ladder.
-5. [Manufacturing](manufacturing.html) and [Scan, recover and matter stores](matter-loop.html): `Slice → Feed → Trap → Move → Weld → Check`, non-moving `S(f)` tomography (`G17–G19`), material recovery, and Salt/Ash/Noble-Gas stores.
-6. [Upgrade loop](upgrades.html) and [Digital twin](digital-twin.html): `upgrade_graph.json`, Charter/solver gates, and pre-solder simulation realism tiers.
-7. The specific physics/subsystem guide ([Acoustics](acoustics.html), [Optics](optics.html), [Electromagnetics](electromagnetics.html), [Physics overview](physics.html), [Research library](research.html)).
+1. [Current state](status.html): what exists, its evidence, and the known inconsistencies.
+2. [Desktop Replicator](desktop-replicator.html): the machine all near-term work targets.
+3. [Insight register](insights.html): the findings that changed the design and where each still has to be carried into code.
+4. [Architecture](architecture.html), then the chapter for your subsystem.
+5. [Glossary](glossary.html) for any term you do not know.
 
-For foundational physics and atomic-to-hardware work, read [Observer Patch Holography](oph.html), [Light, fields and matter](light-matter.html), [Periodic table and tones](periodic-table.html), and [From atoms to hardware](physics-to-hardware.html). Verify the small shell/geometry suite with `python3 tools/check_physics_derivations.py`.
+For a complete plain-text copy of the handbook use [llms-full.txt](../llms-full.txt). For the compact map use [llms.txt](../llms.txt). Stable document identifiers are in [catalog.json](../catalog.json).
 
-Use [catalog.json](../catalog.json) for stable document IDs, [llms.txt](../llms.txt) as the compact agent map, and [llms-full.txt](../llms-full.txt) for complete plaintext ingestion.
+## Lanes
 
-## Ownership
+Work is divided into six lanes. Each lane owns a set of files and stays out of the others.
 
 | Lane | Owns | Delivers |
 |---|---|---|
-| **System integration** | Architecture, Ultimate vs. Prototype framing, cross-field contracts | Compatible modules, invariant `.fcode`/`.pattern` schemas, complete manufacturing loop |
-| **Acoustics** | Coupled piezo/plate/scatterer/radiation co-design, harmonic comb closure | `body-response/0.1` `H(f)`, `K-PORT+` solid FEM agreement, thermal/force limits |
-| **Platform / control** | Timescale split, `MachineBackend`, Ring-0 firmware, prototype `RP2350B` `1-bit ΣΔ` &amp; `XIN`/`SYNC` bus, Brain Slot | Bounded executable jobs, standalone/tethered parity, `K-HAPTIC-PZT` bench receipts |
-| **Intelligence / Cadence** | Sparse complex Hermitian `EqProp`, `AssociativeChordBank`, `ThoracicMotorCompiler`, multi-teacher distillation | Validated `holo/` benchmarks across `ideal_fp32`, `rp2350_ganglia_q8`, `fpga_int8_sparse`, `optical_pcm_analog` |
-| **Optics / metamaterials** | Metasurface facets, toroidal stem, `SMI` mosquito-eye readout, nanoimprint replication, optical tweezers | Sightline-true `K-MOSQUITO-SMI` receipts, phase tolerances (`δh`), PCM `M#` &amp; endurance specs |
-| **Electromagnetic control** | Coils, transient/RF fields, `J × B` melt shaping, `m/q` sort, contactless `X-EM` exciter | Calibrated field/force maps, current/thermal limits, `X-EM` disc modal response |
-| **Feed, join &amp; stores** | `Assemble`, `Recover`, consolidation state machine (`R15`), Salt/Ash/Noble-Gas stores, active `R9` chamber | Qualified process recipes, mass/energy balance ledger, `FAB-01` first upgrade part |
-| **Metrology &amp; Scan** | Non-moving `S(f)` (`G17`–`G19`), `measured` vs. `inferred` tagging, calibration phantoms | Reproducible raw sensor captures, uncertainty bounds, phantom ground-truth checks |
-| **Physics / documentation** | OPH &amp; material-tone links, canonical Markdown handbook maintenance | Clear current explanations preserving epistemic status and public-scope firewall |
+| Firmware and machine interface (`os`) | Controller firmware for the Desktop Replicator, the machine interface and calibration code in the twin | Firmware that compiles, a calibration procedure, the same job running tethered and standalone |
+| Simulation (`sim`) | The acoustic and electrical physics models, the pattern network training code, the solid finite-element bridge | Model results with receipts, including the gates that must pass before hardware |
+| Sensing (`biomimicry`) | The scan models for sound and for the laser ring, and their acceptance checks | Scan and inspection checks on the current geometry |
+| CAD (`cad`) | The parametric model, exported geometry, drawings, parts list, power and thermal estimates | A self-consistent model and a parts list that can be priced |
+| Handbook (`handbook`) | This handbook and the paper library | An accurate public explanation that passes its checks |
+| Coordination (`cto`) | The shared constants, the insight register, the task board, the upgrade graph and version control | Consistent numbers across lanes and clean checkpoints |
 
-## Working rules
+## The working loop
 
-Inspect git status and active branches before editing. Use isolated branches for concurrent work. Never touch running experiment logs or overwrite uncommitted local hardware edits without explicit check.
+The engineering working copy carries a small coordination tool, `tools/hub.py`, together with the shared constants and the insight register. They are not yet part of the public repository.
 
-Every engineering change declares its input revision, target observable, baseline comparison, and discriminating gate. Keep simulation predictions (`SIMULATED`), analytical calculations (`DERIVED`), external literature (`Published`), and project hardware receipts (`Bench measured`) strictly separate. Do not approve parts ordering or push public deployments without operator authorization.
+1. **Brief.** Run `python3 tools/hub.py brief --lane <lane>`. It lists the files other agents have reserved, the open findings for your lane and the open tasks.
+2. **Claim.** Before editing, claim a task and reserve the files you will touch: `python3 tools/hub.py claim <task> --agent <name> --files "<paths>"`. Respect other agents' reservations.
+3. **Work.** Stay inside your lane's files. During a long run, send a heartbeat every 20 to 30 minutes so the reservation does not lapse.
+4. **Report.** Post concrete numbers, blockers and anything another lane needs to know: `python3 tools/hub.py post --channel <lane> --agent <name> --message "..."`.
+5. **Register findings.** If you learn something that changes a design number or rules out an approach, add it to the insight register with a check that a program can run, and state its evidence label. A finding that lives only in prose is treated as lost.
+6. **Close.** When a task passes its check, close it with a pointer to the receipt: `python3 tools/hub.py done <task> --receipt "<path>"`.
 
-## Documentation changes
+## Rules
 
-Lead cleanly with both **Ultimate Architecture** and **Prototype Bootstrap** context whenever describing hardware or compute. Update the owning guide, [Status](status.html), [catalog.json](../catalog.json), and cross-links together so the handbook remains self-contained without relying on legacy HTML papers. Never introduce private intake attachments, local filesystem paths, sibling private studies, or unverified internal codenames into public builds. Always run `python3 tools/build_docs.py` and `python3 tools/check_docs.py` before committing.
+- **One source for numbers.** Geometry, tones, part numbers and budgets are read from the shared constants file. Do not type a design number into code or prose when a constant exists.
+- **Evidence labels.** Keep documented, derived, simulated, measured, open and claim separate, as defined in [Current state](status.html#evidence-labels). A model check that passes is not a measurement.
+- **Retired designs stay retired.** Do not extend the sixteen-transducer array, the drilled-wafer design, single-purpose test rigs or hand-applied adhesive joining. The table is in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced).
+- **Version control.** Do not create working trees and do not run commands that discard work (reset, checkout of files, rebase, clean). The coordination lane makes the checkpoints.
+- **Outside world.** Do not order parts, contact suppliers, push or publish without explicit approval from the operator.
+- **Private material.** Research intake, private studies and internal codenames never enter the handbook, the public repository or any public text.
+- **State your scope.** Every engineering change names the revision it started from, the quantity it targets, the baseline it compares against and the check that decides it.
+
+## Changing the handbook
+
+Chapters are Markdown files in `docs/content/`. Navigation and metadata are in `docs/catalog.json`.
+
+- Quote design numbers with a token, for example <code>&#123;&#123;c:desktop_geometry.gap_mm&#125;&#125;</code>. The tokens are filled from `docs/canon.json`, a snapshot of the shared constants and of the insight register. Refresh it with `python3 tools/sync_canon.py`.
+- Write plainly. Define a term at first use or link the [glossary](glossary.html). Use code formatting only for file names, commands and identifiers.
+- When a decision changes, update the owning chapter, [Current state](status.html) and the catalog together.
+- Before proposing a change, run all three:
+
+```
+python3 tools/build_docs.py
+python3 tools/check_docs.py
+python3 tools/check_canon.py
+```
+
+The first builds the site. The second checks links, anchors and public scope. The third fails if a number has drifted from the constants, if a retired design is described as current, or if a private name appears.

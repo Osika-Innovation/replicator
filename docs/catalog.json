@@ -23,6 +23,8 @@
       "reviewed": "2026-11-17",
       "review_scope": "Current programme explanation",
       "related": [
+        "glossary",
+        "desktop-replicator",
         "start",
         "architecture",
         "compute-control",
@@ -43,15 +45,17 @@
       "group": "Start",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Canonical handbook overview separating the Ultimate Architecture from the Bootstrap Prototype (P0 / HA-0).",
+      "summary": "What the Replicator is, what exists today, and how to read this handbook.",
       "topics": [
         "ultimate architecture",
         "prototype",
         "strategy"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Self-contained handbook framing across Ultimate Architecture and Prototype Bootstrap",
+      "review_scope": "Handbook framing: long-term architecture and the Desktop Replicator prototype",
       "related": [
+        "glossary",
+        "desktop-replicator",
         "architecture",
         "compute-control",
         "cadence-memory",
@@ -65,173 +69,82 @@
       ]
     },
     {
-      "id": "physics",
-      "title": "Physics overview",
-      "source": "docs/content/physics.md",
-      "url": "guides/physics.html",
+      "id": "desktop-replicator",
+      "title": "Desktop Replicator",
+      "source": "docs/content/desktop-replicator.md",
+      "url": "guides/desktop-replicator.html",
       "type": "guide",
-      "group": "Physics",
+      "group": "Start",
       "status": "Current guide",
-      "owner": "Physics / materials",
-      "summary": "Theoretical perspective, physical mechanisms and their role in the Replicator.",
+      "owner": "Systems / documentation",
+      "summary": "The machine being designed first: one open chamber, two undrilled glass wafers, self-sensing piezo sources and a ring of self-mixing lasers. Nothing is built yet.",
       "topics": [
-        "physics",
-        "framework",
-        "waves",
-        "OPH"
+        "prototype",
+        "desktop replicator",
+        "hardware",
+        "CAD"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Framework interpretation and engineering connections",
+      "reviewed": "2026-11-17",
+      "review_scope": "Active prototype design, quoted from the shared engineering constants",
       "related": [
-        "oph",
-        "light-matter",
-        "periodic-table",
-        "materials",
-        "architecture",
-        "physics-to-hardware"
-      ]
-    },
-    {
-      "id": "oph",
-      "title": "Observer Patch Holography",
-      "source": "docs/content/oph.md",
-      "url": "guides/oph.html",
-      "type": "guide",
-      "group": "Physics",
-      "status": "Current guide",
-      "owner": "Physics / materials",
-      "summary": "The carrier algebra, quantum dynamics and a source-generated atomic model.",
-      "topics": [
-        "OPH",
-        "observer",
-        "holography",
-        "boundary",
-        "model validation"
-      ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Primary proof/source review at upstream revision 4483a9c; large numerical study and Lean build not rerun",
-      "related": [
-        "physics",
-        "light-matter",
-        "digital-twin",
         "status",
-        "physics-to-hardware"
-      ]
-    },
-    {
-      "id": "light-matter",
-      "title": "Light, fields and matter",
-      "source": "docs/content/light-matter.md",
-      "url": "guides/light-matter.html",
-      "type": "guide",
-      "group": "Physics",
-      "status": "Current guide",
-      "owner": "Physics / materials",
-      "summary": "The everything-is-light perspective, field descriptions and material interactions.",
-      "topics": [
-        "light",
-        "Walter Russell",
-        "fields",
-        "matter",
-        "energy"
-      ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Framework interpretation and engineering connections",
-      "related": [
-        "physics",
-        "oph",
-        "periodic-table",
-        "electromagnetics",
-        "optics"
-      ]
-    },
-    {
-      "id": "periodic-table",
-      "title": "Periodic table and tones",
-      "source": "docs/content/periodic-table.md",
-      "url": "guides/periodic-table.html",
-      "type": "guide",
-      "group": "Physics",
-      "status": "Current guide",
-      "owner": "Physics / materials",
-      "summary": "Deriving shell capacities and a screened filling order, then mapping spectra to material response.",
-      "topics": [
-        "periodic table",
-        "tones",
-        "frequencies",
-        "spectra",
-        "Walter Russell"
-      ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Independent shell counts, 600-cell spectrum and exact threshold-order comparison; empirical spectra not revalidated",
-      "related": [
-        "physics",
-        "light-matter",
-        "materials",
+        "architecture",
         "acoustics",
-        "research",
-        "physics-to-hardware"
+        "compute-control",
+        "insights",
+        "glossary"
       ]
     },
     {
-      "id": "materials",
-      "title": "Materials and modes",
-      "source": "docs/content/materials.md",
-      "url": "guides/materials.html",
+      "id": "status",
+      "title": "Current state",
+      "source": "docs/content/status.md",
+      "url": "guides/status.html",
       "type": "guide",
-      "group": "Physics",
+      "group": "Start",
       "status": "Current guide",
-      "owner": "Materials and modes",
-      "summary": "Crystals, spectra and fabrication from first principles.",
+      "owner": "Systems / documentation",
+      "summary": "What exists today, with its evidence class, the gate that blocks the next step, and the retired baselines.",
       "topics": [
-        "quartz",
-        "periodic table",
-        "tones",
-        "cymatics",
-        "metamaterials"
+        "status",
+        "receipts",
+        "ultimate vs prototype",
+        "prototype"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Current programme explanation",
+      "reviewed": "2026-11-17",
+      "review_scope": "Ultimate vs. Prototype programme checkpoint",
       "related": [
-        "physics",
-        "periodic-table",
-        "light-matter",
-        "manufacturing",
-        "acoustics",
-        "upgrades",
-        "physics-to-hardware",
-        "optics"
+        "glossary",
+        "desktop-replicator",
+        "start",
+        "compute-control",
+        "cadence-memory",
+        "matter-loop",
+        "agents",
+        "oph"
       ]
     },
     {
-      "id": "physics-to-hardware",
-      "title": "From atoms to hardware",
-      "source": "docs/content/physics-to-hardware.md",
-      "url": "guides/physics-to-hardware.html",
+      "id": "glossary",
+      "title": "Glossary",
+      "source": "docs/content/glossary.md",
+      "url": "guides/glossary.html",
       "type": "guide",
-      "group": "Physics",
+      "group": "Start",
       "status": "Current guide",
-      "owner": "Physics / engineering",
-      "summary": "Bonding, response operators and coordinated fields that manufacture useful parts.",
+      "owner": "Systems / documentation",
+      "summary": "Plain definitions of the terms, abbreviations and gate names used in this handbook.",
       "topics": [
-        "derivation",
-        "Hamiltonian",
-        "phonons",
-        "inverse design",
-        "response operator",
-        "self-upgrade"
+        "glossary",
+        "terms",
+        "definitions"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "reviewed": "2026-11-17",
+      "review_scope": "Terminology",
       "related": [
-        "oph",
-        "periodic-table",
-        "materials",
-        "acoustics",
-        "manufacturing",
-        "upgrades",
-        "electromagnetics",
-        "optics"
+        "start",
+        "desktop-replicator",
+        "status"
       ]
     },
     {
@@ -302,37 +215,6 @@
       ]
     },
     {
-      "id": "electromagnetics",
-      "title": "Electromagnetic control",
-      "source": "docs/content/electromagnetics.md",
-      "url": "guides/electromagnetics.html",
-      "type": "guide",
-      "group": "Systems",
-      "status": "Current guide",
-      "owner": "Electromagnetic control",
-      "summary": "Ultimate J x B melt/sorting vs. Prototype P0 omission and X-EM modal exciter; toroidal classification and patent audits.",
-      "topics": [
-        "toroid",
-        "coils",
-        "X-EM",
-        "MHD",
-        "pulsed fields",
-        "vortex",
-        "levitation"
-      ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Ultimate vs. Prototype EM scope alignment, R5 winding correction, and EM-CTL study summary",
-      "related": [
-        "architecture",
-        "status",
-        "upgrades",
-        "light-matter",
-        "optics",
-        "manufacturing",
-        "photons"
-      ]
-    },
-    {
       "id": "optics",
       "title": "Optics and metamaterials",
       "source": "docs/content/optics.md",
@@ -364,6 +246,37 @@
         "digital-twin",
         "manufacturing",
         "research"
+      ]
+    },
+    {
+      "id": "electromagnetics",
+      "title": "Electromagnetic control",
+      "source": "docs/content/electromagnetics.md",
+      "url": "guides/electromagnetics.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Electromagnetic control",
+      "summary": "Ultimate J x B melt/sorting vs. Prototype P0 omission and X-EM modal exciter; toroidal classification and patent audits.",
+      "topics": [
+        "toroid",
+        "coils",
+        "X-EM",
+        "MHD",
+        "pulsed fields",
+        "vortex",
+        "levitation"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Ultimate vs. Prototype EM scope alignment, R5 winding correction, and EM-CTL study summary",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades",
+        "light-matter",
+        "optics",
+        "manufacturing",
+        "photons"
       ]
     },
     {
@@ -568,30 +481,27 @@
       ]
     },
     {
-      "id": "status",
-      "title": "Current state",
-      "source": "docs/content/status.md",
-      "url": "guides/status.html",
+      "id": "insights",
+      "title": "Insight register",
+      "source": "docs/content/insights.md",
+      "url": "guides/insights.html",
       "type": "guide",
       "group": "Project",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Separated Ultimate Architecture targets, Bootstrap Prototype (P0 / HA-0) records, and open bench gates.",
+      "summary": "Findings that changed the design, their evidence class, and how far each has been carried into code.",
       "topics": [
-        "status",
-        "receipts",
-        "ultimate vs prototype",
-        "prototype"
+        "insights",
+        "evidence",
+        "verification"
       ],
       "reviewed": "2026-11-17",
-      "review_scope": "Ultimate vs. Prototype programme checkpoint",
+      "review_scope": "Snapshot of the engineering insight register",
       "related": [
-        "start",
-        "compute-control",
-        "cadence-memory",
-        "matter-loop",
+        "status",
+        "desktop-replicator",
         "agents",
-        "oph"
+        "upgrades"
       ]
     },
     {
@@ -606,10 +516,9 @@
       "summary": "Canonical handbook reading order, Ultimate vs. Prototype discipline, lane ownership, and CI checks.",
       "topics": [
         "agents",
-        "Claude",
-        "Gemini",
-        "Carbon",
-        "Codex"
+        "coordination",
+        "lanes",
+        "workflow"
       ],
       "reviewed": "2026-11-17",
       "review_scope": "Updated ownership and handbook-primary documentation rules",
@@ -651,6 +560,176 @@
         "upgrades",
         "physics",
         "periodic-table"
+      ]
+    },
+    {
+      "id": "physics",
+      "title": "Physics overview",
+      "source": "docs/content/physics.md",
+      "url": "guides/physics.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "Theoretical perspective, physical mechanisms and their role in the Replicator.",
+      "topics": [
+        "physics",
+        "framework",
+        "waves",
+        "OPH"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "oph",
+        "light-matter",
+        "periodic-table",
+        "materials",
+        "architecture",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "oph",
+      "title": "Observer Patch Holography",
+      "source": "docs/content/oph.md",
+      "url": "guides/oph.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "The carrier algebra, quantum dynamics and a source-generated atomic model.",
+      "topics": [
+        "OPH",
+        "observer",
+        "holography",
+        "boundary",
+        "model validation"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Primary proof/source review at upstream revision 4483a9c; large numerical study and Lean build not rerun",
+      "related": [
+        "physics",
+        "light-matter",
+        "digital-twin",
+        "status",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "light-matter",
+      "title": "Light, fields and matter",
+      "source": "docs/content/light-matter.md",
+      "url": "guides/light-matter.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "The everything-is-light perspective, field descriptions and material interactions.",
+      "topics": [
+        "light",
+        "Walter Russell",
+        "fields",
+        "matter",
+        "energy"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "physics",
+        "oph",
+        "periodic-table",
+        "electromagnetics",
+        "optics"
+      ]
+    },
+    {
+      "id": "periodic-table",
+      "title": "Periodic table and tones",
+      "source": "docs/content/periodic-table.md",
+      "url": "guides/periodic-table.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "Deriving shell capacities and a screened filling order, then mapping spectra to material response.",
+      "topics": [
+        "periodic table",
+        "tones",
+        "frequencies",
+        "spectra",
+        "Walter Russell"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Independent shell counts, 600-cell spectrum and exact threshold-order comparison; empirical spectra not revalidated",
+      "related": [
+        "physics",
+        "light-matter",
+        "materials",
+        "acoustics",
+        "research",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "materials",
+      "title": "Materials and modes",
+      "source": "docs/content/materials.md",
+      "url": "guides/materials.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Materials and modes",
+      "summary": "Crystals, spectra and fabrication from first principles.",
+      "topics": [
+        "quartz",
+        "periodic table",
+        "tones",
+        "cymatics",
+        "metamaterials"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "physics",
+        "periodic-table",
+        "light-matter",
+        "manufacturing",
+        "acoustics",
+        "upgrades",
+        "physics-to-hardware",
+        "optics"
+      ]
+    },
+    {
+      "id": "physics-to-hardware",
+      "title": "From atoms to hardware",
+      "source": "docs/content/physics-to-hardware.md",
+      "url": "guides/physics-to-hardware.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / engineering",
+      "summary": "Bonding, response operators and coordinated fields that manufacture useful parts.",
+      "topics": [
+        "derivation",
+        "Hamiltonian",
+        "phonons",
+        "inverse design",
+        "response operator",
+        "self-upgrade"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "related": [
+        "oph",
+        "periodic-table",
+        "materials",
+        "acoustics",
+        "manufacturing",
+        "upgrades",
+        "electromagnetics",
+        "optics"
       ]
     },
     {

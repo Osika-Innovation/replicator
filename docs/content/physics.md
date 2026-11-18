@@ -17,13 +17,13 @@ For the Replicator, that question becomes practical. A shaped elastic body distr
 
 ## One chain from an idea to a machine
 
-The chain is now worked through in detail: [OPH's carrier algebra and field-to-atom calculation](oph.html#from-carrier-geometry-to-an-interaction-algebra), [shell capacities and filling order](periodic-table.html#deriving-the-shell-structure), and [bonding through to a manufactured upgrade](physics-to-hardware.html). The last chapter shows how a printed body, its source and the surrounding medium physically implement the response operator we optimize.
+The chain is now worked through in detail: [OPH's carrier algebra and field-to-atom calculation](oph.html#from-carrier-geometry-to-an-interaction-algebra), [shell capacities and filling order](periodic-table.html#deriving-the-shell-structure), and [bonding through to a manufactured upgrade](physics-to-hardware.html). The last chapter shows how a body, its sources and the surrounding medium physically implement the response operator we optimize.
 
 | Stage | Question | Replicator example |
 |---|---|---|
-| Structure | What is present, and how is it arranged? | Piezo material, preload, printed body, mounts and surrounding air |
+| Structure | What is present, and how is it arranged? | Bonded PZT-8 piezo discs, borosilicate wafer, rim mount and surrounding air |
 | Dynamics | What changes under a specified excitation? | Coupled electrical, elastic and acoustic response |
-| Access | Which motions can our inputs excite and our sensors resolve? | The useful field patterns available from three drives per body |
+| Access | Which motions can our inputs excite and our sensors resolve? | The useful field patterns available from {{c:desktop_geometry.ports_per_plate}} drives per plate |
 | Process | What does that response do to the feedstock? | Force, transport, heating, joining or alignment |
 | Verification | Did the intended change occur? | Measured field, inspected part and improved module performance |
 

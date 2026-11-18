@@ -1,44 +1,66 @@
 # Start here
 
-We are building a field-controlled manufacturing machine that manufactures increasingly demanding upgrades for itself. The **Engineering Handbook** is the canonical, self-contained technical specification for the entire programme, separating what defines the **Ultimate Architecture** from how we build the **Bootstrap Prototype (`P0` / `HA-0`)** today.
+The Replicator is a machine that builds objects by holding and moving material with fields instead of tools. Sound waves carry and position material, light inspects it and addresses fine detail, and electric and magnetic fields act on materials that respond to them. The work happens in one chamber with no nozzle, no robot arm and no moving stage.
 
-## What the Replicator does
+The programme has one long-term aim: a machine that makes an increasing share of the parts of its own successor.
 
-Every build closes four physical steps inside one shared three-dimensional work volume: **supply feedstock, arrange and orient it by fields, consolidate/join it, and inspect/recover the output**. Optical, acoustic, and electric/magnetic fields act together on a shared material state—with **zero internal moving tools and zero object turntables (`Plan A`)**.
+## What exists today
 
-1. **Scan:** Probe an unknown or partially built object from the walls (`S(f)` + optical sightlines) into a provenance-tagged `.pattern` chord representation ([Scan, recover and matter stores](matter-loop.html)).
-2. **Assemble:** Synthesize holographic traps (`sound as hands`, `light as fingertips`, induction where conductive), glide payloads into position, consolidate via ultrasonic clamping and addressed energy, and check continuously until the structure *rings true* ([Manufacturing](manufacturing.html)).
-3. **Recover:** Disassemble or reprocess parts along least-costly physical/chemical routes back into safe, oxidized **Salt / Ash / Carbon / Water** stores ([Scan, recover and matter stores](matter-loop.html#recover-dissolve-material-specific-separation-and-reuse)).
+A design, not a machine. **No hardware has been built, ordered or measured.** The current work is:
 
-## Three design commitments
+- a parametric CAD model of the first machine, the [Desktop Replicator](desktop-replicator.html);
+- simulations of its acoustic field, its sensors and its controller;
+- a research library of the published work the design relies on;
+- this handbook, which is the current explanation of all of it.
 
-**One enduring platform.** Stable mechanical datums, replaceable boundary cartridges, and shared `.fcode` / `.pattern` contracts preserve the machine frame as hardware modules upgrade.
+[Current state](status.html) lists each area with its evidence and what blocks the next step.
 
-**Minimum human engineering time.** Digital twins (`Swift/Metal` + `MLX/Cadence`) search geometry, tolerances, and drive chords ahead of hardware fabrication; reusable bench fixtures (`K-PORT+`, `K-HAPTIC-PZT`, `K-MOSQUITO-SMI`) become permanent service instrumentation.
+## What the machine does
 
-**More function per part.** Dispersive plates, chaotic faceplates, diffractive facets, and two-terminal crystals execute multiplexing, beam shaping, and sensing natively in physics.
+A build repeats four steps inside the chamber.
 
-## Ultimate architecture and the bootstrap prototype
+1. **Scan.** Find out what is in the chamber. Sound sent from the plates and laser beams crossing the chamber are both changed by any object in their path, and the changes are turned into a description of the object.
+2. **Assemble.** Shape the sound field into small pockets that hold material, move the pockets to carry material into place, and join it there.
+3. **Check.** Compare what is there with what was intended, continuously, with the same sensors.
+4. **Recover.** Take apart what is wrong or no longer needed and return the material to storage.
 
-It is essential not to mistake temporary workshop electronics for the architecture of the machine itself. Every subsystem in this handbook separates these two horizons explicitly:
+Steps 1 and 3 are the best understood. Joining and recovery are the least: neither has a complete recipe yet. [Manufacturing](manufacturing.html) and [Scan, recover and matter stores](matter-loop.html) say exactly what is and is not shown.
 
-| Dimension | Ultimate architecture (physical limit) | Bootstrap prototype (`P0` / `HA-0` workshop seed) |
-|---|---|---|
-| **Boundaries & actuation** | Continuous optically-addressed photoconductive-piezo films (`~10⁵` pixels) over phase-conjugate multimode fibers, graded phononic tapers, and tonotopic dispersive plates ([Acoustics](acoustics.html)) | Opposed thin broadband `3 + 3` or `6 + 6` PZT elements on `1–1.5 mm` borosilicate/aluminum supersonic plates + SLA phase ring + `1.2 mm` PCB backing absorber |
-| **Optical observation & fingertips** | Full bidirectional toroidal-pulse stem (`space ⊗ polarization ⊗ spectrum` density-matrix RX), `756 nm` optically-addressed metasurface SLMs, `OAM`/skyrmion registers, and optical gradient tweezers ([Optics](optics.html)) | Nanoimprinted `TiO₂` diffractive facets along `270°` clear radial windows + `Ø12 mm` bore feeding 3-pin TO-can laser diodes (`SMI` + `SOT-23 ×200` AC stage) |
-| **Electromagnetic coupling** | Coordinated containerless `J × B` melt shaping, `m/q` sorting, and traveling-wave axial bore lift ([Electromagnetics](electromagnetics.html)) | Contactless modal exciter (`X-EM`) for bench blank characterization; process EM windings deferred past first acoustic build |
-| **Compute, sensing & memory** | Minimal-electricity wave-equilibrium compute: threshold `EML` diode cavities, reciprocal `Sb₂S₃`/`Sb₂Se₃` holographic chord memory (`η = (M#/M)²`), and candidate passive optical or excitable neural-gel substrates (`Open`) ([Cadence and memory](cadence-memory.html)) | **Prototype scaffolding:** collocated `RP2350B` `75 MSa/s` `1-bit ΣΔ` ganglia on shared `XIN + SYNC`, `< 60 kB` `5–10%` sparse complex `int8` `Cadence` (`EqProp`) or optional `SoC-FPGA`, trained offline on workstation `MLX/Metal` GPU ([Compute, sensing and control](compute-control.html)) |
-| **Matter & stores loop** | Mirrored three-plate active stack (`R9`): upper build chamber + lower acoustophoretic sorting and QC storage chamber fed from Salt/Ash/Carbon/Water/Air/Noble-Gas stores ([Matter loop](matter-loop.html)) | Indexed septum vials (`ha0_septum_cap`), calibrated dispenser feeds, single-material test payloads, and reusable bench phantoms |
+## Three commitments
 
-## How to read the handbook
+**One platform that lasts.** The frame, coordinate system, calibration tools and file formats stay fixed. Modules are replaced as better ones become available, some of them made by the machine. Nothing is built as a throwaway rig.
 
-This handbook is self-contained and supersedes the older standalone HTML papers as the primary engineering authority. Use:
+**Least human time.** Simulation and the digital twin do the searching, the tolerance analysis and the checking. People do the physical building, the alignment and the purchasing decisions. Every choice is judged by how many hands-on minutes it costs to reach the next measured capability.
 
-1. [Architecture](architecture.html) for coordinated fields, two-carrier physics (`λ`, momentum, crossings), and subsystem contracts.
-2. [Compute, sensing and control](compute-control.html) for the timescale split, wire contracts (`.fcode`, `.pattern`, `MachineBackend`), and Prototype `RP2350B` / `SoC-FPGA` details.
-3. [Cadence, memory and wave compute](cadence-memory.html) for the `8πV / 3λ³` mode theorem, `Sb₂S₃` chord memory, complex Hermitian `EqProp`, and the low-electricity compute ladder.
-4. [Manufacturing](manufacturing.html) and [Scan, recover and matter stores](matter-loop.html) for the complete `Scan → Assemble → Recover → Store` loop.
-5. [Upgrade loop](upgrades.html) and [Digital twin](digital-twin.html) for simulation gates, CAD contracts, and the path to self-upgrading.
-6. [Physics overview](physics.html) for [OPH](oph.html), [Light, fields and matter](light-matter.html), [Periodic table and tones](periodic-table.html), and [From atoms to hardware](physics-to-hardware.html).
+**More function from each part.** A glass plate that carries waves of many shapes replaces an array of hundreds of separate sources. A laser that is its own detector replaces a camera. Geometry and wave physics are used in place of parts wherever they can be.
 
-Legacy HTML papers remain accessible via the [research library](research.html) for historical traceability and long-form derivations.
+## Two horizons
+
+The handbook describes two machines and keeps them apart.
+
+**The Desktop Replicator** is the first machine: a benchtop chamber with two glass plates, {{c:desktop_geometry.ports_per_plate}} piezo sources on each, a ring of {{c:mosquito_smi.total_ommatidia}} small lasers and ordinary microcontrollers. Everything in it can be bought or made in a workshop. [Desktop Replicator](desktop-replicator.html) describes it in full.
+
+**The long-term architecture** replaces the wired sources with a surface of roughly 100,000 elements switched by light, and the digital controller with computing done by waves themselves. Its components exist in the published literature; the machine does not.
+
+The microcontrollers and discrete lasers of the first machine are scaffolding. They are not the architecture. [Architecture](architecture.html) sets the two side by side, one row per subsystem.
+
+## How to read this handbook
+
+| If you want to | Read |
+|---|---|
+| See the machine being designed | [Desktop Replicator](desktop-replicator.html) |
+| Know what is real today | [Current state](status.html) |
+| Look up a term | [Glossary](glossary.html) |
+| Understand the whole system | [Architecture](architecture.html) |
+| Go deep on one subsystem | [Acoustic bodies](acoustics.html), [Optics and metamaterials](optics.html), [Electromagnetic control](electromagnetics.html), [Compute, sensing and control](compute-control.html), [Cadence, memory and wave compute](cadence-memory.html) |
+| Follow material through a build | [Manufacturing](manufacturing.html), then [Scan, recover and matter stores](matter-loop.html) |
+| See the tooling | [Digital twin](digital-twin.html) and [Upgrade loop](upgrades.html) |
+| See what changed the design, and what is unresolved | [Insight register](insights.html) |
+| Work on the project as an engineer or an AI agent | [Agent entry point](agents.html) |
+| Read the theoretical framework | [Physics overview](physics.html) |
+
+The handbook is the current explanation. The papers in the [research library](research.html) are kept as the record of how each mechanism was worked out; several of them describe earlier designs and say so.
+
+## How claims are labelled
+
+Each claim is a design decision, documented in published work, derived, simulated, measured, open or an unverified claim. The definitions are in [Current state](status.html#evidence-labels). Nothing in this handbook is labelled measured, because no project measurement exists yet.

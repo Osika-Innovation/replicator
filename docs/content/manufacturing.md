@@ -1,81 +1,107 @@
 # From fields to manufactured parts
 
-A manufacturing capability is a reproducible transformation from supplied material to an inspected part. Both the **Ultimate Architecture** and the **Bootstrap Prototype (`P0` / `HA-0`)** run the same closed process loop inside one shared work volume—varying in field aperture resolution, feed automation, and consolidation energy delivery rather than abandoning the loop itself.
+<div class="lead">A part is made in five steps that share one work volume: feed, trap, move, consolidate and check. Trapping and moving a single small bead are supported by simulation on earlier apertures. Joining material, and placing one bead beside another, are not yet shown for the first machine.</div>
 
----
+Nothing on this page has been built or measured. The first machine is described in [Desktop Replicator](desktop-replicator.html). Scanning, removal of material and the stores are in [Scan, recover and matter stores](matter-loop.html).
 
-## Six-step concurrent Assemble loop
+## The loop: feed, trap, move, consolidate, check
 
-In steady state, different regions of the chamber execute Steps 2–6 concurrently while every single grain walks through them causally:
+Before the loop starts, the planner turns the target shape into a timed schedule of drive signals. The schedule is not sliced into layers: material can arrive from any direction that the fields can reach.
 
-1. **1 · Slice (field schedule, not Z-layers):** Convert target geometry (`.stl` or parametric twin shape) into timed multi-tone boundary drives (`.fcode`), free of mechanical Z-axis layering whenever trap paths remain clear.
-2. **2 · Feed (`R10`):** Introduce powder, droplets, or wire/melt feedstock along the central `Ø12 mm` bore (`Ultimate`: traveling-wave axial induction / acoustic tube conveyor; `Prototype`: indexed septum vials `ha0_septum_cap` and calibrated injectors).
-3. **3 · Trap (Gor'kov potential):** Superpose boundary waves into three-dimensional quiet pockets (`Derived` + `Published`):
+| Step | What happens | In the Desktop Replicator |
+|---|---|---|
+| 1 · Feed | Material is made available to the fields | Three open crucibles at the back of the chamber: {{c:desktop_geometry.in_chamber_crucibles}} |
+| 2 · Trap | Sound from the plates forms quiet pockets that hold a bead or droplet | Two plates {{c:desktop_geometry.gap_mm}} mm apart, twelve sources, tones of {{c:desktop_geometry.comb_tones_hz|khz}} kHz |
+| 3 · Move | The drive signals change smoothly and the pockets travel | Same sources; no arm, nozzle or stage |
+| 4 · Consolidate | Material that has arrived is joined to what is already there | By the fields themselves. No recipe simulated yet |
+| 5 · Check | The machine senses the result and corrects before errors build up | Piezo discs that listen while driving, plus {{c:mosquito_smi.total_ommatidia}} lasers |
 
-       U_rad = (4/3) π a³ [ f₁ · (½) κ₀ ⟨p²⟩ − f₂ · (¾) ρ₀ ⟨v²⟩ ],    F_rad = −∇U_rad
-       Φ = f₁ + (3/2) f₂   (Φ > 0 traps at pressure nodes for solids/liquids in air)
+Different regions of the chamber can be at different steps at once. Each piece of material passes through them in order.
 
-   Keep strict sign-and-normalization discipline: mixing Fourier conventions silently flips pressure nodes into unstable antinodes (`twin` tests `G7`, `G-B0`).
-4. **4 · Move (parallel steer-first glide):** Ramp boundary phases continuously so hundreds of traps translate concurrently without toolarms. Each carry step updates array steering phases toward the target waypoint *before* optimizing contrast (`PlaceRig.steer`), keeping trap depth `≥ 99%` across `10 mm` spans (`G-P1` pass in twin) rather than decaying monotonically.
-5. **5 · Consolidate / Weld:** Focus thermal, optical, or clamping energy exclusively onto grains that reach latched neighbors—keeping chamber heat confined to the bond zone (`FEEDSTOCK → IN_TRANSIT → MOLTEN → WETTED → LATCHED`).
-6. **6 · Check (closed loop, never open-loop printing):** Run boundary tomography (`HAPTIC` + `SMI`) continuously underneath the build; compare live acoustic/optical chord response against target `.pattern` signatures and correct errors before compounding ([Scan, recover and matter stores](matter-loop.html)).
+## The physics that matters
 
----
+**Trapping.** A small sphere of radius a in a sound field feels the Gor'kov potential (Documented):
 
-## Placement ladder ("sound is the hands, light is the fingertips") and levitation classes
+    U = (4/3) π a³ [ f₁ · ½ κ₀ ⟨p²⟩ − f₂ · ¾ ρ₀ ⟨v²⟩ ],     F = −∇U
 
-No single carrier handles every length scale or material class efficiently (`R1` &amp; `R1-b`):
+Here ⟨p²⟩ and ⟨v²⟩ are the time-averaged squared pressure and air velocity, κ₀ and ρ₀ are the compressibility and density of air, and f₁ and f₂ are contrast factors close to 1 for any solid or liquid in air. Such material is pushed toward places where the pressure is quiet. The force depends on the squared field, which is why reversing a field does not reverse the force (see [removal](matter-loop.html#recover-dissolve-material-specific-separation-and-reuse)). The full treatment is in [Acoustics](acoustics.html).
 
-* **The hands (millimeter → micron):** Because phonons carry `~10⁵–10⁶×` more momentum per watt than photons (`E/v` vs. `E/c`), acoustic and inductive forces execute bulk transport and macro/mesoscale placement ([Acoustics](acoustics.html)).
-* **The fingertips (micron → tens of nanometers, `Ultimate`):** Once sound brings a payload into the axial/radial optical working zone (`hand-off` verb `Open`), holographic optical gradient tweezers (`Published`: Ashkin, Grier) hold and align dielectric inclusions to nanometer tolerances. Below tens of nanometers, thermal agitation (`k_B T`) beats bare gradient stiffness (`polarizability ∝ a³`), requiring near-field / plasmonic traps (`Published` literature; `Open` in-machine).
-* **Levitation by material class:**
-  * **Conductive metals (including melts):** Induction (`J × B` levitation melting—handled inductively in the **Ultimate** stack; omitted from `P0` prototype process actuation per the `2026-11-13` EM audit).
-  * **Charged droplets (any material):** Electrostatic levitation (`ESL` across plate electrodes with mandatory high-rate active servo per Earnshaw's theorem).
-  * **Dielectric / neutral solids &amp; precision multi-trap placement:** Holographic acoustics (default across both Prototype and Ultimate).
+**Why sound does the carrying.** A wave of power P that is absorbed pushes with force P/c, where c is the wave speed. One watt of sound in air (343 m/s) gives 2.9 mN. One watt of light gives 3.3 nN. Sound delivers about 900,000 times more force per watt (Derived), so sound moves material and light is kept for sensing and, in the long-term design, for fine alignment.
 
----
+**Moving.** A pocket is carried by updating the steering of the sources toward the next waypoint first and optimising the depth of the pocket second, which keeps the pocket deep during travel. In an earlier simulation on a 2,560-element plate, a bead was carried 5 mm up and 5 mm across with a worst error of 0.04 mm (Simulated). That result is for a different aperture. It has not been repeated for twelve sources at the {{c:desktop_geometry.gap_mm}} mm spacing.
 
-## Transport-phase ladder (the lowest-rung rule)
+**Use the gentlest form of matter that works.** Feedstock can be handled in four forms of increasing energy cost. The rule is to use the lowest one that meets the tolerance.
 
-Use the least-unbound matter phase that the active fields can grip cleanly—climb the energy ladder only when the surface or feature tolerance demands it:
+| Form | Held by | Role |
+|---|---|---|
+| Powder or small beads | Sound | Default. Lowest energy per kilogram. Prototype starting point |
+| Melt or droplets | Sound; induction for metals in the long-term design | Fast bulk build-up. Droplets join on contact |
+| Vapour | Directed flux and masks | Thin surface coatings |
+| Plasma | Electric and magnetic confinement | Long-term only: atomic finishing and separating elements |
 
-| Rung | Feedstock form | Primary grip | Engineering role |
-|---|---|---|---|
-| **1 · Powder** | Micro-grains / polymer or composite spheres | Acoustic (+ magnetic orientation where doped) | Default lowest energy-per-kg path (`Prototype` starting rung) |
-| **2 · Melt / droplets** | Mesoscale molten droplets (`~10¹⁶` atoms each) | Induction (`Ultimate` EM) or acoustic droplet hold | Fast roughing: droplets weld directly on contact |
-| **3 · Vapor** | Directed vapor flux | Flux geometry &amp; masking | Surface thin-film coatings (PVD precedent) |
-| **4 · Plasma** | Ionized atomic stream | Magnetic / electric `m/q` confinement | Reserved strictly for atomic finishing passes and elemental separation (`Ultimate` horizon) |
+<a id="consolidation-and-athermal-softening-r15"></a>
 
----
+## Consolidation
 
-## Consolidation and athermal softening (R15)
+**Sound alone does not melt a levitated grain.** A free grain smaller than a millimetre absorbs far too little ultrasound to sinter or melt. An earlier slogan to the contrary is retired. Sound can carry, press and rub material against a surface that is already fixed. Melting or sintering needs a separate, addressed source of heat.
 
-**Permanent retirement notice — "The sound is the heat" is dead:** Ultrasonic absorption inside a free airborne sub-millimeter grain is far too small to sinter or melt it cleanly. Acoustics handles **transport, clamping, and ultrasonic friction joining** against an already-latched surface; thermal sintering or melting always requires a separate **addressed heat channel** (focused optical cure/sinter beam, spectral EM absorption, or radiant contact). On the molten-droplet rung, cooling glow offers optional **thermophotovoltaic (`TPV`) energy recovery** back onto the DC rail (`Published` component physics; `Open` in-chamber).
+**Joining without melting everything.** Heating a whole part past its melting point spends energy on material that does not need to flow. Between holding a solid and melting it lies field-assisted plastic flow, sometimes called athermal softening (R15 in the engineering record). Each effect below is Documented separately. Combining them in a chamber is Open.
 
-**Athermal softening rung (`R15` — "flow without melt"):** Conventional printing wastes `~3–4×` latent heat warming bulk parts past `T_m`. Between rigid holding and full melting lies field-assisted plastic flow—supported separately by multiple `Published experiments`, while composed in-chamber softening remains `Open`:
+- **Acoustoplasticity (Blaha effect).** Ultrasound superimposed on a load lowers the flow stress of a metal by tens of percent with little bulk heating.
+- **Electroplasticity (Troitsky).** Pulsed current lowers yield stress by more than resistive heating explains. The programme's estimate is {{c:dissolve_and_toroidal.electroplastic_energy_reduction_vs_melt_x|range}} times less energy than bulk melting (Derived, Open).
+- **Acoustic fluidisation (Melosh).** Vibration unjams friction between grains.
+- **Hydrolytic weakening (Griggs).** Trace water and moderate temperature soften quartz.
 
-* **Acoustoplasticity (Blaha effect):** Superimposed ultrasound reduces metal flow stress tens of percent with minimal bulk heating.
-* **Electroplasticity (Troitsky):** Pulsed electrical currents drop metal yield stress beyond pure resistive heating metrics.
-* **Acoustic fluidization &amp; hydrolytic weakening:** Vibration unjams granular friction (Melosh), and trace water + moderate temperature softens crystalline quartz by dislocation creep (Griggs).
-* **Ultrasonic machining &amp; nonlinear phononics:** Mode-selective transient deformation (`Open` for high-rate in-machine joining).
+None of this removes the thermodynamic floor. Latent heat and the entropy that must be exported still set a minimum energy for any joint.
 
-Latent heat and entropy export remain immutable thermodynamic bounds; avoiding an unnecessary bulk sensible-heat bath does not abolish joining energy budgets.
+### In the Desktop Replicator
 
----
+An earlier plan joined beads with ultraviolet-curing adhesive applied by hand. That route is retired because it put a person inside the loop for every joint. The replacement is consolidation by the fields themselves: acoustic pressure, heat and phase change, for example a droplet that wets its neighbour and solidifies. Stated plainly:
+
+- No end-to-end joining recipe has been simulated.
+- The prototype's parts list contains no heat source for joining.
+- A compact pulsed ring coil at a crucible is a candidate for softening conductive material. It is not in the CAD model. See [Electromagnetic control](electromagnetics.html).
 
 ## A candidate combined-field recipe
 
-Evaluate a composite process in one shared work volume: acoustic forces arrange particles in a liquid feedstock, magnetic fields orient suitable anisotropic inclusions, and patterned light cures a compatible matrix while `HAPTIC` / `SMI` readout tracks the arrangement ([Optics](optics.html), [Electromagnetics](electromagnetics.html)).
+This section records Documented external precedent. It is not the prototype's joining route, because it depends on a light-cured resin.
 
-Two pairwise parts have direct experimental precedents: Greenhall and Raeymaekers combined ultrasound-directed particle assembly with stereolithography to build patterned composites ([Ultrasound and stereolithography](https://doi.org/10.1002/admt.201700122)), while Nagarajan and colleagues integrated magnetic particle alignment with jetting, UV curing, and thermal post-curing ([Magnetic alignment and curing](https://pmc.ncbi.nlm.nih.gov/articles/PMC8433740/)). Combining all three requires qualifying a single compatible resin/suspension against acoustic streaming, curing shrinkage, and optical attenuation, then proving a measurable improvement over simpler recipes.
+In published work, sound arranges particles in a liquid resin, a magnetic field orients particles that respond to it, and patterned light cures the resin around them. Two pairings have been demonstrated. Greenhall and Raeymaekers combined ultrasound-directed particle assembly with stereolithography to build patterned composites ([Ultrasound and stereolithography](https://doi.org/10.1002/admt.201700122)). Nagarajan and colleagues combined magnetic particle alignment with jetting, published UV curing and a thermal post-cure ([Magnetic alignment and curing](https://pmc.ncbi.nlm.nih.gov/articles/PMC8433740/)).
 
----
+Combining all three would require one resin and suspension that tolerates acoustic streaming, cure shrinkage and optical attenuation, and a measured improvement over the simpler pairings. The precedent shows that fields can arrange and orient material in one volume while it is being fixed in place.
 
-## Prototype bootstrap vs. ultimate parallel fabrication
+## What is not yet shown
 
-| Horizon | Feed, fixture &amp; inspection route | Target first-part &amp; production goal |
+These limits come from the programme's own simulation record. They bound what the Desktop Replicator can be claimed to do.
+
+| Limit | Evidence | Consequence |
 |---|---|---|
-| **Prototype bootstrap (`P0` / `HA-0`, `FAB-01`)** | Calibrated `3 + 3` / `6 + 6` dispersive acoustic head, `ha0_septum_cap` vials, UV resin or fusible wax/solder beads, external caliper/optical microscope verification alongside inline `HAPTIC`/`SMI` checks | **First part (`FAB-01`):** repeatable hold/move/release, bonding a tracked origin fiducial / `ha0_sla_phase_ring` insert, demonstrating a measured machine improvement with explicit external finishing steps ([Upgrade loop](upgrades.html)) |
-| **Ultimate architecture (`META-01`+)** | Continuous automated Salt/Ash/Carbon/Water feeds up the bore, optically-addressed `10⁵`-pixel acoustic/EM sculpting + optical tweezer registration, live non-moving `S(f)` verification, and closed [recovery loop](matter-loop.html) | Multi-material structural, electronic, acoustic, and replicated nanoimprint optical parts manufactured autonomously inside one sealed cycle |
+| A second bead cannot be placed beside a first | Simulated, earlier 4 × 4 and 6 × 6 arrays at 40 kHz: the second bead lands 1 to 2 mm off | Building anything from more than one bead is Open. Four remedies are listed; none is chosen |
+| Fields from few sources contain extra wells | Simulated, earlier six-source study: 8 to 26 unwanted wells in the working region | One bead can be handled. Powder would collect in the wrong places |
+| No joining recipe | No simulation exists | A part cannot yet be completed in the model |
+| No mass accounting | No simulation tracks mass through a build | Yield and loss are unknown |
+| Open chamber | Design decision: no glass wall by default | No shield against draughts; no enclosure around the lasers |
+| New plate spacing | Spacing raised from 120 mm to {{c:desktop_geometry.gap_mm}} mm | Earlier acoustic results do not carry over |
 
-Read [Upgrade loop](upgrades.html), [Scan, recover and matter stores](matter-loop.html), [Materials and modes](materials.html), and [Assemble](../papers/replicator_assemble.html).
+The remedies under consideration for the second bead are more tones, a structured plate driven from a few inputs, a larger or differently shaped aperture, and a process in which the work moves to the bead.
+
+## Long-term direction
+
+The long-term design replaces twelve wired sources with a surface of roughly 100,000 optically switched elements, which gives many independent pockets and removes most unwanted wells. Three further capabilities belong to that design and not to the prototype:
+
+- **Fine placement by light.** Sound brings a piece to within reach, then holographic optical tweezers (Documented: Ashkin; Grier) align it to nanometre tolerances. Below a few tens of nanometres thermal motion beats a plain optical trap, and near-field traps are needed. The hand-off from sound to light is Open.
+- **Other ways to levitate.** Molten metals can be held and heated by induction, and charged droplets electrostatically under fast active control. Large coils acting across the whole chamber were studied and produce negligible force, so induction is a long-term, close-range option.
+- **Automatic feed.** Feedstock would rise from a storage chamber below the build chamber, sorted and inspected on the way. See [the stores](matter-loop.html#the-stores-pattern-library-vs-matter-pantry).
+
+## Open questions
+
+| Question | Who answers it |
+|---|---|
+| What joins material without adhesive, and where does the heat come from? | Process simulation |
+| Which remedy places a second bead beside a first? | Simulation |
+| Can twelve sources and five tones hold and carry a bead at the {{c:desktop_geometry.gap_mm}} mm spacing? | Simulation |
+| How are unwanted wells suppressed or tolerated when handling powder? | Simulation |
+| Does mass in the part plus mass in the crucibles stay constant through a build? | Simulation |
+| What is the first part the machine makes for itself? | [Upgrade loop](upgrades.html) |
+
+Read next: [Scan, recover and matter stores](matter-loop.html), [Acoustics](acoustics.html), [Materials and modes](materials.html), [Upgrade loop](upgrades.html) and the earlier paper [Assemble](../papers/replicator_assemble.html).

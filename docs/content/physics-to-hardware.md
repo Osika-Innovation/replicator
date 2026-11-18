@@ -22,9 +22,9 @@ For a linearized elastic body driven harmonically with the convention exp(iωt),
     p = H(ω)u,
     H(ω) = R(ω)[K − ω²M + iωC]⁻¹B.
 
-Here q is displacement, u is the vector of drive amplitudes, B couples drives into force and R maps surface motion into acoustic pressure. K, M and C contain the geometry, material, mounts and losses. A predictive piezo/body/fluid model also includes electrical loading, preload/contact and radiation loading; eliminating those extra variables can make B and the effective dynamic stiffness frequency-dependent.
+Here q is displacement, u is the vector of drive amplitudes, B couples drives into force and R maps surface motion into acoustic pressure. K, M and C contain the geometry, material, mounts and losses. A predictive piezo/body/fluid model also includes electrical loading, the bond or contact between source and body, and radiation loading; eliminating those extra variables can make B and the effective dynamic stiffness frequency-dependent.
 
-**The printed body, source and surrounding medium physically implement H.** Inverse design changes that operator so the field patterns required by a task are produced efficiently by a few accessible inputs. A twelve-port formal carrier or thousands of surface features does not prescribe its control-channel count: with six drives, rank H(ω) ≤ 6 at one frequency. The opportunity is to make that at-most-six-dimensional controllable space align with the desired task. Other frequencies provide other spaces, within usable source bandwidth and settling time.
+**The body, its sources and the surrounding medium physically implement H.** Inverse design changes that operator so the field patterns required by a task are produced efficiently by a few accessible inputs. A twelve-port formal carrier or thousands of surface features does not prescribe its control-channel count: with {{c:desktop_geometry.ports_per_plate}} drives on a plate, rank H(ω) ≤ {{c:desktop_geometry.ports_per_plate}} for that plate at one frequency. The opportunity is to make that small controllable space align with the desired task. Other frequencies provide other spaces, within usable source bandwidth and settling time.
 
 ## 3. Optimize the action on matter
 
@@ -38,12 +38,12 @@ This route has experimental precedent. Melde and colleagues combined passive hol
 
 | Stage | Concrete object or capability | Required process |
 |---|---|---|
-| Seed platform | Calibrated few-drive acoustic module with an optimized body | Purchased preloaded piezos, externally printed/machined body, reusable metrology |
+| Seed platform | Calibrated few-drive acoustic module: off-the-shelf borosilicate wafers, each driven by {{c:desktop_geometry.ports_per_plate}} bonded PZT-8 piezo discs | Purchased wafers and discs, adhesive bonding, calibration in the assembled chamber |
 | First machine-made upgrade | A selected low-load insert, structured composite or calibration artifact | Feed, field-controlled arrangement, compatible curing/joining, dimensional and functional inspection |
 | Improved material module | A controlled orientation, porosity or composition that improves a named response | Qualified feedstock and consolidation, plus microstructure and response measurements |
 | Precision optical/crystal module | A part meeting specified optical loss, orientation, defect and surface limits | A growth/deposition/finishing route and corresponding metrology |
 
-Printed TPMS front masses for Langevin transducers have already been fabricated and characterized with impedance analysis and vibrometry; this supports exploring geometry as an active transducer-design variable. It does not itself qualify our airborne multiport design. [UFFC 2024 primary abstract](https://epapers2.org/uffc2024/ESR/paper_details.php?paper_id=7161).
+Documented published precedent, not the current design: printed front masses with a triply periodic minimal surface (TPMS) lattice have been fabricated for bolt-clamped Langevin transducers and characterized with impedance analysis and vibrometry. This supports treating geometry as a transducer-design variable. The [Desktop Replicator](desktop-replicator.html) uses bonded discs on glass wafers, with no bolt preload, and this reference does not qualify that design. [UFFC 2024 primary abstract](https://epapers2.org/uffc2024/ESR/paper_details.php?paper_id=7161).
 
 Placement, permanent joining and atomic crystal growth are separate physical operations. The enduring platform gains them as compatible modules. Its first self-made improvement should be the part whose fabrication and verification remove the most human work per useful gain.
 
