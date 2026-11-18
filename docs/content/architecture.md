@@ -101,7 +101,7 @@ This is the handbook's single comparison of where the programme is going and wha
 | Pattern network | The network's settling carried out by a physical wave medium | Cadence network under {{c:cadence_brain.cadence_sparse_max_kb}} kB on the compute card, trained on a workstation | [Cadence, memory and wave compute](cadence-memory.html) |
 | Feedstock and recovery | Storage chamber with acoustic sorting and closed reclaim of material | Open crucibles for powder, liquid and seed parts; removal of joined material Open | [Scan, recover and matter stores](matter-loop.html) |
 | Calibration | Full-aperture acoustic and optical scattering measurement with reference objects | In the assembled chamber, with removable Ø1 to 2 mm spheres; no separate test rigs | [Desktop Replicator](desktop-replicator.html) |
-| Digital twin | The same twin plans upgrades that the machine makes for itself | CAD, plate model and design checks; a solid finite-element check is in progress | [Digital twin](digital-twin.html) |
+| Digital twin | The same twin plans upgrades that the machine makes for itself | CAD, plate model and design checks; a solid finite-element check contradicts the planning plate model | [Digital twin](digital-twin.html) |
 | First milestone | The machine makes precise parts of its successor | Repeatable hold, move and release of one bead, calibrated in the chamber | [Upgrade loop](upgrades.html) |
 
 The prototype electronics are purchasable scaffolding, not a small version of the long-term design. Earlier baselines that this prototype replaced are tabulated once, in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced).

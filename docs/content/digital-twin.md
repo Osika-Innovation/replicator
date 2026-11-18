@@ -87,13 +87,13 @@ The interface document lists what the format and its users cannot yet do:
 
 **The exported file is spatially undersampled (Derived).** The interface document requires patches no further apart than half a wavelength in air at the highest frequency, or the piston model aliases the face. The drive tones are {{c:desktop_geometry.comb_tones_hz|khz}} kHz, and at the highest of them half a wavelength in air is about 1 mm. The exported Desktop Replicator file samples each plate with 96 patches about 15 mm apart. Fields computed from it are therefore aliased, and remain so until a finer export or the solid model replaces it.
 
-**Absolute force levels are not anchored (Open).** The exported response comes from a reduced closed-form plate model. The factor that converts drive voltage into patch velocity in that model is a constant with no reference behind it. Patterns and relative comparisons may still be informative; absolute pressure, force and required drive are not. A three-dimensional solid finite-element model of the wafer and its piezo discs (Gmsh for meshing, CalculiX for solving) is in progress, and the reduced model must be compared with it before any force level is quoted.
+**Absolute force levels are not anchored (Open).** The exported response comes from a reduced closed-form plate model. The factor that converts drive voltage into patch velocity in that model is a constant with no reference behind it. Patterns and relative comparisons may still be informative; absolute pressure, force and required drive are not. A three-dimensional solid finite-element model of the wafer and its piezo discs (Gmsh for meshing, CalculiX for solving) was completed on 18 November 2026 and contradicts the exported file: the two radiated fields correlate at 0.06, which is chance level, and the solid model puts the voltage needed to hold a solid polystyrene bead at about 900 V per source. The plate response also shifts too much with small changes in the plate to be predicted, so the file for a real machine has to be measured in its chamber. [Acoustic bodies](acoustics.html#known-limits) gives the figures.
 
 The exported file also records the {{c:desktop_geometry.gap_mm}} mm spacing in its data but still describes the earlier 120 mm geometry in its provenance text. Acoustic results for the earlier spacing do not carry over.
 
 ## Automated design search
 
-The design search in `holo/` scores candidate plate and chamber layouts on several tasks at once, such as carrying a particle through waypoints and the number of independent field patterns a layout can make, then exports the winners as plate-response files. Its rankings are Simulated on the reduced plate model and inherit both defects above. The project's own rule is to anchor a plate family in the solid model before trusting a large sweep.
+The design search in `holo/` scores candidate plate and chamber layouts on several tasks at once, such as carrying a particle through waypoints and the number of independent field patterns a layout can make, then exports the winners as plate-response files. Its rankings are Simulated on the reduced plate model and inherit both defects above; since the solid model does not match that file, the rankings should be treated as unverified. The project's own rule is to anchor a plate family in the solid model before trusting a large sweep.
 
 ## Learning and control
 
@@ -125,7 +125,7 @@ The twin has a written charter: one interface to the machine, no third-party dep
 
 | Question | Who answers it |
 |---|---|
-| Does the reduced plate model agree with the solid finite-element model? | Simulation |
+| How is the plate-response file replaced by one measured in the chamber, at fine enough patch spacing? | Twin software and calibration design |
 | What patch spacing can the field solver afford at the highest tone? | Simulation and twin software |
 | When do calibration and jobs use every tone? | Twin software |
 | How is the receive path represented in the plate-response format? | Twin software and simulation |

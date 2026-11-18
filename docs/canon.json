@@ -97,14 +97,14 @@
       "envelope_mm": [
         286.0,
         268.0,
-        324.0
+        384.0
       ],
       "wafer_material": "Schott Borofloat 33",
       "wafer_diameter_mm": 200.0,
       "wafer_thickness_mm": 1.0,
       "clear_glass_diameter_mm": 179.6,
       "bores": 0,
-      "gap_mm": 180.0,
+      "gap_mm": 240.0,
       "ports_per_plate": 6,
       "pzt_diameter_mm": 4.6,
       "pzt_thickness_mm": 0.8,
@@ -145,16 +145,16 @@
       "door_half_sweep_deg": 78.0,
       "door_opening_chord_mm": 204.2,
       "clear_view_deg": 214.4,
-      "nominal_mass_kg": 8.83,
-      "gap_note": "Raised from 120.0 to 180.0 mm by operator request 2026-11-17 (CAD Rev E2). Acoustic results for 120 mm do not carry over; sim re-anchor OPEN.",
+      "nominal_mass_kg": 9.42,
+      "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Acoustic results for 120 and 180 mm do not carry over; sim re-anchor OPEN.",
       "enclosure_minor_rev": 2,
       "chamber_glass": false,
       "retro_post_opening_chord_mm": 191.5,
       "smi_ray_dz_mm": [
-        -18.0,
-        -6.0,
-        6.0,
-        18.0
+        -24.0,
+        -8.0,
+        8.0,
+        24.0
       ]
     },
     "dissolve_and_toroidal": {
@@ -341,7 +341,7 @@
       },
       {
         "id": "INS-20",
-        "summary": "Air temperature must be known to about a tenth of a kelvin, because the sound path changes by about 50° of phase per kelvin at the top tone.",
+        "summary": "Air temperature must be known to about a tenth of a kelvin, because the sound path changes by about 70° of phase per kelvin at the top tone.",
         "effect": "Adds temperature sensing and recalibration to the design; none is in the parts list yet.",
         "evidence": "SIMULATED",
         "implemented": 2,
@@ -405,16 +405,16 @@
       },
       {
         "id": "INS-28",
-        "summary": "1-bit Comparator HAPTIC Front-End Fails the 72 dB Multi-Tone SFDR Gate in Simulation; Echo Recovery Survives Only With a Decimating or De-Mixed Lock-In",
-        "effect": "holo/sigma_delta.py runs the 75 MSa/s 1-bit loop cycle by cycle (exact RC update, TLV3501 6 mV hysteresis, offset, noise, feedback rise/fall skew, jitter, rail ripple, BAT54S junction nonlinearity and leakage, C0 mismatch) for three readings of the undocumented '2R/1C against the C0 reference' circuit, 144 corners. Best six-tone SFDR is 60.9 dBc against the 72 dB gate; the ideal first-order loop itself gives 70.8 dB SQNR for a full-scale sine at the real 200 kHz band edge (about 63 dBc for six tones at -6 dBFS), so no passive-RC corner can pass and the AD7380 fallback is triggered by the written rule. A -70 dB echo is still recovered in one 14 ms frame at 80-87 dB carrier-to-error (float or sinc3-decimated lock-in), falling to 75-78 dB under board stress, and no single corner is good at both figures. Square XOR references on the harmonic comb put tones 3f and 5f into the f estimate at 1/3 and 1/5, so a triangular de-mix is required. No schematic or netlist of this front-end exists in the repo.",
+        "summary": "A cycle-by-cycle simulation of the one-bit receive converter reaches about 61 dB on the six-tone test, against a 72 dB requirement. No variant of the simple circuit can pass. A faint echo is still recovered when the firmware filters before it correlates.",
+        "effect": "Triggers the written fallback to a conventional converter chip, and requires a circuit diagram that does not yet exist.",
         "evidence": "SIMULATED",
         "implemented": 2,
         "surfaces": 6
       },
       {
         "id": "INS-29",
-        "summary": "Solid FEM Anchor: The Desktop Plate Is Reverberant, Its Shipped Body Response Is Uncorrelated With the Solid Field, the Transfer Cannot Be Predicted Offline, and Drive Authority Is the Binding Gate",
-        "effect": "holo/fem/desktop200_fem.py (Gmsh C3D10, CalculiX K and M, SciPy harmonic solve; 361k dof per plate; flexural wavenumber within 2.4 % of Mindlin at 32-160 kHz) against cad/desktop-replicator/desktop_replicator_body_response.json: radiated-field correlation of the shipped surrogate with the solid model is 0.06 (chance level); the plate field does not decay over 45 mm as the surrogate assumes but reverberates (e-fold length 1.25 m); the solid field sampled on the 96 patches per plate reproduces the radiated field at 0.21; a field correlation >= 0.95 needs a patch pitch of 6 mm at 32 kHz down to 1.5 mm at 160 kHz (alias-free pitch 2 pi / (k_air + k_flex)). A 0.5 % thickness-equivalent detune drops the field correlation to 0.55 (0.78 on boro12), so the port-to-field transfer must be measured in the chamber per wafer; the silicone gland is indistinguishable from a free rim (0.999) while a rigid clamp changes everything (0.21). All 60 complex controls are independent on desktop-200mm (29 of 60 on boro12). Drive authority: 12 ports phased onto a point give 0.28-0.98 Pa per volt on the fixed comb (boro12 0.29-2.8), against 0.9-2.0 kPa to hold solid polystyrene: 911 V single pass at the best tone versus 15.3 V from a 12 V bridge. Standing-wave build-up between the finite plates is 1.0-1.2 when computed (boro12), not 1/(1-r) = 8, because the supersonic plate radiates 16-38 degrees off normal and the beam walks off the aperture. Levers measured on boro12: tone on a plate resonance x1.3-3.7; PZT diameter 3.2 -> 4.8 mm x2-3; a 30 kg/m3 foam bead needs about 0.18 of the pressure.",
+        "summary": "A three-dimensional solid model shows the glass plates ring instead of damping out, so the plate-response file shipped with the design does not match the solid model at all. The response cannot be predicted in advance and must be measured in the chamber for each plate. Holding a solid polystyrene bead would need roughly 900 V per source at the best tone; the drive stage supplies about 15 V.",
+        "effect": "Makes drive strength the limiting factor for levitation, and makes in-chamber calibration mandatory.",
         "evidence": "SIMULATED",
         "implemented": 2,
         "surfaces": 8
@@ -498,7 +498,7 @@
         "effect": "Fields computed from the present file are aliased; the disc partly cancels itself."
       },
       "INS-20": {
-        "summary": "Air temperature must be known to about a tenth of a kelvin, because the sound path changes by about 50° of phase per kelvin at the top tone.",
+        "summary": "Air temperature must be known to about a tenth of a kelvin, because the sound path changes by about 70° of phase per kelvin at the top tone.",
         "effect": "Adds temperature sensing and recalibration to the design; none is in the parts list yet."
       },
       "INS-21": {

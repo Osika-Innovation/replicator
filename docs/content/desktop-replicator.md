@@ -67,7 +67,7 @@ There are three field circuit boards. Two are identical and sit directly behind 
 
 **Why the electronics sit behind the wafer.** A piezo disc of this size has a capacitance of about {{c:haptic_pzt.c0_nominal_pf}} pF. A cable to a remote amplifier would add far more capacitance than that and swamp the small received signal. Placing the controller within millimetres keeps the added capacitance under {{c:haptic_pzt.max_trace_cap_pf}} pF.
 
-**Why a 1-bit converter.** The signals of interest lie below {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz. Sampling one bit at {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} MHz is {{c:haptic_pzt.osr}} times faster than the minimum rate, and averaging that fast stream recovers a precise value. A comparator and a microcontroller pin then replace a multi-channel precision converter. The estimated resolution is {{c:haptic_pzt.enob_range|range}} bits. The 1-bit path is accepted only if a bit-exact simulation with several tones present shows at least {{c:haptic_pzt.sfdr_gate_min_db}} dB between the wanted signals and the largest spurious product. If it does not, the board is populated with a conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) on footprints that are already there.
+**Why a 1-bit converter.** The signals of interest lie below {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz. Sampling one bit at {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} MHz is {{c:haptic_pzt.osr}} times faster than the minimum rate, and averaging that fast stream recovers a precise value. A comparator and a microcontroller pin then replace a multi-channel precision converter. The estimated resolution is {{c:haptic_pzt.enob_range|range}} bits. The 1-bit path is accepted only if a bit-exact simulation with several tones present shows at least {{c:haptic_pzt.sfdr_gate_min_db}} dB between the wanted signals and the largest spurious product. If it does not, the board is populated with a conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) on footprints that are already there. A simulation on 18 November 2026 reached about 61 dB, so the test fails and the fallback applies ([Compute, sensing and control](compute-control.html)).
 
 **Why a spare piezo disc.** The capacitance of the ceramic drifts by about {{c:haptic_pzt.c0_tempco_pct_per_c}} % per degree. A disc that is not attached to the plate drifts the same way but hears nothing, so subtracting its signal removes the drift.
 
@@ -98,7 +98,7 @@ Hardware may be released for purchase only when all five of these exist:
 1. A frozen revision of the design with file hashes.
 2. A bill of materials with quantities, part numbers, live stock and prices.
 3. Exact CAD geometry, drawings, tolerances, wiring and a thermal budget.
-4. Passed simulation gates: the {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test above, and a three-dimensional solid finite-element model of the wafer, piezo discs and rim seal that agrees with the plate model used for planning.
+4. Passed simulation gates: the {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test above, and a three-dimensional solid finite-element model of the wafer, piezo discs and rim seal that agrees with the plate model used for planning. Both currently fail: the converter test above, and the model comparison, which also shows that the drive is far too weak to hold a solid bead ([Acoustic bodies](acoustics.html#known-limits)).
 5. A fixed acceptance procedure to run in the chamber once built.
 
 Ordering parts or contacting suppliers also requires explicit approval from the operator.
@@ -126,8 +126,8 @@ The microcontrollers, comparators and discrete lasers above are purchasable scaf
 
 | Question | Who answers it |
 |---|---|
-| Does the 1-bit converter reach {{c:haptic_pzt.sfdr_gate_min_db}} dB with five tones present? | Simulation |
-| Does a solid finite-element model of the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer agree with the plate model? | Simulation |
+| Does the receive path meet {{c:haptic_pzt.sfdr_gate_min_db}} dB with the fallback converter? | Electrical design and simulation |
+| What drive voltage, tones, source size and bead density reach a holding pressure on the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer? | Simulation, then design |
 | How does the field change at the new {{c:desktop_geometry.gap_mm}} mm plate spacing? Results for the earlier 120 mm spacing do not carry over | Simulation |
 | What protects an open chamber from draughts, and what encloses the laser beams? | Enclosure design |
 | How large is the buoyant air motion for a given floor-to-ceiling temperature difference? | Simulation |

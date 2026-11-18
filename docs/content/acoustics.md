@@ -98,13 +98,21 @@ None of these limits is yet resolved for the Desktop Replicator.
 
 **Source size (Derived).** A bonded disc drives bending efficiently only if it is smaller than half the bending wavelength. Beyond that, parts of the disc push against each other. For the {{c:desktop_geometry.wafer_thickness_mm}} mm wafer, half the bending wavelength is about 4.4 mm at 128 kHz and 3.9 mm at 160 kHz. The Ø{{c:desktop_geometry.pzt_diameter_mm}} mm disc is slightly too large for the top two tones. How much drive this costs is Open, to be confirmed in the solid finite-element model.
 
-**Air temperature (Derived).** The speed of sound changes by about 0.17 % per kelvin. Across the {{c:desktop_geometry.gap_mm}} mm spacing at 160 kHz that is roughly 50° of phase per kelvin, and about 10° at 32 kHz. A calibration therefore goes stale at the top tone when the air changes by a few tenths of a kelvin. The estimated rise of the air inside the enclosure is about 5 K, and how much of that reaches the open chamber is not modelled. Temperature tracking is part of calibration, not an extra.
+**Air temperature (Derived).** The speed of sound changes by about 0.17 % per kelvin. Across the {{c:desktop_geometry.gap_mm}} mm spacing at 160 kHz that is roughly 70° of phase per kelvin, and about 14° at 32 kHz. A calibration therefore goes stale at the top tone when the air changes by a few tenths of a kelvin. The estimated rise of the air inside the enclosure is about 5 K, and how much of that reaches the open chamber is not modelled. Temperature tracking is part of calibration, not an extra.
 
 **Ring-down bounds time-sharing (Simulated, earlier study).** Switching between patterns faster than the source and plate ring down loses the held object. In the earlier study, sources with a quality factor near 500 rang for 4.5 ms and dropped the bead at every switch. Sources with a quality factor near 50 worked, at about ten times the power. The ceramic itself responds in well under a microsecond, so the structure sets the limit. The ring-down time of the prototype wafer is Open.
 
 **Plate spacing changed (Open).** The spacing was raised from 120 to {{c:desktop_geometry.gap_mm}} mm. Simulated results for the earlier spacing do not carry over, and the field at the new spacing has not been studied.
 
-**Reduced plate model (Open).** The plate response used for planning is thin-plate theory with idealised sources and rim. A three-dimensional solid finite-element model of wafer, discs and rim seal (Gmsh and CalculiX) is in progress. Hardware may not be released for purchase until the two agree. No result from the solid model is available yet.
+**The reduced plate model is contradicted by the solid model (Simulated).** The plate response used for planning is thin-plate theory with idealised sources and a rim that absorbs. A three-dimensional solid finite-element model of the wafer, discs and rim seal (Gmsh and CalculiX) was completed on 18 November 2026. Its bending wavelength agrees with plate theory to within 2.4 % across the drive tones. Its field does not agree with the planning file:
+
+- **The plate rings.** The planning model lets a wave die out over about 45 mm. In the solid model the wave loses little on each crossing (its decay length is about 1.25 m), so it reflects from the rim many times and the plate behaves as a resonator.
+- **The shipped plate-response file is uncorrelated with the solid model.** The correlation of the two radiated fields is 0.06, which is chance level. Results planned from that file, including design-search rankings, do not carry over.
+- **The patches are too coarse.** Even the solid field, sampled on the file's 96 patches per plate, reproduces its own radiated field at only 0.21. A correlation of 0.95 needs patches about 6 mm apart at 32 kHz and 1.5 mm apart at 160 kHz.
+- **The response cannot be predicted in advance.** A change equivalent to 0.5 % in plate thickness drops the field correlation to 0.55. Each plate's response therefore has to be measured in the chamber after assembly. The soft rim seal behaves like a free edge; a rigid clamp would change the response completely.
+- **Control is not the limit.** All 60 independent drive settings (twelve sources at five tones) remain independent on this plate.
+
+**Drive strength is the limit (Simulated).** With all twelve sources phased onto one point, the solid model gives 0.28 to 0.98 Pa per volt across the tones. Holding a solid polystyrene bead needs about 0.9 to 2.0 kPa. That is about 900 V per source at the best tone, against roughly 15 V from the 12 V bridge. Reflection between the two plates does not rescue it: on the smaller preset the computed build-up is 1.0 to 1.2, not the factor of eight a simple mirror estimate gives, because the plate radiates 16° to 38° off its normal and the beam walks off the opposite plate. Three levers were computed on the smaller preset and none closes the gap alone: placing a tone on a plate resonance gains 1.3 to 3.7 times, a larger piezo disc (3.2 to 4.8 mm) gains 2 to 3 times, and a foam bead of 30 kg/m³ needs about 0.18 of the pressure. No hardware may be released for purchase while this stands.
 
 <a id="ultimate-vs-prototype-acoustic-apertures"></a>
 
@@ -120,7 +128,8 @@ The long-term acoustic surface is not a plate with a few discs. The comparison w
 
 | Question | Who answers it |
 |---|---|
-| Does the solid finite-element model agree with the thin-plate model for the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer? | Simulation |
+| What combination of resonant tones, source size, drive voltage and bead density reaches a holding pressure on the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer? | Simulation, then design |
+| How is each plate's response measured in the chamber, and at what patch spacing? | Simulation and calibration design |
 | At the {{c:desktop_geometry.gap_mm}} mm spacing, do 12 sources and 5 tones hold one object without unwanted wells nearby? | Simulation, then in-chamber calibration |
 | How much drive is lost at 128 and 160 kHz because the disc is oversized? | Simulation |
 | How long does the wafer ring, and how fast can patterns change? | Simulation, then in-chamber calibration |

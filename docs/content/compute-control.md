@@ -135,7 +135,7 @@ How the multiplied clocks on different boards are brought into a known phase rel
 
 Each piezo disc is driven by a pair of gate-driver outputs ({{c:haptic_pzt.hbridge_driver_mpn}}) wired as a full bridge, with diodes ({{c:haptic_pzt.clamp_diode_mpn}}) protecting the receive path. The electrical estimate assumes a 12 V bridge rail. Two limits follow, as given by the audit (Derived).
 
-**The voltage assumptions disagree.** The body-response file allows up to 40 V rms per source. A 12 V bridge gives about 11 V rms at a single tone, and less per tone when five tones share the swing. Force scales with voltage squared, so planning results that assume 40 V overstate force by roughly an order of magnitude until the two figures agree.
+**The voltage assumptions disagree.** The body-response file allows up to 40 V rms per source. A 12 V bridge gives about 11 V rms at a single tone, and less per tone when five tones share the swing. Force scales with voltage squared, so planning results that assume 40 V overstate force by roughly an order of magnitude. The solid finite-element model has since shown that neither figure is enough: holding a solid polystyrene bead needs about 900 V per source at the best tone ([Acoustic bodies](acoustics.html#known-limits)). Drive strength, not the number of controls, is the limiting factor.
 
 **Square-wave harmonics land on the comb.** A square wave at 32 kHz has its third and fifth harmonics at 96 and 160 kHz, exactly on two of the five tones.
 
@@ -159,7 +159,13 @@ With a band B of {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz the oversampling rati
 
 **The band definition is inconsistent** (Derived, as given by the audit). The stated band is {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz, but the top tone is 160 kHz and the small preset reaches 200 kHz. At a 200 kHz band the ratio is about 188 and the ideal figure drops to about 71 dB, below the acceptance gate of {{c:haptic_pzt.sfdr_gate_min_db}} dB.
 
-The gate is a bit-exact simulation with five tones present, which must show at least {{c:haptic_pzt.sfdr_gate_min_db}} dB between the wanted tones and the largest spurious product. If it fails, the boards take a conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) on footprints already provided. The simulation has not been run for the current geometry.
+The gate is a bit-exact simulation with five tones present, which must show at least {{c:haptic_pzt.sfdr_gate_min_db}} dB between the wanted tones and the largest spurious product. If it fails, the boards take a conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) on footprints already provided.
+
+**The gate fails (Simulated, 18 November 2026).** A cycle-by-cycle simulation of the 1-bit loop was run with comparator hysteresis, offset, noise, timing skew, jitter, supply ripple, protection-diode behaviour and capacitance mismatch, over three readings of the circuit and 144 combinations of part values. The best result with six tones present is 60.9 dB. An ideal loop of this kind reaches only 70.8 dB at the real 200 kHz band edge, so no choice of part values can pass and the fallback converter is triggered by the written rule. Three further results from the same run:
+
+- A faint echo, 70 dB below the drive, is still recovered in one 14 ms frame at 80 to 87 dB, falling to 75 to 78 dB under board-level stress, provided the firmware filters and reduces the sample rate before it correlates. No single set of part values is good at both the tone test and echo recovery.
+- Square-wave references let the third and fifth harmonics of a tone leak into the estimate of that tone at one third and one fifth strength, because the tones are harmonically related. The firmware must subtract them in a fixed order.
+- No circuit diagram or netlist of this front end exists in the project. The simulation had to assume three possible readings of its description.
 
 ### Lock-in detection and its workload
 
@@ -212,8 +218,8 @@ None of these has been simulated as a composed system. [Architecture](architectu
 | Question | Who answers it |
 |---|---|
 | Is the receive band {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz, or wide enough for the 160 and 200 kHz tones? | Constants owner, then simulation |
-| Does the 1-bit converter reach {{c:haptic_pzt.sfdr_gate_min_db}} dB with five tones present? | Bit-exact simulation |
-| Is the drive level 40 V rms or what a 12 V bridge delivers? | Electrical design and plate model together |
+| Does the receive path meet {{c:haptic_pzt.sfdr_gate_min_db}} dB with the fallback converter, and what is the front-end circuit? | Electrical design and simulation |
+| What drive stage and voltage does a holding pressure require, given the solid plate model? | Electrical design and plate model together |
 | How are fractional tick periods and shared square-wave harmonics handled? | Firmware design |
 | How are the multiplied clocks on different boards phase-aligned? | Circuit and firmware design |
 | Can lock-in detection run continuously on all channels? | Firmware in emulation |
