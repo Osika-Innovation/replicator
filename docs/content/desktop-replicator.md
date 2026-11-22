@@ -53,7 +53,8 @@ A smaller configuration, called `boro12`, fits Ø{{c:desktop_geometry.boro12_red
 
 The body is a rounded-square base and head joined by a hollow rear tower. The tower is one structural part that carries the head, covers the laser strips and acts as a duct.
 
-- **Glass cylinder.** A plain glass cylinder ({{c:desktop_geometry.glass_cylinder_id_od_mm|x}} mm inside and outside diameter) hangs from the head and closes the chamber on all sides. It shields levitated material from room draughts and, in simulation, raises the sound pressure by 1.2 to 2.8 times over an open chamber.
+- **Glass cylinder.** A stock borosilicate glass cylinder ({{c:desktop_geometry.glass_cylinder_id_od_mm|x}} mm inside and outside diameter) hangs from the head and closes the chamber on all sides. A catalogue size was chosen over a custom tube. It shields levitated material from room draughts and, in simulation, raises the sound pressure by {{c:desktop_geometry.chamber_gain_closed_gap_median|range}} times over an open chamber.
+- **Static charge.** A foam bead that rubs against glass picks up charge. At about {{c:electrostatics_and_matter_loop.eps_r0p5mm_image_clamp_1g_pc}} pC a 1 mm bead sticks to the glass with a force equal to its weight. The plates and the cylinder therefore need a slightly conductive, grounded surface, and the chamber air a relative humidity of {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} %, to keep the charge under {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC (Derived). No such surface treatment has been chosen.
 - **Lifting head.** To load the chamber, the head, the glass and two guide posts rise {{c:desktop_geometry.lift_stroke_mm}} mm on rails in the tower. The moving mass is {{c:desktop_geometry.lift_moving_mass_kg}} kg, partly balanced by springs, and the machine is {{c:desktop_geometry.envelope_open_height_mm}} mm tall when open. The upper plate moves with the head, so its return position becomes something calibration has to measure after every opening.
 - **Interlock.** A switch detects that the head is down. With the head up, the firmware refuses to drive above listening level and switches the lasers off. Clear glass keeps out draughts but does not block the laser light, so it is not an enclosure around the laser beams; the laser class of the assembled machine is still to be confirmed against the standard.
 - **Air sensors.** Two temperature sensors measure the chamber air, because calibration is sensitive to a few tenths of a kelvin.
@@ -69,7 +70,7 @@ There are three field circuit boards. Two are identical and sit directly behind 
 
 | Board | What is on it |
 |---|---|
-| Head board, two identical (Ø172 mm) | One RP2350B microcontroller, six drive stages (driver part open), receive protection (BAT54S), four {{c:haptic_pzt.adc_fallback_mpn}} converters, fast comparators (TLV3501) and one spare piezo disc that touches nothing |
+| Head board, two identical (Ø172 mm) | One RP2350B microcontroller, six drive stages ({{c:haptic_pzt.hbridge_driver_mpn}}), receive protection (BAT54S), four {{c:haptic_pzt.adc_fallback_mpn}} converters, fast comparators (TLV3501) and one spare piezo disc that touches nothing |
 | Backplane (Ø188 mm) | The 12 MHz clock and its distribution, power conversion from USB-C, rear connectors and the socket for the compute card |
 | Compute card (M.2 form factor) | Card 1: an RP2350B running Cadence. Card 2: an optional FPGA module. Card 3 is reserved for an optical core |
 
@@ -137,7 +138,7 @@ The microcontrollers, comparators and discrete lasers above are purchasable scaf
 | Does the receive path meet {{c:haptic_pzt.sfdr_gate_min_db}} dB with the fallback converter? | Electrical design and simulation |
 | What drive voltage, tones, source size and bead density reach a holding pressure on the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer? | Simulation, then design |
 | Does the head return to the same position after each lift, closely enough to keep a calibration? | CAD tolerance study, then the assembled machine |
-| Which drive part replaces the one that was removed, now that the supply is {{c:haptic_pzt.bridge_rail_v}} V? | Electrical design |
+| Which surface treatment bleeds static charge from the glass without disturbing the lasers or the sound? | Materials selection, then the assembled machine |
 | Does the larger piezo disc adopted for a first levitation keep pattern control? | Simulation |
 | How large is the buoyant air motion for a given floor-to-ceiling temperature difference? | Simulation |
 | Does the laser amplifier pass the highest drive tone? A single stage with a gain of 200 would roll off at about 100 kHz | Circuit design |
