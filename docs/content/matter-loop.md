@@ -34,7 +34,7 @@ The relation has a hard limit in air. A solid has an acoustic impedance of 10 to
 
 **Laser ring.** {{c:mosquito_smi.total_ommatidia}} self-mixing laser diodes, nicknamed the mosquito eye, look across the chamber from beside the rear tower. Each gives two readings: a steady drop when an object blocks the beam, which builds a shadow image, and a ripple when sound crosses the beam, which measures the sound field independently of the piezo discs. This is the side sightline of remedy 3. Details are in [Desktop Replicator](desktop-replicator.html) and [Optics](optics.html).
 
-**Open chamber.** The default chamber has no glass wall, so a scan runs with no draught shield and no enclosure around the laser beams. Both are unresolved.
+**Glass wall.** The chamber is closed by a glass cylinder. The lasers look through it and their reflector film is on its outer face, so every beam crosses the curved glass twice each way. The cylinder shields the scan from draughts. It lifts with the head for loading, and the scan must be recalibrated after each lift.
 
 <a id="reconstruction-honesty-and-static-validation-g17-g18-g19"></a>
 

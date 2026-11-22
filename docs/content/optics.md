@@ -42,7 +42,7 @@ The prototype uses {{c:mosquito_smi.total_ommatidia}} laser diodes at {{c:mosqui
 Three items are unsettled and are stated here plainly.
 
 1. **Signal size is Open.** Earlier estimates of 50 µV to 1 mV at the diode terminals per fringe ([Giuliani et al., 2002](https://doi.org/10.1088/1464-4258/4/6/371) for the method) assumed a 50 mm path. The path is now of the order of 200 mm one way. The light returned by a retro-reflective strip, the feedback strength and the fringe voltage must all be derived again for that distance. Whether a 0.1 rad acoustic signal is resolvable is not established.
-2. **Laser safety is Open.** The chamber is open by default, so the beams are not enclosed. The candidate diodes are rated up to 5 mW each and no part has been selected. The laser class of the assembled machine has not been determined, and no enclosure or interlock is in the model. Both must be settled before the lasers are operated.
+2. **Laser safety is Open.** The chamber wall is clear glass, which does not enclose the beams. An interlock switches the lasers off when the head is raised. The candidate diodes are rated up to 5 mW each and no part has been selected. The laser class of the assembled machine has not been determined, and no enclosure or interlock is in the model. Both must be settled before the lasers are operated.
 3. **Amplifier bandwidth is Open.** A single amplifier stage with the planned gain would roll off below the highest drive tone; see [Compute, sensing and control](compute-control.html).
 
 Inside opaque powder the beams see nothing, and acoustic sensing through the piezo discs takes over. The retired earlier optical layout is listed in [Desktop Replicator](desktop-replicator.html).
@@ -92,7 +92,7 @@ For λ = 650 nm, n = 1.5 and an allowed phase error of 0.1 rad, the height must 
 | Question | Who answers it |
 |---|---|
 | What fringe signal does a retro-reflective strip return over a path of about 200 mm? | Optical derivation, then first bench test |
-| What laser class is the open machine, and what enclosure and interlock does it need? | Enclosure design and safety review |
+| What laser class is the machine with a clear glass wall, and is the interlock sufficient? | Safety review against the standard |
 | Do {{c:mosquito_smi.total_ommatidia}} line integrals in two directions constrain the sound field usefully, given draughts? | Simulation, then bench test |
 | Does the spiral conductor launch a useful pulse, and what would drive it? | Pulse-capable simulation, which does not exist yet |
 

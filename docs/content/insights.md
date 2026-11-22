@@ -19,7 +19,7 @@ The checks look for specific text in specific files. They show that a finding ha
 
 ## What the register shows
 
-Findings 1 to 15 define the [Desktop Replicator](desktop-replicator.html) and the corrections to removal, pulsed fields and thermal layout. Most of their open places are firmware, which has not been written, and simulation work in progress.
+Findings 1 to 15 define the [Desktop Replicator](desktop-replicator.html) and the corrections to removal, pulsed fields and thermal layout. Nearly all of their places are now filled.
 
 Findings 16 to 27 come from a review of the whole engineering record on 17 November 2026. They are mostly disagreements and unstated limits, and they are the ones a reader should weigh before trusting any performance figure:
 
@@ -28,10 +28,10 @@ Findings 16 to 27 come from a review of the whole engineering record on 17 Novem
 - The file describing how the plates radiate is too coarse to trust in detail (19).
 - Air temperature has to be tracked far more closely than the design provides for (20).
 - Twelve sources may leave unwanted traps and uneven filling, which is unchecked for this machine (21).
-- The open chamber has no draught shield, no laser enclosure and no interlock (22).
+- The chamber, open at the time of the review, had no draught shield, no laser enclosure and no interlock (22). It has since been closed with a glass cylinder and given an interlock.
 - There is no joining recipe without adhesive, and placing one bead beside another is unsolved (24).
 
-Findings 28 and 29 are simulation results that followed on 18 November 2026 and settle two of the above against the design: the simple one-bit receive converter fails its test (28), and a solid model of the plates shows that the shipped plate-response file is wrong and that drive strength, not pattern control, limits levitation (29).
+Findings 28 to 30 are simulation results that followed on 18 November 2026 and settle several of the above: the simple one-bit receive converter fails its test (28), and a solid model of the plates shows that the shipped plate-response file is wrong and that drive strength, not pattern control, limits levitation (29). Finding 30 gives the reason, bending stress in the glass, and the way forward: a foam bead as the first test particle.
 
 Each has an owner and a task. [Current state](status.html#known-inconsistencies-in-the-design) summarises them.
 

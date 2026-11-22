@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
-  "synced_at": "2026-11-18",
+  "synced_at": "2026-11-22",
   "constants": {
     "architecture_status": {
-      "active_prototype": "Desktop Replicator (Rev D)",
+      "active_prototype": "Desktop Replicator (Rev F)",
       "active_cad_dir": "cad/desktop-replicator/",
       "active_twin_cmd": "fieldc desktop",
       "active_presets": [
@@ -27,12 +27,17 @@
       "xin_hz": 12000000,
       "sys_clk_hz": 150000000,
       "pio_tick_ns": 6.6667,
+      "pio_tick_phase_deg_at_160khz": 0.384,
+      "coherent_comb_window_us": 62.5,
+      "transmit_ring_us": 125.0,
+      "capture_burst_us": 500.0,
       "sync_skew_max_ns": 2.0,
       "spinal_bus_mbps_range": [
         50,
         150
       ],
       "pcb_count": 3,
+      "mcu_count_full_machine": 6,
       "pcb_roles": [
         "1x modular base backplane PCB (Ø188 mm) + horizontal M.2 Key-E compute card",
         "2x identical HAPTIC lamina PCBs (Ø172 mm)"
@@ -40,8 +45,8 @@
     },
     "haptic_pzt": {
       "sigma_delta_fs_hz": 75000000,
-      "ultrasonic_bw_hz": 150000,
-      "osr": 250,
+      "ultrasonic_bw_hz": 200000,
+      "osr": 187.5,
       "enob_range": [
         12,
         16
@@ -50,14 +55,37 @@
         74,
         96
       ],
-      "c0_nominal_pf": 171.0,
+      "c0_nominal_pf": 4450.0,
+      "c0_boro12_pf": 171.0,
       "c0_tempco_pct_per_c": 0.3,
       "max_trace_cap_pf": 2.0,
       "hbridge_driver_mpn": "TC4427A",
+      "bridge_rail_v": 18.0,
+      "hbridge_driver_v_max": 18.0,
+      "hbridge_driver_has_tristate_pin": false,
+      "max_drive_vrms": 16.2,
+      "max_drive_vrms_5tone_per_tone": 7.2,
+      "max_drive_v_peak_single_tone": 22.92,
       "comparator_mpn": "TLV3501",
       "clamp_diode_mpn": "BAT54S",
       "sfdr_gate_min_db": 72.0,
-      "adc_fallback_mpn": "AD7380"
+      "ideal_1bit_sqnr_200khz_db": 70.8,
+      "sfdr_simulated_dbc": 60.9,
+      "ad7380_fallback_triggered": true,
+      "adc_fallback_mpn": "AD7380",
+      "drive_authority_pa_per_volt": [
+        2.97,
+        1.5,
+        2.79,
+        6.32,
+        6.11
+      ],
+      "cavity_walkoff_gain_range": [
+        1.02,
+        1.17
+      ],
+      "first_particle": "eps_foam_30",
+      "first_test_particle": "eps_foam_30"
     },
     "mosquito_smi": {
       "total_ommatidia": 24,
@@ -106,8 +134,8 @@
       "bores": 0,
       "gap_mm": 240.0,
       "ports_per_plate": 6,
-      "pzt_diameter_mm": 4.6,
-      "pzt_thickness_mm": 0.8,
+      "pzt_diameter_mm": 16.0,
+      "pzt_thickness_mm": 0.4,
       "comb_tones_hz": [
         32000,
         64000,
@@ -141,20 +169,49 @@
         160000,
         200000
       ],
-      "enclosure_rev": "E",
+      "enclosure_rev": "F",
       "door_half_sweep_deg": 78.0,
       "door_opening_chord_mm": 204.2,
       "clear_view_deg": 214.4,
-      "nominal_mass_kg": 9.42,
-      "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Acoustic results for 120 and 180 mm do not carry over; sim re-anchor OPEN.",
-      "enclosure_minor_rev": 2,
-      "chamber_glass": false,
+      "nominal_mass_kg": 11.55,
+      "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Acoustic results for 120 and 180 mm do not carry over; sim re-anchor OPEN. Rev F closes the chamber with a glass cylinder, so the lateral boundary is glass at r=109 mm again.",
+      "enclosure_minor_rev": 0,
+      "chamber_glass": true,
       "retro_post_opening_chord_mm": 191.5,
       "smi_ray_dz_mm": [
         -24.0,
         -8.0,
         8.0,
         24.0
+      ],
+      "chamber_wall": "glass cylinder on lifting head (Rev F, operator 2026-11-18); --no-lift = open front, --glass = rotating door",
+      "lift_stroke_mm": 150.0,
+      "lift_moving_mass_kg": 5.35,
+      "envelope_open_height_mm": 534.0,
+      "glass_cylinder_id_od_mm": [
+        218.0,
+        224.0
+      ],
+      "retro_film_radius_mm": 112.05,
+      "air_temp_tolerance_k": 0.1,
+      "calibration_phase_tol_deg": 5.0,
+      "calibration_gain_tol_pct": 2.0,
+      "chamber_rayleigh_per_k_240mm": 1300000.0,
+      "plate_bending_stress_limit_mpa": 10.0,
+      "plate_characteristic_strength_mpa": 25.0,
+      "chamber_gain_closed_nominal": [
+        3.84,
+        1.66,
+        2.22,
+        1.73,
+        1.61
+      ],
+      "chamber_gain_closed_gap_median": [
+        2.8,
+        1.7,
+        1.4,
+        1.4,
+        1.2
       ]
     },
     "dissolve_and_toroidal": {
@@ -184,15 +241,15 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 67,
-    "total_surfaces": 119,
+    "implemented_surfaces": 126,
+    "total_surfaces": 126,
     "items": [
       {
         "id": "INS-01",
         "summary": "Each piezo source is read on its own two wires by a 1-bit converter at 75 million samples per second, with a spare disc cancelling thermal drift.",
         "effect": "Removes separate microphones, precision converters and a listening interval.",
         "evidence": "DERIVED",
-        "implemented": 3,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -200,7 +257,7 @@
         "summary": "A ring of 24 laser diodes each acts as its own detector, giving a shadow image and an optical reading of the sound field.",
         "effect": "Removes cameras and beam splitters, and needs no hole in the plates.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -208,7 +265,7 @@
         "summary": "One 12 MHz clock and one start-of-frame signal are shared by every board.",
         "effect": "All drive and sensor channels share a time base without per-board calibration.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 3,
         "surfaces": 3
       },
       {
@@ -216,7 +273,7 @@
         "summary": "The on-board pattern network must fit in under 60 kB by keeping 5 to 10 % of its weights.",
         "effect": "Lets a microcontroller choose drive patterns in milliseconds instead of a workstation.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -232,7 +289,7 @@
         "summary": "Simulation and twin must handle all drive tones and the same pattern file format.",
         "effect": "Stops calibration and planning from silently using only the first tone.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 3,
         "surfaces": 3
       },
       {
@@ -240,7 +297,7 @@
         "summary": "Scanning uses mostly steady tones with short chirps, an absorbing backing and a faceted rear reflector, as echolocating animals do.",
         "effect": "Improves range resolution and suppresses back-wall echoes without extra hardware.",
         "evidence": "SIMULATED",
-        "implemented": 3,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -248,7 +305,7 @@
         "summary": "Feedstock sits in open crucibles inside the one chamber, and material is joined by the fields rather than by hand-applied adhesive.",
         "effect": "Removes external vials, a second chamber and a person in the joining loop.",
         "evidence": "OPEN",
-        "implemented": 3,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -272,7 +329,7 @@
         "summary": "Reversing a holding pattern does not remove material. Removal needs a bond state, energy absorbed at the joint, and transport back to a crucible.",
         "effect": "Replaces two physically wrong shortcuts that are still in the code.",
         "evidence": "DERIVED",
-        "implemented": 1,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -280,7 +337,7 @@
         "summary": "Short doughnut-shaped pulses are a candidate for tagging and cold debonding; a spiral conductor can sit on an undrilled wafer.",
         "effect": "Opens pulsed operation; every present solver is continuous-wave only.",
         "evidence": "OPEN",
-        "implemented": 3,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -296,7 +353,7 @@
         "summary": "The enclosure became a rounded-square body with a rear tower that carries structure, cabling and cooling air outside the chamber.",
         "effect": "Makes the machine loadable and serviceable.",
         "evidence": "DERIVED",
-        "implemented": 4,
+        "implemented": 6,
         "surfaces": 6
       },
       {
@@ -304,7 +361,7 @@
         "summary": "Air heated from below overturns, so the chamber floor must not be warmer than its ceiling.",
         "effect": "Avoids buoyant air motion that would drag on levitated material.",
         "evidence": "DERIVED",
-        "implemented": 3,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -320,7 +377,7 @@
         "summary": "Planning assumes up to 40 V per source while the drive stage as specified delivers about 11 V; force scales with voltage squared.",
         "effect": "Planned forces are roughly ten times optimistic until the two agree.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -328,7 +385,7 @@
         "summary": "The receive band, converter resolution and timing figures were stated for 40 kHz and a 150 kHz band, but the tones reach 160 and 200 kHz.",
         "effect": "The 72 dB converter gate has less margin than stated, and may have none.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 3,
         "surfaces": 3
       },
       {
@@ -336,7 +393,7 @@
         "summary": "The plate-response file samples each plate far more coarsely than half a wavelength, and the piezo disc is slightly too large for the top two tones.",
         "effect": "Fields computed from the present file are aliased; the disc partly cancels itself.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -344,7 +401,7 @@
         "summary": "Air temperature must be known to about a tenth of a kelvin, because the sound path changes by about 70° of phase per kelvin at the top tone.",
         "effect": "Adds temperature sensing and recalibration to the design; none is in the parts list yet.",
         "evidence": "SIMULATED",
-        "implemented": 2,
+        "implemented": 5,
         "surfaces": 5
       },
       {
@@ -352,7 +409,7 @@
         "summary": "Twelve sources and five tones give 60 independent controls; unwanted traps and uneven filling are not yet checked for this machine.",
         "effect": "Powder handling cannot be claimed from a few-source chamber without that check.",
         "evidence": "SIMULATED",
-        "implemented": 2,
+        "implemented": 3,
         "surfaces": 3
       },
       {
@@ -360,7 +417,7 @@
         "summary": "The chamber is now open: there is no draught shield, no enclosure around the laser beams and no interlock, and the wall affects the acoustics.",
         "effect": "Safety and acoustic consequences of the open chamber must be settled before operation.",
         "evidence": "OPEN",
-        "implemented": 2,
+        "implemented": 5,
         "surfaces": 5
       },
       {
@@ -368,7 +425,7 @@
         "summary": "Calibration in the chamber needs a phase reference between the plates, several probe points, an initial frequency sweep and gradual moves.",
         "effect": "Prevents a calibration that looks accurate and still loses the object.",
         "evidence": "SIMULATED",
-        "implemented": 1,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -376,7 +433,7 @@
         "summary": "Sound cannot supply the heat to join grains; joining needs a separate addressed energy step, and placing one bead beside another is unsolved.",
         "effect": "The assembly loop has no adhesive-free joining recipe yet.",
         "evidence": "SIMULATED",
-        "implemented": 1,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -384,7 +441,7 @@
         "summary": "A pulsed ring coil acts only on material that forms a closed conducting path through it, and induction lifts millimetre shot, not powder.",
         "effect": "Bounds what the small coil can be expected to do.",
         "evidence": "DERIVED",
-        "implemented": 2,
+        "implemented": 3,
         "surfaces": 3
       },
       {
@@ -392,7 +449,7 @@
         "summary": "Continuous software demodulation of every channel does not fit the controller, and the sparse network has not yet been shown at the target size.",
         "effect": "Firmware needs burst capture; the memory target needs evidence.",
         "evidence": "OPEN",
-        "implemented": 1,
+        "implemented": 4,
         "surfaces": 4
       },
       {
@@ -400,7 +457,7 @@
         "summary": "Nothing is frozen, no acceptance procedure exists for this machine, the first self-made upgrade is unnamed, and several findings cite the wrong sources.",
         "effect": "Lists what must exist before hardware can be released.",
         "evidence": "DOCUMENTED",
-        "implemented": 1,
+        "implemented": 5,
         "surfaces": 5
       },
       {
@@ -408,7 +465,7 @@
         "summary": "A cycle-by-cycle simulation of the one-bit receive converter reaches about 61 dB on the six-tone test, against a 72 dB requirement. No variant of the simple circuit can pass. A faint echo is still recovered when the firmware filters before it correlates.",
         "effect": "Triggers the written fallback to a conventional converter chip, and requires a circuit diagram that does not yet exist.",
         "evidence": "SIMULATED",
-        "implemented": 2,
+        "implemented": 6,
         "surfaces": 6
       },
       {
@@ -416,8 +473,16 @@
         "summary": "A three-dimensional solid model shows the glass plates ring instead of damping out, so the plate-response file shipped with the design does not match the solid model at all. The response cannot be predicted in advance and must be measured in the chamber for each plate. Holding a solid polystyrene bead would need roughly 900 V per source at the best tone; the drive stage supplies about 15 V.",
         "effect": "Makes drive strength the limiting factor for levitation, and makes in-chamber calibration mandatory.",
         "evidence": "SIMULATED",
-        "implemented": 2,
+        "implemented": 8,
         "surfaces": 8
+      },
+      {
+        "id": "INS-30",
+        "summary": "The pressure a glass plate can deliver is limited by bending stress in the glass, not by drive voltage. Holding solid polystyrene would stress the plates beyond the assumed safe limit whatever piezo is used. A foam bead of 30 kg/m³ needs about one sixth of the pressure and can be held with larger, thinner piezo discs on an 18 V supply. The closed glass cylinder raises pressure by 1.2 to 2.8 times, not the factor of eight first assumed.",
+        "effect": "Made a foam bead the first test particle and led the design to adopt larger piezo discs and an 18 V supply. Requires recalibration after every head lift and every few tenths of a kelvin.",
+        "evidence": "SIMULATED",
+        "implemented": 7,
+        "surfaces": 7
       }
     ],
     "notes": {
@@ -536,6 +601,10 @@
       "INS-29": {
         "summary": "A three-dimensional solid model shows the glass plates ring instead of damping out, so the plate-response file shipped with the design does not match the solid model at all. The response cannot be predicted in advance and must be measured in the chamber for each plate. Holding a solid polystyrene bead would need roughly 900 V per source at the best tone; the drive stage supplies about 15 V.",
         "effect": "Makes drive strength the limiting factor for levitation, and makes in-chamber calibration mandatory."
+      },
+      "INS-30": {
+        "summary": "The pressure a glass plate can deliver is limited by bending stress in the glass, not by drive voltage. Holding solid polystyrene would stress the plates beyond the assumed safe limit whatever piezo is used. A foam bead of 30 kg/m³ needs about one sixth of the pressure and can be held with larger, thinner piezo discs on an 18 V supply. The closed glass cylinder raises pressure by 1.2 to 2.8 times, not the factor of eight first assumed.",
+        "effect": "Made a foam bead the first test particle and led the design to adopt larger piezo discs and an 18 V supply. Requires recalibration after every head lift and every few tenths of a kelvin."
       }
     }
   },

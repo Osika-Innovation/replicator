@@ -92,7 +92,7 @@ This is the handbook's single comparison of where the programme is going and wha
 
 | Subsystem | Long-term architecture | Desktop Replicator prototype | Chapter |
 |---|---|---|---|
-| Work volume | One tool-free volume with fields from all sides, plus a separate storage chamber for sorting and reclaim | One open chamber, {{c:desktop_geometry.gap_mm}} mm between two plates, crucibles inside | [Desktop Replicator](desktop-replicator.html) |
+| Work volume | One tool-free volume with fields from all sides, plus a separate storage chamber for sorting and reclaim | One chamber closed by a glass cylinder, {{c:desktop_geometry.gap_mm}} mm between two plates, crucibles inside | [Desktop Replicator](desktop-replicator.html) |
 | Acoustic sources | Continuous piezo film with about 100,000 optically switched elements and no per-element wiring | Two undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} mm glass wafers, {{c:desktop_geometry.ports_per_plate}} bonded piezo discs each, five tones | [Acoustics](acoustics.html) |
 | Acoustic sensing | The same surface read out optically | The same 12 discs sense on their drive wires through 1-bit converters | [Acoustics](acoustics.html) |
 | Optics | Optically addressed surfaces, structured pulses, tomography and fine optical traps | {{c:mosquito_smi.total_ommatidia}} self-mixing laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm, for sensing only | [Optics](optics.html) |

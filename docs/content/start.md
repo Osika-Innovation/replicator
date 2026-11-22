@@ -52,7 +52,7 @@ The microcontrollers and discrete lasers of the first machine are scaffolding. T
 | Know what is real today | [Current state](status.html) |
 | Look up a term | [Glossary](glossary.html) |
 | Understand the whole system | [Architecture](architecture.html) |
-| Go deep on one subsystem | [Acoustic bodies](acoustics.html), [Optics and metamaterials](optics.html), [Electromagnetic control](electromagnetics.html), [Compute, sensing and control](compute-control.html), [Cadence, memory and wave compute](cadence-memory.html) |
+| Go deep on one subsystem | [Acoustic bodies](acoustics.html), [Optics and metamaterials](optics.html), [Electromagnetic control](electromagnetics.html), [Compute, sensing and control](compute-control.html), [Cadence, memory and wave compute](cadence-memory.html), [Ideas from biology](biology.html) |
 | Follow material through a build | [Manufacturing](manufacturing.html), then [Scan, recover and matter stores](matter-loop.html) |
 | See the tooling | [Digital twin](digital-twin.html) and [Upgrade loop](upgrades.html) |
 | See what changed the design, and what is unresolved | [Insight register](insights.html) |
