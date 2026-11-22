@@ -84,7 +84,7 @@ The table uses an 18.5 L volume. That figure belongs to an earlier, larger chamb
 | Microwave, 10 GHz | 30 mm | 5.7 × 10³ | Heating and positioning aid; valued for speed, not mode count |
 | Light, 500 nm | 0.5 µm | 1.2 × 10¹⁸ | Computing and storage |
 
-For the Desktop Replicator, the space inside the glass cylinder is about 9 L, and the formula gives about 8 × 10⁶ at its top tone of 160 kHz (Derived). This counts resolvable field patterns, not sharp resonances.
+For the Desktop Replicator, the space inside the glass cylinder is about 11 L, and the formula gives about 9 × 10⁶ at its top tone of 160 kHz (Derived). This counts resolvable field patterns, not sharp resonances.
 
 Light offers twelve orders of magnitude more states than sound in the same volume. The architecture therefore uses sound for force and light for computing and memory.
 

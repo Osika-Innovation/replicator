@@ -36,6 +36,12 @@ The relation has a hard limit in air. A solid has an acoustic impedance of 10 to
 
 **Glass wall.** The chamber is closed by a glass cylinder. The lasers look through it and their reflector film is on its outer face, so every beam crosses the curved glass twice each way. The cylinder shields the scan from draughts. It lifts with the head for loading, and the scan must be recalibrated after each lift.
 
+**Sound alone cannot tell dense solids apart (Simulated).** Almost all the sound in air reflects from any dense solid, whatever it is made of, so echoes carry little about the material. In simulation, classifying solids from echoes at a realistic noise level is right 9 % of the time, which is near chance. Identifying a material needs the other channels as well: its response to a pulsed electromagnetic field, its optical reflectance in two bands, and its density from how it moves in the sound field. Combined, these separate eleven test materials completely in the model. The electromagnetic part of this is a long-term capability; the Desktop Replicator has no such coil.
+
+**Touching beads scatter together (Derived).** Two to four beads in contact do not scatter sound as the sum of separate beads. The difference is 2 to 6 % at 32 kHz, 11 to 51 % at 64 kHz and complete at 96 kHz and above. A scan of an assembled cluster has to use a model in which each bead re-scatters the sound from its neighbours. The simple sum is acceptable only at the lowest tone.
+
+**Material moves as neutral grains (Design decision).** Feedstock is carried as electrically neutral grains or droplets. A stream of charged particles would repel itself and screen the fields that are meant to steer it. Stray static charge on a bead is a separate problem, limited to {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC by grounded, slightly conductive glass and controlled humidity, as described in [Desktop Replicator](desktop-replicator.html#the-enclosure).
+
 <a id="reconstruction-honesty-and-static-validation-g17-g18-g19"></a>
 
 ### What a scan is allowed to claim

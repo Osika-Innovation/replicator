@@ -33,6 +33,8 @@ Findings 16 to 27 come from a review of the whole engineering record on 17 Novem
 
 Findings 28 to 30 are simulation results that followed on 18 November 2026 and settle several of the above: the simple one-bit receive converter fails its test (28), and a solid model of the plates shows that the shipped plate-response file is wrong and that drive strength, not pattern control, limits levitation (29). Finding 30 gives the reason, bending stress in the glass, and the way forward: a foam bead as the first test particle.
 
+Findings 31 to 36 were added on 22 November 2026. They cover static charge on beads (31), a chamber-independent file format for shapes (32), the limits of sound for telling materials apart (33), lifting with one tone and cleaning the field with several (34), and how touching beads scatter sound together (35). Finding 36 sets bounds for the long-term machine and does not change the Desktop Replicator.
+
 Each has an owner and a task. [Current state](status.html#known-inconsistencies-in-the-design) summarises them.
 
 ## Adding a finding

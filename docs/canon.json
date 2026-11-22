@@ -59,10 +59,10 @@
       "c0_boro12_pf": 171.0,
       "c0_tempco_pct_per_c": 0.3,
       "max_trace_cap_pf": 2.0,
-      "hbridge_driver_mpn": "TC4427A",
+      "hbridge_driver_mpn": "IXDD604SITR",
       "bridge_rail_v": 18.0,
-      "hbridge_driver_v_max": 18.0,
-      "hbridge_driver_has_tristate_pin": false,
+      "hbridge_driver_v_max": 35.0,
+      "hbridge_driver_has_tristate_pin": true,
       "max_drive_vrms": 16.2,
       "max_drive_vrms_5tone_per_tone": 7.2,
       "max_drive_v_peak_single_tone": 22.92,
@@ -123,8 +123,8 @@
     },
     "desktop_geometry": {
       "envelope_mm": [
-        286.0,
-        268.0,
+        313.0,
+        294.0,
         384.0
       ],
       "wafer_material": "Schott Borofloat 33",
@@ -173,8 +173,8 @@
       "door_half_sweep_deg": 78.0,
       "door_opening_chord_mm": 204.2,
       "clear_view_deg": 214.4,
-      "nominal_mass_kg": 11.55,
-      "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Acoustic results for 120 and 180 mm do not carry over; sim re-anchor OPEN. Rev F closes the chamber with a glass cylinder, so the lateral boundary is glass at r=109 mm again.",
+      "nominal_mass_kg": 14.1,
+      "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Rev F2 (#37/#41, 2026-11-22) closes the chamber with a stock DURAN O250x5 borosilicate cylinder on the lifting head, placing the lateral glass boundary at r=120 mm (ID 240 mm, OD 250 mm, 5 mm wall).",
       "enclosure_minor_rev": 0,
       "chamber_glass": true,
       "retro_post_opening_chord_mm": 191.5,
@@ -186,13 +186,13 @@
       ],
       "chamber_wall": "glass cylinder on lifting head (Rev F, operator 2026-11-18); --no-lift = open front, --glass = rotating door",
       "lift_stroke_mm": 150.0,
-      "lift_moving_mass_kg": 5.35,
+      "lift_moving_mass_kg": 6.97,
       "envelope_open_height_mm": 534.0,
       "glass_cylinder_id_od_mm": [
-        218.0,
-        224.0
+        240.0,
+        250.0
       ],
-      "retro_film_radius_mm": 112.05,
+      "retro_film_radius_mm": 125.05,
       "air_temp_tolerance_k": 0.1,
       "calibration_phase_tol_deg": 5.0,
       "calibration_gain_tol_pct": 2.0,
@@ -200,18 +200,18 @@
       "plate_bending_stress_limit_mpa": 10.0,
       "plate_characteristic_strength_mpa": 25.0,
       "chamber_gain_closed_nominal": [
-        3.84,
-        1.66,
-        2.22,
-        1.73,
-        1.61
+        2.48,
+        1.6,
+        1.47,
+        1.32,
+        1.85
       ],
       "chamber_gain_closed_gap_median": [
-        2.8,
-        1.7,
-        1.4,
-        1.4,
-        1.2
+        2.4,
+        1.6,
+        1.5,
+        1.3,
+        1.8
       ]
     },
     "dissolve_and_toroidal": {
@@ -238,11 +238,26 @@
         4.0
       ],
       "anapole_condition": "p = i * k * T"
+    },
+    "electrostatics_and_matter_loop": {
+      "transport_charge_rule": "neutral_bound_counterparts_only",
+      "forbid_unneutralized_ion_bulk_transport": true,
+      "borosilicate_rel_permittivity": 4.6,
+      "eps_r0p5mm_weight_nn": 154.1,
+      "eps_r0p5mm_image_clamp_1g_pc": 5.16,
+      "ma2_bjerknes_contact_160khz_nn": 11.83,
+      "ma2_coulomb_cancel_pc": 1.15,
+      "max_bead_charge_pc": 0.2,
+      "wafer_bleed_sheet_resistance_max_ohm_sq": 1000000000.0,
+      "chamber_ambient_rh_pct_range": [
+        45.0,
+        55.0
+      ]
     }
   },
   "insights": {
-    "implemented_surfaces": 126,
-    "total_surfaces": 126,
+    "implemented_surfaces": 151,
+    "total_surfaces": 151,
     "items": [
       {
         "id": "INS-01",
@@ -483,6 +498,54 @@
         "evidence": "SIMULATED",
         "implemented": 7,
         "surfaces": 7
+      },
+      {
+        "id": "INS-31",
+        "summary": "Material is moved only as electrically neutral grains or droplets, never as a stream of charged particles, which would repel itself and screen the fields. A foam bead that picks up static charge by rubbing sticks to the glass at about 5 pC and loses its attraction to a neighbouring bead at about 1 pC. Slightly conductive, grounded glass surfaces and moderate humidity keep the charge under 0.2 pC.",
+        "effect": "Adds a charge limit, a surface-conductivity requirement for the plates and cylinder, and a humidity range for the chamber.",
+        "evidence": "DERIVED",
+        "implemented": 6,
+        "surfaces": 6
+      },
+      {
+        "id": "INS-32",
+        "summary": "A drive pattern saved as raw signals for one chamber stops working when the plate, the cylinder or the number of sources changes. A new file format stores the goal and the object's scattering behaviour in chamber-independent terms and compiles them through each machine's calibration. In simulation this matches a direct solve within 1 % on chambers with 12 and 36 sources, and lets the controller update its goal without extra memory.",
+        "effect": "Makes the chamber-independent format the way shapes are stored and exchanged; raw per-chamber patterns become a cache.",
+        "evidence": "SIMULATED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-33",
+        "summary": "Sound in air cannot tell dense solids apart, because nearly all of it reflects from any of them: classification of solids from echoes is near chance. Identifying materials needs the electromagnetic and optical channels as well. A material model covering all elements lets a stored response be split into a material part and a shape part, which shrinks files several hundred times.",
+        "effect": "Assigns material identification to combined electromagnetic, optical and density sensing, and adopts the factored file format.",
+        "evidence": "SIMULATED",
+        "implemented": 6,
+        "surfaces": 6
+      },
+      {
+        "id": "INS-34",
+        "summary": "Sharing the supply between five tones leaves each with a fifth of the voltage and lifts only about 7 % of a foam bead's weight. One tone at full voltage lifts 10 to 20 times more: about 1.2 times the bead's weight with the present twelve sources. The five-tone drive is still what removes unwanted traps and what the machine listens with.",
+        "effect": "Splits the job: one tone lifts, several tones clean up the field and sense. Retires the plate data computed for the earlier small piezo discs.",
+        "evidence": "SIMULATED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-35",
+        "summary": "Two to four beads touching each other scatter sound differently from the same beads far apart: by a few percent at the lowest tone, and completely at the upper tones. The model of a cluster has to include how the beads re-scatter each other's sound. Separately, in still air the response from source A to source B equals that from B to A, which nearly halves the calibration measurements and gives a live alarm for air movement.",
+        "effect": "Requires the coupled scattering model above the lowest tone, and adds a symmetry check to calibration.",
+        "evidence": "DERIVED",
+        "implemented": 2,
+        "surfaces": 2
+      },
+      {
+        "id": "INS-36",
+        "summary": "Bounds for the long-term machine, worked for a 250 g iron reference object. A description of the object at 10 µm resolution fits in one cubic centimetre of holographic crystal and can be read out in under a millisecond. A description exact to the atom is about 10¹⁴ times too large to store or send. The time to make the object is set by the energy supply, about nine minutes at 10 kW, not by how fast fields or data move.",
+        "effect": "Fixes the stored description at the 10 µm scale for long-term planning and identifies energy storage as the limit on build time. Does not affect the Desktop Replicator.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
       }
     ],
     "notes": {
@@ -605,6 +668,30 @@
       "INS-30": {
         "summary": "The pressure a glass plate can deliver is limited by bending stress in the glass, not by drive voltage. Holding solid polystyrene would stress the plates beyond the assumed safe limit whatever piezo is used. A foam bead of 30 kg/m³ needs about one sixth of the pressure and can be held with larger, thinner piezo discs on an 18 V supply. The closed glass cylinder raises pressure by 1.2 to 2.8 times, not the factor of eight first assumed.",
         "effect": "Made a foam bead the first test particle and led the design to adopt larger piezo discs and an 18 V supply. Requires recalibration after every head lift and every few tenths of a kelvin."
+      },
+      "INS-31": {
+        "summary": "Material is moved only as electrically neutral grains or droplets, never as a stream of charged particles, which would repel itself and screen the fields. A foam bead that picks up static charge by rubbing sticks to the glass at about 5 pC and loses its attraction to a neighbouring bead at about 1 pC. Slightly conductive, grounded glass surfaces and moderate humidity keep the charge under 0.2 pC.",
+        "effect": "Adds a charge limit, a surface-conductivity requirement for the plates and cylinder, and a humidity range for the chamber."
+      },
+      "INS-32": {
+        "summary": "A drive pattern saved as raw signals for one chamber stops working when the plate, the cylinder or the number of sources changes. A new file format stores the goal and the object's scattering behaviour in chamber-independent terms and compiles them through each machine's calibration. In simulation this matches a direct solve within 1 % on chambers with 12 and 36 sources, and lets the controller update its goal without extra memory.",
+        "effect": "Makes the chamber-independent format the way shapes are stored and exchanged; raw per-chamber patterns become a cache."
+      },
+      "INS-33": {
+        "summary": "Sound in air cannot tell dense solids apart, because nearly all of it reflects from any of them: classification of solids from echoes is near chance. Identifying materials needs the electromagnetic and optical channels as well. A material model covering all elements lets a stored response be split into a material part and a shape part, which shrinks files several hundred times.",
+        "effect": "Assigns material identification to combined electromagnetic, optical and density sensing, and adopts the factored file format."
+      },
+      "INS-34": {
+        "summary": "Sharing the supply between five tones leaves each with a fifth of the voltage and lifts only about 7 % of a foam bead's weight. One tone at full voltage lifts 10 to 20 times more: about 1.2 times the bead's weight with the present twelve sources. The five-tone drive is still what removes unwanted traps and what the machine listens with.",
+        "effect": "Splits the job: one tone lifts, several tones clean up the field and sense. Retires the plate data computed for the earlier small piezo discs."
+      },
+      "INS-35": {
+        "summary": "Two to four beads touching each other scatter sound differently from the same beads far apart: by a few percent at the lowest tone, and completely at the upper tones. The model of a cluster has to include how the beads re-scatter each other's sound. Separately, in still air the response from source A to source B equals that from B to A, which nearly halves the calibration measurements and gives a live alarm for air movement.",
+        "effect": "Requires the coupled scattering model above the lowest tone, and adds a symmetry check to calibration."
+      },
+      "INS-36": {
+        "summary": "Bounds for the long-term machine, worked for a 250 g iron reference object. A description of the object at 10 µm resolution fits in one cubic centimetre of holographic crystal and can be read out in under a millisecond. A description exact to the atom is about 10¹⁴ times too large to store or send. The time to make the object is set by the energy supply, about nine minutes at 10 kW, not by how fast fields or data move.",
+        "effect": "Fixes the stored description at the 10 µm scale for long-term planning and identifies energy storage as the limit on build time. Does not affect the Desktop Replicator."
       }
     }
   },

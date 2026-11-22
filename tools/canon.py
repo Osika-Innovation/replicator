@@ -61,7 +61,7 @@ def render(value, flt=None):
     if flt == 'and':
         return join_and(seq)
     if flt == 'range':
-        return f'{num(seq[0])} to {num(seq[-1])}'
+        return f'{num(min(seq))} to {num(max(seq))}'
     if flt == 'khz':
         return join_and([v / 1e3 for v in seq])
     if flt == 'mhz':
