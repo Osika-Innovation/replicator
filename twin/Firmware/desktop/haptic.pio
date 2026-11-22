@@ -1,0 +1,115 @@
+; Desktop Replicator Rev F: HAPTIC lamina PIO programs (RP2350B, clk_sys 150 MHz).
+; One lamina = 6 port channels + 1 C0(T) reference channel + 1 spare = 8.
+;
+; Receive has two paths, both fitted (INS-28):
+;   1. 1-bit sigma_delta at 75 MSa/s (TLV3501 per channel). SIM's cycle-accurate
+;      model gave 60.9 dBc SFDR against the 72 dB gate, so this path is only
+;      used behind the adds-only sinc3 (CIC) decimator in lockin_xor.c, with the
+;      1/3 and 1/5 square-reference harmonics of the comb de-mixed (demix).
+;   2. AD7380 16-bit SAR ADC fallback (triggered by that gate failure).
+;
+; Transmit: every port has TWO pins, INA and INB, one per leg of its IXDD604
+; bridge (CAD #35). +1 = (1,0), -1 = (0,1), 0 = (0,0) both legs low. High
+; impedance is the shared group enable, a plain GPIO outside these programs
+; (frame_scheduler.c fs_rx_window): low for receive windows only.
+;
+; Every program first waits for the SYNC downbeat (spinal_bus.c), so all state
+; machines on all six MCUs start on the same system tick (+/- 1 tick: the MCUs
+; share the 12.000 MHz XIN but not the phase of their PLL post-dividers).
+; SYNC is GPIO16 on every Rev F board. `wait gpio` counts from the PIO block's
+; GPIO base: 16 for a block based at 0, 0 for a block based at 16. The loader
+; (sb_sync_patch() in spinal_bus.c) rewrites the index for the block it loads into.
+.define public SYNC_GPIO 16
+
+; ---------------------------------------------------------------- transmit
+; 12 pins = 6 x (INA, INB). (0,0) is zero volts across the port, not Hi-Z. One step per system tick
+; (6.67 ns, 0.38 deg at 160 kHz); autopull at 24 bits, so each 32-bit word
+; from the DMA ring carries two steps and the DMA runs at 75 M words/s.
+; Ring = DR_TX_RING_WORDS words = 125 us.
+;
+; The same program at clock divider TX_GRID_100NS_DIV is the 100 ns grid:
+; 1250 steps = 625 words per ring, DMA at 5 M words/s. frame_scheduler.c
+; builds patterns for either grid (fs_config.step_ticks = 1 or 15). The
+; three-level single-tone pattern (fs_three_level_pattern) and the comb
+; profiles with 15, 30 or 60 tick pulses run on it; a 100 ns pulse is the
+; shortest the driver is asked for, against 107 ns on the fine grid.
+.define public TX_GRID_100NS_DIV 15
+.program haptic_tx
+    wait 0 gpio SYNC_GPIO
+    wait 1 gpio SYNC_GPIO
+.wrap_target
+    out pins, 12
+.wrap
+
+; ------------------------------------------------- sigma_delta, 1-bit, x8
+; Two state machines at clkdiv 2 (75 MSa/s), started together.
+;
+; haptic_sd_feedback: FB_k <= NOT Q_k for all 8 channels in one instruction.
+; (IN base = Q_A, OUT base = FB_A, 8 pins each.) A high integrator node pulls
+; itself down on the next clock: C dv/dt = (v_s - v)/R_in + (fb - v)/R_fb.
+.program haptic_sd_feedback
+    wait 0 gpio SYNC_GPIO
+    wait 1 gpio SYNC_GPIO
+.wrap_target
+    mov pins, !pins
+.wrap
+
+; haptic_sd_reader8: records the FEEDBACK pins, not the comparator pins, so the
+; recorded bit is by construction the bit that was fed back (a second look at
+; the comparator one tick later could differ). IN base = FB_A, 8 pins;
+; shift right, autopush at 32: four samples per word, earliest in the low
+; byte, channel k in bit k of each byte. The stream is the INVERTED comparator
+; bit; lockin_xor.c takes the sign out.
+.program haptic_sd_reader8
+    wait 0 gpio SYNC_GPIO
+    wait 1 gpio SYNC_GPIO
+.wrap_target
+    in pins, 8
+.wrap
+
+; ------------------------------------------------------- AD7380 fallback
+; Four dual AD7380 on shared /CS and SCLK: 8 simultaneous channels, 8 SDO
+; lines (IN base = SDOA of ADC 0). State machine at clkdiv 2 (13.3 ns/tick):
+; SCLK 37.5 MHz, 16 clocks, then /CS high to make 50 ticks per conversion:
+; 1.5 MSa/s exactly, 750 samples per 500 us burst, 46.875 per 32 kHz period.
+; Shift LEFT, autopush at 32: four words per conversion, first clock in the
+; top byte. lk_adc_unpack() rebuilds the eight int16 samples.
+; ASSUMED from memory of the datasheet and to be re-read before layout: data
+; changes on the falling SCLK edge and is valid before the next one; /CS
+; falling starts the frame; two's complement, MSB first; /CS high >= 190 ns
+; covers conversion and quiet time (here 16 ticks = 213 ns).
+.program ad7380_x4
+.side_set 2                        ; bit 0 = SCLK, bit 1 = /CS
+    wait 0 gpio SYNC_GPIO         side 3
+    wait 1 gpio SYNC_GPIO         side 3
+.wrap_target
+    set x, 15              side 1 [1]   ; /CS low, SCLK high: frame start
+bitloop:
+    nop                    side 0       ; SCLK falls: ADC puts the next bit out
+    in pins, 8             side 1       ; SCLK rises: sample all eight lines
+    jmp x-- bitloop        side 1       ; (3 ticks per bit would be 25 MHz;
+                                        ;  see the 2-tick variant note below)
+    nop                    side 3 [7]   ; /CS high: convert
+    nop                    side 3 [7]
+.wrap
+; Tick count per conversion as written: 2 + 16*3 + 16 = 66 ticks = 880 ns
+; (1.136 MSa/s) -- NOT the 50 ticks the burst arithmetic wants. The 50-tick
+; frame needs the 2-tick bit below; it is a separate program so the slower,
+; safer one can be used at bring-up. Only ad7380_x4_fast is coherent with the
+; 500 us burst; lockin_xor.c takes the sample rate as a parameter.
+
+.program ad7380_x4_fast
+.side_set 2
+    wait 0 gpio SYNC_GPIO         side 3
+    wait 1 gpio SYNC_GPIO         side 3
+.wrap_target
+    set x, 14              side 1 [1]   ; 2 ticks: /CS low
+bitloop:
+    in pins, 8             side 0       ; SCLK low; samples the bit launched by
+    jmp x-- bitloop        side 1       ; the previous falling edge. 15 x 2
+    in pins, 8             side 0       ; 16th bit
+    nop                    side 3 [7]   ; 8 + 8 + 1 = 17 ticks /CS high
+    nop                    side 3 [7]
+    nop                    side 3
+.wrap
+; 2 + 30 + 1 + 17 = 50 ticks = 666.7 ns = 1.5 MSa/s.

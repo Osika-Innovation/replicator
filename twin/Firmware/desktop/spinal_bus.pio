@@ -1,0 +1,29 @@
+; Spinal bus between the six MCUs: two data lanes and a FRAME lane, 4 system
+; ticks per bit pair = 75 Mbit/s. There is no clock lane and no clock
+; recovery: every MCU runs from the same 12.000 MHz XIN star, so a receiver
+; sampling every 4 of its own ticks stays on the transmitter's bit cell
+; for ever; only the fixed phase is found, by FRAME.
+; (HSTX would double the rate. It is not written yet: OPEN.)
+
+; OUT base = D0 (2 pins), side-set = FRAME. Autopull at 32, shift right.
+; The first word of a packet is its length in bit pairs, minus one.
+.program spinal_tx
+.side_set 1
+.wrap_target
+    out x, 32          side 0          ; idle, FRAME low, until a length arrives
+bitloop:
+    out pins, 2        side 1 [2]
+    jmp x-- bitloop    side 1
+.wrap
+
+; IN base = D0 (2 pins), JMP pin = FRAME. Autopush at 32, shift right: words
+; come out as they went in. The first sample is taken two ticks into the
+; first bit cell (the input synchroniser delays FRAME and data alike).
+.program spinal_rx
+.wrap_target
+    wait 0 pin 2
+    wait 1 pin 2
+bitloop:
+    in pins, 2         [1]
+    jmp pin bitloop    [1]
+.wrap

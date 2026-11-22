@@ -1,0 +1,51 @@
+; Desktop Replicator Rev F: Mosquito-Eye SMI strip (RP2350B, clk_sys 150 MHz).
+; 24 clear-window ommatidia: 650 nm laser diode, its monitor photodiode, a
+; two-stage OPA320 amplifier (x200 in all, see smi_tia_response() in
+; lockin_xor.c for why two stages), a TLV3501 and a 1-bit sigma-delta loop
+; per channel. Two things are read from one bitstream:
+;   DC occlusion  = the ones density of the stream (a blocked beam returns less)
+;   AC LightRead  = the stream's phasor at each comb tone (pressure phase)
+;
+; 24 channels at 75 MSa/s is 1.8 Gbit/s: too much to store or process at
+; once. The loops all run all the time; the READER looks at one BANK of 8
+; channels per burst (bank 0 = channels 0-7, 1 = 8-15, 2 = 16-23). The bank is
+; changed between bursts by rewriting the reader's IN base (smi_bank_base()).
+
+.define public SYNC_GPIO 16         ; from the PIO block's GPIO base; see haptic.pio
+
+; All 24 loops closed in one instruction per sample: FB_k <= NOT Q_k.
+; IN base = Q_0 (24 pins), OUT base = FB_0 (24 pins), clkdiv 2 (75 MSa/s).
+; On the RP2350B the two 24-pin runs do not fit one 32-pin PIO window with
+; anything else in it: this strip MCU does only this.
+.program smi_sd_feedback24
+    wait 0 gpio SYNC_GPIO
+    wait 1 gpio SYNC_GPIO
+.wrap_target
+    mov pins, !pins
+.wrap
+
+; One bank of 8 feedback pins, recorded as in haptic_sd_reader8: shift right,
+; autopush at 32, four samples per word, channel (bank*8 + k) in bit k of each
+; byte, inverted comparator sense. clkdiv 2. X counts samples so a burst is
+; exactly DR_BURST_SAMPLES long and ends on a word boundary: the host writes
+; (samples - 1) to the TX FIFO to start one.
+.program smi_bank_reader
+.wrap_target
+    pull block                     ; burst length - 1
+    mov x, osr
+    wait 0 gpio SYNC_GPIO                 ; start on the next SYNC downbeat
+    wait 1 gpio SYNC_GPIO
+sample:
+    in pins, 8
+    jmp x-- sample                 ; 2 SM ticks per sample at clkdiv 1 = 75 MSa/s
+.wrap
+; Note the clock: this program takes two instructions per sample, so it runs
+; at clkdiv 1 while smi_sd_feedback24 runs at clkdiv 2. Both are 75 MSa/s.
+
+; Laser enable, 24 pins, gated in hardware by the head-down interlock AND in
+; firmware by frame_scheduler.c. A plain latch: the word written is the mask.
+.program smi_laser_enable
+.wrap_target
+    pull block
+    out pins, 24
+.wrap
