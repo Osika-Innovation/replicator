@@ -8,13 +8,13 @@
 |---|---|---|---|
 | Machine design | Parametric CAD model, exact geometry export, drawings, parts list with candidate part numbers, power estimate | Derived | Simulation gates below; operator approval before anything is ordered |
 | Plate acoustics | A reduced plate model used for planning, and a three-dimensional solid finite-element model that contradicts it | Simulated | The two models disagree; a measured plate response is required; all results repeated at the new {{c:desktop_geometry.gap_mm}} mm plate spacing |
-| Drive and receive electronics | Circuit concept with candidate parts. No circuit board layout | Derived | The {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test in simulation; drive voltage and receive band reconciled with the plan |
-| Optical ring | Geometry in the CAD model and a signal model in simulation | Simulated | Signal model checked against the present {{c:mosquito_smi.total_ommatidia}}-laser layout; amplifier design; laser safety for an open chamber |
-| Pattern network (Cadence) | Trained and tested in simulation at full size | Simulated | The reduced form that fits the controller has not been shown at its target size |
-| Firmware | None for the Desktop Replicator. Firmware for a retired earlier array still compiles as a regression case | — | Writing it, starting from a cycle budget |
-| Assembly and joining | A transport model in simulation. No joining recipe without adhesive | Open | A joining step with its energy source; placing one bead beside another |
-| Removal and recovery | The correct physical sequence is specified. The code still uses two shortcuts known to be wrong | Derived | Implementing the sequence and tracking mass |
-| Scanning | Acoustic and optical scan models that pass their checks on simulated data | Simulated | Repeating them for the present geometry |
+| Drive and receive electronics | Circuit concept with a proposed front-end netlist. The 1-bit converter failed its test, so a conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) is fitted. No drive part is selected and there is no board layout | Simulated; Open | A drive part; a check that the larger piezo discs keep pattern control |
+| Optical ring | Geometry in the CAD model and a signal model in simulation | Simulated | A check on data that the same model did not generate; confirmation of the laser class |
+| Pattern network (Cadence) | Trained in simulation at full size. A reduced form fits the controller's memory but, on the solid plate model, loses the accuracy needed | Simulated | A ruling: a smaller task, a larger memory budget, or the second compute card |
+| Firmware | Source for the drive, receive, laser, bus and pattern-network modules, tested on a workstation (59 checks). Never built for or run on a board | Simulated | A main program, a build, a drive part, and a board to run on |
+| Assembly and joining | A transport model in simulation, and a modelled joining step that heats the joint with a laser pulse. Placing one bead beside another is unsolved | Simulated; Open | Enough drive for transport; the beside-bead problem; any evidence for the heating step |
+| Removal and recovery | The correct physical sequence is implemented in simulation and conserves mass. On the solid plate model it delivers little energy to the part, so it is slow | Simulated | A measured scattering response; more energy on the part |
+| Scanning | Acoustic and optical scan models updated to the present geometry; their checks are reported passing | Simulated | Stored results of those checks; tests on independently generated data |
 | Electromagnetic control | Large coils across the chamber are ruled out by simulation. A small pulsed coil is a candidate | Simulated; Open | A model of the small coil that respects what it can and cannot reach |
 | Long-term architecture | Design studies resting on published component physics | Documented; Open | Demonstrations of the components at useful scale |
 | Bench evidence | None | — | A built machine |
@@ -23,14 +23,14 @@ The detailed chapters are [Acoustic bodies](acoustics.html), [Compute, sensing a
 
 ## Known inconsistencies in the design
 
-A review of the engineering record on 17 November 2026 found places where two parts of the design disagree. Each is registered, has an owner and is listed in the [insight register](insights.html). The ones that matter most:
+A review of the engineering record on 17 November 2026, and the simulations that followed it, found places where the design disagrees with itself or with its models. Each is registered and listed in the [insight register](insights.html). Several from the first review are now settled: the receive converter (a fallback part is fitted), the air temperature sensors (added) and the open chamber (closed with a glass cylinder). The ones that matter most now:
 
-1. **Drive voltage.** Planning assumes up to 40 V per source. The drive stage as specified supplies about 11 V. Force scales with the square of voltage, so planned forces are about ten times too high. A solid finite-element model has since put the voltage needed to hold a solid polystyrene bead at roughly 900 V per source at the best tone, far beyond either figure. Drive strength is the limiting factor for levitation.
-2. **Receive band.** The converter figures are stated for a {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz band, yet the highest drive tone is above that. A cycle-by-cycle simulation of the simple one-bit converter then reached about 61 dB on the six-tone test and cannot pass. The written fallback is a conventional converter chip.
-3. **Plate model resolution.** The file that describes how the plates radiate samples them far more coarsely than half a wavelength of sound in air. The solid finite-element model confirms it: the plates ring instead of damping out, and the file does not match the solid model at all. The plate response has to be measured in the chamber for each plate.
-4. **Air temperature.** The sound path between the plates changes by about 70° of phase per kelvin at the highest tone. The parts list has no air temperature sensor.
-5. **Open chamber.** The glass wall was removed on 17 November 2026. The chamber now has no shield against draughts, no enclosure around the laser beams and no interlock.
-6. **Joining.** Sound cannot supply the heat to join grains. With hand-applied adhesive retired, there is no joining recipe.
+1. **Drive strength.** Sound pressure from a glass plate is limited by bending stress in the glass, not by voltage. Holding solid polystyrene would stress the plates past the assumed safe limit with any piezo. A foam bead of 30 kg/m³ can be held, in simulation, with larger and thinner piezo discs on an 18 V supply, with a margin of 1.19. The design adopted both on 18 November 2026. The drive part previously listed has been removed as unsuitable and no replacement is chosen.
+2. **Plate response.** The solid model shows the plates ring, and the response shifts too much between nominally identical plates to be predicted. It has to be measured in the chamber for each plate, and again after every head lift and every few tenths of a kelvin of air temperature change.
+3. **Unwanted traps.** One tone from twelve sources leaves 10 to 17 % of the work volume above 70 % of the target amplitude, against a limit of 2 %. Filling several sites evenly also falls short.
+4. **Pattern network size.** The form of Cadence that fits in {{c:cadence_brain.cadence_sparse_max_kb}} kB keeps its speed but not its accuracy on the solid plate model. A second simulation, on a different task, reports the opposite. The two have not been reconciled.
+5. **Laser class.** The glass cylinder is clear, so it does not enclose the laser beams. An interlock switches the lasers off when the head is raised. The laser class has been assessed from memory of the standard and needs confirming.
+6. **Placing beads side by side.** A bead already in place disturbs the field that should hold its neighbour. This is unsolved.
 
 ## What must exist before hardware is ordered
 
@@ -39,7 +39,7 @@ Hardware may be released for purchase only when all five of these exist:
 1. A frozen revision of the design with file hashes.
 2. A parts list with quantities, part numbers, live stock and prices.
 3. Exact CAD geometry, drawings, tolerances, wiring and a thermal budget.
-4. Passed simulation gates: the {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test and agreement between the solid finite-element model and the plate model. Both currently fail.
+4. Passed simulation gates: the {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test and agreement between the solid finite-element model and the plate model. Three gates currently fail: predicting the plate response offline, holding a solid bead, and keeping unwanted traps under the limit.
 5. A fixed acceptance procedure to run in the chamber once the machine is built.
 
 None of the five is complete. Ordering parts or contacting suppliers also requires explicit approval from the operator.

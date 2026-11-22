@@ -3,7 +3,7 @@
 The Desktop Replicator is the machine we are designing to build first. It is a benchtop chamber, about the size of an espresso machine, in which two vibrating glass plates hold and move small amounts of material in mid-air while a ring of low-power lasers watches. Everything on this page is a design: **no parts have been ordered, nothing has been built and nothing has been measured.**
 
 <div class="diagram">
-<img src="../assets/desktop/desktop_iso.jpg" alt="CAD render of the Desktop Replicator. A rounded-square base and head are joined by a rear tower; between them is an open chamber with a round glass plate at the floor, a dark rear baffle and small crucibles at the back." width="1200" height="900">
+<img src="../assets/desktop/desktop_iso.jpg" alt="CAD render of the Desktop Replicator. A rounded-square base and head are joined by a rear tower; between them a clear glass cylinder encloses the chamber, with a round glass plate at the floor and three small crucibles at the back." width="1600" height="1200">
 <p>CAD render. The round plate on the chamber floor is the lower acoustic wafer; an identical one faces it from the head. The crucibles at the rear hold feedstock. This is a model, not a photograph.</p>
 </div>
 
@@ -13,15 +13,15 @@ The Desktop Replicator is the machine we are designing to build first. It is a b
 |---|---|---|
 | Outside size | {{c:desktop_geometry.envelope_mm|x}} mm | Derived from the CAD model |
 | Mass | {{c:desktop_geometry.nominal_mass_kg}} kg nominal | Derived from model densities |
-| Work chamber | One chamber, {{c:desktop_geometry.gap_mm}} mm between the plates, no holes in floor or ceiling, open at the front and sides | Design decision |
+| Work chamber | One chamber, {{c:desktop_geometry.gap_mm}} mm between the plates, no holes in floor or ceiling, closed by a glass cylinder that lifts with the head | Design decision |
 | Acoustic plates | Two undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} × {{c:desktop_geometry.wafer_thickness_mm}} mm borosilicate wafers ({{c:desktop_geometry.wafer_material}}), Ø{{c:desktop_geometry.clear_glass_diameter_mm}} mm free to vibrate | Design decision |
 | Sound sources | {{c:desktop_geometry.ports_per_plate}} small piezo discs (PZT-8, Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm) bonded behind each wafer, 12 in total | Design decision |
 | Drive tones | {{c:desktop_geometry.comb_tones_hz|khz}} kHz, used together | Design decision |
-| Acoustic sensing | The same 12 piezo discs listen while they drive; each is read by a 1-bit converter at {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} million samples per second | Derived; simulation gate open |
-| Optical sensing | {{c:mosquito_smi.total_ommatidia}} laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm that each double as their own detector | Derived; simulation gate open |
+| Acoustic sensing | The same 12 piezo discs listen while they drive. A conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) reads them, because the 1-bit converter failed its simulation test | Simulated |
+| Optical sensing | {{c:mosquito_smi.total_ommatidia}} laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm that each double as their own detector, looking through the glass | Simulated |
 | Electronics | {{c:clock_and_bus.pcb_count}} circuit boards and one plug-in compute card | Design decision |
 | Controller memory | Under {{c:cadence_brain.cadence_sparse_max_kb}} kB for the on-board pattern network | Design target |
-| Electrical power | 4.7 W with the first compute card, 10.2 W design ceiling | Derived from assumed datasheet values |
+| Electrical power | 5.7 W with the first compute card, 11.3 W with the second | Derived from assumed datasheet values |
 | Feedstock | Open crucibles for powder, liquid and seed parts, inside the chamber | Design decision |
 | Hardware built | None | — |
 
@@ -40,16 +40,24 @@ A smaller configuration, called `boro12`, fits Ø{{c:desktop_geometry.boro12_red
 **A small network picks the drive pattern.** A plug-in card holds a compact pattern-completion network called Cadence. Given the sensed state and a target, it settles on a set of drive amplitudes and phases in {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms. It is trained on a workstation and copied to the card. See [Cadence, memory and wave compute](cadence-memory.html).
 
 <div class="diagram">
-<img src="../assets/desktop/desktop_section.jpg" alt="Vertical section through the Desktop Replicator. A wafer and circuit board sit in the head, a matching wafer and board sit above the base electronics, and the open chamber lies between them with the rear tower on the left." width="1200" height="900">
+<img src="../assets/desktop/desktop_section.jpg" alt="Vertical section through the Desktop Replicator. A wafer and circuit board sit in the head, a matching wafer and board sit above the base electronics, and the glass-walled chamber lies between them beside the rear tower." width="1600" height="1200">
 <p>Section through the centre. Top and bottom: wafer, piezo discs and the board that drives them. Bottom: backplane, power and compute card. Left: the hollow tower that carries the head, the laser strips, the cabling and the cooling air.</p>
 </div>
 
 ## The enclosure
 
+<div class="diagram">
+<img src="../assets/desktop/desktop_lift_open.jpg" alt="CAD render of the Desktop Replicator with the head raised. The glass cylinder has lifted with the head on two posts, leaving the chamber floor and crucibles open for loading." width="1600" height="1200">
+<p>Head raised for loading. The glass cylinder and the upper plate travel with the head.</p>
+</div>
+
 The body is a rounded-square base and head joined by a hollow rear tower. The tower is one structural part that carries the head, covers the laser strips and acts as a duct.
 
-- **Open chamber.** The current default has no glass wall. A matte black baffle closes the rear third of the chamber and carries the crucible tray; two slim posts at the front carry the laser reflector strips and leave a {{c:desktop_geometry.retro_post_opening_chord_mm}} mm opening between them. An open chamber is easy to load and to watch, but it has no shield against room draughts and no enclosure around the laser beams. Both need an answer before the machine runs outside a controlled bench.
-- **Optional glass.** The model keeps a glass option: a curved door that rotates {{c:desktop_geometry.door_half_sweep_deg}}° to either side behind a fixed glass arc. With glass fitted the reflector strips sit on the door, so optical scanning requires the door closed.
+- **Glass cylinder.** A plain glass cylinder ({{c:desktop_geometry.glass_cylinder_id_od_mm|x}} mm inside and outside diameter) hangs from the head and closes the chamber on all sides. It shields levitated material from room draughts and, in simulation, raises the sound pressure by 1.2 to 2.8 times over an open chamber.
+- **Lifting head.** To load the chamber, the head, the glass and two guide posts rise {{c:desktop_geometry.lift_stroke_mm}} mm on rails in the tower. The moving mass is {{c:desktop_geometry.lift_moving_mass_kg}} kg, partly balanced by springs, and the machine is {{c:desktop_geometry.envelope_open_height_mm}} mm tall when open. The upper plate moves with the head, so its return position becomes something calibration has to measure after every opening.
+- **Interlock.** A switch detects that the head is down. With the head up, the firmware refuses to drive above listening level and switches the lasers off. Clear glass keeps out draughts but does not block the laser light, so it is not an enclosure around the laser beams; the laser class of the assembled machine is still to be confirmed against the standard.
+- **Air sensors.** Two temperature sensors measure the chamber air, because calibration is sensitive to a few tenths of a kelvin.
+- **Alternatives kept in the model.** An open-fronted chamber with no lift, and a rotating glass door.
 - **Cooling.** Air enters through louvres beside the power supply, rises through the tower and leaves through louvres in the head. No cooling air passes through the work chamber, where it would disturb levitated material.
 - **Service.** A side hatch reaches the compute card. Power and USB-C are on the rear panel. A small display and a rotary knob are on the head.
 
@@ -61,7 +69,7 @@ There are three field circuit boards. Two are identical and sit directly behind 
 
 | Board | What is on it |
 |---|---|
-| Head board, two identical (Ø172 mm) | One RP2350B microcontroller, six drive stages (TC4427A), receive protection (BAT54S), seven fast comparators (TLV3501) and one spare piezo disc that touches nothing |
+| Head board, two identical (Ø172 mm) | One RP2350B microcontroller, six drive stages (driver part open), receive protection (BAT54S), four {{c:haptic_pzt.adc_fallback_mpn}} converters, fast comparators (TLV3501) and one spare piezo disc that touches nothing |
 | Backplane (Ø188 mm) | The 12 MHz clock and its distribution, power conversion from USB-C, rear connectors and the socket for the compute card |
 | Compute card (M.2 form factor) | Card 1: an RP2350B running Cadence. Card 2: an optional FPGA module. Card 3 is reserved for an optical core |
 
@@ -75,7 +83,7 @@ All part numbers are candidates. Their electrical values were entered from memor
 
 ## Heat
 
-With the first compute card the whole machine dissipates an estimated 4.7 W, of which the {{c:mosquito_smi.total_ommatidia}} lasers account for 2.0 W. The estimated rise of the internal air is 5 K. This is a single-node estimate from assumed values, not a flow simulation.
+With the first compute card the whole machine dissipates an estimated 5.7 W, of which the {{c:mosquito_smi.total_ommatidia}} lasers account for 2.0 W. The estimated rise of the internal air is 5.5 K. This is a single-node estimate from assumed values, not a flow simulation.
 
 One thermal rule follows from the physics of the chamber and constrains the layout: **the chamber floor must not be warmer than its ceiling.** Air heated from below overturns. For a chamber {{c:desktop_geometry.gap_mm}} mm tall the estimate is that a floor warmer than the ceiling by a few thousandths of a kelvin is enough to start that motion, and moving air drags on anything levitated in it. The base holds most of the electronics, so the default arrangement is the unstable one. The stable arrangement is a ceiling slightly warmer than the floor. How fast the air would move, and whether that drag matters next to the acoustic holding force, has not yet been calculated.
 
@@ -98,7 +106,7 @@ Hardware may be released for purchase only when all five of these exist:
 1. A frozen revision of the design with file hashes.
 2. A bill of materials with quantities, part numbers, live stock and prices.
 3. Exact CAD geometry, drawings, tolerances, wiring and a thermal budget.
-4. Passed simulation gates: the {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test above, and a three-dimensional solid finite-element model of the wafer, piezo discs and rim seal that agrees with the plate model used for planning. Both currently fail: the converter test above, and the model comparison, which also shows that the drive is far too weak to hold a solid bead ([Acoustic bodies](acoustics.html#known-limits)).
+4. Passed simulation gates: the {{c:haptic_pzt.sfdr_gate_min_db}} dB converter test above, and a three-dimensional solid finite-element model of the wafer, piezo discs and rim seal that agrees with the plate model used for planning. Three release gates currently fail in simulation: the plate response cannot be predicted offline, the drive cannot hold a solid bead, and the field leaves too many unwanted traps ([Acoustic bodies](acoustics.html#known-limits)). The converter test failed and is answered by the fallback converter.
 5. A fixed acceptance procedure to run in the chamber once built.
 
 Ordering parts or contacting suppliers also requires explicit approval from the operator.
@@ -128,8 +136,9 @@ The microcontrollers, comparators and discrete lasers above are purchasable scaf
 |---|---|
 | Does the receive path meet {{c:haptic_pzt.sfdr_gate_min_db}} dB with the fallback converter? | Electrical design and simulation |
 | What drive voltage, tones, source size and bead density reach a holding pressure on the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer? | Simulation, then design |
-| How does the field change at the new {{c:desktop_geometry.gap_mm}} mm plate spacing? Results for the earlier 120 mm spacing do not carry over | Simulation |
-| What protects an open chamber from draughts, and what encloses the laser beams? | Enclosure design |
+| Does the head return to the same position after each lift, closely enough to keep a calibration? | CAD tolerance study, then the assembled machine |
+| Which drive part replaces the one that was removed, now that the supply is {{c:haptic_pzt.bridge_rail_v}} V? | Electrical design |
+| Does the larger piezo disc adopted for a first levitation keep pattern control? | Simulation |
 | How large is the buoyant air motion for a given floor-to-ceiling temperature difference? | Simulation |
 | Does the laser amplifier pass the highest drive tone? A single stage with a gain of 200 would roll off at about 100 kHz | Circuit design |
 | What joins material without adhesive, and what removes joined material? | Process simulation |

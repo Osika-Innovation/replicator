@@ -37,7 +37,7 @@ The table lists every record in `twin/Design/upgrade_graph.json`, in build order
 | `S-WORKSHOP` | Workshop machining and 3-D printing, plus outsourced circuit boards and glass edge cutting | Specified in the manufacturing pack; nothing ordered | Nothing |
 | `C-SIM-GATES` | Simulation checks to pass before any board is made: receive converter, pattern network size, laser readout, solid plate model | Open | Nothing |
 | `S-META-MASTER` | Externally made nanostructured optical master, for later imprint copies | Candidate; not ordered | Nothing |
-| `C-FW-DESKTOP` | Controller firmware for the three boards: drive, receive, laser readout, shared clock and pattern network | Open; not written | `C-SIM-GATES` |
+| `C-FW-DESKTOP` | Controller firmware for the three boards: drive, receive, laser readout, shared clock and pattern network | Source written and tested on a workstation; never run on a board | `C-SIM-GATES` |
 | `X-EM` | Optional contactless exciter (magnet and flat coil) for testing metal plates outside the glass baseline | Drafted; off the critical path | `S-WORKSHOP` |
 | `M-DESKTOP-REV-D` | The assembled Desktop Replicator | CAD model passes its geometry checks; no parts ordered | `S-SEEDS`, `S-WORKSHOP`, `C-FW-DESKTOP` |
 | `K-INCHAMBER-CAL` | Calibration inside the assembled chamber with removable spheres and crucibles: hold, move and transfer repeatability | Blocked until the machine is built | `M-DESKTOP-REV-D` |

@@ -3,7 +3,7 @@
   "title": "Etherworks Replicator Handbook",
   "site_url": "https://osika-innovation.github.io/replicator/",
   "repository": "https://github.com/Osika-Innovation/replicator",
-  "updated": "2026-11-17",
+  "updated": "2026-11-22",
   "documents": [
     {
       "id": "home",
@@ -84,7 +84,7 @@
         "hardware",
         "CAD"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Active prototype design, quoted from the shared engineering constants",
       "related": [
         "status",
@@ -111,7 +111,7 @@
         "ultimate vs prototype",
         "prototype"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Ultimate vs. Prototype programme checkpoint",
       "related": [
         "glossary",
@@ -198,7 +198,7 @@
         "hologram",
         "resonator"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Ultimate vs. Prototype apertures, 25 kHz harmonic comb closure, resolution ladder, and prototype 1-bit sigma-delta bridge",
       "related": [
         "architecture",
@@ -234,7 +234,7 @@
         "SLM",
         "nanoimprint"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Ultimate vs. Prototype optical subsystem summary, toroidal pulse physics, and K-MOSQUITO-SMI gate",
       "related": [
         "architecture",
@@ -302,7 +302,7 @@
         "FPGA",
         "optical compute"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Invariant wire contract plus Ultimate continuous wave control vs. Prototype RP2350B/FPGA bootstrap classification",
       "related": [
         "architecture",
@@ -327,7 +327,7 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Intelligence / Cadence",
-      "summary": "Three-cavity 8piV/3lambda^3 bound, Sb2S3 chord memory, complex Hermitian EqProp Cadence, and minimal-electricity wave substrate ladder.",
+      "summary": "The Cadence pattern network, the three networks that share its name, what the sparse form can and cannot do, chord memory, and the long-term route to computing with waves.",
       "topics": [
         "Cadence",
         "EqProp",
@@ -340,9 +340,10 @@
         "TRELLIS",
         "wave compute"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Synthesis of holographic_memory_and_compute_plan, holo/ EqProp architecture, and minimal-electricity Ultimate substrate ladder",
       "related": [
+        "biology",
         "compute-control",
         "architecture",
         "optics",
@@ -351,6 +352,34 @@
         "status",
         "agents",
         "memory"
+      ]
+    },
+    {
+      "id": "biology",
+      "title": "Ideas from biology",
+      "source": "docs/content/biology.md",
+      "url": "guides/biology.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Sensing / biomimicry",
+      "summary": "Every sensing and computing idea the project borrows from bats, dolphins, moths and insects, in plain terms, with how far each has got.",
+      "topics": [
+        "biomimicry",
+        "biosonar",
+        "compound eye",
+        "insect brain",
+        "sparse memory",
+        "calibration"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Inventory of biology-inspired ideas in the sensing and pattern-network models",
+      "related": [
+        "cadence-memory",
+        "compute-control",
+        "optics",
+        "matter-loop",
+        "status"
       ]
     },
     {
@@ -404,7 +433,7 @@
         "salt and ash",
         "noble gas"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Consolidated Scan, Dissolve, and Stores chapters with Biosonar FM/Golomb prototype and R9 active-store Ultimate stack",
       "related": [
         "architecture",
@@ -495,7 +524,7 @@
         "evidence",
         "verification"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-22",
       "review_scope": "Snapshot of the engineering insight register",
       "related": [
         "status",

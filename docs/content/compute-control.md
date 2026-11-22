@@ -105,7 +105,7 @@ listen(gates, steps)   -> records the port response to a low-level probe
 
 The body-response file (`body-response/0.1`) holds one machine's transfer from drive voltage to plate motion at each tone. Planning code states the field it wants, and the compiler maps that through the file for the machine in front of it. The current presets are `desktop-200mm` and the small `boro12`.
 
-**Firmware.** The firmware target is `twin/Firmware/desktop/`. It does not exist yet; the only firmware in the repository belongs to the retired P0 array and is kept as a regression case. The intent is bare-metal code with no operating system, under about ten thousand lines, that parses the same frames whether they come from a workstation over USB-C or from the compute card. Unplugging the workstation should leave the machine running.
+**Firmware.** The firmware target is `twin/Firmware/desktop/`. It holds source for the drive and receive programs, the laser-strip readout, the bus, lock-in detection, the frame scheduler and the sparse pattern network. Its 59 tests pass on a workstation and its constants match the shared file. There is no main program or build, and nothing has run on a board (Simulated). Firmware for the retired P0 array is kept as a regression case. The intent is bare-metal code with no operating system, under about ten thousand lines, that parses the same frames whether they come from a workstation over USB-C or from the compute card. Unplugging the workstation should leave the machine running.
 
 ## In the Desktop Replicator
 
@@ -133,9 +133,9 @@ How the multiplied clocks on different boards are brought into a known phase rel
 
 ### Drive stage
 
-Each piezo disc is driven by a pair of gate-driver outputs ({{c:haptic_pzt.hbridge_driver_mpn}}) wired as a full bridge, with diodes ({{c:haptic_pzt.clamp_diode_mpn}}) protecting the receive path. The electrical estimate assumes a 12 V bridge rail. Two limits follow, as given by the audit (Derived).
+Each piezo disc is driven by a pair of gate-driver outputs wired as a full bridge, with diodes ({{c:haptic_pzt.clamp_diode_mpn}}) protecting the receive path. The part first listed ({{c:haptic_pzt.hbridge_driver_mpn}}) has been removed from the parts list: it cannot switch its outputs off to let the disc listen, and it tops out at {{c:haptic_pzt.hbridge_driver_v_max}} V. The driver slot is Open. The electrical estimate assumes a {{c:haptic_pzt.bridge_rail_v}} V bridge rail. Two limits follow (Derived).
 
-**The voltage assumptions disagree.** The body-response file allows up to 40 V rms per source. A 12 V bridge gives about 11 V rms at a single tone, and less per tone when five tones share the swing. Force scales with voltage squared, so planning results that assume 40 V overstate force by roughly an order of magnitude. The solid finite-element model has since shown that neither figure is enough: holding a solid polystyrene bead needs about 900 V per source at the best tone ([Acoustic bodies](acoustics.html#known-limits)). Drive strength, not the number of controls, is the limiting factor.
+**Drive voltage is scarce.** A {{c:haptic_pzt.bridge_rail_v}} V bridge gives {{c:haptic_pzt.max_drive_vrms}} V rms at a single tone and {{c:haptic_pzt.max_drive_vrms_5tone_per_tone}} V rms per tone when five tones share the swing. Planning once assumed 40 V; the model now refuses any plan above what the rail delivers. The rail was raised from 12 V to an 18 V rail on 18 November 2026, together with larger piezo discs, because the solid finite-element model shows a first levitation needs both, one tone only, and a foam bead ([Acoustic bodies](acoustics.html#known-limits)). Force scales with voltage squared, so the earlier 40 V assumption overstated force many times over. A proposed front-end circuit adds a further cost: its sensing node is referenced to ground, which needs single-ended drive and halves the available voltage. Drive strength, not the number of controls, is the limiting factor.
 
 **Square-wave harmonics land on the comb.** A square wave at 32 kHz has its third and fifth harmonics at 96 and 160 kHz, exactly on two of the five tones.
 
@@ -155,9 +155,9 @@ For an ideal first-order 1-bit loop the signal-to-quantisation-noise ratio is
 
     SQNR ≈ 6.02 + 1.76 − 5.17 + 30·log₁₀(OSR)  dB,   OSR = f_s / (2·B)
 
-With a band B of {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz the oversampling ratio is {{c:haptic_pzt.osr}} and the result is about 74 dB, or 12 bits (Derived). The constants quote {{c:haptic_pzt.enob_range|range}} bits; the first-order formula supports only the lower end.
+With a band B of {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz the oversampling ratio is {{c:haptic_pzt.osr}} (about 188) and the result is about {{c:haptic_pzt.ideal_1bit_sqnr_200khz_db}} dB, a little under 12 bits (Derived). The constants quote {{c:haptic_pzt.enob_range|range}} bits; the first-order formula does not support that range.
 
-**The band definition is inconsistent** (Derived, as given by the audit). The stated band is {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz, but the top tone is 160 kHz and the small preset reaches 200 kHz. At a 200 kHz band the ratio is about 188 and the ideal figure drops to about 71 dB, below the acceptance gate of {{c:haptic_pzt.sfdr_gate_min_db}} dB.
+The band was first stated as 150 kHz, which excluded the top tones. It is now {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz, and at that band the ideal figure is already below the acceptance gate of {{c:haptic_pzt.sfdr_gate_min_db}} dB.
 
 The gate is a bit-exact simulation with five tones present, which must show at least {{c:haptic_pzt.sfdr_gate_min_db}} dB between the wanted tones and the largest spurious product. If it fails, the boards take a conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) on footprints already provided.
 
@@ -197,7 +197,7 @@ The backplane has one socket in the M.2 form factor, reached through a side hatc
 
 | Card | Status | Network storage | Settle time |
 |---|---|---|---|
-| 1 · RP2350B microcontroller | Default | Sparse 8-bit weights, under {{c:cadence_brain.cadence_sparse_max_kb}} kB of {{c:cadence_brain.rp2350_sram_total_kb}} kB memory | Target {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms; not yet evidenced |
+| 1 · RP2350B microcontroller | Default | Sparse 8-bit weights, under {{c:cadence_brain.cadence_sparse_max_kb}} kB of {{c:cadence_brain.rp2350_sram_total_kb}} kB memory. Fits, but accuracy at that size is disputed | About 4 to 5 ms estimated from instruction counts |
 | 2 · FPGA module | Optional | The same network in block memory | Microseconds as a design target; not modelled |
 | 3 · Optical core | Reserved | Analogue weights in an optical medium | Set by light propagation; long-term research |
 
@@ -217,7 +217,6 @@ None of these has been simulated as a composed system. [Architecture](architectu
 
 | Question | Who answers it |
 |---|---|
-| Is the receive band {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz, or wide enough for the 160 and 200 kHz tones? | Constants owner, then simulation |
 | Does the receive path meet {{c:haptic_pzt.sfdr_gate_min_db}} dB with the fallback converter, and what is the front-end circuit? | Electrical design and simulation |
 | What drive stage and voltage does a holding pressure require, given the solid plate model? | Electrical design and plate model together |
 | How are fractional tick periods and shared square-wave harmonics handled? | Firmware design |

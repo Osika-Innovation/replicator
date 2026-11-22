@@ -84,7 +84,7 @@ The table uses an 18.5 L volume. That figure belongs to an earlier, larger chamb
 | Microwave, 10 GHz | 30 mm | 5.7 × 10³ | Heating and positioning aid; valued for speed, not mode count |
 | Light, 500 nm | 0.5 µm | 1.2 × 10¹⁸ | Computing and storage |
 
-For the Desktop Replicator, the space between the plates is about 4.6 L, and the formula gives about 4 × 10⁶ at its top tone of 160 kHz (Derived). The chamber is open, so this counts resolvable field patterns, not sharp resonances.
+For the Desktop Replicator, the space inside the glass cylinder is about 9 L, and the formula gives about 8 × 10⁶ at its top tone of 160 kHz (Derived). This counts resolvable field patterns, not sharp resonances.
 
 Light offers twelve orders of magnitude more states than sound in the same volume. The architecture therefore uses sound for force and light for computing and memory.
 
@@ -110,7 +110,7 @@ These choices anticipate physical hardware. In a lossless reciprocal optical med
 
 **In simulation.** The project's models (in `holo/`) let units update asynchronously, with outer units relaxing faster than inner ones. The output units include a term for the acoustic loading of the ports. The outputs are also coupled to the chord memory, so a stored shape can be recalled within one settle (Simulated).
 
-The network works in machine-independent terms, and the compiler maps its output through one machine's calibrated body-response file. In simulation a network trained on one plate geometry was carried to another with a new calibration and no retraining. Those runs used earlier presets and have not been repeated for `desktop-200mm`.
+The network works in machine-independent terms, and the compiler maps its output through one machine's calibrated body-response file. In simulation a network trained on one plate geometry was carried to another with a new calibration and no retraining. Those runs used the simpler plate model. On the solid model the opposite holds: a network does not carry over from one plate to the next and must be retrained from a calibration sweep, as described [below](#in-the-desktop-replicator).
 
 <a id="holographic-memory-two-layers-and-chords-not-bits"></a>
 
@@ -146,19 +146,32 @@ All training happens on a workstation. Nothing here has touched hardware (Simula
 - **Teachers.** Large pretrained vision and shape models are distilled offline into compact descriptors. They never run on the machine.
 - **Four deployment tiers.** Each network is re-scored under four hardware models: full-precision floating point; 8-bit weights on the microcontroller with converter noise and drift; pruned 8-bit weights on an FPGA; analogue weights in a phase-change medium with limited precision and crosstalk.
 
-Two caveats apply. The sightlines and plate presets in these runs belong to earlier designs; the curriculum has not been re-run for the Desktop Replicator's {{c:mosquito_smi.total_ommatidia}} beams and {{c:desktop_geometry.gap_mm}} mm spacing. And the REMOVE verb in these simulations is not physically meaningful: the code conjugates the drive, and one path applies a negative acoustic intensity. Both are known to be wrong. The correct sequence is in [Scan, recover and matter stores](matter-loop.html).
+One caveat applies. The shape curriculum was run on the earlier small chamber and has not been repeated for the Desktop Replicator's {{c:mosquito_smi.total_ommatidia}} beams and {{c:desktop_geometry.gap_mm}} mm spacing. An earlier fault has been corrected: the REMOVE verb used to reverse the drive, which does not remove anything. The simulation now follows the physical sequence in [Scan, recover and matter stores](matter-loop.html) and conserves mass.
 
 ## In the Desktop Replicator
 
 The first compute card is an RP2350B microcontroller with {{c:cadence_brain.rp2350_sram_total_kb}} kB of memory. The network is trained on the workstation and copied to the card as 8-bit weights. The card can then make small local corrections, for example for thermal drift, with the same update rule.
 
-**Why it must be sparse** (Derived). The reference network has 192 inputs, 512 hidden units and 180 outputs. Stored densely at one byte each for the real and imaginary parts, its weights take 372 kB, and a 30-step settle takes 220 to 300 ms on this controller. The target is to keep {{c:cadence_brain.target_block_sparsity_range|pct}} % of the weights, in blocks, and to skip units whose state has not changed. That would bring storage under {{c:cadence_brain.cadence_sparse_max_kb}} kB and settling to {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms.
+**Three networks share the name.** The project's code holds three networks called Cadence, built for different jobs. They should not be read as one result.
 
-**What the evidence supports** (Simulated and Open, as given by an audit of the engineering record):
+| Network | Job | Size | State |
+|---|---|---|---|
+| Shape drawer | Turns a target shape into a sequence of drive patterns | 192 inputs, 1,024 hidden units, 120 outputs; about 457,000 weights | Trained in simulation on the earlier small chamber. Far too large for the first compute card |
+| Occupancy estimator | Turns sensor readings into a map of where material is, on a 7 × 7 × 7 grid | About 380 to 390 inputs, 256 hidden units, 343 outputs; 361 to 387 kB at 8 bits | Simulated. This is the job the first compute card is meant to do |
+| Sparse occupancy estimator | The same job with most connections removed, in 8 × 8 blocks | 32 to 53 kB at 5 to 10 % of connections | Simulated; firmware source exists. Accuracy is disputed, below |
 
-- The only pruned network in the project's acceptance checks keeps 20 % of its weights, and its accuracy bar is lower than the dense network's: agreement with the full-precision reference of 0.90, against 0.98.
-- A block-sparse variant near 9 % density exists in code, but no acceptance check covers it. The 5 to 10 % target that fits in {{c:cadence_brain.cadence_sparse_max_kb}} kB is not yet evidenced.
-- Settle time scales with density. Linear scaling from the dense 220 to 300 ms gives 11 to 15 ms at 5 % but 22 to 30 ms at 10 %. The {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms target needs about 5 % density or real savings from skipping unchanged units.
+**Why it must be sparse** (Derived). At 361 to 387 kB the dense occupancy estimator fits in the controller's {{c:cadence_brain.rp2350_sram_total_kb}} kB only by leaving little for anything else, and it settles in an estimated 23 ms. The target is to keep {{c:cadence_brain.target_block_sparsity_range|pct}} % of the connections, which brings storage under {{c:cadence_brain.cadence_sparse_max_kb}} kB.
+
+**What the evidence supports** (Simulated). Two simulations on 18 November 2026 reached opposite conclusions about the sparse network.
+
+- *On the solid plate model it fits but does not work.* Trained on echoes computed from the solid finite-element model, locating one to four beads, the network at 5 to 10 % of connections takes 34 to 53 kB and settles in an estimated 4 to 5 ms. Its agreement with the true map is 0.24 to 0.39, against 0.92 for the dense network and a required 0.90. The first size that identifies the beads correctly keeps 40 % of connections and takes 164 kB. The stated reason is that the echo pattern from the reverberant plate is close to random speckle, with little structure for a sparse network to exploit.
+- *On the sensing lane's own model it works.* A network at 5.9 % of connections, 44.9 kB, is reported to agree with the dense network at 0.96 and to settle in 15 ms. This run used the simpler plate model and compared the sparse network with the dense one, not with the true map. The project has no stored record of this run.
+
+The first result is the more demanding test and should be taken as the current position: the memory and speed targets are met, the accuracy target is not. The settle times are estimates from instruction counts, not timings on a controller.
+
+**Choices awaiting a ruling.** Give the first card a smaller job, such as locating a single bead. Raise its memory budget to between 165 and 390 kB. Or move the full map to the second compute card.
+
+**The network must be trained per machine** (Simulated). A dense network trained on five simulated plates scores 0.28 on a sixth. After one sweep of a single sphere through the 343 grid positions on that plate, it scores 0.80 and names the correct set of beads 99 % of the time, and it then forgets the plates it knew before. The calibration sweep in the chamber is therefore also the network's training set. It has to be repeated when the air temperature drifts by more than about 0.1 K: a simple linear read-out falls from 0.91 to 0.62 between 0.1 and 0.3 K.
 
 The card options are tabulated once, in [Compute, sensing and control](compute-control.html#compute-card).
 
@@ -185,8 +198,9 @@ Background is in the paper [Holographic Memory and Compute](../papers/holographi
 
 | Question | Who answers it |
 |---|---|
-| Does a network at 5 to 10 % density keep its accuracy? | Simulation, with an acceptance check at that density |
-| Does it settle in {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms on the controller? | Firmware in emulation, then the assembled machine |
+| Which of the two sparse-network results holds when both use the same data? | Simulation and sensing lanes together |
+| Does the first card take a smaller job, more memory, or hand the map to the second card? | Ruling by the coordination lane |
+| Does it settle in the estimated 4 to 5 ms on a real controller? | Firmware on a board |
 | Do the training results hold for the Desktop Replicator's geometry and sensors? | Simulation on the `desktop-200mm` preset |
 | Can a real reciprocal medium supply feedback and local updates at useful precision? | Optical experiment; not scheduled |
 | Can thick, low-loss phase-change stacks be made? | Materials research |

@@ -80,7 +80,7 @@ These limits come from the programme's own simulation record. They bound what th
 | Fields from few sources contain extra wells | Simulated, earlier six-source study: 8 to 26 unwanted wells in the working region | One bead can be handled. Powder would collect in the wrong places |
 | No joining recipe | No simulation exists | A part cannot yet be completed in the model |
 | No mass accounting | No simulation tracks mass through a build | Yield and loss are unknown |
-| Open chamber | Design decision: no glass wall by default | No shield against draughts; no enclosure around the lasers |
+| Closed chamber | Design decision: a glass cylinder that lifts with the head | Recalibration after each lift; clear glass does not enclose the lasers |
 | New plate spacing | Spacing raised from 120 mm to {{c:desktop_geometry.gap_mm}} mm | Earlier acoustic results do not carry over |
 
 The remedies under consideration for the second bead are more tones, a structured plate driven from a few inputs, a larger or differently shaped aperture, and a process in which the work moves to the bead.
