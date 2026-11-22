@@ -4,7 +4,8 @@ import Foundation
 /// as another session's coupled model (or a bench) hands it to the twin:
 /// what each input makes the radiating faces do, per frequency.
 ///
-/// Format `body-response/0.1`. SI units throughout. The radiating faces are
+/// Format `body-response/0.1`, or `body-response/0.2` when the file also says
+/// what the inputs HEAR (`receive`). SI units throughout. The radiating faces are
 /// sampled as flat patches on two facing planes (z = 0 looking up, z = gap
 /// looking down), the same number on each; a patch is a small baffled piston.
 /// A face that is not flat, or patches that differ in count between the
@@ -12,6 +13,8 @@ import Foundation
 /// perturbs it by `uncertainty`, and corrects each input by calibration.
 public struct BodyResponse: Codable, Sendable, Equatable {
     public static let format = "body-response/0.1"
+    /// 0.1 plus the receive path: what each input reports of the sound on the faces.
+    public static let formatWithReceive = "body-response/0.2"
     public struct Provenance: Codable, Sendable, Equatable {
         /// REFERENCE (made up to exercise the interface), SIMULATED or MEASURED.
         public var status: String
@@ -47,11 +50,32 @@ public struct BodyResponse: Codable, Sendable, Equatable {
     /// [frequency][input][patch] → [re, im]: patch normal velocity, m/s peak, per unit drive.
     public var response: [[[[Double]]]]
     public var uncertainty: Uncertainty
+    /// 0.2 only. [frequency][input][patch] → [re, im]: the input's signal, in
+    /// `receiveUnit`, per pascal of sound pressure on that patch (peak). The
+    /// HAPTIC ports listen through the same plate they drive, and the plate
+    /// reverberates, so this is not the transmit response with a constant in
+    /// front unless someone has shown it is: it is its own measurement.
+    public var receive: [[[[Double]]]]? = nil
+    /// The unit of an input's received signal ("V", or "1" for a reference set).
+    public var receiveUnit: String? = nil
 
-    public enum Invalid: Error, Equatable { case format(String), shape(String) }
+    public enum Invalid: Error, Equatable {
+        case format(String), shape(String)
+        /// The patches sample a continuous face more coarsely than half a
+        /// wavelength of air at the top tone (m, m, Hz).
+        case aliased(maxPatchPitch: Double, halfWavelength: Double, frequency: Double)
+    }
 
     public func validate() throws {
-        guard format == BodyResponse.format else { throw Invalid.format(format) }
+        guard format == BodyResponse.format || format == BodyResponse.formatWithReceive else { throw Invalid.format(format) }
+        if format == BodyResponse.format {
+            guard receive == nil, receiveUnit == nil else { throw Invalid.shape("receive: needs format \(BodyResponse.formatWithReceive)") }
+        } else if let rx = receive {
+            guard receiveUnit != nil, rx.count == frequencies.count,
+                  rx.allSatisfy({ f in f.count == inputs.count && f.allSatisfy { $0.count == patches.count && $0.allSatisfy { $0.count == 2 && $0[0].isFinite && $0[1].isFinite } } }) else {
+                throw Invalid.shape("receive: [frequency][input][patch][re, im] and a receiveUnit")
+            }
+        }
         let lower = patches.filter { $0.plate == 0 }.count
         guard lower * 2 == patches.count, patches.allSatisfy({ $0.plate == 0 || $0.plate == 1 }) else { throw Invalid.shape("patches: the same number on each body") }
         guard patches.prefix(lower).allSatisfy({ $0.plate == 0 }) else { throw Invalid.shape("patches: the lower body's first") }
@@ -64,9 +88,86 @@ public struct BodyResponse: Codable, Sendable, Equatable {
         guard gap > 0, inputs.allSatisfy({ $0.maxDrive > 0 }), patches.allSatisfy({ $0.radius > 0 }) else { throw Invalid.shape("gap, limits and radii are positive") }
     }
 
-    public static func read(_ data: Data) throws -> BodyResponse {
+    /// `forPlanning`: also refuse a file whose patches alias (see `aliasing`).
+    /// A file read without it may be looked at and exercised, not planned on.
+    public static func read(_ data: Data, forPlanning: Bool = false) throws -> BodyResponse {
         let b = try JSONDecoder().decode(BodyResponse.self, from: data)
         try b.validate()
+        if forPlanning { try b.validateForPlanning() }
+        return b
+    }
+
+    // MARK: - Spatial aliasing (INS-19)
+
+    /// The widest gap in the sampling of a face: over the patches of each
+    /// plate, the largest distance from a patch to its nearest neighbour (m).
+    public var maxPatchPitch: Double {
+        var worst = 0.0
+        for plate in 0...1 {
+            let p = patches.filter { $0.plate == plate }
+            guard p.count > 1 else { continue }
+            for a in p.indices {
+                var nearest = Double.infinity
+                for b in p.indices where b != a {
+                    let dx = p[a].x - p[b].x, dy = p[a].y - p[b].y
+                    nearest = min(nearest, (dx * dx + dy * dy).squareRoot())
+                }
+                worst = max(worst, nearest)
+            }
+        }
+        return worst
+    }
+
+    /// Half a wavelength of air at the top tone (m): the coarsest sampling of
+    /// a continuous radiating face that still fixes the field it radiates.
+    public func halfWavelength(soundSpeed: Double = 343) -> Double {
+        soundSpeed / (2 * (frequencies.max() ?? 1))
+    }
+
+    /// Whether the patches are samples of a continuous face (a plate, a
+    /// printed body) or are the emitters themselves (P0's cans). Only samples
+    /// can alias. The format has no field that says which, so the rule here
+    /// is by provenance: a REFERENCE set (P0 written as a body, the demo) is
+    /// exempt because it predicts nothing; everything else is held to λ/2.
+    public var aliased: Bool {
+        provenance.status != "REFERENCE" && maxPatchPitch > halfWavelength() * (1 + 1e-9)
+    }
+
+    /// Refuse a file that cannot support force, trap or drive planning.
+    public func validateForPlanning() throws {
+        try validate()
+        if aliased { throw Invalid.aliased(maxPatchPitch: maxPatchPitch, halfWavelength: halfWavelength(), frequency: frequencies.max() ?? 0) }
+    }
+
+    // MARK: - Receive path (body-response/0.2)
+
+    /// What every input reports when the faces see `pressure` (Pa peak, one
+    /// per patch) at the listed frequency nearest f. nil without a receive response.
+    public func received(pressure: [Complex], frequency f: Double) -> [Complex]? {
+        guard let rx = receive, pressure.count == patches.count else { return nil }
+        let q = frequencies.indices.min { abs(frequencies[$0] - f) < abs(frequencies[$1] - f) } ?? 0
+        return rx[q].map { row in
+            var v = Complex.zero
+            for e in row.indices { v += Complex(row[e][0], row[e][1]) * pressure[e] }
+            return v
+        }
+    }
+
+    /// The same file as 0.2 with a receive response taken from the transmit
+    /// one by reciprocity: an input that moves a patch v m/s per unit drive
+    /// hears `scale` × v × (patch area) per pascal on it. True for a linear,
+    /// passive, reciprocal transducer and plate; `scale` (the port's
+    /// electrical side) is not known here, so the result's unit is "1" and
+    /// its provenance says REFERENCE until a bench replaces it.
+    public func withReciprocalReceive(scale: Double = 1) -> BodyResponse {
+        var b = self
+        b.format = BodyResponse.formatWithReceive
+        b.receiveUnit = "1"
+        b.receive = response.map { f in f.map { row in row.indices.map { e in
+            let area = Double.pi * patches[e].radius * patches[e].radius * scale
+            return [row[e][0] * area, row[e][1] * area]
+        } } }
+        b.provenance.note += " Receive response by reciprocity from the transmit response, unscaled: not a measurement."
         return b
     }
 

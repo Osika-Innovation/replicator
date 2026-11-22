@@ -58,8 +58,41 @@ public struct PlateArray: Sendable {
         public var plateOf: [Int]
         /// The largest drive each input takes, in the drive's own unit.
         public var maxDrive: [Double]
-        /// Per input, what a calibration measured against the model; nil = as modelled.
-        public var error: [Complex]? = nil
+        /// What a calibration measured against the model, per listed frequency
+        /// and input: [frequency][input], in the order of `frequencies`;
+        /// nil = as modelled. A plate reverberates, so an input's error at
+        /// one tone says nothing about the next (INS-06, INS-29).
+        public var toneError: [[Complex]]? = nil
+        /// The same error at every frequency. Setting it fills `toneError`
+        /// with one copy per frequency. Reading it gives the first
+        /// frequency's errors, which is the whole truth only while
+        /// `errorIsBroadband`; per-tone code reads `toneError`.
+        public var error: [Complex]? {
+            get { toneError?.first }
+            set { toneError = newValue.map { e in frequencies.map { _ in e } } }
+        }
+        /// True when no error is set or every frequency carries the same one.
+        public var errorIsBroadband: Bool {
+            guard let t = toneError, let first = t.first else { return true }
+            return t.allSatisfy { $0 == first }
+        }
+        /// The index of the listed frequency nearest f.
+        public func nearest(_ f: Double) -> Int {
+            frequencies.indices.min { abs(frequencies[$0] - f) < abs(frequencies[$1] - f) } ?? 0
+        }
+        /// Set the errors of the listed frequency nearest f, leaving the
+        /// others as they are (as modelled, if nothing was set).
+        public mutating func setError(_ e: [Complex], at f: Double) {
+            var t = toneError ?? frequencies.map { _ in [Complex](repeating: .one, count: plateOf.count) }
+            t[nearest(f)] = e
+            toneError = t
+        }
+        /// Multiply every frequency's error of the inputs `change` names.
+        public mutating func scaleError(_ change: (_ input: Int) -> Complex?) {
+            var t = toneError ?? frequencies.map { _ in [Complex](repeating: .one, count: plateOf.count) }
+            for q in t.indices { for i in t[q].indices { if let k = change(i) { t[q][i] = t[q][i] * k } } }
+            toneError = t
+        }
         /// The slowest input's settling time (s); the field cannot change faster.
         public var settling = 0.0
         public init(frequencies: [Double], weights: [[[Complex]]], plateOf: [Int], maxDrive: [Double]) {
@@ -72,10 +105,11 @@ public struct PlateArray: Sendable {
     /// 0 for a channel of the lower plate or body, 1 for the upper.
     public func plate(of channel: Int) -> Int { inputs?.plateOf[channel] ?? (channel < perPlate ? 0 : 1) }
 
-    /// A body's weights at the listed frequency nearest f, with the inputs' measured errors.
+    /// A body's weights at the listed frequency nearest f, with the inputs' errors measured at that frequency.
     public func inputWeights(_ m: InputMap, at f: Double) -> [[Complex]] {
-        let q = m.frequencies.indices.min { abs(m.frequencies[$0] - f) < abs(m.frequencies[$1] - f) } ?? 0
-        guard let e = m.error else { return m.weights[q] }
+        let q = m.nearest(f)
+        guard let t = m.toneError, q < t.count else { return m.weights[q] }
+        let e = t[q]
         return m.weights[q].indices.map { i in m.weights[q][i].map { $0 * e[i] } }
     }
     /// A per-element row (what each element contributes at a point) as a per-channel row.
