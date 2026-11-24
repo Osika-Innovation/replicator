@@ -60,7 +60,7 @@ ASSEMBLIES = {
     'chamber': ('Chamber seal', 'A soft gasket where the lifting glass tube lands.', 'S01', 'desktop', (0, 335)),
     'lift': ('Lifting glass tube and rear liner', 'The glass tube that closes the build chamber, its carrier ring and the rear liner. It rises with the head.', 'S01', 'desktop', (0, 430)),
     'optics': ('Laser ring', 'Two strips of small lasers that look across the chamber. Each laser is also its own detector.', 'S06', 'optics', (-95, 235)),
-    'tower': ('Rear tower and lift rails', 'The hollow rear column. It carries the head on rails, covers the laser strips and carries cooling air.', 'S01', 'desktop', (-240, 90)),
+    'tower': ('Rear tower and lift drive', 'The hollow rear column and the two fixed corner pieces. They hold the ball screws, the guide carriages, the servo and the belts that raise the head, and carry cooling air.', 'S01', 'desktop', (-240, 90)),
     'head-upper': ('Upper acoustic plate', 'The matching wafer and piezo discs in the head. It is the ceiling of the build chamber.', 'S04', 'acoustics', (0, 570)),
     'head': ('Head', 'The lid that carries the upper plate and the gap actuators.', 'S05', 'desktop', (0, 670)),
     'console': ('Touchscreen wedge', 'A hollow aluminium wedge on the front of the base, tilted 45 degrees. It carries a 7-inch touchscreen, a status light and a USB-C socket.', 'S08', 'desktop', (170, -30)),
@@ -71,7 +71,12 @@ PART_RULES = [
     (r'rear-panel|bucket-panel', 'S06', 'optics', 'One of six flat aluminium panels standing inside the glass on the rear half. They carry temperature and humidity sensors, sound-absorbing baffles and windows for the lasers, and can later be swapped for active tiles.'),
     (r'bore-plug|plug-o-ring', 'S03', 'matter', 'A sandwich cartridge made as a plug. Two soft rings press evenly on the inside of the glass tube, so it seals against liquid and puts no point load on the glass.'),
     (r'lift-plug', 'S03', 'matter', 'A handle point for lifting the mid-plane cassette out by hand.'),
-    (r'^gap-trim', 'S05', 'acoustics', 'A small stepper motor under a datum seat in the head. Three of them tilt and lift the upper plate by up to 1 mm, to keep the gap tuned as the air warms.'),
+    (r'ball-screw|screw-(top|bottom)-bearing', 'S01', 'desktop', 'A ball screw (12 mm, 10 mm lead) standing in a fixed corner piece. Turning it drives the nut, the spine and the head up or down.'),
+    (r'ball-nut|nut-arm', 'S01', 'desktop', 'The nut that rides on a ball screw, and the arm that joins it to the centre spine through a slot in the corner piece.'),
+    (r'brushless-servo|servo-', 'S05', 'acoustics', 'The lift servo, with a brake that holds the head if power is lost. It raises and lowers the head, and trims the gap by up to 1 mm to keep it tuned as the air warms.'),
+    (r'sync-belt|drive-belt|-pulley', 'S01', 'desktop', 'A belt or pulley in the base that links the servo to both ball screws so they turn together.'),
+    (r'head-down-stop|home|limit-sensor', 'S05', 'desktop', 'A hard stop or a sensor that tells the controller where the head is: homed, at the top, or down.'),
+    (r'corner-piece|centre-spine|slot-brush', 'S01', 'desktop', 'Part of the lift structure: the fixed corner pieces that hold the screws, the centre spine that rises with the head, or a brush that seals a slot.'),
     (r'^head-down-interlock|^interlock-plunger', 'S11', 'desktop', 'A safety switch that notices the head is down. With the head up, the drive stage and the lasers lose power.'),
     (r'^pzt-patch|^m1-pzt-patch', 'S04', 'acoustics', 'A small piezo disc glued behind a glass wafer. Voltage shakes it, and the glass sends sound into the chamber. It also listens.'),
     (r'c0-reference-piezo', 'S04', 'acoustics', 'A spare piezo disc that touches nothing. It drifts with temperature in the same way as the working discs, so subtracting it removes the drift.'),
@@ -92,8 +97,8 @@ PART_RULES = [
     (r'^m1-reflector-annulus', 'S03', 'acoustics', 'A hard flat metal ring around the wafer. With the wafer it reflects at least 85 % of the sound back up, which the lift depends on.'),
     (r'^m1-transfer-gate|^m1-gate', 'S03', 'matter', 'The gate in the cassette that lets material pass up from the store. The mechanism is not designed yet.'),
     (r'^m1-|^cassette|^mid-plane|^rim-|^latch-strike', 'S03', 'matter', 'Part of the mid-plane: the cassette tray, the ring it sits on, or the three balls that locate it.'),
-    (r'^lift-|spring|^descent|^carriage|^counterbalance|^umbilical|^trim-spring|^main-spring', 'S01', 'desktop', 'Part of the lift: rails, springs, a damper and a cable loop that let the head rise by hand and come down slowly.'),
-    (r'datum|vee-block', 'S01', 'desktop', 'Part of the three-point seat that puts the head back in the same place after every lift.'),
+    (r'^lift-|spring|^descent|^carriage|^counterbalance|^umbilical|^trim-spring|^main-spring', 'S01', 'desktop', 'Part of the motor-driven lift: a rail, a guide carriage or the cable loop that lets the head rise and come back down.'),
+    (r'datum|vee-block', 'S01', 'desktop', 'Part of the seat that puts the head back in the same place after every lift.'),
 ]
 
 # Words that read badly when title-cased from a slug.
