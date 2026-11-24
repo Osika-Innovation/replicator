@@ -55,7 +55,7 @@ Subsystem datasheets, the interface control matrix and the log of deleted parts 
 <path d="M866 705 H807" marker-end="url(#ms-sense)"/>
 </g>
 <text class="fl fl-matter" transform="rotate(-90 16 480)" x="16" y="480" text-anchor="middle" font-size="10" font-weight="600" fill="#9a542e" stroke="#fffefa" stroke-width="3.5" paint-order="stroke">MATTER AND RETURN · neutral grains and droplets only · charge ≤ {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC per bead</text>
-<text class="fl fl-matter" transform="rotate(-90 29 480)" x="29" y="480" text-anchor="middle" font-size="10" font-weight="600" fill="#9a542e" stroke="#fffefa" stroke-width="3.5" paint-order="stroke">air at {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} % RH · one Ø1.6 mm liquid line · solids feed OPEN · return to crucibles (dashed)</text>
+<text class="fl fl-matter" transform="rotate(-90 29 480)" x="29" y="480" text-anchor="middle" font-size="10" font-weight="600" fill="#9a542e" stroke="#fffefa" stroke-width="3.5" paint-order="stroke">air at {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} % RH · fed up from the storage bucket through the cassette gate · gate mechanism OPEN · return (dashed)</text>
 <text class="fl fl-power" transform="rotate(-90 76 480)" x="76" y="480" text-anchor="middle" font-size="10" font-weight="600" fill="#a8323a" stroke="#fffefa" stroke-width="3.5" paint-order="stroke">POWER AND HEAT · USB-C in · {{c:haptic_pzt.bridge_rail_v}} V bridge rail · 5 V driver logic · 3.3 V logic and lasers</text>
 <text class="fl fl-power" transform="rotate(-90 89 480)" x="89" y="480" text-anchor="middle" font-size="10" font-weight="600" fill="#a8323a" stroke="#fffefa" stroke-width="3.5" paint-order="stroke">17.0 W in total (22.5 W with the gate-array card) · ceiling kept 1.9 K warmer than floor</text>
 <text class="fl fl-act" transform="rotate(-90 838 480)" x="838" y="480" text-anchor="middle" font-size="10" font-weight="600" fill="#166b60" stroke="#fffefa" stroke-width="3.5" paint-order="stroke">ACTUATION · 12 channels ≤ {{c:haptic_pzt.max_drive_v_peak_single_tone}} V peak · tones {{c:desktop_geometry.comb_tones_hz|khz}} kHz · timing step {{c:clock_and_bus.pio_tick_ns}} ns</text>
@@ -79,8 +79,8 @@ Subsystem datasheets, the interface control matrix and the log of deleted parts 
 <rect x="467" y="92" width="318" height="66" rx="7" fill="#fffefa" stroke="#173630" stroke-width="1.2"/>
 <text x="477" y="110" font-size="12.5" font-weight="600" fill="#173630">Gap actuator and resonance lock</text>
 <text x="477" y="125" font-size="10" fill="#3d4d47">holds gap ÷ sound speed: 0.41 mm per kelvin, ± 0.07 mm</text>
-<text x="477" y="138" font-size="10" fill="#3d4d47">± 1 mm travel in 0.02 mm steps · not yet in CAD or firmware</text>
-<text x="776" y="152" font-size="8.3" letter-spacing=".4" text-anchor="end" fill="#9a542e">SIMULATED NEED · OPEN PART</text>
+<text x="477" y="138" font-size="10" fill="#3d4d47">± 1 mm travel: three steppers in the head (CAD) · lock host-tested</text>
+<text x="776" y="152" font-size="8.3" letter-spacing=".4" text-anchor="end" fill="#166b60">SIMULATED NEED · NOT ON A BOARD</text>
 <circle class="fl fl-act" cx="480" cy="149" r="3.6" fill="#166b60"/>
 <circle class="fl fl-sense" cx="490" cy="149" r="3.6" fill="#2b5fa8"/>
 </a>
@@ -178,9 +178,9 @@ Subsystem datasheets, the interface control matrix and the log of deleted parts 
 <a href="matter-loop.html" class="bk on-matter" aria-label="Transfer gate">
 <rect x="465" y="518" width="155" height="64" rx="7" fill="#fffefa" stroke="#173630" stroke-width="1.2"/>
 <text x="475" y="536" font-size="12.5" font-weight="600" fill="#173630">Transfer gate</text>
-<text x="475" y="551" font-size="10" fill="#3d4d47">Ø1.6 mm liquid riser</text>
-<text x="475" y="564" font-size="10" fill="#3d4d47">solids ports: OPEN</text>
-<text x="611" y="576" font-size="8.3" letter-spacing=".4" text-anchor="end" fill="#9a542e">DERIVED · OPEN</text>
+<text x="475" y="551" font-size="10" fill="#3d4d47">gate slot in the cassette</text>
+<text x="475" y="564" font-size="10" fill="#3d4d47">mechanism not designed</text>
+<text x="611" y="576" font-size="8.3" letter-spacing=".4" text-anchor="end" fill="#9a542e">DESIGN · OPEN</text>
 <circle class="fl fl-matter" cx="478" cy="573" r="3.6" fill="#9a542e"/>
 </a>
 <a href="desktop-replicator.html#heat" class="bk on-power" aria-label="Thermal barrier">
@@ -193,7 +193,7 @@ Subsystem datasheets, the interface control matrix and the log of deleted parts 
 </a>
 <rect x="120" y="604" width="680" height="312" rx="12" fill="#e8ecf3" stroke="#173630" stroke-width="1.5"/>
 <text x="135" y="625" font-size="12.5" font-weight="700" letter-spacing=".6" fill="#173630">LOWER PLINTH: STORAGE, RELEASE, POWER, COMPUTE</text>
-<text x="135" y="640" font-size="10" fill="#3d4d47">coaxial under the build cylinder (ruled 24 Nov 2026) · CAD pivot pending; the current model has the store behind the tower</text>
+<text x="135" y="640" font-size="10" fill="#3d4d47">coaxial under the build cylinder (ruled 24 Nov 2026) · drawn in the CAD as Rev S, the default build</text>
 <a href="compute-control.html#drive-stage" class="bk on-act on-sense on-power" aria-label="Lower acoustic lamina">
 <rect x="135" y="652" width="208" height="76" rx="7" fill="#fffefa" stroke="#173630" stroke-width="1.2"/>
 <text x="145" y="670" font-size="12.5" font-weight="600" fill="#173630">Lower acoustic lamina</text>
@@ -218,7 +218,7 @@ Subsystem datasheets, the interface control matrix and the log of deleted parts 
 <rect x="577" y="652" width="208" height="76" rx="7" fill="#fffefa" stroke="#173630" stroke-width="1.2"/>
 <text x="587" y="670" font-size="12.5" font-weight="600" fill="#173630">Chamber and plinth sensors</text>
 <text x="587" y="685" font-size="10" fill="#3d4d47">I²C: 2 air thermometers, humidity</text>
-<text x="587" y="698" font-size="10" fill="#3d4d47">3 load cells · head-down switch</text>
+<text x="587" y="698" font-size="10" fill="#3d4d47">head-down switch · LED ring, camera</text>
 <text x="776" y="722" font-size="8.3" letter-spacing=".4" text-anchor="end" fill="#9a542e">DESIGN · PARTS OPEN</text>
 <circle class="fl fl-sense" cx="590" cy="719" r="3.6" fill="#2b5fa8"/>
 </a>
@@ -249,12 +249,12 @@ Subsystem datasheets, the interface control matrix and the log of deleted parts 
 <circle class="fl fl-act" cx="590" cy="807" r="3.6" fill="#166b60"/>
 <circle class="fl fl-power" cx="600" cy="807" r="3.6" fill="#a8323a"/>
 </a>
-<a href="matter-loop.html" class="bk on-matter on-sense" aria-label="Material store">
+<a href="matter-loop.html" class="bk on-matter on-sense" aria-label="Storage bucket">
 <rect x="135" y="828" width="208" height="76" rx="7" fill="#fffefa" stroke="#173630" stroke-width="1.2"/>
-<text x="145" y="846" font-size="12.5" font-weight="600" fill="#173630">Material store</text>
-<text x="145" y="861" font-size="10" fill="#3d4d47">3 × 500 mL stock bottles, weighed</text>
-<text x="145" y="874" font-size="10" fill="#3d4d47">reversible metering pump</text>
-<text x="334" y="898" font-size="8.3" letter-spacing=".4" text-anchor="end" fill="#9a542e">DERIVED · PARTS OPEN</text>
+<text x="145" y="846" font-size="12.5" font-weight="600" fill="#173630">Storage bucket</text>
+<text x="145" y="861" font-size="10" fill="#3d4d47">fixed glass tube under the cassette</text>
+<text x="145" y="874" font-size="10" fill="#3d4d47">same stock tube as the build tube</text>
+<text x="334" y="898" font-size="8.3" letter-spacing=".4" text-anchor="end" fill="#9a542e">DESIGN · SIM OPEN</text>
 <circle class="fl fl-matter" cx="148" cy="895" r="3.6" fill="#9a542e"/>
 <circle class="fl fl-sense" cx="158" cy="895" r="3.6" fill="#2b5fa8"/>
 </a>
@@ -312,7 +312,7 @@ Subsystem datasheets, the interface control matrix and the log of deleted parts 
 <text x="176" y="1124" font-size="10.5" fill="#3d4d47"><tspan fill="#9a542e" font-weight="600">OPEN</tspan> not settled · no block in this diagram is MEASURED</text>
 </svg>
 <!-- MASTER_STACK:END -->
-<p>Master subsystem block diagram. Choose a flow to isolate it. Every block opens its subsystem guide. The stack is drawn as ruled on 24 November 2026; the parts named are those of the current Desktop Replicator model, whose CAD still carries the material store behind the tower rather than under the chamber.</p>
+<p>Master subsystem block diagram. Choose a flow to isolate it. Every block opens its subsystem guide. The stack is drawn as ruled on 24 November 2026; the parts named are those of the current Desktop Replicator model, which the CAD now draws with the storage bucket under the chamber (Rev S, the default build).</p>
 </div>
 
 The diagram shows where things are and what crosses between them, not a sequence. The prototype fits the acoustic column and optical sensing only. The electric and magnetic block is empty by default.
@@ -323,7 +323,7 @@ The diagram shows where things are and what crosses between them, not a sequence
 |---|---|---|---|
 | Upper build cylinder | Two facing acoustic [wafers](glossary.html) {{c:desktop_geometry.gap_mm}} mm apart, the optical ring, the glass wall, the work volume | The stock glass tube ({{c:desktop_geometry.glass_cylinder_id_od_mm|x}} mm inside and outside diameter) and the plate spacing | Design decision; acoustics Simulated |
 | Mid-plane | The lower wafer and flat ring, which reflect sound back up; the gate for material from the plinth; the thermal barrier under the chamber floor | The end reflection the lift needs, and a material route that cuts neither wafer nor glass | Simulated requirement; layout Open |
-| Lower plinth | Material store on weigh cells, release and reclaim, lower drive board, clock and bus, compute card, power conversion, cooling air path | The store volume and the electronics, not the acoustics | Design decision of 24 November 2026; CAD pending |
+| Lower plinth | Material store on weigh cells, release and reclaim, lower drive board, clock and bus, compute card, power conversion, cooling air path | The store volume and the electronics, not the acoustics | Design decision of 24 November 2026; in the CAD as Rev S |
 
 On the mid-plane, sound wants a hard, flat, unbroken end and material wants a way through. The two layouts being compared in simulation are in the mid-plane row of the [comparison table](#long-term-architecture-and-the-desktop-replicator).
 
@@ -353,11 +353,11 @@ This is the handbook's one comparison of the prototype, the options still being 
 
 | Subsystem | Prototype 1 (Desktop, coaxial) | Engineering options and trade space | Final machine | Gate that triggers the swap |
 |---|---|---|---|---|
-| [Chamber and stack topology](subsystems.html#s01-chamber-and-stack-topology) | A stock glass tube closes the {{c:desktop_geometry.gap_mm}} mm gap between two plates and lifts {{c:desktop_geometry.lift_stroke_mm}} mm with the head, over a coaxial plinth. *Design decision; plinth CAD pending* | Open front with no lift; rotating glass door; the small `boro12` plate pair ({{c:desktop_geometry.boro12_reducer_wafer_mm}} mm wafers, {{c:desktop_geometry.boro12_gap_mm}} mm gap) in the same frame | Same two zones at Ø0.9 m: a barrel head with 62 ports on a Ø1.24 × 0.55 m plinth. The limit: a ball shell with 12 evenly spread ports, each carrying all three fields. *Derived concept geometry* | A measured test of whether 12 ports are enough. If not, the barrel is the reference. *Open* |
-| [Storage and release plinth](subsystems.html#s02-storage-and-release-plinth) | Three 500 mL stock bottles on load cells, a reversible metering pump, one Ø1.6 mm liquid line, three open crucibles in the chamber; solids dosed by hand. *Derived CAD; pump and cells Open* | Store behind the tower (modelled) against a plinth under the chamber (ruled 24 November). Solids: a raised glass seat with screw feeders, or powder suspended in the liquid line | Release bin, a store sorted by species, a loop bus carrying binding energy from release to write. *Derived; store beyond ordinary condensed stock Open* | Part mass plus store mass constant through a build, on the weigh cells. *No threshold fixed* |
+| [Chamber and stack topology](subsystems.html#s01-chamber-and-stack-topology) | A stock glass tube closes the {{c:desktop_geometry.gap_mm}} mm gap between two plates and lifts {{c:desktop_geometry.lift_stroke_mm}} mm with the head, over a coaxial plinth. *Design decision; in the CAD as Rev S* | Open front with no lift; rotating glass door; the small `boro12` plate pair ({{c:desktop_geometry.boro12_reducer_wafer_mm}} mm wafers, {{c:desktop_geometry.boro12_gap_mm}} mm gap) in the same frame | Same two zones at Ø0.9 m: a barrel head with 62 ports on a Ø1.24 × 0.55 m plinth. The limit: a ball shell with 12 evenly spread ports, each carrying all three fields. *Derived concept geometry* | A measured test of whether 12 ports are enough. If not, the barrel is the reference. *Open* |
+| [Storage and release plinth](subsystems.html#s02-storage-and-release-plinth) | Three 500 mL stock bottles on load cells, a reversible metering pump, one Ø1.6 mm liquid line, three open crucibles in the chamber; solids dosed by hand. *Derived CAD; pump and cells Open* | A rear store behind the tower (the Rev F2 layout) against a fixed storage bucket under the chamber (ruled 24 November, in the Rev S CAD). Solids: a raised glass seat with screw feeders, or powder suspended in the liquid line | Release bin, a store sorted by species, a loop bus carrying binding energy from release to write. *Derived; store beyond ordinary condensed stock Open* | Part mass plus store mass constant through a build, on the weigh cells. *No threshold fixed* |
 | [Mid-plane interface](subsystems.html#s03-mid-plane-interface) | The undrilled lower wafer and a flat ring reflect sound; liquid rises through the deck between wafer socket and glass bore. *Design decision* | Sealed wafer in a hard ring with retractable feed ports, against one tall cylinder (about 440 to 480 mm) with a perforated or retractable separator. *Simulation in progress* | No plate in the way: the object is written in free levitation from boundary ports. *Derived concept* | End reflection of at least 0.85, from a one-source sweep across the gap resonance in an empty chamber. *Simulated requirement; measurement Open* |
 | [Acoustic array](subsystems.html#s04-acoustic-array) | {{c:desktop_geometry.ports_per_plate}} PZT-8 discs (Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm) behind each of two undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafers, on {{c:haptic_pzt.bridge_rail_v}} V. Foam-bead voltage margin 1.19 at the median gap, 0.87 at the worst. *Simulated* | 36 sources: 18 smaller discs per plate on 24 V give a margin of 1.60 (1.27 at the worst gap). A field free of unwanted traps needs 113 V with 12 sources and 30.5 V with 36; {{c:haptic_pzt.max_drive_v_peak_single_tone}} V is available | A piezo film of about 100,000 elements switched by light, with no wire to each ([how](acoustics.html#long-term-direction)), plus side-facing sources and sensors. *Documented components; integration Open* | Unwanted-trap volume under 2.0 % at twice the 12-source focal pressure, with under 3.0 W of bridge loss at 160 kHz. Skipped if 12 sources pass the lift and clean-trap test on the bench. *Open* |
-| [Gap actuator and resonance lock](subsystems.html#s05-gap-actuator-and-resonance-lock) | Hold gap over sound speed constant: 0.41 mm per kelvin, to ± 0.07 mm. Specified actuator: ± 1 mm travel in 0.02 mm steps. *Simulated need; not yet in CAD or firmware* | Set point from an optical reading or a one-source resonance sweep; with no actuator, recalibrate after every head lift and every few tenths of a kelvin | One clock phase-locks every port and the boundary reads the field back. *Derived concept* | Measured resonance width and lift in an empty chamber agree with the simulated law. *Open* |
+| [Gap actuator and resonance lock](subsystems.html#s05-gap-actuator-and-resonance-lock) | Hold gap over sound speed constant: 0.41 mm per kelvin, to ± 0.07 mm. Actuator: three Ø8 mm geared steppers under the head's datum seats, ± 1 mm travel. *Simulated need; three steppers in the CAD head; lock host-tested, not run on a board* | Set point from an optical reading or a one-source resonance sweep; with no actuator, recalibrate after every head lift and every few tenths of a kelvin | One clock phase-locks every port and the boundary reads the field back. *Derived concept* | Measured resonance width and lift in an empty chamber agree with the simulated law. *Open* |
 | [Optical tomography](subsystems.html#s06-optical-tomography) | {{c:mosquito_smi.total_ommatidia}} self-mixing laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm give a shadow image and read the sound field; they track air temperature to 0.0005 K and gap to 0.28 µm. *Simulated* | One-stage or two-stage amplifier (one stage rolls off near 100 kHz, below the top tone); replicated diffractive strips on the windows | Surfaces addressed by light, structured pulses, tomography, fine optical traps; X-ray absorption edges for shielded parts. *Documented components; integration Open* | Diffractive strips at least double what the optical reading can tell apart in the calibrated chamber. *Open* |
 | [Electromagnetics and consolidation](subsystems.html#s07-electromagnetics-and-consolidation) | No electric or magnetic drive. Joining is an addressed heating step, modelled only. *Simulated; recipe Open* | A twelve-arm conductor spiral on the wafer; a pulsed ring coil of {{c:dissolve_and_toroidal.compact_toroid_collar_id_mm_range|range}} mm at one crucible. Large coils across the chamber are ruled out. *Simulated* | Ports combining sound, light and electromagnetic fields; binding energy returned to the loop as a coherent wave. *Open: needs physics not yet demonstrated* | A second bead placed within 0.25 mm of a held first bead, and a joint that holds ten times the trapping force in shear. *Open* |
 | [Control and firmware](subsystems.html#s08-control-and-firmware) | Six microcontrollers on {{c:clock_and_bus.pcb_count}} field boards, a plug-in compute card, one {{c:clock_and_bus.xin_hz|mhz}} MHz clock, {{c:haptic_pzt.adc_fallback_mpn}} receive converters. Firmware passes workstation tests; never run on a board. *Simulated* | The 1-bit receive converter failed ({{c:haptic_pzt.sfdr_simulated_dbc}} dB against {{c:haptic_pzt.sfdr_gate_min_db}} dB) and is replaced. Compute card 1 (microcontroller) against card 2 (gate array, 5 W ceiling) | Wave-based computing in optical or excitable soft-matter substrates, on little electrical power. *Documented components; integration Open* | A swapped card matches the reference network on the same jobs (match score at least 0.90, where 1 is identical) and settles within 5 µs. *Open* |

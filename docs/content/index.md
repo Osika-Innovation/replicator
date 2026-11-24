@@ -26,6 +26,7 @@ The first machine is the [Desktop Replicator](guides/desktop-replicator.html), a
 
 | You want to | Start with | Then read |
 |---|---|---|
+| See the machine in 3D, pull it apart and click its parts | [The machine in 3D](guides/cad-3d.html) | [Subsystems and interfaces](guides/subsystems.html) |
 | Understand the project in ten minutes | [Start here](guides/start.html) | [Desktop Replicator](guides/desktop-replicator.html), [Current state](guides/status.html) |
 | Check the published science behind it | [Proven in the lab](guides/evidence.html) | [Research library](guides/research.html), [Current state](guides/status.html) |
 | Design or review a subsystem | [Architecture](guides/architecture.html), then [Subsystems and interfaces](guides/subsystems.html) | [Acoustics](guides/acoustics.html), [Optics](guides/optics.html), [Electromagnetics](guides/electromagnetics.html), [Compute, sensing and control](guides/compute-control.html) |

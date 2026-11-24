@@ -93,7 +93,37 @@
         "acoustics",
         "compute-control",
         "insights",
-        "glossary"
+        "glossary",
+        "cad-3d"
+      ]
+    },
+    {
+      "id": "cad-3d",
+      "title": "The machine in 3D",
+      "source": "docs/content/cad.md",
+      "url": "guides/cad-3d.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Architecture",
+      "summary": "The Desktop Replicator's CAD model in your browser: turn it, pull it apart, cut it open, and click any part to read what it does and jump to its guide.",
+      "topics": [
+        "3D model",
+        "CAD",
+        "exploded view",
+        "parts",
+        "viewer"
+      ],
+      "reviewed": "2026-11-24",
+      "review_scope": "Interactive view of the default CAD build (Rev S); part descriptions written for the handbook",
+      "related": [
+        "desktop-replicator",
+        "architecture",
+        "subsystems",
+        "digital-twin",
+        "acoustics",
+        "optics",
+        "matter-loop"
       ]
     },
     {
@@ -216,7 +246,8 @@
         "digital-twin",
         "manufacturing",
         "matter-loop",
-        "evidence"
+        "evidence",
+        "cad-3d"
       ]
     },
     {
@@ -259,7 +290,8 @@
         "evidence",
         "insights",
         "upgrades",
-        "status"
+        "status",
+        "cad-3d"
       ]
     },
     {

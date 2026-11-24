@@ -99,7 +99,7 @@ def master():
     p.append(bus('sense', 866, 138, 705, [(138, 'src'), (360, 'src'), (568, 'src'), (705, 'in')]))
     p.append(bus_label('matter', (16, 29), [
         'MATTER AND RETURN · neutral grains and droplets only · charge ≤ {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC per bead',
-        'air at {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} % RH · one Ø1.6 mm liquid line · solids feed OPEN · return to crucibles (dashed)']))
+        'air at {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} % RH · fed up from the storage bucket through the cassette gate · gate mechanism OPEN · return (dashed)']))
     p.append(bus_label('power', (76, 89), [
         'POWER AND HEAT · USB-C in · {{c:haptic_pzt.bridge_rail_v}} V bridge rail · 5 V driver logic · 3.3 V logic and lasers',
         '17.0 W in total (22.5 W with the gate-array card) · ceiling kept 1.9 K warmer than floor']))
@@ -118,7 +118,7 @@ def master():
                     'echo read on the drive wires by {{c:haptic_pzt.adc_fallback_mpn}}, 16 bit'], 'DESIGN · SIMULATED', ['act', 'sense', 'power']))
     p.append(block(467, 92, 318, 66, 'acoustics.html#known-limits', 'Gap actuator and resonance lock',
                    ['holds gap ÷ sound speed: 0.41 mm per kelvin, ± 0.07 mm',
-                    '± 1 mm travel in 0.02 mm steps · not yet in CAD or firmware'], 'SIMULATED NEED · OPEN PART', ['act', 'sense']))
+                    '± 1 mm travel: three steppers in the head (CAD) · lock host-tested'], 'SIMULATED NEED · NOT ON A BOARD', ['act', 'sense']))
     p.append(block(135, 168, 650, 30, 'acoustics.html', 'Upper wafer',
                    ['undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} × {{c:desktop_geometry.wafer_thickness_mm}} mm borosilicate: source, reflector and microphone in one part'], 'DESIGN', ['act', 'sense'], bar=True))
     p.append(block(135, 208, 190, 198, 'optics.html', 'Optical ring (LightRead)',
@@ -144,22 +144,22 @@ def master():
                    'one plane, two duties: reflect sound up, pass material up · layout trade in simulation'))
     mids = [('acoustics.html', 'Lower wafer', ['same part as the upper', 'source and reflector'], 'DESIGN', ['act', 'sense']),
             ('acoustics.html#known-limits', 'Hard end annulus', ['end reflection ≥ 0.85', 'measured first, no bead'], 'SIMULATED', ['act']),
-            ('matter-loop.html', 'Transfer gate', ['Ø1.6 mm liquid riser', 'solids ports: OPEN'], 'DERIVED · OPEN', ['matter']),
+            ('matter-loop.html', 'Transfer gate', ['gate slot in the cassette', 'mechanism not designed'], 'DESIGN · OPEN', ['matter']),
             ('desktop-replicator.html#heat', 'Thermal barrier', ['floor never warmer', 'than the ceiling'], 'DERIVED', ['power'])]
     for i, (href, t, l, ev, fl) in enumerate(mids):
         p.append(block(135 + 165 * i, 518, 155, 64, href, t, l, ev, fl))
 
     # ---- lower plinth
     p.append(frame(120, 604, 680, 312, '#e8ecf3', 'LOWER PLINTH: STORAGE, RELEASE, POWER, COMPUTE',
-                   'coaxial under the build cylinder (ruled 24 Nov 2026) · CAD pivot pending; the current model has the store behind the tower'))
+                   'coaxial under the build cylinder (ruled 24 Nov 2026) · drawn in the CAD as Rev S, the default build'))
     rows = [
         [('compute-control.html#drive-stage', 'Lower acoustic lamina', ['6 drive channels + 1 reference', '3 enable groups: 1 listens, 2 drive'], 'DESIGN', ['act', 'sense', 'power']),
          ('compute-control.html#clock-and-timing', 'Clock and bus backplane', ['{{c:clock_and_bus.xin_hz|mhz}} MHz + frame sync, skew ≤ {{c:clock_and_bus.sync_skew_max_ns}} ns', 'board bus 75 Mbit/s with CRC-32'], 'DERIVED', ['act', 'sense', 'power']),
-         ('compute-control.html#in-the-desktop-replicator', 'Chamber and plinth sensors', ['I²C: 2 air thermometers, humidity', '3 load cells · head-down switch'], 'DESIGN · PARTS OPEN', ['sense'])],
+         ('compute-control.html#in-the-desktop-replicator', 'Chamber and plinth sensors', ['I²C: 2 air thermometers, humidity', 'head-down switch · LED ring, camera'], 'DESIGN · PARTS OPEN', ['sense'])],
         [('cadence-memory.html', 'Compute card: Prime network', ['sparse, under {{c:cadence_brain.cadence_sparse_max_kb}} kB of memory', 'settle 15.4 kB + calibration 43.3 kB'], 'SIMULATED', ['act', 'sense', 'power']),
          ('digital-twin.html', 'Calibration and metrology', ['in-chamber spheres, reciprocity', 'new LMQ8 image per calibration'], 'SIMULATED', ['sense']),
          ('compute-control.html#drive-stage', 'Safety interlocks', ['head up: bridges off, lasers off', 'humidity gate in firmware: OPEN'], 'DESIGN · OPEN', ['act', 'power'])],
-        [('matter-loop.html', 'Material store', ['3 × 500 mL stock bottles, weighed', 'reversible metering pump'], 'DERIVED · PARTS OPEN', ['matter', 'sense']),
+        [('matter-loop.html', 'Storage bucket', ['fixed glass tube under the cassette', 'same stock tube as the build tube'], 'DESIGN · SIM OPEN', ['matter', 'sense']),
          ('matter-loop.html', 'Release and reclaim', ['crucibles: powder, liquid, seed', 'removing joined material: OPEN'], 'OPEN', ['matter', 'act']),
          ('desktop-replicator.html#heat', 'Power and heat reject', ['USB-C in → {{c:haptic_pzt.bridge_rail_v}} V, 5 V, 3.3 V', '17.0 W · air path outside chamber'], 'DERIVED', ['power'])],
     ]

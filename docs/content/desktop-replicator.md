@@ -7,6 +7,8 @@ The Desktop Replicator is the machine we are designing to build first: a benchto
 <p>CAD render. The round plate on the chamber floor is the lower acoustic wafer; an identical one faces it from the head. The crucibles at the rear hold feedstock.</p>
 </div>
 
+<div class="callout note"><strong>Which build this page describes.</strong> The CAD default is now Rev S, the unified stack: a fixed glass storage tube directly under the build chamber, a lift-out cassette between them, and three gap actuators in the head. <a href="cad-3d.html">See it in 3D.</a> Sections below that describe the crucible tray, the rear bottle store and the bottle weighing still describe the Rev F2 layout, which remains a build option. They are being brought in line with Rev S.</div>
+
 ## At a glance
 
 | | Value | Evidence |

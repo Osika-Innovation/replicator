@@ -1705,7 +1705,7 @@
       "decision": "foundational experimental precedent for boundary-to-interior acoustic holography"
     },
     {
-      "id": "R109",
+      "id": "H001",
       "title": "Acoustofluidics 7: The acoustic radiation force on small particles",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1039/C2LC21068A",
@@ -1725,7 +1725,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R110",
+      "id": "H002",
       "title": "Forces acting on a small particle in an acoustical field in a viscous fluid",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1103/PhysRevE.85.016327",
@@ -1746,7 +1746,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R111",
+      "id": "H003",
       "title": "Holographic acoustic tweezers",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1073/pnas.1813047115",
@@ -1767,7 +1767,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R112",
+      "id": "H004",
       "title": "Observation of acoustic spin",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1093/nsr/nwz059",
@@ -1794,7 +1794,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R113",
+      "id": "H005",
       "title": "In solid localization of finger impacts using acoustic time-reversal process",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1063/1.2130720",
@@ -1817,7 +1817,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R114",
+      "id": "H006",
       "title": "Time reversal of ultrasonic fields. I. Basic principles",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/58.156174",
@@ -1837,7 +1837,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R115",
+      "id": "H007",
       "title": "Time reversal of ultrasonic fields. II. Experimental results",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/58.156175",
@@ -1859,7 +1859,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R116",
+      "id": "H008",
       "title": "Focusing Beyond the Diffraction Limit with Far-Field Time Reversal",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1126/science.1134824",
@@ -1882,7 +1882,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R117",
+      "id": "H009",
       "title": "Ultrafast ultrasound localization microscopy for deep super-resolution vascular imaging",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/nature16066",
@@ -1908,7 +1908,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R118",
+      "id": "H010",
       "title": "Defect detection using ultrasonic arrays: The multi-mode total focusing method",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1016/j.ndteint.2009.10.001",
@@ -1931,7 +1931,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R119",
+      "id": "H011",
       "title": "Coherent Perfect Absorbers: Time-Reversed Lasers",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1103/PhysRevLett.105.053901",
@@ -1957,7 +1957,7 @@
       ]
     },
     {
-      "id": "R120",
+      "id": "H012",
       "title": "Matrix pencil method for estimating parameters of exponentially damped/undamped sinusoids in noise",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/29.56027",
@@ -1978,7 +1978,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R121",
+      "id": "H013",
       "title": "Dehnung von Zink-Kristallen unter Ultraschalleinwirkung",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1007/BF00623773",
@@ -1999,7 +1999,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R122",
+      "id": "H014",
       "title": "Acoustic fluidization: A new geologic process?",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1029/JB084iB13p07513",
@@ -2019,7 +2019,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R123",
+      "id": "H015",
       "title": "Hydrolytic Weakening of Quartz and Other Silicates",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1111/j.1365-246X.1967.tb06218.x",
@@ -2039,7 +2039,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R124",
+      "id": "H016",
       "title": "Nonlinear phononics as an ultrafast route to lattice control",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/nphys2055",
@@ -2065,7 +2065,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R125",
+      "id": "H017",
       "title": "Metallic Phase with Long-Range Orientational Order and No Translational Symmetry",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1103/PhysRevLett.53.1951",
@@ -2088,7 +2088,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R126",
+      "id": "H018",
       "title": "Observation of a single-beam gradient force optical trap for dielectric particles",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1364/OL.11.000288",
@@ -2111,7 +2111,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R127",
+      "id": "H019",
       "title": "A revolution in optical manipulation",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/nature01935",
@@ -2131,7 +2131,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R128",
+      "id": "H020",
       "title": "Trapping of single atoms in metasurface optical tweezer arrays",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41586-025-09961-5",
@@ -2162,7 +2162,7 @@
       ]
     },
     {
-      "id": "R129",
+      "id": "H021",
       "title": "Thermophotovoltaic efficiency of 40%",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41586-022-04473-y",
@@ -2194,7 +2194,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R130",
+      "id": "H022",
       "title": "A carbon nanotube optical rectenna",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/nnano.2015.220",
@@ -2217,7 +2217,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R131",
+      "id": "H023",
       "title": "Large-scale polymeric carbon nanotube membranes with sub–1.27-nm pores",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1126/sciadv.1700938",
@@ -2249,7 +2249,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R132",
+      "id": "H024",
       "title": "Encoding and decoding of multidimensional optical field modulation in holographic data storage",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1364/OPTICA.586593",
@@ -2275,7 +2275,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R133",
+      "id": "H025",
       "title": "All elementary functions from a single binary operator",
       "kind": "preprint",
       "canonical_url": "https://arxiv.org/abs/2603.21852",
@@ -2295,7 +2295,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R134",
+      "id": "H026",
       "title": "Toroidal helical pulses",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s42005-026-02699-0",
@@ -2327,7 +2327,7 @@
       ]
     },
     {
-      "id": "R135",
+      "id": "H027",
       "title": "Programmable skyrmions for communication and sensing",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41928-026-01611-6",
@@ -2360,7 +2360,7 @@
       ]
     },
     {
-      "id": "R136",
+      "id": "H028",
       "title": "Free-Space Skyrmions Radiated from a Geometric Phase Aperture",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1021/acsnano.6c02725",
@@ -2389,7 +2389,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R137",
+      "id": "H029",
       "title": "Skyrmions based on optical anisotropy for topological encoding",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41377-026-02307-4",
@@ -2420,7 +2420,7 @@
       ]
     },
     {
-      "id": "R138",
+      "id": "H030",
       "title": "Extracting topological features of skyrmionic light: a tutorial",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1117/1.ap.8.2.023001",
@@ -2445,7 +2445,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R139",
+      "id": "H031",
       "title": "Frequency independent antennas",
       "kind": "conference_paper",
       "canonical_url": "https://doi.org/10.1109/IRECON.1957.1150565",
@@ -2465,7 +2465,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R140",
+      "id": "H032",
       "title": "The unidirectional equiangular spiral antenna",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/TAP.1959.1144707",
@@ -2485,7 +2485,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R141",
+      "id": "H033",
       "title": "Arbitrary aperture synthesis with nonlocal leaky-wave metasurface antennas",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41467-023-39818-2",
@@ -2510,7 +2510,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R142",
+      "id": "H034",
       "title": "Holographic inspired high-performance circular polarized spoof surface plasmon polariton leaky-wave antenna excited by a novel launcher",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41598-025-85300-y",
@@ -2534,7 +2534,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R143",
+      "id": "H035",
       "title": "EBG-backed ultrawideband circularly polarized Archimedean spiral antenna scheme for IoT applications",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41598-025-96381-0",
@@ -2560,7 +2560,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R144",
+      "id": "H036",
       "title": "Design of an omnidirectional conical beam leaky wave antenna using the holographic technique",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41598-025-23790-6",
@@ -2583,7 +2583,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R145",
+      "id": "H037",
       "title": "A space-time holographic metasurface antenna",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1126/sciadv.adx7090",
@@ -2610,7 +2610,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R146",
+      "id": "H038",
       "title": "Weak baselines and reporting biases lead to overoptimism in machine learning for fluid-related partial differential equations",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s42256-024-00897-5",
@@ -2634,7 +2634,7 @@
       ]
     },
     {
-      "id": "R147",
+      "id": "H039",
       "title": "The Optimal Hard Threshold for Singular Values is 4/√3",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/TIT.2014.2323359",
@@ -2658,7 +2658,7 @@
       ]
     },
     {
-      "id": "R148",
+      "id": "H040",
       "title": "OctoMap: an efficient probabilistic 3D mapping framework based on octrees",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1007/s10514-012-9321-0",
@@ -2682,7 +2682,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R149",
+      "id": "H041",
       "title": "Ultrasound confidence maps using random walks",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1016/j.media.2012.07.005",
@@ -2705,7 +2705,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R150",
+      "id": "H042",
       "title": "Positional Uncertainty of Isocontours: Condition Analysis and Probabilistic Measures",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/TVCG.2010.247",
@@ -2726,7 +2726,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R151",
+      "id": "H043",
       "title": "Uncertainty Visualization in Medical Volume Rendering Using Probabilistic Animation",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/TVCG.2007.70518",
@@ -2749,7 +2749,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R152",
+      "id": "H044",
       "title": "AcousTools: A “Full-Stack,” Python-Based, Acoustic Holography Library",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1109/tuson.2026.3659798",
@@ -2776,7 +2776,7 @@
       ]
     },
     {
-      "id": "R153",
+      "id": "H045",
       "title": "GS-PAT",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1145/3386569.3392492",
@@ -2799,7 +2799,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R154",
+      "id": "H046",
       "title": "Acoustic hologram optimisation using automatic differentiation",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1038/s41598-021-91880-2",
@@ -2821,7 +2821,7 @@
       "decision": "reference for physics handbook; no hardware capability promotion"
     },
     {
-      "id": "R155",
+      "id": "H047",
       "title": "A convergent Born series for solving the inhomogeneous Helmholtz equation in arbitrarily large media",
       "kind": "journal_article",
       "canonical_url": "https://doi.org/10.1016/j.jcp.2016.06.034",
@@ -2846,7 +2846,7 @@
       ]
     },
     {
-      "id": "R156",
+      "id": "H048",
       "title": "Do generative video models understand physical principles?",
       "kind": "conference_paper",
       "canonical_url": "https://doi.org/10.1109/wacv61042.2026.00099",
@@ -2873,7 +2873,7 @@
       ]
     },
     {
-      "id": "R157",
+      "id": "H049",
       "title": "The Well: a Large-Scale Collection of Diverse Physics Simulations for Machine Learning",
       "kind": "conference_paper",
       "canonical_url": "https://doi.org/10.52202/079017-1430",

@@ -44,7 +44,7 @@ Every datasheet has the same lines. Owner is the guide that holds the detail.
 | In | Material through the mid-plane; twelve drive signals; laser light |
 | Out | Echoes, optical readings, a finished or released part |
 | Budgets | Sound pressure raised {{c:desktop_geometry.chamber_gain_closed_gap_median|range}} times over an open chamber at the median gap (*Simulated*). Tube tolerance: outside diameter ± 2.9 mm, wall ± 0.7 mm (*Documented*, catalogue) |
-| Open | Coaxial plinth CAD. Head return repeatability after a lift. Lift post stiffness |
+| Open | Head return repeatability after a lift. Lift post stiffness. The Rev S model (storage bucket and cassette under the chamber) has no acoustic study yet |
 | Owner | [Desktop Replicator](desktop-replicator.html#the-enclosure) |
 
 ### S02 Storage and release plinth
@@ -52,7 +52,7 @@ Every datasheet has the same lines. Owner is the guide that holds the detail.
 | | |
 |---|---|
 | Function | Hold feedstock, meter it in, take unwanted material back, and account for mass |
-| Prototype fits | Three 500 mL laboratory bottles on three bar load cells; one reversible metering pump; Ø1.6 mm fluoropolymer line; desiccant and a humidity sensor; three open crucibles in the chamber for powder, liquid and seed parts. *Derived CAD; bottles Documented; pump, cells and sensor not selected* |
+| Prototype fits | In the Rev S CAD (the default build): a fixed glass storage tube, the same stock as the build tube, directly under the mid-plane, with an LED ring and a camera under its rim. *Design decision; no acoustic study yet*. Rev F2 option (not in the default build): three 500 mL laboratory bottles on three bar load cells; one reversible metering pump; Ø1.6 mm fluoropolymer line; desiccant and a humidity sensor; three open crucibles in the chamber for powder, liquid and seed parts. *Derived CAD; bottles Documented; pump, cells and sensor not selected* |
 | In | Hand-loaded stock; returned material |
 | Out | Liquid to the chamber floor; weight readings |
 | Budgets | Material moves only as neutral grains or droplets, never as a charged stream. The liquid riser has 6.8 mm of floor between the wafer socket and the smallest glass bore the catalogue tolerance allows (*Derived*) |
