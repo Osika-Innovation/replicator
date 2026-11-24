@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Acoustic Hologram — the plate pair at the limit</title>
+<meta name="author" content="Etherworks">
+<style>
+  :root{
+    --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
+    --green:#5a7d3a; --amber:#b88a2a; --steel:#3a5a7d; --teal:#2f6d5e;
+    --slate:#5a6470; --blood:#7a1f1f; --violet:#6a4a8a;
+    --rule:#d2cdbf; --soft:#8a8676; --wash:#f3efe4;
+  }
+  html{background:var(--page)}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    max-width:820px; margin:2.5rem auto; padding:2.6rem 2.4rem 4rem;
+    color:var(--ink); line-height:1.62; background:var(--paper);
+    box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:17px;
+  }
+  h1{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-weight:700;
+     font-size:2rem; line-height:1.18; border-bottom:2px solid var(--ink);
+     padding-bottom:.55rem; margin:.3rem 0 .5rem}
+  h2{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.28rem;
+     margin-top:2.5rem; border-bottom:1px solid var(--rule); padding-bottom:.25rem}
+  h3{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:1.02rem;
+     margin-top:1.6rem; color:#444}
+  .banner{background:#eef5fa; border-bottom:2px solid var(--steel);
+     margin:-2.6rem -2.4rem 2rem; padding:.65rem 2.4rem;
+     font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.85rem;
+     color:var(--steel); line-height:1.5; text-align:center}
+  .banner a{color:var(--steel); font-weight:600}
+  .sub{color:var(--soft); font-style:italic; font-size:1.02rem}
+  .meta{color:var(--soft); font-size:.85rem; margin-bottom:1.6rem}
+  .chip{display:inline-block; font:700 .6rem/1.5 "Helvetica Neue",Helvetica,sans-serif;
+    letter-spacing:.07em; padding:.08rem .45rem; border-radius:2px;
+    background:var(--wash); color:var(--slate); border:1px solid var(--rule);
+    vertical-align:.14em; white-space:nowrap}
+  .chip.c-measured{color:#fff;background:var(--teal);border-color:var(--teal)}
+  .chip.c-derived{color:#fff;background:var(--amber);border-color:var(--amber)}
+  .chip.c-open{color:#fff;background:var(--steel);border-color:var(--steel)}
+  table{border-collapse:collapse; width:100%; margin:1.1rem 0; font-size:.88rem}
+  th,td{border:1px solid var(--rule); padding:.42rem .6rem; text-align:left; vertical-align:top}
+  th{background:#f0eadb; font-family:"Helvetica Neue",Helvetica,sans-serif; font-size:.82rem}
+  tr:nth-child(even) td{background:#faf7ef}
+  blockquote{border-left:4px solid var(--amber); background:#fff8e8;
+    margin:1.2rem 0; padding:.7rem 1.1rem; color:#4a4437; font-size:.97rem}
+  .box{border-left:4px solid var(--green); background:#eef3e8;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  .warn{border-left:4px solid var(--blood); background:#f3e7e7;
+    padding:.85rem 1.1rem; margin:1.3rem 0; font-size:.94rem}
+  code{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:2px; font-size:.85em; padding:.05em .3em}
+  pre{font-family:"JetBrains Mono",Menlo,Consolas,monospace; background:var(--wash);
+    border-radius:3px; font-size:.8em; padding:.7em .9em; overflow-x:auto}
+  a{color:var(--steel)}
+  .overflow{overflow-x:auto}
+  ol li,ul li{margin:.3rem 0}
+</style>
+</head>
+<body>
+
+<div class="banner">Read first: <a href="replicator_principles.html">Principles</a> ·
+element physics: <a href="replicator_phonons.html">The Phonons</a> ·
+DOF inventory: <a href="the_two_carriers.html">The Two Carriers</a> ·
+sibling carrier: <a href="replicator_photons.html">The Photons</a> ·
+how the machine sees: <a href="replicator_scan.html">Scan</a> ·
+machine topology: <a href="replicator_architecture.html">Architecture</a> ·
+software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
+memory: <a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a></div>
+
+<div class="brand" style="font:600 11.5px/1.2 -apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#555;margin:0 0 6px;">Etherworks</div>
+<h1>The Acoustic Hologram — the plate pair at the limit</h1>
+<p class="sub">Two facing plates, an object between them, and the demand
+that the plates record it as a hologram and play it back as a force. Derived
+from that demand alone: what one hologram is, what frequency is for, what the
+plate must and must not be, why the harmonic comb, what resolution may
+honestly be claimed, what the hologram records, how it is stored, and how it
+is scored. The architecture that cannot be improved further — and the
+prototype that is the same architecture with a smaller brain.</p>
+<p class="meta">draft v0.3 · 2026-11-17 (previous v0.2 · 2026-11-15; v0.1 · 2026-08-18) · <b>status: proposal toward a ruling
+(candidate R17)</b> — not yet folded into the rulings file. Single-home: this
+paper owns the <em>acoustic-hologram limit architecture</em> (aperture
+completeness, channel/rank arithmetic, band ladder, comb, resolution
+register, crystal-inertia &amp; two-terminal <code>HAPTIC</code> drive/sense loop, storage interface, metrics). Element physics (throat, horn, face,
+Gor'kov force, softening) stays in
+<a href="replicator_phonons.html">The Phonons</a>; the sensing-claim ladder
+R12 stays in <a href="replicator_scan.html">Scan</a>; instance dimensions stay
+in the hardware papers. Where this paper amends a standing ruling it says so
+in §11. Claims tagged <span class="chip c-measured">MEASURED</span> /
+<span class="chip c-derived">DERIVED</span> /
+<span class="chip c-open">OPEN</span> per the paper-network convention.</p>
+
+<h2 id="s0">0 · The rule of this document</h2>
+<p>Start from the demand, not from parts: <b>two opposing circular plates,
+any object between them, a perfect holographic image of it, storable on an
+analog holographic medium, replayable as a force.</b> Every design statement
+below is either forced by that demand plus a law, or is marked as a choice.
+"Cannot be improved further" means: each element sits against a bound
+(diffraction, absorption, linearity, reciprocity, mode count) rather than
+against a budget. Where a bound is reached the paper says which; where the
+design is short of it the paper says by how much and why.</p>
+
+<h2 id="s1">1 · What one hologram is</h2>
+<p>A monochromatic wave field in a source-free region is completely
+determined by its complex value — amplitude <em>and</em> phase — on a closed
+surface around it (Kirchhoff–Helmholtz; the Rayleigh integrals for a plane).
+The plate pair is that surface to within an equatorial band (§7). So a
+hologram of the object at frequency <em>f</em> is the complex pressure on the
+two plates at <em>f</em>, and nothing more is needed to reconstruct the
+whole 3-D field between them to the diffraction limit.
+<span class="chip c-derived">DERIVED</span> (textbook; optical holography is
+the measured instance).</p>
+<p><b>Sound records phase directly.</b> Optics must interfere the object
+wave with a reference beam to make phase visible; a piezo element or
+microphone reads complex pressure as such. Acoustic hologram acquisition is
+therefore sampling, not interferometry — the "phase-kept scan <em>is</em>
+hologram acquisition" identity of R12 stated at the element.
+<span class="chip c-measured">MEASURED</span> (near-field acoustic
+holography, Maynard/Williams lineage).</p>
+<p><b>Sample budget.</b> A plate of area <em>A</em> radiating at wavelength
+λ needs one complex sample per (λ/2)² — the space–bandwidth product
+<em>N</em><sub>SBP</sub> = 4<em>A</em>/λ². This is the ceiling on every
+channel-count question in this paper.</p>
+<div class="overflow"><table>
+<tr><th>f</th><th>λ (air)</th><th>λ/2</th><th>N<sub>SBP</sub>, Ø400 plate</th></tr>
+<tr><td>40 kHz</td><td>8.6 mm</td><td>4.3 mm</td><td>≈ 7 × 10³</td></tr>
+<tr><td>100 kHz</td><td>3.4 mm</td><td>1.7 mm</td><td>≈ 4.5 × 10⁴</td></tr>
+<tr><td>200 kHz</td><td>1.7 mm</td><td>0.85 mm</td><td>≈ 1.8 × 10⁵</td></tr>
+<tr><td>1 MHz</td><td>0.34 mm</td><td>0.17 mm</td><td>≈ 4 × 10⁶</td></tr>
+</table></div>
+<p class="meta">Instance numbers (Ø400) appear here as worked examples;
+the physics is in ratios. Ø410 is the RH-1 plate.</p>
+
+<h2 id="s2">2 · What frequency is for — voxel size, and the price of it</h2>
+<p>Because one frequency already carries the whole geometry (§1), frequency
+buys exactly one thing for the image: <b>voxel size, λ/2 in every direction
+once angular coverage is complete</b>. Everything else frequency does is
+either a cost (absorption) or a bonus (§5). The band ladder in ordinary
+air, 20 °C, mid humidity: <span class="chip c-derived">DERIVED</span> (ISO
+9613 class absorption; T₆₀ from α·c in a ~0.5 m chamber)</p>
+<div class="overflow"><table>
+<tr><th>f</th><th>voxel λ/2</th><th>absorption</th><th>chamber T₆₀ (order)</th><th>regime</th></tr>
+<tr><td>40 kHz</td><td>4.3 mm</td><td>~1 dB/m</td><td>10²–10³ ms (wall-limited)</td><td>reverberant; TinyLev art <span class="chip c-measured">MEASURED</span></td></tr>
+<tr><td>100 kHz</td><td>1.7 mm</td><td>~3–4 dB/m</td><td>~50 ms</td><td>reverberant</td></tr>
+<tr><td>200 kHz</td><td>0.85 mm</td><td>~8–10 dB/m</td><td>~20 ms</td><td>reverberant; plan-A design top</td></tr>
+<tr><td>500 kHz</td><td>0.35 mm</td><td>~40–50 dB/m</td><td>~4 ms</td><td>few passes</td></tr>
+<tr><td>1 MHz</td><td>0.17 mm</td><td>~150–200 dB/m</td><td>~1 ms</td><td>one pass — ballistic</td></tr>
+</table></div>
+<p><b>T<sub>60</sub> is passive cavity storage, not actuator latency.</b> A
+chamber's 20–50 ms reverberation time at 100–200 kHz is the lifetime over
+which the air volume stores standing-wave energy (<em>Q</em><sub>cav</sub> =
+π<em>f</em>T<sub>60</sub>/ln 10<sup>3</sup> ~ 10<sup>3</sup>–10<sup>4</sup>),
+<b>not</b> a mechanical update frame period. Actuator state changes are
+bounded by the piezoelectric crystal's acoustic transit inertia
+τ<sub>inertia</sub> = <em>L</em>/<em>v</em><sub>D</sub> ~ 0.1–0.3 µs
+(§4.1), five orders of magnitude faster than T<sub>60</sub>.
+<span class="chip c-derived">DERIVED</span></p>
+<p><b>What the closed chamber does and does not buy.</b> Confinement does
+not defeat absorption: loss is per metre travelled, and in a reverberant box
+what matters is α·c in dB per second. Above ~300 kHz the field is one-pass
+whether or not the box is closed. What the chamber <em>does</em> buy: (i)
+reverberation up to ~200 kHz — the mixing that makes a few channels worth
+thousands (§3); (ii) <b>atmosphere control</b> — the 40 kHz–1 MHz loss is
+dominated by O₂/N₂ molecular relaxation (humidity-dependent) plus classical
+∝ f² loss, so humidity is a knob, and a monatomic fill (argon: no molecular
+relaxation) drops 200 kHz–1 MHz loss several-fold; (iii) designable
+nonlinearity — shock distance ∝ 1/(f·p₀) is centimetres at 200 kHz and
+~150 dB, so parametric and harmonic operation are features, not confounds.
+Plan A stays ordinary air (R11); argon fill is the named roadmap rung that
+opens 500 kHz–1 MHz, and that rung <em>requires</em> the pixel-dense
+aperture of §10 because a one-pass field has no reverberation for a
+few-channel drive to exploit. <span class="chip c-derived">DERIVED</span>
+(R11 confirmed; the argon rung is this paper's addition to R11's medium
+shelf).</p>
+<div class="box"><b>Design point.</b> Top of the plan-A band = <b>200 kHz</b>
+(0.85 mm voxel; single-digit dB per pass over a 0.3–0.5 m path; reverberation
+still usable; thin-plate physics still valid at 1 mm). R11's 300 kHz
+envelope stands as the ceiling; 200 kHz is where every element is still on
+the good side of its bound at once.</div>
+
+<h2 id="s3">3 · The plate as a MIMO channel — what "how many speakers" really asks</h2>
+<p>Drop "how many transducers" as the question. The plate (plus chamber) is
+a linear channel from <em>K</em> drives to pressure at every point of the
+working volume: a transfer matrix <b>H</b>(f). Measure it once
+(microphone/vibrometer scan — the twin's calibration), and the hologram
+problem is: find drive signals whose image under H is the target field. The
+honest capacity questions are properties of H's singular-value spectrum:</p>
+<ul>
+<li><b>Effective rank N<sub>eff</sub></b> — singular values above the
+noise/actuator floor: the number of genuinely different fields the aperture
+can make. Ceiling: N<sub>SBP</sub> of §1.</li>
+<li><b>Capacity</b> Σ log₂(1 + SNR·σᵢ²) if one number is wanted.</li>
+</ul>
+<p>Every design lever below — symmetry, thickness, Q, channel count, the
+chamber — is a lever on that spectrum. This is the same MIMO/transmission-
+matrix idea that a multimode fibre (§8) and a Wi-Fi array use.
+<span class="chip c-derived">DERIVED</span> (time-reversal and transmission-
+matrix art <span class="chip c-measured">MEASURED</span>: Fink lineage;
+"acoustic touch" glass localises a fingertip anywhere with 2–4 piezos by
+plate reverberation — the reciprocal of what we build).</p>
+
+<h3>3.1 The counting rule</h3>
+<p>Per frequency-resolution slot Δf (the modal or reverberant linewidth) the
+aperture can command min(<em>K</em>, <em>M</em>) independent patterns, where
+<em>M</em> is the number of modes overlapping that slot. Summed over the
+band <em>B</em>:</p>
+<pre>N_eff ≈ Σ_slots min(K, M)  ≈  min( K · B/Δf ,  N_modes(B) )</pre>
+<p>Thin-plate modal density is <em>n</em>(f) = <em>A</em>√3 / (<em>h</em>·c<sub>L</sub>′)
+(c<sub>L</sub>′ the plate longitudinal speed), constant in frequency.
+Worked: Ø400 borosilicate 1 mm → ~40 modes/kHz → ~8 × 10³ modes below
+200 kHz; 2 mm Al 5052 → ~20 modes/kHz (the registered Chladni bench object's
+"~2,100 modes in band" is this number over its band).
+<span class="chip c-derived">DERIVED</span></p>
+<div class="overflow"><table>
+<tr><th>regime</th><th>Δf</th><th>K = 3</th><th>K = 6</th><th>note</th></tr>
+<tr><td>plate alone, session-damped Q ≈ 300 (R6 bench)</td><td>~300 Hz at 100 kHz</td><td>~1.5 × 10³</td><td>~3 × 10³</td><td>overlap M ≈ 10: channels multiply</td></tr>
+<tr><td>plate alone, high-Q glass (Q ~ 10³–10⁴)</td><td>tens of Hz</td><td colspan="2">→ capped by N<sub>modes</sub> ≈ 8 × 10³</td><td>modes resolved: channel count barely matters</td></tr>
+<tr><td>plate + closed chamber, T₆₀ 20–50 ms</td><td>20–50 Hz</td><td>~10⁴</td><td>~2 × 10⁴</td><td>chamber mode count ≫: channels multiply again</td></tr>
+<tr><td>ceiling N<sub>SBP</sub> at 200 kHz</td><td>—</td><td colspan="2">1.8 × 10⁵</td><td>reached only by the pixel-dense aperture (§10)</td></tr>
+</table></div>
+<p>Two readings matter. <b>On a plate alone with resolved modes, N<sub>eff</sub>
+≈ the number of radiating modes in band, almost independent of channel
+count</b> — three drives and six drives make the same ~10³–10⁴ patterns.
+Channels multiply the count only where modes overlap within a slot: the
+damped bench plate, and above all the reverberant chamber. So the closed
+chamber is the single strongest reason a few-channel prototype approaches
+the ceiling. <span class="chip c-derived">DERIVED</span></p>
+
+<h3>3.2 Monochromatic vs broadband — the caveat that keeps this honest</h3>
+<p>At <em>one</em> frequency and one instant, <em>K</em> drives are
+<em>K</em> complex weights: a K-element array, however rich the plate. The
+thousands above are frequency-multiplexed. For a pressure <em>image</em>
+they are sequential snapshots. For a <b>force</b> hologram they are
+simultaneous, because radiation force is quadratic and time-averaged: cross
+terms between different frequencies average out (beat ≫ mechanical
+bandwidth), so sub-holograms on different lines <b>add linearly in force
+space</b>. Contrast of a superposition falls as ~1/√N; force per site as
+1/N (§9). And the reachable set is the span of H's columns — a target
+outside it is simply not makeable with that aperture; the compiler
+(<a href="replicator_field_compiler.html">RSW-1</a>) reports reachability
+rather than pretending.</p>
+
+<h2 id="s4">4 · What the plate must be — and how little that is</h2>
+<p>The hologram lives in the drive signals; the plate is a mixing medium.
+It has to satisfy four things and no fifth:</p>
+<ol>
+<li><b>Radiate.</b> A bending plate radiates efficiently only above its
+coincidence frequency f<sub>c</sub> = c<sub>air</sub>²/(1.8·c<sub>L</sub>′·<em>h</em>).
+1 mm glass: ~12 kHz; 2 mm Al: ~6 kHz — both far below the band. Above
+f<sub>c</sub> bending waves are supersonic and each radiates a plane wave at
+sin θ = c<sub>air</sub>/c<sub>B</sub>, c<sub>B</sub> ∝ √f. <b>Consequence: no
+horn is required for impedance matching in the working band</b> — the plate
+is already an efficient radiator; a thickness/stiffness gradient <em>is</em>
+a built-in lens (angle follows local c<sub>B</sub>) at zero depth. R3's
+horn + gyroid front end solves a below-coincidence and viscothermal problem
+the thin plate does not have at 40–200 kHz; it remains correct engineering
+where a design drives a thick plate or needs the gyroid's EM GRIN reading
+(§11, amendment a). <span class="chip c-derived">DERIVED</span></li>
+<li><b>Be thin and low-loss.</b> ~1 mm keeps thin-plate physics valid to
+~400 kHz (bending λ ≥ ~5<em>h</em>), doubles modal density against 2 mm, keeps
+f<sub>c</sub> low. Borosilicate glass: internal Q in the thousands, isotropic,
+transparent (the optical addressing of §10 comes through it); aluminium is
+the metal alternative. Polymers are excluded — internal loss eats the
+reverberation the count in §3 relies on. Q is then <em>set</em>, per R6:
+session-calibrated bench → damp to Q ≈ 300 (ABH rim); the continuously
+self-calibrating machine keeps the high-Q bins.
+<span class="chip c-derived">DERIVED</span></li>
+<li><b>Share no symmetry with its drives.</b> The pathology is the cymatics
+default — a symmetric disc driven at its centre reaches only the m = 0
+Bessel family. Three drives at 120° with <em>independent</em> signals already
+break the symmetry as an excitation (they reach m ≡ 0, ±1 mod 3), and are
+what R4 needs for OAM m = ±1 by phasing; what they can never reach is the
+sine-class m = 3k modes whose nodal lines pass through all three points
+(~1/6 of the spectrum), and doublet degeneracy costs one channel per slot.
+The aperiodic diffuse-spectrum face of R4 lifts the remaining degeneracy —
+that is exactly what "spectral diffuseness" buys in H-language: a
+well-conditioned column set. Cheap insurance beyond it: drives at three
+radii, an off-centre bore or D-cut. Never at the centre; not at a clamped
+rim. <span class="chip c-derived">DERIVED</span></li>
+<li><b>Free-ish edge.</b> Point/soft support (the transducers can be the
+supports, as a Chladni driver post is); clamping kills rim modes and adds
+loss.</li>
+</ol>
+<div class="box"><b>Everything else is optional bias.</b> Graded thickness,
+gyroid, micro-horn face, cochlear grading (§5.3) can improve conditioning or
+add a fixed lens; none is a precondition. The plate need not <em>be</em>
+anything specific — it needs to <em>not be</em> symmetric, thick, lossy, or
+clamped.</div>
+
+<h3 id="s4-1">4.1 The transducer — crystal transit inertia, two-terminal HAPTIC self-sensing, and dispersive SIMO</h3>
+<p>Every count in §3 is a time–bandwidth product. A bolt-clamped Langevin
+transducer is a resonant dumbbell whose steel/aluminium end masses give it a
+~1–2 kHz usable bandwidth and ~4.5 ms ring-down at <em>Q</em> ≈ 500; three of
+them give ~10–20 patterns — three speakers on a Chladni plate — and bolt
+preloading also exceeds thin glass's tensile strength. Langevin cartridges are
+valid for single-frequency CW power demonstrations; they are the wrong element
+for a broadband, sub-microsecond holographic loop.
+<span class="chip c-derived">DERIVED</span></p>
+<p><b>Crystal acoustic transit-inertia ceiling.</b> Rather than waiting for
+arbitrary 20 ms control frames or ms-scale horn ring-down, the intrinsic
+mechanical response limit of a bare or lightly backed piezoelectric layer of
+thickness <em>L</em> and stiffened longitudinal wave speed
+<em>v</em><sub>D</sub> = √(<em>c</em><sub>33</sub><sup>D</sup>/ρ) is simply
+its internal acoustic transit time
+τ<sub>inertia</sub> = <em>L</em>/<em>v</em><sub>D</sub>
+(half-wave thickness mode <em>f</em><sub>λ/2</sub> = <em>v</em><sub>D</sub>/2<em>L</em>):
+<span class="chip c-derived">DERIVED</span> (from published elastic/dielectric constants).</p>
+<div class="overflow"><table>
+<tr><th>crystal / composite</th><th>density ρ</th><th>speed v<sub>D</sub></th><th>coupling k<sub>33</sub> / k<sub>t</sub></th><th>τ<sub>inertia</sub> @ L = 1 mm</th><th>f<sub>λ/2</sub> @ 1 mm</th></tr>
+<tr><td><b>AlN / ScAlN</b></td><td>3.26 g/cm³</td><td>~11,000 m/s</td><td>k<sub>t</sub> ~ 0.24–0.45</td><td><b>~91 ns</b></td><td>~5.5 MHz</td></tr>
+<tr><td><b>LiNbO₃ (Y-36°) / Quartz</b></td><td>4.65 / 2.65 g/cm³</td><td>~7,340 / 5,750 m/s</td><td>k<sub>t</sub> ~ 0.49</td><td><b>~136–174 ns</b></td><td>~2.9–3.7 MHz</td></tr>
+<tr><td><b>PMN-PT / PIN-PMN-PT</b></td><td>~8.1 g/cm³</td><td>~4,600 m/s</td><td>k<sub>33</sub> ~ 0.90</td><td><b>~217 ns</b></td><td>~2.3 MHz</td></tr>
+<tr><td><b>PZT-4 / PZT-8 / PZT-5H</b></td><td>~7.5–7.8 g/cm³</td><td>~4,100–4,600 m/s</td><td>k<sub>33</sub> ~ 0.70–0.75</td><td><b>~220–245 ns</b></td><td>~2.0–2.3 MHz</td></tr>
+<tr><td><b>1–3 piezocomposite</b></td><td>~3.5–4.5 g/cm³</td><td>~3,500–3,900 m/s</td><td>k<sub>t</sub> ~ 0.60–0.75 (lateral modes suppressed)</td><td><b>~255–285 ns</b></td><td>~1.8–2.0 MHz</td></tr>
+</table></div>
+<p>At <em>L</em> = 0.5–1.5 mm, every crystal above responds electrically to
+mechanical expansion or contraction within ~90–285 ns — <b>five orders of
+magnitude faster than 20 ms</b> and 20–200× faster than one 25–200 kHz air
+cycle. The optimal broadband element for Rung 1 is therefore a thin
+unbacked or composite piezo disc/annulus bonded below its thickness mode onto
+the 1–1.5 mm supersonic plate (sizing rule: patch width ≤ λ<sub>B</sub>/2,
+so ≤ 5 mm discs or concentric annuli avoid flexural nulls up to 200 kHz,
+optionally mated to a replaceable thin-walled chaotic scatterer faceplate
+with a coaxial Ø12 mm bore). The bandwidth limit now sits in electrical
+headroom rather than steel end masses.</p>
+<p><b>Simultaneous two-terminal <code>HAPTIC</code> self-sensing (zero TX/RX dead time).</b>
+Treat the piezoelectric transducer from first principles as a two-port
+electromechanical state whose crystal coordinate <em>x</em>(t) (expanded vs.
+contracted) and instantaneous velocity <em>ẋ</em>(t) obey the coupled
+Butterworth–Van Dyke equations:
+<span class="chip c-derived">DERIVED</span></p>
+<pre>m·ẍ + c·ẋ + k·x = Θ·V(t) + F_echo(t)
+I(t) = C₀·dV/dt + Θ·ẋ(t)   [charge form: q(t) = C₀·V(t) + Θ·x(t)]</pre>
+<p>Wiring a differential full H-bridge (+V<sub>bus</sub> expand,
+−V<sub>bus</sub> contract, 0 V active brake, Hi-Z float) across
+<b>both terminals</b> (V<sub>+</sub>, V<sub>−</sub>) of a collocated
+<code>RP2350B</code> head (&lt;&nbsp;2&nbsp;pF trace capacitance vs.
+<code>C₀ ≈ 171&nbsp;pF</code>) turns every drive pin into a continuous sensor
+without TX/RX dead time. On multi-tone harmonic combs, bare zero-crossing
+timing fails: airborne echoes from a 2&nbsp;mm droplet arrive at
+<code>−60 to −80&nbsp;dB</code> below the drive current, <code>PZT-8</code>
+dielectric capacitance <code>C₀(T)</code> drifts by <code>~0.3%/°C</code>
+(<code>−50&nbsp;dB</code>, 10–30× larger than the scatter echo), and a
+single comparator crossing captures the dominant tone within &lt;&nbsp;0.2&nbsp;ns
+while failing to invert <code>5</code> comb harmonics (10 I/Q unknowns).
+Adding <code>1</code> fast comparator plus a <code>2R/1C</code> feedback
+loop across <code>2</code> PIO pins against an uncoupled <code>C₀</code>
+reference piezo runs an ADC-free <code>75&nbsp;MSa/s</code> 1-bit sigma-delta
+(<code>ΣΔ</code>) bridge (<code>OSR = 250</code> over <code>150&nbsp;kHz</code>
+→ <code>12–16</code> ENOB / <code>74–96&nbsp;dB</code> linear dynamic range)
+paired with multiplier-free <code>XOR + popcount</code> lock-in across
+<code>1</code> 12-pin drive SM and <code>1–2</code> banked <code>ΣΔ</code>
+SMs out of <code>12</code> PIO state machines on a shared
+<code>XIN + SYNC</code> clock/phase bus (<code>6.67&nbsp;ns</code> /
+<code>~0.1°</code>). That subtracts <code>C₀·dV/dt</code> and local
+efference copies directly in hardware to expose motional velocity
+<code>ẋ(t)</code> and echo force <code>F_echo(t)</code> continuously during
+TX (<span class="chip c-measured">MEASURED</span> self-sensing bridge art:
+Dosch, Inman &amp; Garcia 1992, <code>10.1177/1045389X9200300109</code>;
+bench coupon <code>K-HAPTIC-PZT</code>;
+<a href="../docs/content/compute-control.md#acoustic-lamina-75-msas-1-bit-sigma-delta-piezo-haptic">Compute, sensing and control</a>).
+Continuous tracking keeps high-Q chamber modes locked across 1 °C thermal
+drift; discrete chirped TX/RX gates remain optional for baseline
+empty-chamber H mapping rather than a frame-rate bottleneck.</p>
+
+<h3 id="s4-2">4.2 Coupled-cavity harmony and minimum holding power</h3>
+<p>Holding a stationary mass against gravity performs zero mechanical work
+(<em>F</em>·d<em>z</em> = 0 when <em>ż</em> = 0). Because the ~10⁴
+air-to-solid impedance ratio (415 Rayl vs. ~46 MRayl for steel) reflects
+99.996% at a dense solid surface, airborne acoustic levitation of heavy metals
+such as steel (~7.85 g/cm³) up to iridium (22.6 g/cm³;
+<span class="chip c-measured">MEASURED</span> single-axis resonant art: Xie et
+al. 2006) does not resonate inside the steel bulk; instead it builds a high
+reactive standing wave inside the <b>coupled chamber + sphere air cavity</b>.
+Locking the <code>HAPTIC</code> autodyne/PLL bridge onto the object-shifted
+coupled eigen-chord sustains kPa trapping pressure reactively through
+<em>Q</em><sub>cav</sub> and throttles steady-state drive down to pure
+cavity dissipation once ẋ(t) matches the target chord
+(<code>residual → 0</code>):
+<code>P_hold = ω·E_stored / Q_cav</code>
+<span class="chip c-derived">DERIVED</span>. Extending dense-metal holding from
+1-D resonant axes to 3-D multi-tone dispersive chords in our chamber remains
+<span class="chip c-open">OPEN</span>.</p>
+
+<h2 id="s5">5 · The chord — one comb, three octaves</h2>
+<h3>5.1 What octaves buy for the image (a pyramid, not information)</h3>
+<p>With full angular coverage a single frequency fills the whole k-space
+ball of radius 2k; lower frequencies add no geometry the top one lacks. What
+a log-spaced ladder (constant fractional bandwidth per band — the cochlea's
+sampling) does add: coarse-to-fine reconstruction and robustness where the
+top octave is lost to absorption or occlusion; <b>penetration</b> (low bands
+pass what high bands only see the surface of); speckle decorrelation; and
+<b>spectral colour by size class</b> — an object rings at the band whose
+wavelength matches it, so octave <em>n</em> images structure of scale
+~λ<sub>n</sub>/2. <span class="chip c-derived">DERIVED</span></p>
+<h3>5.2 Why a harmonic comb — the nonlinearity closes it</h3>
+<p>At force-grade SPL air is nonlinear and generates 2f, 3f and every
+sum/difference of what is driven. An arbitrary carrier set sprays
+intermodulation everywhere; a <b>harmonic comb f₀, 2f₀, 3f₀ …</b> is closed
+under mixing (nf₀ ± mf₀ stays on the comb). The field stays "in tune":
+spectrally sparse, coherently sampleable, harmonic imaging (drive f, listen
+2f — R12's "few ×" rung) built in. A phase-locked comb is a periodic pulse
+train in time — the broadband time-reversal pulse and the harmonic chord are
+one object seen on two axes. Radiation-force cross terms between comb lines
+land at multiples of f₀, never at DC, so force sub-holograms on different
+lines still add cleanly (§3.2). Pure octaves alone are not closed (2+4=6),
+so the comb is the primitive and octaves are its grouping into scale
+classes. <span class="chip c-derived">DERIVED</span> (parametric-array and
+harmonic-imaging art <span class="chip c-measured">MEASURED</span>)</p>
+<div class="box"><b>Choice:</b> f₀ ≈ 25 kHz, harmonics 1–8 (25–200 kHz;
+1–12 fills R11's 300 kHz envelope), grouped as three octaves 25/50/100→200
+kHz = scale classes 7 → 3.4 → 1.7 → 0.85 mm.</div>
+<h3>5.3 On the plate, an octave is √2 — and a graded plate is a cochlea</h3>
+<p>Bending waves are dispersive: λ<sub>B</sub> ∝ 1/√f, and the radiation
+angle moves by the same √2 per octave — frequency is a spatial coordinate on
+the plate. A plate with a graded thickness/stiffness localises each frequency
+to a place (tonotopy); an exponential gradient gives a log map, one octave
+per unit length. This is the disciplined form of the graded-structure idea
+(R3's "3-D rainbow library" moved into the plane): a <b>reverse cochlea</b>
+in which a few broadband channels address <em>place by pitch</em>, and each
+comb line owns a ring. Optional (§4), coherent with the comb, and it makes
+the plate's frequency→angle steering designable rather than incidental.
+<span class="chip c-derived">DERIVED</span> (cochlear tonotopy
+<span class="chip c-measured">MEASURED</span>; in-plate use design)</p>
+
+<h2 id="s6">6 · Resolution, honestly — what bandwidth does and does not buy</h2>
+<p><b>The field is linear.</b> Every launched component is spatially
+band-limited to its own 2k; a sum of band-limited patterns is band-limited to
+the largest. Chirping 40–200 kHz does <em>not</em> sharpen the pressure image
+below λ<sub>min</sub>/2 — the other 159 kHz add depth resolution
+c/2B ≈ 1 mm (a single tone has almost none along the axis without full
+angular coverage), speckle averaging, and the pattern count of §3. That is
+worth having; it is not "arbitrarily fine".
+<span class="chip c-derived">DERIVED</span></p>
+<p>Three genuine loopholes, registered separately:</p>
+<div class="overflow"><table>
+<tr><th>quantity</th><th>limit</th><th>at 200 kHz air</th><th>mechanism</th><th>register</th></tr>
+<tr><td>pressure feature</td><td>λ<sub>min</sub>/2</td><td>0.85 mm</td><td>diffraction (R12 rung 1)</td><td><span class="chip c-derived">DERIVED</span> on <span class="chip c-measured">MEASURED</span> art</td></tr>
+<tr><td><b>force pixel</b></td><td>~λ<sub>min</sub>/4, sharper near a strong focus</td><td>~0.4 mm</td><td>force ∝ ⟨p²⟩ doubles spatial bandwidth; locally generated harmonics (absorption irrelevant over the last cm)</td><td><span class="chip c-derived">DERIVED</span>; in-chamber sharpening <span class="chip c-open">OPEN</span></td></tr>
+<tr><td>depth</td><td>c/2B</td><td>~1 mm</td><td>chirp bandwidth</td><td><span class="chip c-derived">DERIVED</span></td></tr>
+<tr><td><b>placement</b></td><td>λ/100 class</td><td>~10 µm</td><td>trap position moves continuously with phase; SNR-limited, not λ-limited (R12 last rung)</td><td><span class="chip c-measured">MEASURED</span> art (ULM)</td></tr>
+<tr><td>sparse imaging</td><td>below λ/2, log-SNR</td><td>—</td><td>priors on discrete parts (localisation)</td><td><span class="chip c-derived">DERIVED</span></td></tr>
+</table></div>
+<p><b>Machine reading:</b> the thing that pushes has finer pixels than the
+thing you hear; the hand places far finer than it draws. Feature size in a
+held pattern ≈ λ<sub>min</sub>/4; placement ≈ 10 µm; wanting genuinely finer
+<em>features</em> means a higher carrier — the argon rung — not a wider
+chirp. This is the register the deck should use instead of a bare "λ/2
+pixel". <span class="chip c-derived">DERIVED</span></p>
+
+<h2 id="s7">7 · What the hologram records — not monochrome, but two-polarisation</h2>
+<p>Sound scatters from two contrasts, with different angular signatures
+(first-order Born: f(θ) ∝ k²[γ<sub>κ</sub> − γ<sub>ρ</sub> cos θ]):</p>
+<ul>
+<li><b>compressibility (stiffness) contrast</b> → a monopole, isotropic;</li>
+<li><b>density contrast</b> → a dipole, ∝ cos θ — forward and back with
+opposite sign, nothing sideways.</li>
+</ul>
+<p>Forward scatter (bottom plate → object → top plate) reads
+γ<sub>κ</sub> − γ<sub>ρ</sub>; back-scatter to the same plate reads
+γ<sub>κ</sub> + γ<sub>ρ</sub>. Two equations, two unknowns: <b>the two-plate
+geometry is what makes stiffness and density separable at one
+frequency</b> — the acoustic analogue of a polarimetric image (one
+wavelength, two "polarisations" split by viewing direction), and the same
+Δκ/Δρ vector R12 names as the sees-as-it-holds identity, now with its
+angular mechanism stated. In storage that is two pages per comb line (top
+view, bottom view). <span class="chip c-derived">DERIVED</span> (Born
+scattering; USCT κ/ρ separation <span class="chip c-measured">MEASURED</span>
+art in fluid coupling)</p>
+<p>Two honest limits. (i) <b>In air, solids saturate both contrasts</b>
+(impedance ratio ~10⁴): steel and wood scatter as the same rigid surface —
+shape beautifully, material barely; moderate contrasts (foams, powders,
+liquids, gels) do separate. R12's "silhouettes + shadows + multi-bounce"
+stands. (ii) Solids carry shear and everything has loss, so the full state is
+κ, ρ, shear modulus, damping — one frequency and two angles cannot get all of
+it. This is where the comb becomes <b>colour</b>: a held part is a resonator
+and its ring-down spectrum (natural frequencies ~√(E/ρ)/L, damping) is a
+material signature even when its scattering strength is saturated — the
+chord list of <a href="replicator_scan.html">Scan §3</a>. <b>Geometry from
+the monochrome hologram; material from the angular split where contrast is
+moderate, and from the spectrum where it is not.</b> Material identification
+of rigid parts by ring-down in this chamber:
+<span class="chip c-open">OPEN</span>.</p>
+<p><b>The missing wedge.</b> Two plates cover both polar hemispheres; what
+they cannot see is the equatorial band — the side view. Perfect (λ/2)³ voxels
+need the full k-sphere; the six side panels are what fill it (R8's
+"high-angle coverage"; the photonic panel note of 2026-08-10). Stated as architecture: <b>the plates are the hologram; the
+panels close the k-sphere.</b> The κ/ρ separation above does not need the
+panels — the θ = 0, π extremes suffice. <span class="chip c-derived">DERIVED</span></p>
+
+<h2 id="s8">8 · Storage and the optical interface — light carries the picture</h2>
+<p>An analog holographic medium stores the interference of two coherent
+optical beams as a phase (index) grating and re-emits the object wave when
+re-illuminated by the reference. Our acoustic hologram is a 2-D complex map
+on each plate; the chain that keeps it analog end to end:</p>
+<ol>
+<li><b>Fibre carries a picture, not a signal.</b> Single-mode fibre carries
+one spatial mode — using it means digitising and rebuilding with a projector,
+which is the electronic route. Multimode fibre carries ≈(π·d·NA/λ)²/4 spatial
+modes: 400 µm core ≈ 7 × 10⁴, 1 mm core ≈ 4 × 10⁵ at visible — <b>one fat fibre
+holds a 200 kHz plate</b> (1.8 × 10⁵ pixels); a coherent bundle carries it
+unscrambled at lower count. Natural spine: one fibre per plate, or one per
+octave ring (§5.3). <span class="chip c-derived">DERIVED</span></li>
+<li><b>Record through the scramble.</b> A multimode fibre scrambles the
+picture by a fixed linear transform. Photorefractive holography is a
+phase-conjugate mirror: send the plate-side light backwards through the
+fibre into the medium, it stores the <em>scrambled</em> version; play it back
+into the same fibre and the fibre unscrambles it onto the plate. Fibre
+distortion cancels; the medium holds "the hologram as seen through that
+fibre" — the optical twin of "calibrate H once".
+<span class="chip c-measured">MEASURED</span> (image transmission through
+multimode fibre by phase conjugation, 1980s photorefractive art) ; in-machine
+<span class="chip c-open">OPEN</span></li>
+<li><b>Both directions on one fibre.</b> Playback: medium → fibre → light
+picture on the plate → the addressed aperture of §10 (electric carrier does
+the work). Scan: plate as receiver → piezo strain read optically
+(photoelastic/interferometric readout in the same film) → light picture back
+down the fibre → interferes with the reference → recorded. Storage output
+<em>is</em> transducer input; transducer output <em>is</em> storage input.
+No digitisation anywhere in the loop. Reciprocity again.
+<span class="chip c-open">OPEN</span> (each element measured art; the
+composed loop is design)</li>
+</ol>
+<p><b>Phase.</b> A hologram is amplitude and phase; phase carries the
+geometry, amplitude can be dropped (kinoform) or re-encoded as phase (detour
+phase) at modest fidelity cost — so a phase medium fits, and the
+quadrature-gated aperture of §10 supplies full complex control regardless.
+<b>Capacity:</b> Bragg-multiplexed thick media hold ~10¹²–10¹³ bits/cm³
+against ~3 × 10⁶ bits per 200 kHz frame — ~10⁵–10⁶ acoustic frames per cm³.
+Which medium (photorefractive vs the phase-change store) is owned by
+<a href="holographic_memory_and_compute_plan.html">Memory &amp; Compute</a>;
+this paper fixes only the interface: <b>optical, bidirectional,
+phase-conjugate, through multimode fibre</b>. <span class="chip c-derived">DERIVED</span></p>
+<div class="warn"><b>Risk register.</b> Multimode transmission matrices
+drift with bending and temperature; phase-conjugate recording cancels only
+what was there at record time. Mitigation: short rigid thermally-stable runs
+and continuous re-calibration by reciprocity (probe back through, re-record)
+— the same drift problem the acoustic H has (R6), solved the same way.
+Coherence: one laser feeds reference and object arms; path differences of
+metres need only a decent single-frequency source. Wavelength: photorefractives
+and a-Si photoconductors both prefer visible; fibre loss at visible over metres
+is negligible.</div>
+
+<h2 id="s9">9 · How the hologram is scored — the metric sheet</h2>
+<p>Degrees of freedom is the wrong headline. The scoreboard, all measurable
+on the bench, in the order they should appear on a spec sheet:</p>
+<div class="overflow"><table>
+<tr><th>metric</th><th>what it is</th><th>how measured</th><th>target / bound</th></tr>
+<tr><td><b>N<sub>eff</sub></b></td><td>effective rank of the calibrated H at operating SNR</td><td>SVD of the measured drive→field matrix (mic scan; LDV + refracto-vibrometry/schlieren where mics fail at 200 kHz)</td><td>ceiling N<sub>SBP</sub>; prototype ~10³–10⁴</td></tr>
+<tr><td><b>Resolution</b></td><td>focal FWHM vs λ/2; depth of field ~λ(F/D)²</td><td>scan through a commanded focus</td><td>→ λ/2 (0.85 mm @ 200 kHz); force pixel λ/4</td></tr>
+<tr><td><b>Fidelity</b></td><td>correlation / NMSE between target and achieved field over the working volume</td><td>full-volume scan vs compiler target</td><td>&gt; 0.9</td></tr>
+<tr><td><b>Contrast (PSLR)</b></td><td>peak vs mean background</td><td>same scan</td><td>&gt; 20 dB single focus; ~√N<sub>eff</sub> by time reversal</td></tr>
+<tr><td><b>Multiplex capacity</b></td><td>simultaneous foci at spec'd contrast</td><td>count while adding foci</td><td>the deliverable number; pressure ∝ 1/√N, force ∝ 1/N</td></tr>
+<tr><td><b>Power</b></td><td>kPa (or mN, trap stiffness N/m) per electrical watt; W<sub>ac</sub>/W<sub>el</sub></td><td>calibrated mic at focus / bead oscillation frequency</td><td>see rule below</td></tr>
+</table></div>
+<p><b>Power rule of thumb.</b> 1 W radiated over Ø400, focused to one λ/2
+spot at 40 kHz: aperture gain ~8 × 10³ → ~70 kW/m² → ~7–8 kPa (~172 dB) →
+radiation pressure ~200 Pa → ~0.15 mN on a 1 mm bead ≈ 15 mg-force.
+<b>≈ 1 W per site per ~10 mg</b>, and N sites cost N× (force splits 1/N).
+The one-line spec that fuses resolution and power: <em>"N simultaneous λ/2
+sites at ≥ X kPa within Y dB contrast, per watt"</em> — N<sub>eff</sub> from
+the SVD is the ceiling on N. <span class="chip c-derived">DERIVED</span>;
+all values ship MEASURED or not at all (register discipline of the phonons
+paper §6).</p>
+
+<h2 id="s10">10 · The two rungs — prototype and final form are one architecture</h2>
+<div class="overflow"><table>
+<tr><th></th><th>rung 1 — bench / RH-1 (now)</th><th>rung 2 — final form</th></tr>
+<tr><td>plates</td><td colspan="2"><b>same</b>: two ~1 mm borosilicate (or 2 mm Al) plates, aperiodic diffuse face (R4), free-ish edge, facing across the chamber; 3-plate stack per R9</td></tr>
+<tr><td>drive</td><td>3 (bench) → 6 (two plates) thin crystal-inertia-limited broadband elements per §4.1 (<code>0.5–1.5 mm</code> PZT / <code>1–3</code> composite / PMN-PT / AlN; <code>τ_inertia ≈ 90–285 ns</code>, optional replaceable thin-walled SLA chaotic scatterer faceplate with Ø12 mm bore); collocated <code>RP2350B</code> two-terminal differential H-bridges running <code>75 MSa/s</code> 1-bit <code>ΣΔ</code> + <code>XOR</code> lock-in against an uncoupled <code>C₀</code> reference on a shared <code>XIN + SYNC</code> spinal bus (<code>K-HAPTIC-PZT</code>; optional Card 2 <code>SoC-FPGA</code>) so TX/RX has zero dead time</td><td><b>optically-addressed piezo film</b>: continuous thin piezo layer with photoconductive (a-Si) electrode; global carriers on four interleaved comb electrodes at 0°/90°/180°/270°; light selects per pixel which phase and how much is gated → full complex control at ~10⁵ pixels, no per-pixel wiring; electricity is the muscle, light the data (R1). Photoconductor response µs → carriers to hundreds of kHz; pattern rate = writer frame rate (kHz), ample for hologram updates</td></tr>
+<tr><td>hologram source</td><td>swappable Brain Slot: measured H + <code>RP2350B</code> <code>C₀</code>-cancelled <code>HAPTIC</code> + <code>SMI</code> innovation bus (~128–256 complex axons, &lt; 1 kB/stroke) feeding Card 1 <code>5–10%</code> block-sparse complex <code>int8</code> <code>Cadence</code> (&lt; 60 kB SRAM, ~8–15 ms settle) or optional Card 2 <code>SoC-FPGA</code> (&lt; 5 µs settle); steady holding throttles to <code>P_hold = ω·E_stored/Q_cav</code></td><td>holographic medium read out as light, through multimode fibre, phase-conjugate (§8)</td></tr>
+<tr><td>N<sub>eff</sub></td><td>~10³ (plate) – ~10⁴ (chamber)</td><td>→ N<sub>SBP</sub>, diffraction-limited</td></tr>
+<tr><td>band</td><td>comb f₀ 25 kHz, harmonics to 8 (200 kHz), ordinary air</td><td>same in air; argon rung to 1 MHz (0.17 mm) — needs this rung's pixel density, since a one-pass field has no reverberation to lend a few channels</td></tr>
+<tr><td>storage</td><td>compact sparse <code>.pattern</code> chord lists (KB to sub-MB; Scan §3, §6)</td><td>optical holographic pages: (plate view) × (comb line), ~10⁵–10⁶ frames/cm³</td></tr>
+</table></div>
+<p>The prototype is not a detour: it is the final machine with a smaller
+brain. Every rung-1 measurement (H, N<sub>eff</sub>, FWHM, kPa/W) is a
+rung-2 number. The photoconductive-piezo film is the acoustic sibling of the
+photodiode–varactor tile of the panel note; both are the same principle —
+pre-built passive surface, structured addressing light, electrical carrier
+(R2's "programmable acoustic source aperture", made muscle-honest by gating
+rather than by photoacoustic conversion). <span class="chip c-open">OPEN</span>
+(optically-addressed piezo film: OASLM and photoconductor–piezo art
+<span class="chip c-measured">MEASURED</span> separately; the composed
+aperture is design)</p>
+
+<h2 id="s11">11 · Proposed rulings (candidate R17) and gates</h2>
+<p>For adoption; each is stated so it can be refused on its own.</p>
+<ol type="a">
+<li><b>Horn optional above coincidence.</b> The primary acoustic aperture is
+a thin (≈1 mm) low-loss plate driven above f<sub>c</sub>; R3's horn + graded
+gyroid front end is retained as a plan for thick-plate or sub-coincidence
+designs and for its EM GRIN duty, not as a precondition of the acoustic
+hologram. Amends R3 letter; keeps its rationale.</li>
+<li><b>Crystal-inertia-limited broadband elements, not Langevin dumbbells, for the hologram.</b> Thin (0.5–1.5 mm) bare/composite piezos sized below the λ<sub>B</sub> null (τ<sub>inertia</sub> = L/v<sub>D</sub> ≈ 90–285 ns) driven across both terminals by differential <code>HAPTIC</code> H-bridges with 10–50× electrical headroom; zero TX/RX switching dead time replaces mandatory 20 ms frame gating. Heavy Q ≈ 500 Langevin slugs only for narrowband CW power comparisons.</li>
+<li><b>Symmetric ring allowed, drive supplies asymmetry, face supplies
+diffuseness.</b> Confirms R4's 3-PZT OAM ring (or asymmetric 3-element
+diffuse port layout / hybrid chaotic scatterer faceplate); forbids centre
+drive and clamped rims.</li>
+<li><b>Design top of plan-A band = 200 kHz</b> within R11's 300 kHz
+envelope; argon fill added to R11's medium shelf as the named rung to 1 MHz,
+tied to rung 2.</li>
+<li><b>One comb, three octaves.</b> f₀ ≈ 25 kHz harmonic comb; octaves as
+scale classes; force sub-holograms add per comb line.</li>
+<li><b>Resolution register:</b> pressure λ/2, force pixel λ/4, depth c/2B,
+placement λ/100 (R12 unchanged; adds the force-pixel row).</li>
+<li><b>Two-polarisation, not monochrome:</b> κ/ρ separation by forward/back
+angle at one frequency; panels close the k-sphere (adds mechanism to R12's
+Δκ/Δρ identity and to R8's high-angle duty).</li>
+<li><b>Storage interface:</b> compact sparse <code>.pattern</code> chord lists
+on Rung 1; optical, bidirectional, phase-conjugate multimode fibre on Rung 2
+(medium owned by Memory &amp; Compute).</li>
+<li><b>Coupled-cavity chord lock and minimum holding power:</b> stationary
+payloads hold at zero mechanical work via coupled chamber eigen-chords;
+steady-state input throttles to <code>P_hold = ω·E_stored / Q_cav</code>
+when the <code>HAPTIC</code> velocity residual vanishes (dense-metal 3-D holding
+via dispersive multi-tone chords <span class="chip c-open">OPEN</span>).</li>
+<li><b>Scoreboard:</b> N<sub>eff</sub>, FWHM, fidelity, contrast, multiplex
+capacity, kPa/W — MEASURED or absent.</li>
+</ol>
+<h3>Gates (pre-register before any adoption)</h3>
+<ul>
+<li><b>G-A0 (sim, twin):</b> modal density and overlap of the 1 mm glass
+plate at 40–200 kHz; predicted N<sub>eff</sub> for K = 3 and 6, Q = 300 and
+high-Q, with and without chamber. Freeze numbers before the bench.</li>
+<li><b>G-A1 (bench, rung 1):</b> Chladni bench object → measure H, report
+N<sub>eff</sub>, FWHM at 40 and 100 kHz, kPa/W at a single focus; compare to
+G-A0. Also verify differential <code>HAPTIC</code> dielectric subtraction
+(<code>I_mot = I − C₀·dV/dt</code>) across both crystal pins during drive.</li>
+<li><b>G-A2 (comb):</b> drive the harmonic comb at force SPL; verify
+intermodulation stays on the comb (spectral sparsity) and that two-line force
+holograms add without cross-force.</li>
+<li><b>G-A3 (κ/ρ):</b> a moderate-contrast phantom (foam/gel) between two
+plates; recover κ and ρ maps from forward + back scatter at one line.</li>
+<li><b>G-A4 (fibre):</b> record a known plate pattern through a 1 mm-core
+multimode fibre by phase conjugation; play back; measure fidelity and drift
+over hours.</li>
+<li><b>G-A5 (film):</b> optically-addressed piezo film, ≥100 pixels,
+quadrature carriers; demonstrate per-pixel phase selection by light and a
+steered focus.</li>
+</ul>
+
+<h2 id="s12">12 · Register</h2>
+<p><span class="chip c-measured">MEASURED</span> — Kirchhoff completeness
+(optical holography), near-field acoustic holography, time-reversal
+focusing and reverberant plate localisation, TinyLev-class and resonant dense-metal
+cavities (Xie et al. 2006), Dosch–Inman two-terminal self-sensing piezoelectric
+bridges (1992), parametric arrays and harmonic imaging, ULM λ/100
+localisation, Born κ/ρ separation in fluid-coupled USCT, cochlear tonotopy,
+phase-conjugate transmission through multimode fibre, OASLM and
+photoconductor art. All as published art; none as in-chamber results.</p>
+<p><span class="chip c-derived">DERIVED</span> — the sample budget, crystal
+transit-inertia table (τ<sub>inertia</sub> = L/v<sub>D</sub>), coupled BVD
+two-terminal current subtraction, band ladder and absorption regimes (with T₆₀
+distinguished as passive cavity Q<sub>cav</sub> storage), the counting rule and
+its worked numbers, coincidence and the no-horn consequence, transducer sizing,
+the comb closure argument, the linear-field resolution bound and the force-pixel
+doubling, the two-polarisation reading, fibre mode counts and storage capacity,
+coupled-cavity minimum holding power <code>P_hold</code>, the power rule, and the
+metric sheet.</p>
+<p><span class="chip c-open">OPEN</span> — in-chamber force-pixel sharpening,
+3-D multi-tone chord-locked holding of dense metal spheres (e.g., steel) on thin
+dispersive plates, material ID of rigid parts by ring-down, the composed
+fibre/medium/film loop, the optically-addressed piezo aperture itself.
+Registered bets with the gates above as falsifiers.</p>
+<p>Nothing here upgrades a claim already tagged elsewhere; where this paper
+restates R11, R12, R4 or R6 it carries their chips unchanged. Instance
+recipes stay in <a href="desktop_replicator_hardware_spec.html">Hardware
+Spec</a> and <a href="replicator_mechanical_construction.html">Mechanical
+Construction</a>; the element physics in
+<a href="replicator_phonons.html">The Phonons</a>; the sensing ladder in
+<a href="replicator_scan.html">Scan</a>.</p>
+
+</body>
+</html>

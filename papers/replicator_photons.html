@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Photons — light as address, measurement, energy, and the fingertips</title>
+<meta name="author" content="Etherworks">
 <style>
   :root{
     --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
@@ -67,13 +68,14 @@ software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
 instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a> /
 <a href="replicator_mechanical_construction.html">Mechanical Construction</a></div>
 
+<div class="brand" style="font:600 11.5px/1.2 -apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#555;margin:0 0 6px;">Etherworks</div>
 <h1>The Photons — light as address, measurement, energy, and the fingertips</h1>
 <p class="sub">The machine's information carrier, microwave through optical,
 described at the level of its elements and verbs: the radiating face, the
 optical stem, the fingertips (optical placement at the finest scale),
 the sensing ladder, the topological alphabet, and the energy
 loop. Size-free — the physics privileges ratios, not dimensions.</p>
-<p class="meta">draft v1.0 · 2026-08-01 · extracted from
+<p class="meta">draft v1.1 · 2026-11-17 (previous v1.0 · 2026-08-01; revised optical mosquito eye &amp; SMI sensing) · extracted from
 replicator_mechanical_construction.html / desktop_replicator_hardware_spec.html
 / replicator_field_compiler.html / REPLICATOR_CAP_STACK_RULINGS_2026-07-30.
 <b>Single-home rule</b>: this paper is now the canonical home for the photon
@@ -85,48 +87,35 @@ those papers. The complete degrees-of-freedom inventory lives in
 duplicated.</p>
 
 <h2 id="s1">1 · Light as address and measure — the division of labor</h2>
-<p>Ruling R1: <b>light addresses, measures, and calibrates; sound and
-induction exert force and heat</b>; electrons only amplify at the boundary
-edge and carry DC power — never information. Not a preference: every
-cross-carrier coupling in the volume is parametric, with negligible energy
-exchange
-(<a href="replicator_field_compiler.html">Field Compiler §17.6</a> bound i),
-so light <em>cannot</em> be muscle. Its whole value is being the machine's
-independent information plane. <span class="chip c-derived">DERIVED</span>
-One refinement (R1-b, adopted 2026-08-01): <b>sound is the hands; light is
-the fingertips</b> — light's <em>direct</em> radiation force is the
-precision-placement channel at the smallest payloads (§3b). A second
-refinement (R1-c, adopted 2026-08-03): <b>light and induction are one
-connection, two regimes, not two different couplings that happen to both
-be electromagnetic.</b> Both are realizations of the same forced u(1) gauge
-connection (<a href="../../papers/magnetism.html">Magnetism</a> §§2–6); what differs is
-whether the connection's curvature stays bound near the source or detaches
-and propagates. Kept close to a conductor (within roughly a wavelength) it
-never fully radiates — it drives free-charge motion directly, a
-transformer-like power-transfer mechanism, which is why induction is
-strong and short-range. Let go, it propagates at any range but only ever
-carries momentum p&nbsp;=&nbsp;E/c — always weak, which is why light is
-fast and universal but can only ever address. R1's muscle/address split is
-therefore not an engineering convention laid over "it's all EM" — it is
-the physical content of the radiative/non-radiative distinction. The
-hardware already found this before the theory did: R5's contrawound
-winding pair's sum mode (confined, non-radiating) and difference mode
-(fast ring dipole, radiating) are the near- and far-field regimes of the
-<em>same</em> connection on the <em>same</em> coil, not two different
-antennas. <span class="chip c-derived">DERIVED</span></p>
-<p>What the photon brings that the phonon cannot: speed (ns propagation
-across the volume, so verification runs ~10⁴× faster than the acoustic
-chords it verifies — "acoustic builds, EM verifies"), bandwidth (six decades
-of frequency, microwave through optical, on one carrier family),
-penetration without a medium, a genuine polarisation pair in free space,
-and sensing precision that is SNR-limited rather than λ-limited. What it
-gives up: momentum — E/c is 10⁵–10⁶× less force per watt than sound's E/v,
-the sibling paper's whole reason to exist. The full asymmetry
-table is <a href="the_two_carriers.html">The Two Carriers §4–§5</a>; the
-carriers' in-flight interactions (sound steers light, light reads sound,
-light writes sound) are owned by
-<a href="the_two_carriers.html">The Two Carriers §6b</a> (software-facing
-copy: Field Compiler §17.6).</p>
+<p>The historical R1 allocation prioritized light for addressing, measurement
+and calibration, with acoustics and induction supplying bulk force and heat.
+The current <a href="../guides/optics.html">optics and metamaterials guide</a>
+places optical manipulation, energy delivery and readout within the coordinated-field
+architecture. The division of labor follows the payload and process.</p>
+<p>R1-b (2026-08-01), “sound is the hands; light is the fingertips,” already
+introduced direct optical forces for small-payload placement (§3b). A bound on
+parametric cross-carrier energy exchange does not bound direct optical
+absorption or optical forces on matter. Freely propagating light in vacuum
+carries momentum p&nbsp;=&nbsp;E/c; its direct momentum transfer per unit power
+is small, while absorption can still deliver substantial heat and optical
+gradients can trap suitable small objects. Those are distinct useful interactions.</p>
+<p>R1-c (2026-08-03) connects light and induction through electromagnetic
+physics. Near-field inductive coupling and radiative illumination use different
+source and material responses, so they receive separate engineering models.
+The proposed contrawound pair's sum and difference modes remain candidates for
+field confinement and radiation; their actual response requires the loaded
+source geometry, current distribution, frequency and workpiece coupling.</p>
+<p>Electromagnetic waves offer propagation through vacuum, broad operating
+bands and polarization/spectral control. Across the same work volume their
+propagation delay is much shorter than sound's; detector integration, acquisition
+and reconstruction determine the actual feedback latency. Position estimation
+can reach below a wavelength when the calibrated response and signal-to-noise
+permit it, while resolving distinct features also depends on aperture, bandwidth
+and the measurement model. Compare each carrier on the required material
+interaction and useful force or process outcome per input watt. The broader
+inventory is <a href="the_two_carriers.html">The Two Carriers §4–§5</a>;
+light–sound interactions are developed in its §6b and
+<a href="replicator_field_compiler.html">Field Compiler §17.6</a>.</p>
 
 <h2 id="s2">2 · The EM radiating face</h2>
 <p>The photon's boundary element is a flat printed disc that behaves like a
@@ -232,7 +221,7 @@ one alphabet, six decades of frequency, both directions.</p>
 <ul>
 <li><b>TX — flying doughnuts, holographically.</b>
 <span class="chip c-measured">MEASURED</span>: optical toroidal pulses by
-metasurface converter (Zdagkas et al., <i>Nat. Photonics</i> 16:512, 2022)
+metasurface converter (Zdagkas et al., <i>Nat. Photonics</i> 16:523–528, 2022)
 and by pulse shaper × segmented waveplate with <em>no metasurface needed</em>
 (Vignjevic et al., arXiv:2509.10924 — few-cycle FDs). Holographic synthesis
 = pulse shaper (spectral DOF) × wavefront/polarization converter (spatial
@@ -273,6 +262,30 @@ photoacoustics, single-pixel imaging). And light <em>reads</em> sound
 ports and becomes photographed — an independent calibration path. Both
 verbs owned in detail by
 <a href="replicator_field_compiler.html">Field Compiler §17.6</a>.</li>
+<li><b>Optical "mosquito eye" — diffractive facets plus laser Self-Mixing Interferometry (<code>SMI</code>).</b>
+Instead of slow CMOS cameras or external Mach–Zehnder reference arms,
+passive replicated diffractive metasurface facets
+(<span class="chip c-open">OPEN</span> for this chamber) pair with 3-pin
+TO-can laser diodes operating in optical feedback interferometry
+(<span class="chip c-measured">MEASURED</span> SMI ultrasonic &amp; diode
+tomography art: Giuliani et al., <i>J. Opt. A</i> 4:S283, 2002,
+<code>10.1088/1464-4258/4/6/371</code>; Bertling et al., <i>Opt. Express</i>
+22:30346, 2014, <code>10.1364/OE.22.030346</code>) to read both DC
+Beer–Lambert matter shadow and <code>24–200 kHz</code> acoustic air phase
+(<code>Δφ(t) = k_L ((n₀−1)/(γ P₀)) ∫ p dx</code>) in one single-pixel chain.
+<span class="chip c-derived">DERIVED</span> audit: weak feedback across
+50&nbsp;mm of air shifts laser terminal voltage by only
+<code>ΔV ≈ 50&nbsp;µV–1&nbsp;mV</code> per <code>2π</code> fringe
+(<code>~5–100&nbsp;µV</code> at <code>0.1&nbsp;rad</code>, corresponding to
+<code>~0.1&nbsp;ps</code> Hi-Z slew change vs. <code>6.67&nbsp;ns</code>
+PIO ticks and <code>~200&nbsp;mV</code> GPIO hysteresis), so bare 2-pin
+GPIO driving fails; instead, the diode's built-in monitor photodiode (or
+AC-coupled anode) feeds <code>1</code> SOT-23 op-amp (<code>×200</code> AC
+gain) + a <code>75&nbsp;MSa/s</code> 1-bit sigma-delta comparator into
+<code>RP2350B</code> PIO locked onto the shared acoustic
+<code>XIN + SYNC</code> clock (<code>~0.1°</code> at 40&nbsp;kHz; bench coupon
+<code>K-MOSQUITO-SMI</code>;
+<a href="../docs/content/compute-control.md#optical-mosquito-eye-diffractive-facets-and-self-mixing-interferometry">Compute, sensing and control</a>).</li>
 <li><span class="chip c-open">OPEN</span>: <b>anapole spectroscopy</b>
 (toroidal pulses engage non-radiating charge-current configurations
 ordinary light cannot — a candidate composition channel); and

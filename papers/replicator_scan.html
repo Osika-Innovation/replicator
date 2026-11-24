@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scan — how the machine sees</title>
+<meta name="author" content="Etherworks">
 <style>
   :root{
     --ink:#1c1c1c; --paper:#fbfaf6; --page:#ece8df;
@@ -68,12 +69,13 @@ topology: <a href="replicator_architecture.html">Architecture</a> ·
 software: <a href="replicator_field_compiler.html">Field Compiler</a> ·
 instance: <a href="desktop_replicator_hardware_spec.html">Hardware Spec</a></div>
 
+<div class="brand" style="font:600 11.5px/1.2 -apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#555;margin:0 0 6px;">Etherworks</div>
 <h1>Scan — how the machine sees</h1>
 <p class="sub">The scan-mode narrative: what happens, step by step, when
 the machine looks at an object — first in plain words, then in the terms
 the engineering uses. Size-free — the physics privileges ratios, not
 dimensions.</p>
-<p class="meta">draft v1.0 · 2026-08-01 · mode paper — owns the scan-mode
+<p class="meta">draft v1.1 · 2026-11-17 (previous v1.0 · 2026-08-01) · mode paper — owns the scan-mode
 narrative; element detail lives in the carrier papers, solver detail in the
 Field Compiler. Sibling mode papers:
 <a href="replicator_assemble.html">Assemble</a> and
@@ -166,17 +168,27 @@ imaging on arbitrary objects — design until the bench signs it
 
 <h2 id="s2">2 · The probes — what is actually sent in</h2>
 
-<h3>2a · The acoustic call</h3>
-<p>The sound side asks in <b>coded chirps</b> — brief multi-frequency
-bursts at milliwatt level, low enough that nothing in the volume moves.
-One gate speaks, all ports listen; then the next gate, or a coded
-combination. The v1 schedule is one-gate-at-a-time; from milestone M5, a
-<b>Welch–Costas schedule</b> — because 13 is prime with primitive root 2,
-a perfect ambiguity-free hopping schedule exists for exactly 12 gates
-(<code>slot k → gate 2ᵏ mod 13</code>) — lets all gates interrogate
-simultaneously without colliding. Owner:
-<a href="replicator_field_compiler.html">Field Compiler §15</a>; the
-acoustic elements (horns, meshes, drive laws) are
+<h3>2a · The acoustic call — chirped tomography and simultaneous HAPTIC self-sensing</h3>
+<p>The sound side operates in two complementary sensing regimes depending on
+whether it is mapping an empty/static chamber or tracking a driven chord:</p>
+<ul>
+<li><b>Baseline tomography (coded chirps):</b> brief multi-frequency bursts at
+milliwatt level, low enough that nothing in the volume moves. One gate speaks,
+all ports listen; or from milestone M5, a <b>Welch–Costas schedule</b> —
+because 13 is prime with primitive root 2, a perfect ambiguity-free hopping
+schedule exists for 12 gates (<code>slot k → gate 2ᵏ mod 13</code>) so gates
+interrogate without colliding.</li>
+<li><b>Continuous closed-loop self-sensing (differential piezo
+<code>HAPTIC</code>):</b> during continuous multi-tone holding and fabrication,
+subtracting the known dielectric current <code>C₀·dV/dt</code> across both
+terminals of each thin broadband piezoelectric element recovers motional
+velocity <code>ẋ(t) = (I − C₀·dV/dt)/Θ</code> and returning cavity echo
+<code>F_echo(t)</code> simultaneously during TX with <b>zero switching dead
+time</b> and no mandatory 20 ms blind frame
+(<a href="replicator_acoustic_hologram.html#s4">Acoustic Hologram §4.1</a>).</li>
+</ul>
+<p>Software owner:
+<a href="replicator_field_compiler.html">Field Compiler §15</a>; element physics:
 <a href="replicator_phonons.html">The Phonons</a>.</p>
 
 <h3>2b · The EM call — the flying doughnuts</h3>
@@ -189,7 +201,7 @@ design sketch:</p>
 <ul>
 <li><b>They exist and can be launched.</b>
 <span class="chip c-measured">MEASURED</span>: optical toroidal pulses by
-metasurface converter (Zdagkas et al., <i>Nat. Photonics</i> 16:512,
+metasurface converter (Zdagkas et al., <i>Nat. Photonics</i> 16:523–528,
 2022), and by pulse shaper × segmented waveplate with no metasurface
 needed (Vignjevic et al., arXiv:2509.10924); microwave toroidal and
 toroidal-helical pulses from launcher structures of the machine's own
@@ -237,7 +249,15 @@ a laser pulse absorbed on any visible surface, including the workpiece,
 launches ultrasound from that spot with nothing moving — and
 <em>reads</em> sound (schlieren/vibrometry). Owners:
 <a href="the_two_carriers.html">The Two Carriers §6b</a>,
-<a href="replicator_field_compiler.html">Field Compiler §17.6</a>.</p>
+<a href="replicator_field_compiler.html">Field Compiler §17.6</a>.
+In the Rung 1 "optical mosquito eye" architecture, passive diffractive
+metasurface facets and 3-pin TO-can laser diodes performing Self-Mixing
+Interferometry (<code>SMI</code>; built-in monitor photodiode or AC-coupled
+anode → SOT-23 <code>×200</code> AC stage → <code>75 MSa/s</code> 1-bit
+<code>ΣΔ</code> PIO locked on <code>XIN + SYNC</code>) read DC Beer–Lambert
+matter occlusion and <code>24–200 kHz</code> air-phase sound simultaneously
+with zero cameras or beam splitters (<a href="replicator_photons.html#s3">The Photons §3</a>;
+<a href="../docs/content/compute-control.md#optical-mosquito-eye-diffractive-facets-and-self-mixing-interferometry">Compute, sensing and control</a>).</p>
 
 <h2 id="s3">3 · Call-and-response — the formal object a scan builds</h2>
 <p>Formally, a scan measures the object's <b>scattering matrix S(f)</b>:
@@ -268,8 +288,10 @@ this more than a file format is
 <a href="replicator_principles.html">Principles §6</a>: scan and build are
 one operation run in opposite directions — the same chord list is at once
 the scan's output, the builder's drive recipe, and the build's acceptance
-criterion, met when the workpiece rings true. Milliwatt listening is
-always on, so every instant of fabrication is also a scan; and the EM
+criterion, met when the workpiece rings true. Simultaneous two-terminal
+piezo <code>HAPTIC</code> subtraction
+(<code>I_mot = I − C₀·dV/dt = Θ·ẋ</code>) tracks motional chord residuals
+continuously during harmonic drive with no mandatory blind TX/RX gap, and the EM
 octaves ring up ~10⁴× faster than the acoustic chords they check, so
 verification is effectively continuous: <b>acoustic builds, EM
 verifies</b>.</p>
@@ -362,11 +384,14 @@ working question</td>
 discrete scatterers is far easier than classical imaging, with measured
 art (ultrasound localization microscopy) two orders below the
 wavelength.</p>
-<blockquote><b>TX/RX conjugacy — the identity that closes the loop.</b> A
-phase-kept scan <em>is</em> hologram acquisition; the same recording,
-replayed conjugate, is a trap around the thing imaged (time reversal). And
-the same Δκ/Δρ contrast vector appears in Born scattering (what the
-machine <em>senses</em>) and in the Gor'kov force (what it
+<blockquote><b>Simultaneous TX/RX conjugacy — the identity that closes the loop.</b> A
+phase-kept scan <em>is</em> hologram acquisition, and through two-terminal
+HAPTIC bridge subtraction (<code>&Theta; x&#775; = I &minus; C<sub>0</sub> dV/dt</code>)
+the transducer measures that returning echo while continuously driving the
+field — no blind TX/RX switching gap separates sensing from actuation. The same
+recording, replayed conjugate, is a trap around the thing imaged (time
+reversal), and the same Δκ/Δρ contrast vector appears in Born scattering (what
+the machine <em>senses</em>) and in the Gor'kov force (what it
 <em>grips</em>). <b>The machine sees matter in the terms by which it holds
 it</b> — §0's slogan, now as an identity.</blockquote>
 

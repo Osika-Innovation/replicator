@@ -1,0 +1,809 @@
+{
+  "schema_version": "1.0",
+  "synced_at": "2026-11-22",
+  "constants": {
+    "architecture_status": {
+      "active_prototype": "Desktop Replicator (Rev F)",
+      "active_cad_dir": "cad/desktop-replicator/",
+      "active_twin_cmd": "fieldc desktop",
+      "active_presets": [
+        "desktop-200mm",
+        "boro12"
+      ],
+      "calibration_method": "in_chamber_spheres_and_crucibles",
+      "disposable_bench_coupons": false,
+      "retired_historic": [
+        "P0 (4x4 Murata 40 kHz cans, cad/p0-platform/, twin/Firmware/p0/)",
+        "HA-0 Rev C bored Ø150mm wafers and disposable coupons (cad/ha0-benchtop/coupons/)",
+        "P-JOIN (manual 405 nm UV adhesive bead gluing)"
+      ],
+      "ultimate_horizon": [
+        "Coordinated 3-field (acoustic, optical, electromagnetic) unified 3D work volume",
+        "~1e5-pixel optically-gated continuous boundary apertures",
+        "Coherent EML optical cavities, reciprocal Sb2S3/Sb2Se3 PCM holograms, and excitable soft-matter wave substrates"
+      ]
+    },
+    "clock_and_bus": {
+      "xin_hz": 12000000,
+      "sys_clk_hz": 150000000,
+      "pio_tick_ns": 6.6667,
+      "pio_tick_phase_deg_at_160khz": 0.384,
+      "coherent_comb_window_us": 62.5,
+      "transmit_ring_us": 125.0,
+      "capture_burst_us": 500.0,
+      "sync_skew_max_ns": 2.0,
+      "spinal_bus_mbps_range": [
+        50,
+        150
+      ],
+      "pcb_count": 3,
+      "mcu_count_full_machine": 6,
+      "pcb_roles": [
+        "1x modular base backplane PCB (Ø188 mm) + horizontal M.2 Key-E compute card",
+        "2x identical HAPTIC lamina PCBs (Ø172 mm)"
+      ]
+    },
+    "haptic_pzt": {
+      "sigma_delta_fs_hz": 75000000,
+      "ultrasonic_bw_hz": 200000,
+      "osr": 187.5,
+      "enob_range": [
+        12,
+        16
+      ],
+      "dynamic_range_db_range": [
+        74,
+        96
+      ],
+      "c0_nominal_pf": 4450.0,
+      "c0_boro12_pf": 171.0,
+      "c0_tempco_pct_per_c": 0.3,
+      "max_trace_cap_pf": 2.0,
+      "hbridge_driver_mpn": "IXDD604SITR",
+      "bridge_rail_v": 18.0,
+      "hbridge_driver_v_max": 35.0,
+      "hbridge_driver_has_tristate_pin": true,
+      "max_drive_vrms": 16.2,
+      "max_drive_vrms_5tone_per_tone": 7.2,
+      "max_drive_v_peak_single_tone": 22.92,
+      "comparator_mpn": "TLV3501",
+      "clamp_diode_mpn": "BAT54S",
+      "sfdr_gate_min_db": 72.0,
+      "ideal_1bit_sqnr_200khz_db": 70.8,
+      "sfdr_simulated_dbc": 60.9,
+      "ad7380_fallback_triggered": true,
+      "adc_fallback_mpn": "AD7380",
+      "drive_authority_pa_per_volt": [
+        2.97,
+        1.5,
+        2.79,
+        6.32,
+        6.11
+      ],
+      "cavity_walkoff_gain_range": [
+        1.02,
+        1.17
+      ],
+      "first_particle": "eps_foam_30",
+      "first_test_particle": "eps_foam_30"
+    },
+    "mosquito_smi": {
+      "total_ommatidia": 24,
+      "window_ommatidia": 24,
+      "bore_ommatidia": 0,
+      "window_azimuth_deg": 116.0,
+      "retro_azimuth_deg": 64.0,
+      "rear_pinna_rays": 0,
+      "laser_wavelength_nm": 650.0,
+      "laser_package": "3-pin TO-46 / TO-56 with monitor photodiode",
+      "tia_mpn": "OPA320",
+      "tia_ac_gain": 200,
+      "comparator_mpn": "TLV3501",
+      "lightread_coef_rad_per_pa_m": 0.01889
+    },
+    "cadence_brain": {
+      "hermitian_reciprocity": true,
+      "spectral_norm_max": 1.0,
+      "rp2350_sram_total_kb": 520,
+      "cadence_sparse_max_kb": 60.0,
+      "target_block_sparsity_range": [
+        0.05,
+        0.1
+      ],
+      "rp2350_settle_target_ms_range": [
+        8.0,
+        15.0
+      ],
+      "substrates": [
+        "ideal_fp32",
+        "rp2350_ganglia_q8",
+        "fpga_int8_sparse",
+        "optical_pcm_analog"
+      ]
+    },
+    "desktop_geometry": {
+      "envelope_mm": [
+        313.0,
+        294.0,
+        384.0
+      ],
+      "wafer_material": "Schott Borofloat 33",
+      "wafer_diameter_mm": 200.0,
+      "wafer_thickness_mm": 1.0,
+      "clear_glass_diameter_mm": 179.6,
+      "bores": 0,
+      "gap_mm": 240.0,
+      "ports_per_plate": 6,
+      "pzt_diameter_mm": 16.0,
+      "pzt_thickness_mm": 0.4,
+      "comb_tones_hz": [
+        32000,
+        64000,
+        96000,
+        128000,
+        160000
+      ],
+      "golomb_band_khz": [
+        20.0,
+        198.0
+      ],
+      "in_chamber_crucibles": [
+        "powder",
+        "liquid",
+        "seed"
+      ],
+      "moth_absorber_thickness_mm": 1.2,
+      "pinna_facets": 48,
+      "pinna_arc_deg": [
+        133.0,
+        227.0
+      ],
+      "boro12_reducer_wafer_mm": 50.8,
+      "boro12_gap_mm": 48.0,
+      "boro12_pzt_diameter_mm": 3.2,
+      "boro12_pzt_thickness_mm": 0.6,
+      "boro12_comb_tones_hz": [
+        40000,
+        80000,
+        120000,
+        160000,
+        200000
+      ],
+      "enclosure_rev": "F",
+      "door_half_sweep_deg": 78.0,
+      "door_opening_chord_mm": 204.2,
+      "clear_view_deg": 214.4,
+      "nominal_mass_kg": 14.1,
+      "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Rev F2 (#37/#41, 2026-11-22) closes the chamber with a stock DURAN O250x5 borosilicate cylinder on the lifting head, placing the lateral glass boundary at r=120 mm (ID 240 mm, OD 250 mm, 5 mm wall).",
+      "enclosure_minor_rev": 0,
+      "chamber_glass": true,
+      "retro_post_opening_chord_mm": 191.5,
+      "smi_ray_dz_mm": [
+        -24.0,
+        -8.0,
+        8.0,
+        24.0
+      ],
+      "chamber_wall": "glass cylinder on lifting head (Rev F, operator 2026-11-18); --no-lift = open front, --glass = rotating door",
+      "lift_stroke_mm": 150.0,
+      "lift_moving_mass_kg": 6.97,
+      "envelope_open_height_mm": 534.0,
+      "glass_cylinder_id_od_mm": [
+        240.0,
+        250.0
+      ],
+      "retro_film_radius_mm": 125.05,
+      "air_temp_tolerance_k": 0.1,
+      "calibration_phase_tol_deg": 5.0,
+      "calibration_gain_tol_pct": 2.0,
+      "chamber_rayleigh_per_k_240mm": 1300000.0,
+      "plate_bending_stress_limit_mpa": 10.0,
+      "plate_characteristic_strength_mpa": 25.0,
+      "chamber_gain_closed_nominal": [
+        2.48,
+        1.6,
+        1.47,
+        1.32,
+        1.85
+      ],
+      "chamber_gain_closed_gap_median": [
+        2.4,
+        1.6,
+        1.5,
+        1.3,
+        1.8
+      ]
+    },
+    "dissolve_and_toroidal": {
+      "matter_state_fields": [
+        "rho_density",
+        "b_bond_rigidity"
+      ],
+      "cpa_remove_law": "min_singular_vector_S_omega_n",
+      "forbid_conjugate_remove_hack": true,
+      "forbid_negative_intensity_hack": true,
+      "pulse_modes": [
+        "cw_harmonic_comb",
+        "fink_time_reversal_shocklet",
+        "space_time_toroidal_flying_doughnut"
+      ],
+      "borofloat_chiral_spiral_trace_thickness_um": 2.0,
+      "borofloat_chiral_spiral_arms": 12,
+      "compact_toroid_collar_id_mm_range": [
+        15.0,
+        40.0
+      ],
+      "electroplastic_energy_reduction_vs_melt_x": [
+        3.0,
+        4.0
+      ],
+      "anapole_condition": "p = i * k * T"
+    },
+    "electrostatics_and_matter_loop": {
+      "transport_charge_rule": "neutral_bound_counterparts_only",
+      "forbid_unneutralized_ion_bulk_transport": true,
+      "borosilicate_rel_permittivity": 4.6,
+      "eps_r0p5mm_weight_nn": 154.1,
+      "eps_r0p5mm_image_clamp_1g_pc": 5.16,
+      "ma2_bjerknes_contact_160khz_nn": 11.83,
+      "ma2_coulomb_cancel_pc": 1.15,
+      "max_bead_charge_pc": 0.2,
+      "wafer_bleed_sheet_resistance_max_ohm_sq": 1000000000.0,
+      "chamber_ambient_rh_pct_range": [
+        45.0,
+        55.0
+      ]
+    }
+  },
+  "insights": {
+    "implemented_surfaces": 151,
+    "total_surfaces": 151,
+    "items": [
+      {
+        "id": "INS-01",
+        "summary": "Each piezo source is read on its own two wires by a 1-bit converter at 75 million samples per second, with a spare disc cancelling thermal drift.",
+        "effect": "Removes separate microphones, precision converters and a listening interval.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-02",
+        "summary": "A ring of 24 laser diodes each acts as its own detector, giving a shadow image and an optical reading of the sound field.",
+        "effect": "Removes cameras and beam splitters, and needs no hole in the plates.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-03",
+        "summary": "One 12 MHz clock and one start-of-frame signal are shared by every board.",
+        "effect": "All drive and sensor channels share a time base without per-board calibration.",
+        "evidence": "DERIVED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-04",
+        "summary": "The on-board pattern network must fit in under 60 kB by keeping 5 to 10 % of its weights.",
+        "effect": "Lets a microcontroller choose drive patterns in milliseconds instead of a workstation.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-05",
+        "summary": "The plates are undrilled 200 mm wafers, and the plate model must agree with a three-dimensional solid finite-element model before it is trusted.",
+        "effect": "Removes the central hole and its fracture risk; anchors planning to a solid model.",
+        "evidence": "SIMULATED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-06",
+        "summary": "Simulation and twin must handle all drive tones and the same pattern file format.",
+        "effect": "Stops calibration and planning from silently using only the first tone.",
+        "evidence": "DERIVED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-07",
+        "summary": "Scanning uses mostly steady tones with short chirps, an absorbing backing and a faceted rear reflector, as echolocating animals do.",
+        "effect": "Improves range resolution and suppresses back-wall echoes without extra hardware.",
+        "evidence": "SIMULATED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-08",
+        "summary": "Feedstock sits in open crucibles inside the one chamber, and material is joined by the fields rather than by hand-applied adhesive.",
+        "effect": "Removes external vials, a second chamber and a person in the joining loop.",
+        "evidence": "OPEN",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-09",
+        "summary": "A flat coil can excite a conductive plate without contact, but coils act only within about one coil radius.",
+        "effect": "Keeps coil work to a plate diagnostic and off the critical path.",
+        "evidence": "DERIVED",
+        "implemented": 2,
+        "surfaces": 2
+      },
+      {
+        "id": "INS-10",
+        "summary": "Microcontrollers, comparators and discrete lasers are prototype scaffolding, kept separate from the long-term wave-computing design.",
+        "effect": "Prevents the first machine's electronics from being mistaken for the architecture.",
+        "evidence": "DERIVED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-11",
+        "summary": "Reversing a holding pattern does not remove material. Removal needs a bond state, energy absorbed at the joint, and transport back to a crucible.",
+        "effect": "Replaces two physically wrong shortcuts that are still in the code.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-12",
+        "summary": "Short doughnut-shaped pulses are a candidate for tagging and cold debonding; a spiral conductor can sit on an undrilled wafer.",
+        "effect": "Opens pulsed operation; every present solver is continuous-wave only.",
+        "evidence": "OPEN",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-13",
+        "summary": "Large coils across the chamber are ruled out; a small pulsed ring coil at a crucible induces an axial electric field with the magnetic field confined.",
+        "effect": "A candidate route to soften or break down material during recovery.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-14",
+        "summary": "The enclosure became a rounded-square body with a rear tower that carries structure, cabling and cooling air outside the chamber.",
+        "effect": "Makes the machine loadable and serviceable.",
+        "evidence": "DERIVED",
+        "implemented": 6,
+        "surfaces": 6
+      },
+      {
+        "id": "INS-15",
+        "summary": "Air heated from below overturns, so the chamber floor must not be warmer than its ceiling.",
+        "effect": "Avoids buoyant air motion that would drag on levitated material.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-16",
+        "summary": "The handbook quotes shared engineering constants by reference and its build fails when they drift or when a retired design is described as current.",
+        "effect": "Keeps the public explanation in step with the design.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-17",
+        "summary": "Planning assumes up to 40 V per source while the drive stage as specified delivers about 11 V; force scales with voltage squared.",
+        "effect": "Planned forces are roughly ten times optimistic until the two agree.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-18",
+        "summary": "The receive band, converter resolution and timing figures were stated for 40 kHz and a 150 kHz band, but the tones reach 160 and 200 kHz.",
+        "effect": "The 72 dB converter gate has less margin than stated, and may have none.",
+        "evidence": "DERIVED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-19",
+        "summary": "The plate-response file samples each plate far more coarsely than half a wavelength, and the piezo disc is slightly too large for the top two tones.",
+        "effect": "Fields computed from the present file are aliased; the disc partly cancels itself.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-20",
+        "summary": "Air temperature must be known to about a tenth of a kelvin, because the sound path changes by about 70° of phase per kelvin at the top tone.",
+        "effect": "Adds temperature sensing and recalibration to the design; none is in the parts list yet.",
+        "evidence": "SIMULATED",
+        "implemented": 5,
+        "surfaces": 5
+      },
+      {
+        "id": "INS-21",
+        "summary": "Twelve sources and five tones give 60 independent controls; unwanted traps and uneven filling are not yet checked for this machine.",
+        "effect": "Powder handling cannot be claimed from a few-source chamber without that check.",
+        "evidence": "SIMULATED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-22",
+        "summary": "The chamber is now open: there is no draught shield, no enclosure around the laser beams and no interlock, and the wall affects the acoustics.",
+        "effect": "Safety and acoustic consequences of the open chamber must be settled before operation.",
+        "evidence": "OPEN",
+        "implemented": 5,
+        "surfaces": 5
+      },
+      {
+        "id": "INS-23",
+        "summary": "Calibration in the chamber needs a phase reference between the plates, several probe points, an initial frequency sweep and gradual moves.",
+        "effect": "Prevents a calibration that looks accurate and still loses the object.",
+        "evidence": "SIMULATED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-24",
+        "summary": "Sound cannot supply the heat to join grains; joining needs a separate addressed energy step, and placing one bead beside another is unsolved.",
+        "effect": "The assembly loop has no adhesive-free joining recipe yet.",
+        "evidence": "SIMULATED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-25",
+        "summary": "A pulsed ring coil acts only on material that forms a closed conducting path through it, and induction lifts millimetre shot, not powder.",
+        "effect": "Bounds what the small coil can be expected to do.",
+        "evidence": "DERIVED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-26",
+        "summary": "Continuous software demodulation of every channel does not fit the controller, and the sparse network has not yet been shown at the target size.",
+        "effect": "Firmware needs burst capture; the memory target needs evidence.",
+        "evidence": "OPEN",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-27",
+        "summary": "Nothing is frozen, no acceptance procedure exists for this machine, the first self-made upgrade is unnamed, and several findings cite the wrong sources.",
+        "effect": "Lists what must exist before hardware can be released.",
+        "evidence": "DOCUMENTED",
+        "implemented": 5,
+        "surfaces": 5
+      },
+      {
+        "id": "INS-28",
+        "summary": "A cycle-by-cycle simulation of the one-bit receive converter reaches about 61 dB on the six-tone test, against a 72 dB requirement. No variant of the simple circuit can pass. A faint echo is still recovered when the firmware filters before it correlates.",
+        "effect": "Triggers the written fallback to a conventional converter chip, and requires a circuit diagram that does not yet exist.",
+        "evidence": "SIMULATED",
+        "implemented": 6,
+        "surfaces": 6
+      },
+      {
+        "id": "INS-29",
+        "summary": "A three-dimensional solid model shows the glass plates ring instead of damping out, so the plate-response file shipped with the design does not match the solid model at all. The response cannot be predicted in advance and must be measured in the chamber for each plate. Holding a solid polystyrene bead would need roughly 900 V per source at the best tone; the drive stage supplies about 15 V.",
+        "effect": "Makes drive strength the limiting factor for levitation, and makes in-chamber calibration mandatory.",
+        "evidence": "SIMULATED",
+        "implemented": 8,
+        "surfaces": 8
+      },
+      {
+        "id": "INS-30",
+        "summary": "The pressure a glass plate can deliver is limited by bending stress in the glass, not by drive voltage. Holding solid polystyrene would stress the plates beyond the assumed safe limit whatever piezo is used. A foam bead of 30 kg/m³ needs about one sixth of the pressure and can be held with larger, thinner piezo discs on an 18 V supply. The closed glass cylinder raises pressure by 1.2 to 2.8 times, not the factor of eight first assumed.",
+        "effect": "Made a foam bead the first test particle and led the design to adopt larger piezo discs and an 18 V supply. Requires recalibration after every head lift and every few tenths of a kelvin.",
+        "evidence": "SIMULATED",
+        "implemented": 7,
+        "surfaces": 7
+      },
+      {
+        "id": "INS-31",
+        "summary": "Material is moved only as electrically neutral grains or droplets, never as a stream of charged particles, which would repel itself and screen the fields. A foam bead that picks up static charge by rubbing sticks to the glass at about 5 pC and loses its attraction to a neighbouring bead at about 1 pC. Slightly conductive, grounded glass surfaces and moderate humidity keep the charge under 0.2 pC.",
+        "effect": "Adds a charge limit, a surface-conductivity requirement for the plates and cylinder, and a humidity range for the chamber.",
+        "evidence": "DERIVED",
+        "implemented": 6,
+        "surfaces": 6
+      },
+      {
+        "id": "INS-32",
+        "summary": "A drive pattern saved as raw signals for one chamber stops working when the plate, the cylinder or the number of sources changes. A new file format stores the goal and the object's scattering behaviour in chamber-independent terms and compiles them through each machine's calibration. In simulation this matches a direct solve within 1 % on chambers with 12 and 36 sources, and lets the controller update its goal without extra memory.",
+        "effect": "Makes the chamber-independent format the way shapes are stored and exchanged; raw per-chamber patterns become a cache.",
+        "evidence": "SIMULATED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-33",
+        "summary": "Sound in air cannot tell dense solids apart, because nearly all of it reflects from any of them: classification of solids from echoes is near chance. Identifying materials needs the electromagnetic and optical channels as well. A material model covering all elements lets a stored response be split into a material part and a shape part, which shrinks files several hundred times.",
+        "effect": "Assigns material identification to combined electromagnetic, optical and density sensing, and adopts the factored file format.",
+        "evidence": "SIMULATED",
+        "implemented": 6,
+        "surfaces": 6
+      },
+      {
+        "id": "INS-34",
+        "summary": "Sharing the supply between five tones leaves each with a fifth of the voltage and lifts only about 7 % of a foam bead's weight. One tone at full voltage lifts 10 to 20 times more: about 1.2 times the bead's weight with the present twelve sources. The five-tone drive is still what removes unwanted traps and what the machine listens with.",
+        "effect": "Splits the job: one tone lifts, several tones clean up the field and sense. Retires the plate data computed for the earlier small piezo discs.",
+        "evidence": "SIMULATED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-35",
+        "summary": "Two to four beads touching each other scatter sound differently from the same beads far apart: by a few percent at the lowest tone, and completely at the upper tones. The model of a cluster has to include how the beads re-scatter each other's sound. Separately, in still air the response from source A to source B equals that from B to A, which nearly halves the calibration measurements and gives a live alarm for air movement.",
+        "effect": "Requires the coupled scattering model above the lowest tone, and adds a symmetry check to calibration.",
+        "evidence": "DERIVED",
+        "implemented": 2,
+        "surfaces": 2
+      },
+      {
+        "id": "INS-36",
+        "summary": "Bounds for the long-term machine, worked for a 250 g iron reference object. A description of the object at 10 µm resolution fits in one cubic centimetre of holographic crystal and can be read out in under a millisecond. A description exact to the atom is about 10¹⁴ times too large to store or send. The time to make the object is set by the energy supply, about nine minutes at 10 kW, not by how fast fields or data move.",
+        "effect": "Fixes the stored description at the 10 µm scale for long-term planning and identifies energy storage as the limit on build time. Does not affect the Desktop Replicator.",
+        "evidence": "DERIVED",
+        "implemented": 4,
+        "surfaces": 4
+      }
+    ],
+    "notes": {
+      "INS-01": {
+        "summary": "Each piezo source is read on its own two wires by a 1-bit converter at 75 million samples per second, with a spare disc cancelling thermal drift.",
+        "effect": "Removes separate microphones, precision converters and a listening interval."
+      },
+      "INS-02": {
+        "summary": "A ring of 24 laser diodes each acts as its own detector, giving a shadow image and an optical reading of the sound field.",
+        "effect": "Removes cameras and beam splitters, and needs no hole in the plates."
+      },
+      "INS-03": {
+        "summary": "One 12 MHz clock and one start-of-frame signal are shared by every board.",
+        "effect": "All drive and sensor channels share a time base without per-board calibration."
+      },
+      "INS-04": {
+        "summary": "The on-board pattern network must fit in under 60 kB by keeping 5 to 10 % of its weights.",
+        "effect": "Lets a microcontroller choose drive patterns in milliseconds instead of a workstation."
+      },
+      "INS-05": {
+        "summary": "The plates are undrilled 200 mm wafers, and the plate model must agree with a three-dimensional solid finite-element model before it is trusted.",
+        "effect": "Removes the central hole and its fracture risk; anchors planning to a solid model."
+      },
+      "INS-06": {
+        "summary": "Simulation and twin must handle all drive tones and the same pattern file format.",
+        "effect": "Stops calibration and planning from silently using only the first tone."
+      },
+      "INS-07": {
+        "summary": "Scanning uses mostly steady tones with short chirps, an absorbing backing and a faceted rear reflector, as echolocating animals do.",
+        "effect": "Improves range resolution and suppresses back-wall echoes without extra hardware."
+      },
+      "INS-08": {
+        "summary": "Feedstock sits in open crucibles inside the one chamber, and material is joined by the fields rather than by hand-applied adhesive.",
+        "effect": "Removes external vials, a second chamber and a person in the joining loop."
+      },
+      "INS-09": {
+        "summary": "A flat coil can excite a conductive plate without contact, but coils act only within about one coil radius.",
+        "effect": "Keeps coil work to a plate diagnostic and off the critical path."
+      },
+      "INS-10": {
+        "summary": "Microcontrollers, comparators and discrete lasers are prototype scaffolding, kept separate from the long-term wave-computing design.",
+        "effect": "Prevents the first machine's electronics from being mistaken for the architecture."
+      },
+      "INS-11": {
+        "summary": "Reversing a holding pattern does not remove material. Removal needs a bond state, energy absorbed at the joint, and transport back to a crucible.",
+        "effect": "Replaces two physically wrong shortcuts that are still in the code."
+      },
+      "INS-12": {
+        "summary": "Short doughnut-shaped pulses are a candidate for tagging and cold debonding; a spiral conductor can sit on an undrilled wafer.",
+        "effect": "Opens pulsed operation; every present solver is continuous-wave only."
+      },
+      "INS-13": {
+        "summary": "Large coils across the chamber are ruled out; a small pulsed ring coil at a crucible induces an axial electric field with the magnetic field confined.",
+        "effect": "A candidate route to soften or break down material during recovery."
+      },
+      "INS-14": {
+        "summary": "The enclosure became a rounded-square body with a rear tower that carries structure, cabling and cooling air outside the chamber.",
+        "effect": "Makes the machine loadable and serviceable."
+      },
+      "INS-15": {
+        "summary": "Air heated from below overturns, so the chamber floor must not be warmer than its ceiling.",
+        "effect": "Avoids buoyant air motion that would drag on levitated material."
+      },
+      "INS-16": {
+        "summary": "The handbook quotes shared engineering constants by reference and its build fails when they drift or when a retired design is described as current.",
+        "effect": "Keeps the public explanation in step with the design."
+      },
+      "INS-17": {
+        "summary": "Planning assumes up to 40 V per source while the drive stage as specified delivers about 11 V; force scales with voltage squared.",
+        "effect": "Planned forces are roughly ten times optimistic until the two agree."
+      },
+      "INS-18": {
+        "summary": "The receive band, converter resolution and timing figures were stated for 40 kHz and a 150 kHz band, but the tones reach 160 and 200 kHz.",
+        "effect": "The 72 dB converter gate has less margin than stated, and may have none."
+      },
+      "INS-19": {
+        "summary": "The plate-response file samples each plate far more coarsely than half a wavelength, and the piezo disc is slightly too large for the top two tones.",
+        "effect": "Fields computed from the present file are aliased; the disc partly cancels itself."
+      },
+      "INS-20": {
+        "summary": "Air temperature must be known to about a tenth of a kelvin, because the sound path changes by about 70° of phase per kelvin at the top tone.",
+        "effect": "Adds temperature sensing and recalibration to the design; none is in the parts list yet."
+      },
+      "INS-21": {
+        "summary": "Twelve sources and five tones give 60 independent controls; unwanted traps and uneven filling are not yet checked for this machine.",
+        "effect": "Powder handling cannot be claimed from a few-source chamber without that check."
+      },
+      "INS-22": {
+        "summary": "The chamber is now open: there is no draught shield, no enclosure around the laser beams and no interlock, and the wall affects the acoustics.",
+        "effect": "Safety and acoustic consequences of the open chamber must be settled before operation."
+      },
+      "INS-23": {
+        "summary": "Calibration in the chamber needs a phase reference between the plates, several probe points, an initial frequency sweep and gradual moves.",
+        "effect": "Prevents a calibration that looks accurate and still loses the object."
+      },
+      "INS-24": {
+        "summary": "Sound cannot supply the heat to join grains; joining needs a separate addressed energy step, and placing one bead beside another is unsolved.",
+        "effect": "The assembly loop has no adhesive-free joining recipe yet."
+      },
+      "INS-25": {
+        "summary": "A pulsed ring coil acts only on material that forms a closed conducting path through it, and induction lifts millimetre shot, not powder.",
+        "effect": "Bounds what the small coil can be expected to do."
+      },
+      "INS-26": {
+        "summary": "Continuous software demodulation of every channel does not fit the controller, and the sparse network has not yet been shown at the target size.",
+        "effect": "Firmware needs burst capture; the memory target needs evidence."
+      },
+      "INS-27": {
+        "summary": "Nothing is frozen, no acceptance procedure exists for this machine, the first self-made upgrade is unnamed, and several findings cite the wrong sources.",
+        "effect": "Lists what must exist before hardware can be released."
+      },
+      "INS-28": {
+        "summary": "A cycle-by-cycle simulation of the one-bit receive converter reaches about 61 dB on the six-tone test, against a 72 dB requirement. No variant of the simple circuit can pass. A faint echo is still recovered when the firmware filters before it correlates.",
+        "effect": "Triggers the written fallback to a conventional converter chip, and requires a circuit diagram that does not yet exist."
+      },
+      "INS-29": {
+        "summary": "A three-dimensional solid model shows the glass plates ring instead of damping out, so the plate-response file shipped with the design does not match the solid model at all. The response cannot be predicted in advance and must be measured in the chamber for each plate. Holding a solid polystyrene bead would need roughly 900 V per source at the best tone; the drive stage supplies about 15 V.",
+        "effect": "Makes drive strength the limiting factor for levitation, and makes in-chamber calibration mandatory."
+      },
+      "INS-30": {
+        "summary": "The pressure a glass plate can deliver is limited by bending stress in the glass, not by drive voltage. Holding solid polystyrene would stress the plates beyond the assumed safe limit whatever piezo is used. A foam bead of 30 kg/m³ needs about one sixth of the pressure and can be held with larger, thinner piezo discs on an 18 V supply. The closed glass cylinder raises pressure by 1.2 to 2.8 times, not the factor of eight first assumed.",
+        "effect": "Made a foam bead the first test particle and led the design to adopt larger piezo discs and an 18 V supply. Requires recalibration after every head lift and every few tenths of a kelvin."
+      },
+      "INS-31": {
+        "summary": "Material is moved only as electrically neutral grains or droplets, never as a stream of charged particles, which would repel itself and screen the fields. A foam bead that picks up static charge by rubbing sticks to the glass at about 5 pC and loses its attraction to a neighbouring bead at about 1 pC. Slightly conductive, grounded glass surfaces and moderate humidity keep the charge under 0.2 pC.",
+        "effect": "Adds a charge limit, a surface-conductivity requirement for the plates and cylinder, and a humidity range for the chamber."
+      },
+      "INS-32": {
+        "summary": "A drive pattern saved as raw signals for one chamber stops working when the plate, the cylinder or the number of sources changes. A new file format stores the goal and the object's scattering behaviour in chamber-independent terms and compiles them through each machine's calibration. In simulation this matches a direct solve within 1 % on chambers with 12 and 36 sources, and lets the controller update its goal without extra memory.",
+        "effect": "Makes the chamber-independent format the way shapes are stored and exchanged; raw per-chamber patterns become a cache."
+      },
+      "INS-33": {
+        "summary": "Sound in air cannot tell dense solids apart, because nearly all of it reflects from any of them: classification of solids from echoes is near chance. Identifying materials needs the electromagnetic and optical channels as well. A material model covering all elements lets a stored response be split into a material part and a shape part, which shrinks files several hundred times.",
+        "effect": "Assigns material identification to combined electromagnetic, optical and density sensing, and adopts the factored file format."
+      },
+      "INS-34": {
+        "summary": "Sharing the supply between five tones leaves each with a fifth of the voltage and lifts only about 7 % of a foam bead's weight. One tone at full voltage lifts 10 to 20 times more: about 1.2 times the bead's weight with the present twelve sources. The five-tone drive is still what removes unwanted traps and what the machine listens with.",
+        "effect": "Splits the job: one tone lifts, several tones clean up the field and sense. Retires the plate data computed for the earlier small piezo discs."
+      },
+      "INS-35": {
+        "summary": "Two to four beads touching each other scatter sound differently from the same beads far apart: by a few percent at the lowest tone, and completely at the upper tones. The model of a cluster has to include how the beads re-scatter each other's sound. Separately, in still air the response from source A to source B equals that from B to A, which nearly halves the calibration measurements and gives a live alarm for air movement.",
+        "effect": "Requires the coupled scattering model above the lowest tone, and adds a symmetry check to calibration."
+      },
+      "INS-36": {
+        "summary": "Bounds for the long-term machine, worked for a 250 g iron reference object. A description of the object at 10 µm resolution fits in one cubic centimetre of holographic crystal and can be read out in under a millisecond. A description exact to the atom is about 10¹⁴ times too large to store or send. The time to make the object is set by the energy supply, about nine minutes at 10 kW, not by how fast fields or data move.",
+        "effect": "Fixes the stored description at the 10 µm scale for long-term planning and identifies energy storage as the limit on build time. Does not affect the Desktop Replicator."
+      }
+    }
+  },
+  "rules": {
+    "forbidden": [
+      {
+        "pattern": "\\bP0\\b",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous|regression",
+        "reason": "P0 (4x4 40 kHz array) is retired; the active prototype is the Desktop Replicator"
+      },
+      {
+        "pattern": "\\bHA-0\\b",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous",
+        "reason": "HA-0 Rev C (drilled wafers, coupons) is retired; the active prototype is the Desktop Replicator"
+      },
+      {
+        "pattern": "K-PORT|K-HAPTIC-PZT|K-MOSQUITO-SMI|bench coupon",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous|no disposable|without",
+        "reason": "single-purpose bench coupons are retired; gates are simulation first, then in-chamber calibration"
+      },
+      {
+        "pattern": "septum|ha0_septum_cap",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous",
+        "reason": "septum vials are retired; feedstock sits in in-chamber crucibles"
+      },
+      {
+        "pattern": "Ø\\s?12\\s?mm",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous|long-term|ultimate",
+        "reason": "the Desktop Replicator wafers are undrilled; a central bore belongs to history or to the long-term design"
+      },
+      {
+        "pattern": "270°",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous",
+        "reason": "270° window geometry belonged to HA-0 / Rev D"
+      },
+      {
+        "pattern": "\\b36\\b.{0,14}(ray|ommatid)",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous",
+        "reason": "the optical ring has the number of lasers given by mosquito_smi.total_ommatidia"
+      },
+      {
+        "pattern": "\\b3\\s?\\+\\s?3\\b",
+        "reason": "the plates carry desktop_geometry.ports_per_plate sources each"
+      },
+      {
+        "pattern": "conj\\(",
+        "unless": "does not|fails|bug|error|wrong|not a |cannot|same trap|removed",
+        "reason": "conjugating a holding pattern rebuilds the same trap; it is not removal (INS-11)"
+      },
+      {
+        "pattern": "12 or 24 MHz",
+        "reason": "the master clock is clock_and_bus.xin_hz"
+      },
+      {
+        "pattern": "twin/Firmware/p0",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous|regression",
+        "reason": "active firmware target is twin/Firmware/desktop/"
+      },
+      {
+        "pattern": "UV[- ](resin|glue|adhesive)|P-JOIN",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous|published|documented",
+        "reason": "hand-applied UV adhesive joining is retired"
+      },
+      {
+        "pattern": "Langevin",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous|published|documented|comparison|reference",
+        "reason": "bolt-clamped horn transducers are parked"
+      },
+      {
+        "pattern": "\\b(361|380)\\s?kB",
+        "reason": "the on-board network budget is cadence_brain.cadence_sparse_max_kb"
+      },
+      {
+        "pattern": "20 ms frame",
+        "unless": "retired|historic|earlier|former|replaced|superseded|no longer|parked|was |were |previous",
+        "reason": "fixed 20 ms frame clocks are retired"
+      },
+      {
+        "pattern": "neural[- ]gel",
+        "reason": "public wording is 'excitable soft-matter wave substrates'"
+      },
+      {
+        "pattern": "research/intake|private laborator|private research corpus",
+        "reason": "private material must not appear in the handbook (codenames are checked from a local list that is never published)"
+      },
+      {
+        "pattern": "bench[- ]measured|validated on the bench",
+        "unless": "no |not |none|never|nothing|yet|once|will|until|label|means",
+        "reason": "no project bench measurement exists"
+      }
+    ],
+    "required": [
+      {
+        "doc": "status",
+        "pattern": "No hardware has been built, ordered or measured",
+        "reason": "the status page must say plainly that nothing physical exists"
+      },
+      {
+        "doc": "desktop-replicator",
+        "pattern": "\\{\\{c:desktop_geometry\\.gap_mm\\}\\}",
+        "reason": "prototype numbers are quoted from the shared constants, not typed"
+      },
+      {
+        "doc": "insights",
+        "pattern": "<!-- INSIGHT_TABLE -->",
+        "reason": "the insight page renders the live register"
+      },
+      {
+        "doc": "agents",
+        "pattern": "hub\\.py",
+        "reason": "agents must be pointed at the coordination hub"
+      }
+    ]
+  }
+}

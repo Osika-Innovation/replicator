@@ -1,0 +1,1110 @@
+{
+  "schema_version": "1.0",
+  "title": "Etherworks Replicator Handbook",
+  "site_url": "https://osika-innovation.github.io/replicator/",
+  "repository": "https://github.com/Osika-Innovation/replicator",
+  "updated": "2026-11-22",
+  "documents": [
+    {
+      "id": "home",
+      "title": "Home",
+      "source": "docs/content/index.md",
+      "url": "index.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Build the machine that builds the next.",
+      "topics": [
+        "overview",
+        "replicator",
+        "etherworks"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "glossary",
+        "desktop-replicator",
+        "start",
+        "architecture",
+        "compute-control",
+        "cadence-memory",
+        "manufacturing",
+        "matter-loop",
+        "status",
+        "upgrades",
+        "physics"
+      ]
+    },
+    {
+      "id": "start",
+      "title": "Start here",
+      "source": "docs/content/start.md",
+      "url": "guides/start.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "What the Replicator is, what exists today, and how to read this handbook.",
+      "topics": [
+        "ultimate architecture",
+        "prototype",
+        "strategy"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Handbook framing: long-term architecture and the Desktop Replicator prototype",
+      "related": [
+        "glossary",
+        "desktop-replicator",
+        "architecture",
+        "compute-control",
+        "cadence-memory",
+        "manufacturing",
+        "matter-loop",
+        "status",
+        "upgrades",
+        "physics",
+        "electromagnetics",
+        "optics"
+      ]
+    },
+    {
+      "id": "desktop-replicator",
+      "title": "Desktop Replicator",
+      "source": "docs/content/desktop-replicator.md",
+      "url": "guides/desktop-replicator.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "The machine being designed first: one open chamber, two undrilled glass wafers, self-sensing piezo sources and a ring of self-mixing lasers. Nothing is built yet.",
+      "topics": [
+        "prototype",
+        "desktop replicator",
+        "hardware",
+        "CAD"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Active prototype design, quoted from the shared engineering constants",
+      "related": [
+        "status",
+        "architecture",
+        "acoustics",
+        "compute-control",
+        "insights",
+        "glossary"
+      ]
+    },
+    {
+      "id": "status",
+      "title": "Current state",
+      "source": "docs/content/status.md",
+      "url": "guides/status.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "What exists today, with its evidence class, the gate that blocks the next step, and the retired baselines.",
+      "topics": [
+        "status",
+        "receipts",
+        "ultimate vs prototype",
+        "prototype"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Ultimate vs. Prototype programme checkpoint",
+      "related": [
+        "glossary",
+        "desktop-replicator",
+        "start",
+        "compute-control",
+        "cadence-memory",
+        "matter-loop",
+        "agents",
+        "oph"
+      ]
+    },
+    {
+      "id": "glossary",
+      "title": "Glossary",
+      "source": "docs/content/glossary.md",
+      "url": "guides/glossary.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Plain definitions of the terms, abbreviations and gate names used in this handbook.",
+      "topics": [
+        "glossary",
+        "terms",
+        "definitions"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Terminology",
+      "related": [
+        "start",
+        "desktop-replicator",
+        "status"
+      ]
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "source": "docs/content/architecture.md",
+      "url": "guides/architecture.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Architecture",
+      "summary": "Coordinated fields, two-carrier wavelength/momentum physics, volume crossings, and Ultimate vs. Prototype comparison.",
+      "topics": [
+        "block diagram",
+        "modules",
+        "two carriers",
+        "ultimate vs prototype",
+        "3+3"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Coordinated-field architecture, two-carrier physics, and Ultimate vs. Prototype subsystem table",
+      "related": [
+        "start",
+        "agents",
+        "physics",
+        "acoustics",
+        "electromagnetics",
+        "optics",
+        "compute-control",
+        "cadence-memory",
+        "digital-twin",
+        "manufacturing",
+        "matter-loop"
+      ]
+    },
+    {
+      "id": "acoustics",
+      "title": "Acoustic bodies",
+      "source": "docs/content/acoustics.md",
+      "url": "guides/acoustics.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Acoustic bodies",
+      "summary": "Ultimate optical-piezo apertures vs. prototype PZT plates, harmonic comb closure, HAPTIC self-sensing, and resolution bounds.",
+      "topics": [
+        "piezo",
+        "HAPTIC",
+        "crystal inertia",
+        "harmonic comb",
+        "hologram",
+        "resonator"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Ultimate vs. Prototype apertures, 25 kHz harmonic comb closure, resolution ladder, and prototype 1-bit sigma-delta bridge",
+      "related": [
+        "architecture",
+        "compute-control",
+        "cadence-memory",
+        "matter-loop",
+        "acoustic-hologram",
+        "phonons",
+        "status",
+        "upgrades",
+        "periodic-table",
+        "materials",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "optics",
+      "title": "Optics and metamaterials",
+      "source": "docs/content/optics.md",
+      "url": "guides/optics.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Optics / metamaterials",
+      "summary": "Ultimate toroidal stem, metasurfaces and optical tweezers vs. Prototype SMI mosquito-eye facets and nanoimprint bootstrap.",
+      "topics": [
+        "optics",
+        "metamaterials",
+        "metasurfaces",
+        "toroidal pulses",
+        "SMI",
+        "holography",
+        "SLM",
+        "nanoimprint"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Ultimate vs. Prototype optical subsystem summary, toroidal pulse physics, and K-MOSQUITO-SMI gate",
+      "related": [
+        "architecture",
+        "compute-control",
+        "cadence-memory",
+        "electromagnetics",
+        "photons",
+        "materials",
+        "digital-twin",
+        "manufacturing",
+        "research"
+      ]
+    },
+    {
+      "id": "electromagnetics",
+      "title": "Electromagnetic control",
+      "source": "docs/content/electromagnetics.md",
+      "url": "guides/electromagnetics.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Electromagnetic control",
+      "summary": "Ultimate J x B melt/sorting vs. Prototype P0 omission and X-EM modal exciter; toroidal classification and patent audits.",
+      "topics": [
+        "toroid",
+        "coils",
+        "X-EM",
+        "MHD",
+        "pulsed fields",
+        "vortex",
+        "levitation"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Ultimate vs. Prototype EM scope alignment, R5 winding correction, and EM-CTL study summary",
+      "related": [
+        "architecture",
+        "status",
+        "upgrades",
+        "light-matter",
+        "optics",
+        "manufacturing",
+        "photons"
+      ]
+    },
+    {
+      "id": "compute-control",
+      "title": "Compute, sensing and control",
+      "source": "docs/content/compute-control.md",
+      "url": "guides/compute-control.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Platform / control",
+      "summary": "Invariant .fcode/MachineBackend timescale contract across Ultimate wave boundaries and Prototype RP2350B 1-bit sigma-delta / SMI boards.",
+      "topics": [
+        "MachineBackend",
+        "fcode",
+        "prototype RP2350",
+        "PIO",
+        "sigma-delta",
+        "HAPTIC",
+        "self-mixing interferometry",
+        "Cadence",
+        "EqProp",
+        "FPGA",
+        "optical compute"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Invariant wire contract plus Ultimate continuous wave control vs. Prototype RP2350B/FPGA bootstrap classification",
+      "related": [
+        "architecture",
+        "cadence-memory",
+        "acoustics",
+        "optics",
+        "digital-twin",
+        "matter-loop",
+        "status",
+        "upgrades",
+        "acoustic-hologram",
+        "photons",
+        "memory"
+      ]
+    },
+    {
+      "id": "cadence-memory",
+      "title": "Cadence, memory and wave compute",
+      "source": "docs/content/cadence-memory.md",
+      "url": "guides/cadence-memory.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Intelligence / Cadence",
+      "summary": "The Cadence pattern network, the three networks that share its name, what the sparse form can and cannot do, chord memory, and the long-term route to computing with waves.",
+      "topics": [
+        "Cadence",
+        "EqProp",
+        "Hermitian",
+        "holographic memory",
+        "Sb2S3",
+        "EML",
+        "ThoracicMotorCompiler",
+        "AssociativeChordBank",
+        "TRELLIS",
+        "wave compute"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Synthesis of holographic_memory_and_compute_plan, holo/ EqProp architecture, and minimal-electricity Ultimate substrate ladder",
+      "related": [
+        "biology",
+        "compute-control",
+        "architecture",
+        "optics",
+        "digital-twin",
+        "matter-loop",
+        "status",
+        "agents",
+        "memory"
+      ]
+    },
+    {
+      "id": "biology",
+      "title": "Ideas from biology",
+      "source": "docs/content/biology.md",
+      "url": "guides/biology.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Sensing / biomimicry",
+      "summary": "Every sensing and computing idea the project borrows from bats, dolphins, moths and insects, in plain terms, with how far each has got.",
+      "topics": [
+        "biomimicry",
+        "biosonar",
+        "compound eye",
+        "insect brain",
+        "sparse memory",
+        "calibration"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Inventory of biology-inspired ideas in the sensing and pattern-network models",
+      "related": [
+        "cadence-memory",
+        "compute-control",
+        "optics",
+        "matter-loop",
+        "status"
+      ]
+    },
+    {
+      "id": "manufacturing",
+      "title": "Manufacturing",
+      "source": "docs/content/manufacturing.md",
+      "url": "guides/manufacturing.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Manufacturing",
+      "summary": "Six-step Assemble loop, hands-vs-fingertips ladder, transport phases, R15 softening, combined-field recipes, and FAB-01.",
+      "topics": [
+        "assemble",
+        "Gorkov",
+        "athermal softening",
+        "consolidation",
+        "fabrication",
+        "FAB-01"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Consolidated Assemble loop, placement/transport ladders, R15 softening, and Prototype vs. Ultimate fabrication",
+      "related": [
+        "architecture",
+        "matter-loop",
+        "upgrades",
+        "status",
+        "physics-to-hardware",
+        "electromagnetics",
+        "optics",
+        "assemble"
+      ]
+    },
+    {
+      "id": "matter-loop",
+      "title": "Scan, recover and matter stores",
+      "source": "docs/content/matter-loop.md",
+      "url": "guides/matter-loop.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Processes / metrology",
+      "summary": "Non-moving S(f) tomography (G17-G19), material recovery hierarchy, and oxidized Salt/Ash/Noble-Gas stores across Prototype and Ultimate stacks.",
+      "topics": [
+        "scan",
+        "tomography",
+        "provenance",
+        "recover",
+        "dissolve",
+        "stores",
+        "salt and ash",
+        "noble gas"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Consolidated Scan, Dissolve, and Stores chapters with Biosonar FM/Golomb prototype and R9 active-store Ultimate stack",
+      "related": [
+        "architecture",
+        "manufacturing",
+        "compute-control",
+        "cadence-memory",
+        "digital-twin",
+        "upgrades",
+        "scan",
+        "dissolve",
+        "stores"
+      ]
+    },
+    {
+      "id": "digital-twin",
+      "title": "Digital twin",
+      "source": "docs/content/digital-twin.md",
+      "url": "guides/digital-twin.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Digital twin",
+      "summary": "Charter minimalism, linear-first Gor'kov solver, Metal/CPU gates, G-CAD9/G-STEP, holo/ co-design, and hardware realism tiers.",
+      "topics": [
+        "CAD",
+        "Charter",
+        "Metal",
+        "G-CAD9",
+        "simulation",
+        "AI",
+        "Cadence",
+        "holo"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Consolidated CHARTER/ENGINE/CAD discipline, multi-island autoresearch, and 4 hardware-realism tiers",
+      "related": [
+        "architecture",
+        "compute-control",
+        "cadence-memory",
+        "matter-loop",
+        "status",
+        "upgrades",
+        "physics-to-hardware",
+        "optics"
+      ]
+    },
+    {
+      "id": "upgrades",
+      "title": "Upgrade loop",
+      "source": "docs/content/upgrades.md",
+      "url": "guides/upgrades.html",
+      "type": "guide",
+      "group": "Build and improve",
+      "status": "Current guide",
+      "owner": "Upgrade loop",
+      "summary": "Acyclic dependency graph joining Prototype seed coupons and FAB-01 to Ultimate wave apertures and self-improvement.",
+      "topics": [
+        "self-replication",
+        "upgrade graph",
+        "FAB-01",
+        "META-01",
+        "constructor",
+        "automation"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Two-ended search joining P0/HA-0 seed coupons to META-01 and Ultimate physical convergence",
+      "related": [
+        "start",
+        "manufacturing",
+        "matter-loop",
+        "cadence-memory",
+        "agents",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "insights",
+      "title": "Insight register",
+      "source": "docs/content/insights.md",
+      "url": "guides/insights.html",
+      "type": "guide",
+      "group": "Project",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Findings that changed the design, their evidence class, and how far each has been carried into code.",
+      "topics": [
+        "insights",
+        "evidence",
+        "verification"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Snapshot of the engineering insight register",
+      "related": [
+        "status",
+        "desktop-replicator",
+        "agents",
+        "upgrades"
+      ]
+    },
+    {
+      "id": "agents",
+      "title": "For agents",
+      "source": "docs/content/agents.md",
+      "url": "guides/agents.html",
+      "type": "guide",
+      "group": "Project",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Canonical handbook reading order, Ultimate vs. Prototype discipline, lane ownership, and CI checks.",
+      "topics": [
+        "agents",
+        "coordination",
+        "lanes",
+        "workflow"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Updated ownership and handbook-primary documentation rules",
+      "related": [
+        "architecture",
+        "compute-control",
+        "cadence-memory",
+        "matter-loop",
+        "status",
+        "upgrades",
+        "physics",
+        "oph",
+        "optics"
+      ]
+    },
+    {
+      "id": "research",
+      "title": "Research library",
+      "source": "docs/content/research.md",
+      "url": "guides/research.html",
+      "type": "guide",
+      "group": "Project",
+      "status": "Current guide",
+      "owner": "Systems / documentation",
+      "summary": "Archived HTML paper network, primary source catalog, and handbook-first navigation note.",
+      "topics": [
+        "papers",
+        "patents",
+        "sources"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Handbook-first framing over preserved HTML paper archive",
+      "related": [
+        "architecture",
+        "compute-control",
+        "cadence-memory",
+        "matter-loop",
+        "status",
+        "upgrades",
+        "physics",
+        "periodic-table"
+      ]
+    },
+    {
+      "id": "physics",
+      "title": "Physics overview",
+      "source": "docs/content/physics.md",
+      "url": "guides/physics.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "Theoretical perspective, physical mechanisms and their role in the Replicator.",
+      "topics": [
+        "physics",
+        "framework",
+        "waves",
+        "OPH"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "oph",
+        "light-matter",
+        "periodic-table",
+        "materials",
+        "architecture",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "oph",
+      "title": "Observer Patch Holography",
+      "source": "docs/content/oph.md",
+      "url": "guides/oph.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "The carrier algebra, quantum dynamics and a source-generated atomic model.",
+      "topics": [
+        "OPH",
+        "observer",
+        "holography",
+        "boundary",
+        "model validation"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Primary proof/source review at upstream revision 4483a9c; large numerical study and Lean build not rerun",
+      "related": [
+        "physics",
+        "light-matter",
+        "digital-twin",
+        "status",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "light-matter",
+      "title": "Light, fields and matter",
+      "source": "docs/content/light-matter.md",
+      "url": "guides/light-matter.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "The everything-is-light perspective, field descriptions and material interactions.",
+      "topics": [
+        "light",
+        "Walter Russell",
+        "fields",
+        "matter",
+        "energy"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Framework interpretation and engineering connections",
+      "related": [
+        "physics",
+        "oph",
+        "periodic-table",
+        "electromagnetics",
+        "optics"
+      ]
+    },
+    {
+      "id": "periodic-table",
+      "title": "Periodic table and tones",
+      "source": "docs/content/periodic-table.md",
+      "url": "guides/periodic-table.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / materials",
+      "summary": "Deriving shell capacities and a screened filling order, then mapping spectra to material response.",
+      "topics": [
+        "periodic table",
+        "tones",
+        "frequencies",
+        "spectra",
+        "Walter Russell"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Independent shell counts, 600-cell spectrum and exact threshold-order comparison; empirical spectra not revalidated",
+      "related": [
+        "physics",
+        "light-matter",
+        "materials",
+        "acoustics",
+        "research",
+        "physics-to-hardware"
+      ]
+    },
+    {
+      "id": "materials",
+      "title": "Materials and modes",
+      "source": "docs/content/materials.md",
+      "url": "guides/materials.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Materials and modes",
+      "summary": "Crystals, spectra and fabrication from first principles.",
+      "topics": [
+        "quartz",
+        "periodic table",
+        "tones",
+        "cymatics",
+        "metamaterials"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "physics",
+        "periodic-table",
+        "light-matter",
+        "manufacturing",
+        "acoustics",
+        "upgrades",
+        "physics-to-hardware",
+        "optics"
+      ]
+    },
+    {
+      "id": "physics-to-hardware",
+      "title": "From atoms to hardware",
+      "source": "docs/content/physics-to-hardware.md",
+      "url": "guides/physics-to-hardware.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Physics / engineering",
+      "summary": "Bonding, response operators and coordinated fields that manufacture useful parts.",
+      "topics": [
+        "derivation",
+        "Hamiltonian",
+        "phonons",
+        "inverse design",
+        "response operator",
+        "self-upgrade"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Coordinated-field architecture and process integration; initial configurations retain their evidence status",
+      "related": [
+        "oph",
+        "periodic-table",
+        "materials",
+        "acoustics",
+        "manufacturing",
+        "upgrades",
+        "electromagnetics",
+        "optics"
+      ]
+    },
+    {
+      "id": "principles",
+      "title": "Replicator Principles",
+      "source": "papers/replicator_principles.html",
+      "url": "papers/replicator_principles.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Architecture",
+      "summary": "Programme principles and shared operating model.",
+      "topics": [
+        "architecture",
+        "holography"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Prose and claim boundaries",
+      "related": [
+        "architecture",
+        "compute-control",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "architecture-paper",
+      "title": "Replicator Architecture",
+      "source": "papers/replicator_architecture.html",
+      "url": "papers/replicator_architecture.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Design study",
+      "owner": "Architecture",
+      "summary": "The RH-1 architecture argument and topology.",
+      "topics": [
+        "RH-1",
+        "topology"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "compute-control",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "The Replicator at the Limit",
+      "source": "papers/replicator_at_the_limit.html",
+      "url": "papers/replicator_at_the_limit.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Strategy",
+      "summary": "Design from constraints and a credible manufacturing dependency chain.",
+      "topics": [
+        "bounds",
+        "constructor",
+        "self-replication"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Prose and claim boundaries",
+      "related": [
+        "architecture",
+        "compute-control",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "phonons",
+      "title": "Phonons: the acoustic carrier",
+      "source": "papers/replicator_phonons.html",
+      "url": "papers/replicator_phonons.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Mechanism study",
+      "owner": "Mechanisms",
+      "summary": "Acoustic wave control and material manipulation.",
+      "topics": [
+        "acoustics",
+        "force"
+      ],
+      "reviewed": "2026-11-15",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "acoustic-hologram",
+      "title": "The Acoustic Hologram",
+      "source": "papers/replicator_acoustic_hologram.html",
+      "url": "papers/replicator_acoustic_hologram.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Acoustics",
+      "summary": "Crystal-inertia-limited transducers, two-terminal HAPTIC self-sensing, coupled-cavity holding and aperture bounds.",
+      "topics": [
+        "acoustics",
+        "hologram",
+        "HAPTIC",
+        "piezo"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "First-principles transducer and 1-bit sigma-delta control-loop update",
+      "related": [
+        "acoustics",
+        "compute-control",
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "photons",
+      "title": "Photons: the electromagnetic carrier",
+      "source": "papers/replicator_photons.html",
+      "url": "papers/replicator_photons.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Mechanism study",
+      "owner": "Mechanisms",
+      "summary": "Electromagnetic and optical process concepts.",
+      "topics": [
+        "electromagnetics",
+        "optics"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Targeted optical force/absorption, self-mixing optical mosquito-eye sensing and toroidal-pulse citation update; remaining mechanisms not fully revalidated",
+      "related": [
+        "architecture",
+        "compute-control",
+        "research",
+        "status",
+        "optics"
+      ]
+    },
+    {
+      "id": "carriers",
+      "title": "The Two Carriers",
+      "source": "papers/the_two_carriers.html",
+      "url": "papers/the_two_carriers.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Mechanism study",
+      "owner": "Mechanisms",
+      "summary": "Roles of acoustic and electromagnetic interactions.",
+      "topics": [
+        "acoustics",
+        "electromagnetics"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "assemble",
+      "title": "Assembly",
+      "source": "papers/replicator_assemble.html",
+      "url": "papers/replicator_assemble.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Process study",
+      "owner": "Processes",
+      "summary": "Field-guided assembly concepts and process questions.",
+      "topics": [
+        "joining",
+        "assembly"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "scan",
+      "title": "Scanning",
+      "source": "papers/replicator_scan.html",
+      "url": "papers/replicator_scan.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Process study",
+      "owner": "Processes",
+      "summary": "Boundary observations and reconstruction concepts.",
+      "topics": [
+        "scan",
+        "metrology"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Navigation, self-mixing optical readout cross-reference and toroidal-pulse bibliographic update; remaining technical claims not fully revalidated",
+      "related": [
+        "architecture",
+        "compute-control",
+        "research",
+        "status",
+        "optics"
+      ]
+    },
+    {
+      "id": "dissolve",
+      "title": "Material Recovery",
+      "source": "papers/replicator_dissolve.html",
+      "url": "papers/replicator_dissolve.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Editorially updated",
+      "owner": "Processes",
+      "summary": "Focused energy, separation, collection and reuse qualification.",
+      "topics": [
+        "recovery",
+        "recycling"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Prose and claim boundaries",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "stores",
+      "title": "Material Stores",
+      "source": "papers/replicator_stores.html",
+      "url": "papers/replicator_stores.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Design study",
+      "owner": "Processes",
+      "summary": "Feedstock storage and handling concepts.",
+      "topics": [
+        "feedstock",
+        "storage"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "memory",
+      "title": "Holographic Memory and Compute",
+      "source": "papers/holographic_memory_and_compute_plan.html",
+      "url": "papers/holographic_memory_and_compute_plan.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Research programme",
+      "owner": "Research",
+      "summary": "Optical storage/compute candidates and their qualification tasks.",
+      "topics": [
+        "optical",
+        "memory",
+        "compute"
+      ],
+      "reviewed": "2026-11-17",
+      "review_scope": "Helmholtz-reciprocal EqProp, sparse SRAM Cadence and ganglionic Brain Slot update; PCM M# and endurance remain open",
+      "related": [
+        "architecture",
+        "compute-control",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "field-compiler",
+      "title": "Field Compiler Specification",
+      "source": "papers/replicator_field_compiler.html",
+      "url": "papers/replicator_field_compiler.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Historical specification",
+      "owner": "Reference",
+      "summary": "Historical software plan; use current code for implemented behaviour.",
+      "topics": [
+        "software",
+        "compiler"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "mechanical",
+      "title": "Mechanical Construction",
+      "source": "papers/replicator_mechanical_construction.html",
+      "url": "papers/replicator_mechanical_construction.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Historical specification",
+      "owner": "Reference",
+      "summary": "A dated RH-1 mechanical instance and manufacturing concepts.",
+      "topics": [
+        "CAD",
+        "mechanical"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    },
+    {
+      "id": "hardware",
+      "title": "Desktop Replicator Hardware Specification",
+      "source": "papers/desktop_replicator_hardware_spec.html",
+      "url": "papers/desktop_replicator_hardware_spec.html",
+      "type": "paper",
+      "group": "Paper library",
+      "status": "Historical specification",
+      "owner": "Reference",
+      "summary": "RH-1 rulings and historical hardware parameters.",
+      "topics": [
+        "BOM",
+        "RH-1",
+        "hardware"
+      ],
+      "reviewed": "2026-11-13",
+      "review_scope": "Navigation and document role; not a full technical audit",
+      "related": [
+        "architecture",
+        "research",
+        "status"
+      ]
+    }
+  ]
+}

@@ -2,3 +2,5 @@
 .DS_Store
 *.blend1
 twin/cad-out/
+_site/
+__pycache__/
