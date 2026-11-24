@@ -287,8 +287,6 @@
         "compute-control",
         "cadence-memory",
         "matter-loop",
-        "acoustic-hologram",
-        "phonons",
         "status",
         "upgrades",
         "periodic-table",
@@ -323,7 +321,6 @@
         "compute-control",
         "cadence-memory",
         "electromagnetics",
-        "photons",
         "materials",
         "digital-twin",
         "manufacturing",
@@ -357,8 +354,7 @@
         "upgrades",
         "light-matter",
         "optics",
-        "manufacturing",
-        "photons"
+        "manufacturing"
       ]
     },
     {
@@ -394,10 +390,7 @@
         "digital-twin",
         "matter-loop",
         "status",
-        "upgrades",
-        "acoustic-hologram",
-        "photons",
-        "memory"
+        "upgrades"
       ]
     },
     {
@@ -432,8 +425,7 @@
         "digital-twin",
         "matter-loop",
         "status",
-        "agents",
-        "memory"
+        "agents"
       ]
     },
     {
@@ -491,8 +483,7 @@
         "status",
         "physics-to-hardware",
         "electromagnetics",
-        "optics",
-        "assemble"
+        "optics"
       ]
     },
     {
@@ -523,10 +514,7 @@
         "compute-control",
         "cadence-memory",
         "digital-twin",
-        "upgrades",
-        "scan",
-        "dissolve",
-        "stores"
+        "upgrades"
       ]
     },
     {
@@ -654,14 +642,16 @@
       "group": "Project",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "Archived HTML paper network, primary source catalog, and handbook-first navigation note.",
+      "summary": "Where each retired paper went, and the outside publications the handbook rests on, sorted by how strong the evidence is.",
       "topics": [
         "papers",
-        "patents",
-        "sources"
+        "retired papers",
+        "sources",
+        "publications",
+        "patents"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Handbook-first framing over preserved HTML paper archive",
+      "reviewed": "2026-11-24",
+      "review_scope": "Paper retirement map and tiered source catalogue",
       "related": [
         "architecture",
         "compute-control",
@@ -850,19 +840,26 @@
       "url": "papers/replicator_principles.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Editorially updated",
+      "status": "Retired",
       "owner": "Architecture",
-      "summary": "Programme principles and shared operating model.",
+      "summary": "The programme's working principles.",
       "topics": [
         "architecture",
         "holography"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Prose and claim boundaries",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
+        "start",
         "architecture",
-        "compute-control",
-        "research",
+        "upgrades",
+        "status",
+        "research"
+      ],
+      "superseded_by": [
+        "start",
+        "architecture",
+        "upgrades",
         "status"
       ]
     },
@@ -873,20 +870,27 @@
       "url": "papers/replicator_architecture.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Design study",
+      "status": "Retired",
       "owner": "Architecture",
-      "summary": "The RH-1 architecture argument and topology.",
+      "summary": "The argument for the overall machine layout and its size ladder.",
       "topics": [
         "RH-1",
         "topology"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
         "architecture",
-        "compute-control",
-        "research",
-        "status"
+        "subsystems",
+        "acoustics",
+        "ultimate-replicator",
+        "research"
+      ],
+      "superseded_by": [
+        "architecture",
+        "subsystems",
+        "acoustics",
+        "ultimate-replicator"
       ]
     },
     {
@@ -896,21 +900,26 @@
       "url": "papers/replicator_at_the_limit.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Editorially updated",
+      "status": "Retired",
       "owner": "Strategy",
-      "summary": "Design from constraints and a credible manufacturing dependency chain.",
+      "summary": "How far the idea could go, worked from physical limits.",
       "topics": [
         "bounds",
         "constructor",
         "self-replication"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Prose and claim boundaries",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "compute-control",
-        "research",
-        "status"
+        "ultimate-replicator",
+        "cadence-memory",
+        "acoustics",
+        "research"
+      ],
+      "superseded_by": [
+        "ultimate-replicator",
+        "cadence-memory",
+        "acoustics"
       ]
     },
     {
@@ -920,19 +929,23 @@
       "url": "papers/replicator_phonons.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Mechanism study",
+      "status": "Retired",
       "owner": "Mechanisms",
-      "summary": "Acoustic wave control and material manipulation.",
+      "summary": "Sound as the carrier of force: sources, plates and limits.",
       "topics": [
         "acoustics",
         "force"
       ],
-      "reviewed": "2026-11-15",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
+        "acoustics",
         "architecture",
-        "research",
-        "status"
+        "research"
+      ],
+      "superseded_by": [
+        "acoustics",
+        "architecture"
       ]
     },
     {
@@ -942,23 +955,27 @@
       "url": "papers/replicator_acoustic_hologram.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Editorially updated",
+      "status": "Retired",
       "owner": "Acoustics",
-      "summary": "Crystal-inertia-limited transducers, two-terminal HAPTIC self-sensing, coupled-cavity holding and aperture bounds.",
+      "summary": "Shaping sound with few sources, and sensing on the drive wires.",
       "topics": [
         "acoustics",
         "hologram",
         "HAPTIC",
         "piezo"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "First-principles transducer and 1-bit sigma-delta control-loop update",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
         "acoustics",
         "compute-control",
-        "architecture",
-        "research",
-        "status"
+        "matter-loop",
+        "research"
+      ],
+      "superseded_by": [
+        "acoustics",
+        "compute-control",
+        "matter-loop"
       ]
     },
     {
@@ -968,21 +985,25 @@
       "url": "papers/replicator_photons.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Mechanism study",
+      "status": "Retired",
       "owner": "Mechanisms",
-      "summary": "Electromagnetic and optical process concepts.",
+      "summary": "Light and electromagnetic fields as tools for sensing and addressing.",
       "topics": [
         "electromagnetics",
         "optics"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Targeted optical force/absorption, self-mixing optical mosquito-eye sensing and toroidal-pulse citation update; remaining mechanisms not fully revalidated",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "compute-control",
-        "research",
-        "status",
-        "optics"
+        "optics",
+        "electromagnetics",
+        "matter-loop",
+        "research"
+      ],
+      "superseded_by": [
+        "optics",
+        "electromagnetics",
+        "matter-loop"
       ]
     },
     {
@@ -992,19 +1013,25 @@
       "url": "papers/the_two_carriers.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Mechanism study",
+      "status": "Retired",
       "owner": "Mechanisms",
-      "summary": "Roles of acoustic and electromagnetic interactions.",
+      "summary": "What sound and light can each carry, and how they couple.",
       "topics": [
         "acoustics",
         "electromagnetics"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
         "architecture",
-        "research",
-        "status"
+        "acoustics",
+        "optics",
+        "research"
+      ],
+      "superseded_by": [
+        "architecture",
+        "acoustics",
+        "optics"
       ]
     },
     {
@@ -1014,19 +1041,23 @@
       "url": "papers/replicator_assemble.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Process study",
+      "status": "Retired",
       "owner": "Processes",
-      "summary": "Field-guided assembly concepts and process questions.",
+      "summary": "Building a part: feed, hold, move and join.",
       "topics": [
         "joining",
         "assembly"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "research",
-        "status"
+        "manufacturing",
+        "optics",
+        "research"
+      ],
+      "superseded_by": [
+        "manufacturing",
+        "optics"
       ]
     },
     {
@@ -1036,21 +1067,25 @@
       "url": "papers/replicator_scan.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Process study",
+      "status": "Retired",
       "owner": "Processes",
-      "summary": "Boundary observations and reconstruction concepts.",
+      "summary": "Reading the shape and material of an object from its echoes.",
       "topics": [
         "scan",
         "metrology"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Navigation, self-mixing optical readout cross-reference and toroidal-pulse bibliographic update; remaining technical claims not fully revalidated",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "compute-control",
-        "research",
-        "status",
-        "optics"
+        "matter-loop",
+        "optics",
+        "biology",
+        "research"
+      ],
+      "superseded_by": [
+        "matter-loop",
+        "optics",
+        "biology"
       ]
     },
     {
@@ -1060,19 +1095,21 @@
       "url": "papers/replicator_dissolve.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Editorially updated",
+      "status": "Retired",
       "owner": "Processes",
-      "summary": "Focused energy, separation, collection and reuse qualification.",
+      "summary": "Taking a part apart and recovering its material.",
       "topics": [
         "recovery",
         "recycling"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Prose and claim boundaries",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "research",
-        "status"
+        "matter-loop",
+        "research"
+      ],
+      "superseded_by": [
+        "matter-loop"
       ]
     },
     {
@@ -1082,19 +1119,23 @@
       "url": "papers/replicator_stores.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Design study",
+      "status": "Retired",
       "owner": "Processes",
-      "summary": "Feedstock storage and handling concepts.",
+      "summary": "Keeping feedstock and stored object descriptions.",
       "topics": [
         "feedstock",
         "storage"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "research",
-        "status"
+        "matter-loop",
+        "ultimate-replicator",
+        "research"
+      ],
+      "superseded_by": [
+        "matter-loop",
+        "ultimate-replicator"
       ]
     },
     {
@@ -1104,21 +1145,24 @@
       "url": "papers/holographic_memory_and_compute_plan.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Research programme",
+      "status": "Retired",
       "owner": "Research",
-      "summary": "Optical storage/compute candidates and their qualification tasks.",
+      "summary": "Storing patterns in light and computing with waves.",
       "topics": [
         "optical",
         "memory",
         "compute"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Helmholtz-reciprocal EqProp, sparse SRAM Cadence and ganglionic Brain Slot update; PCM M# and endurance remain open",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "compute-control",
-        "research",
-        "status"
+        "cadence-memory",
+        "optics",
+        "research"
+      ],
+      "superseded_by": [
+        "cadence-memory",
+        "optics"
       ]
     },
     {
@@ -1128,19 +1172,27 @@
       "url": "papers/replicator_field_compiler.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Historical specification",
+      "status": "Retired",
       "owner": "Reference",
-      "summary": "Historical software plan; use current code for implemented behaviour.",
+      "summary": "An earlier plan for the software that turns a shape into drive signals.",
       "topics": [
         "software",
         "compiler"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "research",
-        "status"
+        "digital-twin",
+        "compute-control",
+        "matter-loop",
+        "acoustics",
+        "research"
+      ],
+      "superseded_by": [
+        "digital-twin",
+        "compute-control",
+        "matter-loop",
+        "acoustics"
       ]
     },
     {
@@ -1150,19 +1202,25 @@
       "url": "papers/replicator_mechanical_construction.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Historical specification",
+      "status": "Retired",
       "owner": "Reference",
-      "summary": "A dated RH-1 mechanical instance and manufacturing concepts.",
+      "summary": "The mechanical design of an earlier, larger machine.",
       "topics": [
         "CAD",
         "mechanical"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
+        "desktop-replicator",
+        "subsystems",
         "architecture",
-        "research",
-        "status"
+        "research"
+      ],
+      "superseded_by": [
+        "desktop-replicator",
+        "subsystems",
+        "architecture"
       ]
     },
     {
@@ -1172,20 +1230,26 @@
       "url": "papers/desktop_replicator_hardware_spec.html",
       "type": "paper",
       "group": "Paper library",
-      "status": "Historical specification",
+      "status": "Retired",
       "owner": "Reference",
-      "summary": "RH-1 rulings and historical hardware parameters.",
+      "summary": "Design rulings and parameters for an earlier hardware revision.",
       "topics": [
         "BOM",
         "RH-1",
         "hardware"
       ],
-      "reviewed": "2026-11-13",
-      "review_scope": "Navigation and document role; not a full technical audit",
+      "reviewed": "2026-11-24",
+      "review_scope": "Retired 2026-11-24: content carried into the handbook guides listed under superseded_by",
       "related": [
-        "architecture",
-        "research",
-        "status"
+        "desktop-replicator",
+        "subsystems",
+        "compute-control",
+        "research"
+      ],
+      "superseded_by": [
+        "desktop-replicator",
+        "subsystems",
+        "compute-control"
       ]
     },
     {

@@ -2,9 +2,9 @@
 
 <div class="lead">Understand the pattern, identify the coupling, design the boundary.</div>
 
-Etherworks uses **Observer Patch Holography (OPH) as an organizing research framework** for connecting information, geometry, matter and measurement. It motivates a central design question: how much of a machine's function can be carried by its physical structure and interaction with a field?
+Etherworks uses a research idea called **Observer Patch Holography (OPH)** to tie together information, shape, matter and measurement. It raises one design question: how much of a machine's function can its physical structure carry, through how that structure interacts with a field?
 
-For the Replicator, that question becomes practical. A shaped elastic body distributes vibration. A crystal couples electrical and mechanical motion. A patterned optical surface transforms a wavefront. The twin connects these mechanisms to a manufactured part and a measured result.
+For the Replicator the question is practical. A shaped elastic body spreads vibration. A crystal links electrical and mechanical motion. A patterned surface reshapes a light wave. The [twin](digital-twin.html) connects these to a manufactured part and a measured result.
 
 ## Read the physics in four steps
 
@@ -17,7 +17,7 @@ For the Replicator, that question becomes practical. A shaped elastic body distr
 
 ## One chain from an idea to a machine
 
-The chain is now worked through in detail: [OPH's carrier algebra and field-to-atom calculation](oph.html#from-carrier-geometry-to-an-interaction-algebra), [shell capacities and filling order](periodic-table.html#deriving-the-shell-structure), and [bonding through to a manufactured upgrade](physics-to-hardware.html). The last chapter shows how a body, its sources and the surrounding medium physically implement the response operator we optimize.
+The chain is worked through in three places: [OPH's carrier algebra and field-to-atom calculation](oph.html#from-carrier-geometry-to-an-interaction-algebra), [shell capacities and filling order](periodic-table.html#deriving-the-shell-structure), and [bonding through to a manufactured upgrade](physics-to-hardware.html). The last shows how a body, its sources and the surrounding medium together are the response table we optimize.
 
 | Stage | Question | Replicator example |
 |---|---|---|
@@ -27,20 +27,20 @@ The chain is now worked through in detail: [OPH's carrier algebra and field-to-a
 | Process | What does that response do to the feedstock? | Force, transport, heating, joining or alignment |
 | Verification | Did the intended change occur? | Measured field, inspected part and improved module performance |
 
-The theories connect through explicit quantities. Geometry alone does not specify a force; a resonance alone does not specify coupling; an arranged particle cloud does not specify a permanent solid. Each step supplies the information needed by the next.
+Shape alone does not give a force. A resonance alone does not give a coupling. An arranged cloud of particles does not give a permanent solid. Each step supplies what the next one needs.
 
 ## A common language, with scale made explicit
 
-We use modes, phase, interference, boundary conditions and feedback across acoustic, electromagnetic and optical work. Their common mathematical forms help us reuse representations and optimization tools. Their physical parameters determine which operations are possible.
+We use the same words across acoustic, electromagnetic and optical work: modes, phase, interference, boundary conditions and feedback. The shared mathematics lets us reuse optimization tools. The physical numbers decide which operations are possible.
 
-For a small-signal model at a fixed frequency, write **y(f) = H(f)u(f)**: the response map H connects accessible inputs u to measured outputs y. Its units, bandwidth, loss, conditioning and calibration matter as much as its shape. Joining and crystal growth also require material evolution and nonlinear process models.
+For gentle drives at one frequency, the machine behaves like a table of numbers H: **y(f) = H(f)u(f)**. H connects the inputs u we can reach to the outputs y we measure. We also need its units, frequency range, losses, sensitivity to small errors (conditioning) and calibration. Joining and crystal growth also need models of how the material itself changes.
 
-This is the engineering interpretation of “more function per part”: design the material and geometry so that the response needed for the task is easy to excite, measure and reproduce.
+“More function per part” means this: design the material and shape so that the response the task needs is easy to excite, measure and repeat.
 
 ## What the framework commits us to
 
-OPH is our unifying research direction. Mathematical results hold under their stated assumptions; a physical model earns use by reproducing specified observations and making successful predictions. The upstream programme explicitly keeps those two achievements distinct. The [OPH chapter](oph.html) gives the current scope and source trail.
+OPH is our unifying research direction. A mathematical result holds under its stated assumptions. A physical model earns use by reproducing specified observations and by making predictions that succeed. The upstream programme keeps those two apart. The [OPH chapter](oph.html) gives the current scope and source trail.
 
-We carry that discipline into the twin: record the model, parameters, validity range and uncertainty, then use automated measurements to improve them. A foundational hypothesis can inspire a better design while the design is tested with independently established material and field physics.
+We carry that discipline into the twin. Record the model, its parameters, its valid range and its uncertainty. Then use automated measurements to improve them. A foundational hypothesis can inspire a design. The design is still tested with independently established physics.
 
 Continue to [Architecture](architecture.html), [Acoustics](acoustics.html) or the [upgrade loop](upgrades.html).

@@ -1,33 +1,35 @@
 # Research library
 
-<div class="callout">
-<strong>Handbook first:</strong> the handbook is the current explanation of the programme, and the <a href="desktop-replicator.html">Desktop Replicator</a> chapter describes the machine being designed now. The papers below are historical references for individual mechanisms. Consolidation is ongoing: not every derivation in the papers has been carried into a chapter, and not every paper has been updated to the current design.
-</div>
+<div class="lead">The handbook is the one place where the programme is explained. The standalone papers that came before it are retired. This page shows where each paper's content went, and lists the outside publications the handbook rests on.</div>
 
-The paper library keeps the original standalone essays and dated design specifications so that the origin of each mechanism can be traced. Several describe earlier machines that have been replaced. Where a paper and a current chapter disagree, the chapter governs.
+## Where each paper went
 
-## Paper network (historical mechanism archive)
+The papers were written one mechanism at a time, over several machine designs. Their insights, derivations and sources have been moved into the guides below. The papers stay online as a record only. Several describe earlier machines, so where a paper and a guide disagree, the guide is right.
 
 <!-- PAPER_TABLE -->
 
-## Papers and patents from outside the project
+Three kinds of paper content were left behind on purpose: hardware that has been replaced, numbers with no traceable source, and claims that later work in the same papers withdrew. What was deleted from the design, and why, is logged in [Subsystems and interfaces](subsystems.html#deleted-parts-and-retired-baselines).
 
-For an investor- and architecture-oriented map of third-party experimental demonstrations by subsystem, start with [Proven in the lab](evidence.html). The [public source catalog](../sources.json) below is partitioned into three tiers—published laboratory experiments first, reference datasets and models second, and patents or exploratory claims last so non-experimental material never reads like a lab result.
+## Publications from outside the project
+
+Outside work is sorted by how strong it is as evidence. Published laboratory experiments come first. Reference data and models come second. Patents and exploratory leads come last, so that they never read like a lab result. For the same sources arranged by subsystem, see [Proven in the lab](evidence.html). The full records are in the [source catalogue](../sources.json).
+
+A catalogue entry says how deeply the source was read. "Bibliographic record only" means the record was checked and the paper itself has not yet been read by the project.
 
 <!-- SOURCE_TABLE -->
 
-## Physics and materials as tones
-
-The materials research programme explores the relationship between structure and response across scales. Atomic transition frequencies, lattice vibrations and component resonances each provide useful information. The [materials guide](materials.html) connects those descriptions to fabrication and inspection.
-
-The [physics section](physics.html) connects [Observer Patch Holography](oph.html), [light and matter](light-matter.html), and the [periodic-table research model](periodic-table.html). It explains why these ideas inform the programme and how they connect to quantitative machine design. The library lists public sources only, and each is linked where it is used.
-
-## Source reports and design questions
-
-A report of an unusual or highly ordered material is a lead, not a specification. To use it, turn it into an attributable source, a specific composition or microstructure, a measurement and a manufacturing question.
-
 ## How a source becomes engineering
 
-Record the DOI, patent number or versioned source. Note how deeply it was read: a lead only, the abstract, or the full method. Identify the mechanism, the task it would serve, the precision it requires, the materials and processes it depends on, and the next check that would confirm or rule it out.
+A report of an unusual result is a lead. It is not a specification. Before it can shape a part, five things are written down:
 
-Keep negative findings and unresolved leads, with reasons. A source becomes part of a module only through a concrete design and an acceptance test.
+1. **Identity.** The DOI, patent number or versioned source.
+2. **Depth.** Whether the project has seen only a mention, the abstract, or the full method.
+3. **Mechanism.** What the source says happens, and which task in the machine it would serve.
+4. **Cost.** The precision, materials and processes it depends on.
+5. **Next check.** The calculation, simulation or measurement that would confirm it or rule it out.
+
+Leads that fail are kept, with the reason. A source becomes part of a module only through a concrete design and an acceptance test, as described in [Current state](status.html#how-something-moves-up).
+
+## The physics framework
+
+The research framework pages connect the machine to deeper questions about waves and matter: [Physics overview](physics.html), [Observer Patch Holography](oph.html), [Light, fields and matter](light-matter.html), [Periodic table and tones](periodic-table.html), [Materials and modes](materials.html) and [From atoms to hardware](physics-to-hardware.html). They inform the programme. They are not required to follow the machine design.

@@ -1,6 +1,6 @@
 # Compute, sensing and control
 
-<div class="lead">This chapter covers the electronics and control loop of the Desktop Replicator: boards, clock, drive stage, 1-bit receive converters, laser readout, bus and compute card. It also defines the file formats and the software interface that every machine, real or emulated, must honour.</div>
+<div class="lead">This guide covers the electronics that drive and listen to the chamber of the Desktop Replicator: boards, clock, drive stage, 16-bit receive converters, laser readout, bus and compute card. It also explains the files and the software interface that every machine, real or emulated, must follow.</div>
 
 <div class="diagram">
 <svg viewBox="0 0 880 540" role="group" aria-labelledby="cc-title cc-desc" xmlns="http://www.w3.org/2000/svg">
@@ -9,7 +9,7 @@
 <defs><marker id="cc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#186b60"/></marker></defs>
 <rect x="30" y="16" width="820" height="44" rx="8" fill="#e2ede5" stroke="#186b60" stroke-width="1.5"/>
 <g fill="#f2f5ef" stroke="#186b60" stroke-width="1.5">
-<a href="#receive-a-1-bit-converter-on-every-disc" aria-label="Head boards"><rect x="30" y="82" width="400" height="112" rx="9"/></a>
+<a href="#receive-reading-each-disc-while-it-drives" aria-label="Head boards"><rect x="30" y="82" width="400" height="112" rx="9"/></a>
 <a href="#laser-readout-electronics" aria-label="Laser strip boards"><rect x="450" y="82" width="400" height="112" rx="9"/></a>
 <a href="#the-bus" aria-label="Bus between boards"><rect x="110" y="216" width="660" height="50" rx="8"/></a>
 <rect x="30" y="288" width="820" height="148" rx="10" fill="#e2ede5"/>
@@ -24,17 +24,17 @@
 <text x="440" y="52" font-size="12">{{c:clock_and_bus.xin_hz|mhz}} MHz oscillator · {{c:clock_and_bus.sys_clk_hz|mhz}} MHz controller clock · skew target {{c:clock_and_bus.sync_skew_max_ns}} ns</text>
 <text x="230" y="105" font-size="15" font-weight="600">Head boards (2)</text>
 <text x="230" y="126" font-size="12">Six bridge drivers, six piezo discs each</text>
-<text x="230" y="145" font-size="12">1-bit converter per disc, {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} million samples/s</text>
+<text x="230" y="145" font-size="12">16-bit converter ({{c:haptic_pzt.adc_fallback_mpn}}) reads each disc while it drives</text>
 <text x="230" y="164" font-size="12">Spare disc cancels capacitance drift</text>
 <text x="230" y="183" font-size="11.5" fill="#186b60">→ amplitude and phase per tone, per disc</text>
 <text x="650" y="105" font-size="15" font-weight="600">Laser strip boards (2)</text>
 <text x="650" y="126" font-size="12">{{c:mosquito_smi.total_ommatidia}} self-mixing laser diodes in total</text>
-<text x="650" y="145" font-size="12">Amplifier and 1-bit converter per laser</text>
+<text x="650" y="145" font-size="12">Amplifier and fast comparator per laser</text>
 <text x="650" y="164" font-size="12">No camera, no beam splitter</text>
 <text x="650" y="183" font-size="11.5" fill="#186b60">→ shadow level and sound ripple per beam</text>
 <text x="440" y="238" font-size="14.5" font-weight="600">Bus ({{c:clock_and_bus.spinal_bus_mbps_range|range}} Mbit/s design range)</text>
 <text x="440" y="256" font-size="12">Carries differences from prediction, labelled as measurements</text>
-<text x="440" y="311" font-size="14.5" font-weight="700">COMPUTE CARD SLOT — runs the Cadence pattern network</text>
+<text x="440" y="311" font-size="14.5" font-weight="700">COMPUTE CARD SLOT: runs Prime, the project's pattern network</text>
 <text x="173" y="346" font-size="14" font-weight="600">Card 1 · Microcontroller</text>
 <text x="173" y="366" font-size="12">Default (RP2350B)</text>
 <text x="173" y="384" font-size="12">Sparse 8-bit network, under {{c:cadence_brain.cadence_sparse_max_kb}} kB</text>
@@ -64,211 +64,203 @@
 </svg>
 </div>
 
-*Status:* design decisions and derived estimates, built on documented methods for piezo self-sensing ([Dosch, Inman &amp; Garcia, 1992](https://doi.org/10.1177/1045389X9200300109)) and laser self-mixing ([Giuliani et al., 2002](https://doi.org/10.1088/1464-4258/4/6/371); [Bertling et al., 2014](https://doi.org/10.1364/OE.22.030346)). The machine is described in [Desktop Replicator](desktop-replicator.html); terms are in the [Glossary](glossary.html).
+*Status:* design decisions and derived estimates, built on Documented methods for piezo self-sensing ([Dosch, Inman &amp; Garcia, 1992](https://doi.org/10.1177/1045389X9200300109)) and laser self-mixing ([Giuliani et al., 2002](https://doi.org/10.1088/1464-4258/4/6/371); [Bertling et al., 2014](https://doi.org/10.1364/OE.22.030346)). Firmware results come from tests on a workstation and are Simulated. The machine is in [Desktop Replicator](desktop-replicator.html) and terms in the [Glossary](glossary.html).
 
 ## What this subsystem does
 
-The control system turns a target into twelve timed drive signals, and turns the returning echoes and laser signals into an estimate of what is in the chamber. It works on three timescales with separate owners, so that edge timing never waits for heavy computation.
+The control system turns a target into twelve timed drive signals, and the returning echoes and laser signals into an estimate of what is in the chamber. Three layers share the work, so edge timing never waits for heavy computing.
 
 | Layer | Timescale | Job | Runs on |
 |---|---|---|---|
-| Boards at the chamber | Nanoseconds | Generate drive edges, sample the returns, extract amplitude and phase per tone | Microcontrollers on the head and laser boards |
-| Compute card | Milliseconds | Choose the next drive pattern from the sensed state | The Cadence network on the plug-in card |
+| Boards at the chamber | Nanoseconds | Make drive edges, sample the returns, find amplitude and phase per tone | Microcontrollers on the head and laser boards |
+| Compute card | Milliseconds | Choose the next drive pattern from the sensed state | Prime, the project's model built on the Cadence library, on the plug-in card |
 | Workstation | Seconds to hours | Design geometry, train the network, compile patterns | The [digital twin](digital-twin.html); not needed at run time |
 
 <a id="compiler-wire-contract-machinebackend-fcode-and-ring-0-parity"></a>
 
 ## One contract: files, verbs and the machine interface
 
-Everything above the boards speaks one narrow interface, so real hardware and the emulator are interchangeable.
+Everything above the boards speaks one narrow interface, so hardware and emulator can be swapped. The exact fields of every file and packet are in [Subsystems and interfaces](subsystems.html#contracts).
 
-**Holographic equation, chord and `.fcode`.** Three things are kept apart.
+**Three records are kept apart.**
 
-- A **holographic equation** is the stored description of an object. It is a `.holo` file (format `holo-eq/0.2`) and it does not depend on any one machine. It says what to make.
-- A **chord** is one set of complex drive values: an amplitude and a phase for each source at each tone. A chord belongs to one chamber in one state. It is computed when needed and is not the record.
-- A **`.fcode`** file is what a machine plays: a time-ordered list of frames, each with one chord, a duration, a verb and the channels to record. On the wire it is a compact binary stream with 16-bit drive values (tagged `FCD1`).
+| Record | What it is for |
+|---|---|
+| Holographic equation (`.holo`, format `holo-eq/0.2`) | The stored description of an object. It does not depend on any one machine. It says what to make |
+| Chord | One set of drive values: an amplitude and a phase for each source at each tone. It belongs to one chamber in one state and is computed when needed |
+| `.fcode` | What a machine plays: frames in time order, each with one chord, a duration, a verb and the channels to record |
 
-The compiler turns a holographic equation into `.fcode` for a particular machine through that machine's calibration. Every stored item states whether it was measured or inferred, and the compiler refuses an inferred one unless it has been explicitly promoted.
+The compiler turns a holographic equation into `.fcode` for one machine, using that machine's calibration. Every stored item states whether it was measured or inferred, and the compiler refuses an inferred item unless it has been explicitly promoted.
 
-An earlier format, `.pattern`, stored the chords themselves. It is superseded as the store, because chords do not survive a change of chamber, as described [below](#holographic-equations). The simulation workbench still reads and writes `.pattern` files, and the chord memory still operates on them.
+An earlier format, `.pattern`, stored chords. It is superseded as the store, because chords do not survive a change of chamber ([below](#holographic-equations)). The workbench and the [chord memory](cadence-memory.html#chord-memory) still use it.
 
-**Verbs.** Each frame carries one of three verbs.
+**Verbs.** One per frame.
 
 | Verb | Code | Meaning | State of the code |
 |---|---|---|---|
 | ADD | 1 | Apply the chord as written | Implemented |
-| REMOVE | 2 | Release and remove material, as one step of the recovery sequence | Implemented incorrectly; see below |
+| REMOVE | 2 | Release and remove material: the object absorbs sound at a resonance measured from its echo, then the freed material is carried to a crucible | Implemented in the simulation and the twin (Simulated) |
 | LISTEN | 3 | Play the chord at one thousandth of the amplitude (60 dB down) to probe without disturbing | Implemented |
 
-REMOVE is not a reversed or mirrored ADD. The force on a small object depends on the squared magnitude of the pressure field. Flipping the sign of every phase leaves that magnitude unchanged, so a mirrored holding pattern rebuilds the same trap. The present code still implements REMOVE by taking the complex conjugate of the drive, and one simulation path fakes dispersal with a negative acoustic intensity. Both shortcuts are known to be physically wrong and have not yet been replaced. The correct sequence is in [Scan, recover and matter stores](matter-loop.html).
+REMOVE is not ADD played backward. An earlier shortcut replayed a reversed holding pattern. That was wrong, because a reversed pattern rebuilds the same trap. It has been removed from the code ([why](matter-loop.html#why-reversing-a-holding-pattern-removes-nothing)).
 
 **The machine interface.** Hardware and emulator implement the same four calls, named `MachineBackend` in the twin:
 
 ```text
-describe()             -> geometry, channels, limits and the body-response file
+describe()             -> geometry, channels, limits and the plate-response file
 calibrate()            -> empty-chamber response and sensor baselines
 play(frames)           -> plays .fcode frames, returns what the ports recorded
 listen(gates, steps)   -> records the port response to a low-level probe
 ```
 
-The body-response file (`body-response/0.1`) holds one machine's transfer from drive voltage to plate motion at each tone. Planning code states the field it wants, and the compiler maps that through the file for the machine in front of it. The current presets are `desktop-200mm` and the small `boro12`.
+A feature that cannot be written as calibrate, play or listen belongs to the simulator (Design decision). A recorded job must replay through the emulator and give, byte for byte, the frame log the hardware link would receive.
+
+The [plate-response file](digital-twin.html#the-plate-response-file) holds one machine's transfer from drive voltage to plate motion at each tone. Its current version, `body-response/0.2`, also holds the receive path, and it refuses an export sampled more coarsely than half a wavelength at the top tone. Version 0.1 had neither. The compiler maps the wanted field through this file. The presets are `desktop-200mm` and the small `boro12`.
 
 ### Holographic equations
 
-**Why chords cannot be the record (Simulated).** A set of drive values tuned for one chamber writes a shape well on that chamber and fails on the next. In a pre-registered simulation, drives optimised per shape on the nominal plate scored 0.60 to 1.00 overlap with their targets; replayed on plates that differ by half a percent in thickness they fell to chance. The same happens when the cylinder changes size, when sources are added, or when the air warms by a couple of kelvin. A stored chord describes a chamber, not an object.
+**Why chords cannot be the record (Simulated).** In a pre-registered simulation, drives optimised per shape on the nominal plate scored 0.60 to 1.00 overlap with their targets. Replayed on plates half a percent different in thickness, they fell to chance. The same happens when the cylinder changes size, sources are added, or the air warms by a couple of kelvin. A stored chord describes a chamber, not an object.
 
-**What the file holds.** A holographic equation describes the object about its own centre, in two parts.
+**What the file holds.** It describes the object about its own centre, in two parts written as spherical waves.
 
-- *The write form* is the sound field the object needs around it, expressed as a short list of spherical waves at each tone, in one or more steps called strokes. At the default detail this is 49 numbers per tone.
-- *The read form* is how the object scatters sound: a compact table that turns any incoming wave into the outgoing one. It is what the machine compares an echo against to check the object, and what removal starts from.
+- *The write form* is the sound field the object needs around it, in one or more steps called strokes.
+- *The read form* is how the object scatters sound: a table that turns any incoming wave into the outgoing one.
 
-Because both parts are written in spherical waves about the object, turning or moving the object is an exact calculation and needs no new optimisation (Derived).
+Turning or moving the object is therefore an exact calculation and needs no new optimisation (Derived).
 
-**How a machine uses it.** Each chamber measures its own response during calibration: what one volt on each source produces at the object's position. The three verbs then run through that measurement.
+**How a machine uses it.** Each chamber measures, during calibration, what one volt on each source produces at the object's position. ADD compiles the goal through that measurement into drive values, within the voltage it has. LISTEN predicts the echo the object should return and compares it with the measured one. REMOVE uses the measured echo to compute the drive the object absorbs best.
 
-| Verb | What the machine does with the equation |
-|---|---|
-| ADD | Compiles the goal through its calibration into drive values, within the voltage it has |
-| LISTEN | Predicts the echo the object should return and compares it with the measured one |
-| REMOVE | Uses the measured echo to compute the drive that the object absorbs best |
+**A build is finished when the echo matches (Design decision).** The machine drives, listens, and compares the echo with the one the finished object should give. The build is done when the two match, not when the frame list runs out. Listening uses little power, so it runs all through the build. One number, the echo mismatch, is the stop rule and is what the operator sees. A matching echo is still not a passed part ([what a scan may claim](matter-loop.html#what-a-scan-is-allowed-to-claim)).
 
-**Carry the goal, not the field (Simulated).** There are two ways to compile ADD. Reproducing the stored field as closely as the sources allow works on every chamber tried but wastes the supply: it lifts 50 to 1,000 times less than the chamber's own best. Carrying the goal, meaning the sites to hold and the clearance around them, and letting each chamber choose its own field matches a direct solve within 1 % on chambers with 12 and with 36 sources. The format therefore stores the goal.
+**Carry the goal, not the field (Simulated).** Reproducing the stored field on each chamber wastes the supply: it lifts 50 to 1,000 times less than the chamber's own best. Carrying the goal (the sites to hold and the clearance around them) lets each chamber choose its own field. That matches a direct solve within 1 % on chambers with 12 and with 36 sources. The format therefore stores the goal.
 
 **What the experiments support so far (Simulated, pre-registered, 22 November 2026).**
 
 - A rule re-derived from each chamber's calibration beats a stored chord on plates it was not tuned for: mean overlap 0.32 against 0.04.
 - Thirty further iterations on the chamber's own calibration bring that to 86 % of a full per-chamber optimisation, above chance on all 65 plate and shape pairs tested.
-- The equation is not yet short. No compact list of modes reached 95 % of the fully optimised result, and a route that derives the drive from listening alone failed.
-- Thin objects need care. Writing them one site at a time with strong suppression of neighbouring traps puts the traps in the right place, at the cost of lift: on twelve sources three of six test objects fell below their own weight.
+- The equation is not yet short: no compact list of modes reached 95 % of the fully optimised result. Deriving the drive from listening alone failed.
+- Thin objects cost lift. Written one site at a time with neighbouring traps suppressed, three of six test objects fell below their own weight on twelve sources.
 
-These scores use a simplified measure of where the pressure nodes fall, on a 7 × 7 × 7 grid. They are not a simulation of material being held.
+These scores measure where the pressure nodes fall on a 7 × 7 × 7 grid. They do not simulate material being held.
 
-**Limits that are physics (Derived).** At the default detail the write form describes the field only within about 2 mm of the object's centre at the top tone; larger objects need more terms or several centres. A chamber with twelve sources can realise only twelve independent fields per tone, so compilation reports how much of the equation it could not meet. A scan can recover only the part of the read form that the sources can see.
+**Limits that are physics (Derived).** At the default detail the write form describes the field only within about 2 mm of the object's centre at the top tone, so larger objects need more terms or several centres. Twelve sources make only twelve independent fields per tone, so compilation reports how much of the equation it could not meet. A scan can recover only the part of the read form that the sources can see.
 
-**Several materials.** A follow-on version, `holo-eq/0.3-mm`, stores a list of materials and where each sits, and rebuilds the scattering table from a material model when needed. For an eleven-material test object the file is about 1.7 kB, several hundred times smaller than storing the table for every probe band.
+**Several materials.** A follow-on version, `holo-eq/0.3-mm`, stores a list of materials and where each sits, and rebuilds the scattering table from a material model.
 
-**To the controller.** The controller does not receive the file. It receives a short packet (`HLEQ`), about 1.5 kB for a six-stroke job, that sets the goal for the on-board pattern network without using extra memory.
+**To the controller.** The controller receives not the file but a short packet (`HLEQ`) that sets the goal for the on-board pattern network without using extra memory.
 
-**In code.** The simulation workbench and the twin both read and write the format. An earlier export with the same `.holo` name (`holo-field/0.1`) stored raw per-chamber signals and is superseded.
+**Calibration uses a symmetry of still air (Derived).** In still air the response from source A to source B equals the response from B to A. Calibration therefore measures 78 pairs of the twelve sources instead of 144, and recovers each channel's send and receive gains. A departure from the symmetry during a build means the air is moving or the machine has drifted, and serves as an alarm.
 
-**Calibration uses a symmetry of still air (Derived).** In still air the response from source A to source B equals the response from B to A. Calibration can therefore measure 78 pairs of the twelve sources where it would otherwise measure 144, and it recovers each channel's send and receive gains as a by-product. Any departure from the symmetry during a build is a sign that the air is moving or the machine has drifted, and serves as an alarm.
-
-**Firmware.** The firmware target is `twin/Firmware/desktop/`. It holds source for the drive and receive programs, the laser-strip readout, the bus, lock-in detection, the frame scheduler and the sparse pattern network. Its 59 tests pass on a workstation and its constants match the shared file. There is no main program or build, and nothing has run on a board (Simulated). Firmware for the retired P0 array is kept as a regression case. The intent is bare-metal code with no operating system, under about ten thousand lines, that parses the same frames whether they come from a workstation over USB-C or from the compute card. Unplugging the workstation should leave the machine running.
+**Firmware.** The firmware source holds the drive and receive programs, the laser-strip readout, the bus, lock-in detection, the frame scheduler and the sparse pattern network. Its 59 tests pass on a workstation and its constants match the shared file (Simulated). There is no main program and no build for a board. It parses the same frames from a workstation over USB-C or from the compute card, so unplugging the workstation should leave the machine running.
 
 ## In the Desktop Replicator
 
 ### Boards and controllers
 
-The count of {{c:clock_and_bus.pcb_count}} boards refers to the three field boards: two identical head boards behind the wafers, and the backplane in the base with the clock, power conversion and compute-card socket. The bill of materials lists more: two laser strip boards in the tower, a display board in the head, and the compute card. With the first compute card fitted there are six microcontrollers: one per head board, one per laser strip, one on the compute card and one for the display. One controller per laser strip is an assumption.
+The count of {{c:clock_and_bus.pcb_count}} boards means the field boards: two identical head boards behind the wafers, and the backplane in the base with the clock, power conversion and compute-card socket. The bill of materials adds two laser strip boards, a display board and the compute card. With the first compute card there are six microcontrollers: one per head board, one per laser strip (an assumption), one on the compute card and one for the display.
 
-Part numbers, power and heat are in [Desktop Replicator](desktop-replicator.html).
+Part numbers are in [Desktop Replicator](desktop-replicator.html#electronics). The power estimate is 17.0 W with the first compute card and 22.5 W with the second. The warmest internal air is 12.7 K above ambient against a 20 K limit (Derived; [Heat](desktop-replicator.html#heat)).
 
 <a id="shared-xin-sync-clock-and-the-topographic-spinal-bus"></a>
 
 ### Clock and timing
 
-Every controller runs from one {{c:clock_and_bus.xin_hz|mhz}} MHz oscillator on the backplane, distributed over matched traces, and every frame starts on one shared sync line. Each controller multiplies the reference to {{c:clock_and_bus.sys_clk_hz|mhz}} MHz.
+Every controller runs from one {{c:clock_and_bus.xin_hz|mhz}} MHz oscillator on the backplane, sent over matched traces, and multiplies it to {{c:clock_and_bus.sys_clk_hz|mhz}} MHz. Every frame starts on one shared sync line.
 
-The shared clock is necessary. Two free-running crystals rated at ±30 parts per million can differ by 60 parts per million, which at 160 kHz is a 9.6 Hz beat between the plates. The standing-wave pattern would cycle about ten times a second and no trap would stay still.
+The shared clock is necessary. Two free-running crystals rated at ±30 parts per million can differ by 60. At 160 kHz that is a 9.6 Hz beat between the plates, so no trap would stay still.
 
-The timing figures, as given by an audit of the engineering record (Derived):
+The timing figures (Derived):
 
-- One controller clock tick is {{c:clock_and_bus.pio_tick_ns}} ns, which is 0.38° of phase at 160 kHz.
-- The board-to-board skew target is {{c:clock_and_bus.sync_skew_max_ns}} ns, which is 0.12° at 160 kHz. An older figure of 0.1° was computed at 40 kHz.
-- No tone of the full-size machine has a whole number of clock ticks per period: {{c:clock_and_bus.sys_clk_hz|mhz}} MHz divided by 32 kHz is 4687.5. Firmware needs fractional timing or must accept one tick of jitter.
+- One controller clock tick is {{c:clock_and_bus.pio_tick_ns}} ns, which is {{c:clock_and_bus.pio_tick_phase_deg_at_160khz}}° (about 0.38°) of phase at 160 kHz.
+- The board-to-board skew target is {{c:clock_and_bus.sync_skew_max_ns}} ns, which is 0.12° at 160 kHz.
+- No tone has a whole number of clock ticks per period: {{c:clock_and_bus.sys_clk_hz|mhz}} MHz divided by 32 kHz is 4687.5. Firmware needs fractional timing or must accept one tick of jitter.
 
-How the multiplied clocks on different boards are brought into a known phase relative to each other is Open.
+How the multiplied clocks on different boards are brought into a known phase is Open.
 
 ### Drive stage
 
-Each piezo disc is driven by a pair of gate-driver outputs wired as a full bridge, with diodes ({{c:haptic_pzt.clamp_diode_mpn}}) protecting the receive path. The candidate driver is {{c:haptic_pzt.hbridge_driver_mpn}}, rated to {{c:haptic_pzt.hbridge_driver_v_max}} V, which can switch its outputs off so that the disc can listen. It replaces a part that could not do that. Its values have not been re-read from a current datasheet. The electrical estimate assumes a {{c:haptic_pzt.bridge_rail_v}} V bridge rail. Two limits follow (Derived).
+Each piezo disc ([piezo physics](acoustics.html#in-the-desktop-replicator)) is driven by a pair of gate-driver outputs wired as a full bridge. Diodes ({{c:haptic_pzt.clamp_diode_mpn}}) protect the receive path. The candidate driver is {{c:haptic_pzt.hbridge_driver_mpn}}, rated to {{c:haptic_pzt.hbridge_driver_v_max}} V. It can switch its outputs off so the disc can listen. Its values have not been re-read from a current datasheet. The bridge supply is {{c:haptic_pzt.bridge_rail_v}} V.
 
-**Drive voltage is scarce.** A {{c:haptic_pzt.bridge_rail_v}} V bridge gives {{c:haptic_pzt.max_drive_vrms}} V rms at a single tone and {{c:haptic_pzt.max_drive_vrms_5tone_per_tone}} V rms per tone when five tones share the swing. Planning once assumed 40 V; the model now refuses any plan above what the rail delivers. The rail was raised from 12 V to an 18 V rail on 18 November 2026, together with larger piezo discs, because the solid finite-element model shows a first levitation needs both, one tone only, and a foam bead ([Acoustic bodies](acoustics.html#known-limits)). Force scales with voltage squared, so the earlier 40 V assumption overstated force many times over. A proposed front-end circuit adds a further cost: its sensing node is referenced to ground, which needs single-ended drive and halves the available voltage. Drive strength, not the number of controls, is the limiting factor.
+Each bridge has four states (Design decision): push (plus the supply across the disc), pull (minus the supply), brake (both sides at zero volts, which damps the disc) and float (disconnected, so the disc only listens). The electrical contract is in [Subsystems and interfaces](subsystems.html#contracts).
 
-**Square-wave harmonics land on the comb.** A square wave at 32 kHz has its third and fifth harmonics at 96 and 160 kHz, exactly on two of the five tones.
+**Safety switch (Design decision).** A hardware switch sits in series with the supply that enables the bridges and with the laser supply. With the head up, the bridges are disconnected (high impedance) and the lasers are off. Firmware also refuses to drive. The laser class is Open ([Thermal and safety](subsystems.html#s11-thermal-and-safety)).
 
-The piezo port is modelled with a linear equivalent circuit: a capacitance in parallel with a series resonant branch for the mechanics. The exponential-and-logarithm threshold law in the long-term compute ladder describes laser cavities and does not apply to the piezo.
+**Drive voltage is scarce (Derived).** A {{c:haptic_pzt.bridge_rail_v}} V bridge gives {{c:haptic_pzt.max_drive_vrms}} V rms at a single tone, and {{c:haptic_pzt.max_drive_vrms_5tone_per_tone}} V rms per tone when five tones share the swing. Force grows with voltage squared, and the planner refuses any plan above what the supply delivers. On 18 November 2026 the supply was raised from 12 V to {{c:haptic_pzt.bridge_rail_v}} V and the discs were enlarged, because the solid finite-element model shows that a first levitation needs both, with one tone and a foam bead. One 160 kHz tone on the full supply lifts about 1.2 times a foam bead's weight. Five tones sharing the supply lift about 7 % (Simulated; [Acoustics](acoustics.html#known-limits)). A front-end circuit with a grounded sensing node would need single-ended drive, which halves the voltage.
+
+**Square-wave harmonics land on the tones (Derived).** A square wave at 32 kHz also contains weaker waves at three and five times its frequency: 96 and 160 kHz, exactly on two of the five tones.
+
+The piezo port is modelled as a linear circuit: a capacitance in parallel with a series resonant branch for the mechanics.
 
 <a id="acoustic-lamina-75-msas-1-bit-sigma-delta-piezo-haptic"></a>
 
-### Receive: a 1-bit converter on every disc
+### Receive: reading each disc while it drives
 
-Each disc is read while it is driven. The physics of that self-sensing is in [Acoustics](acoustics.html); this section covers the converter.
+Each disc is read while it is driven. The echo is 1,000 to 10,000 times smaller than the drive current (60 to 80 dB down), and the disc's own capacitance drifts by about {{c:haptic_pzt.c0_tempco_pct_per_c}} % per kelvin, a larger change than the echo ([why](acoustics.html#self-sensing-on-the-same-two-wires)).
 
-The wanted signal is small. The echo from a 2 mm droplet is estimated at 60 to 80 dB below the drive current, while the ceramic's capacitance drifts by about {{c:haptic_pzt.c0_tempco_pct_per_c}} % per kelvin, a change about 50 dB below the drive (Derived). Timing the zero crossings of the current cannot recover it: an echo 70 dB down moves a crossing by less than 0.2 ns, and two crossings per period cannot separate five tones.
+**What is fitted (Design decision; converter choice Simulated).** A 16-bit converter ({{c:haptic_pzt.adc_fallback_mpn}}) reads each disc through a tap that divides the signal by twenty. Each head board carries four of them, giving eight channels for six discs and one spare disc. The spare is bonded to nothing: it drifts like the others but hears nothing, so subtracting it removes the drift. The controller sits within millimetres of the discs, which holds stray capacitance under {{c:haptic_pzt.max_trace_cap_pf}} pF against about {{c:haptic_pzt.c0_nominal_pf}} pF for the disc. Each 10 ms frame holds one {{c:clock_and_bus.capture_burst_us}} µs capture. The receive band is {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz. Whether this path resolves the echo with five tones present is Open.
 
-The design closes a sigma-delta loop around a fast comparator ({{c:haptic_pzt.comparator_mpn}}) with two resistors, one capacitor and two controller pins. The output is a stream of single bits at {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} million samples per second whose density follows the input. A seventh comparator on each board reads a spare disc that is not bonded to the wafer. It drifts like the others but hears nothing, so subtracting it removes the drift. Keeping the controller within millimetres holds stray capacitance under {{c:haptic_pzt.max_trace_cap_pf}} pF, against about {{c:haptic_pzt.c0_nominal_pf}} pF for the disc.
+**What it replaced: a 1-bit converter that failed (Simulated, 18 November 2026).** The first design used a comparator ({{c:haptic_pzt.comparator_mpn}}), a part that only answers "higher" or "lower", {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} million times a second. It had to show at least {{c:haptic_pzt.sfdr_gate_min_db}} dB between the wanted tones and the largest false tone. A cycle-by-cycle simulation over 144 sets of part values reached {{c:haptic_pzt.sfdr_simulated_dbc}} dB at best. No part values could have passed: an ideal converter of this kind reaches only {{c:haptic_pzt.ideal_1bit_sqnr_200khz_db}} dB over the {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz band at an oversampling ratio of {{c:haptic_pzt.osr}}, about 188 (Derived). The earlier estimate of {{c:haptic_pzt.enob_range|range}} bits was not supported. The 16-bit converter was then fitted on footprints already on the board. Two lessons carry over:
 
-For an ideal first-order 1-bit loop the signal-to-quantisation-noise ratio is
-
-    SQNR ≈ 6.02 + 1.76 − 5.17 + 30·log₁₀(OSR)  dB,   OSR = f_s / (2·B)
-
-With a band B of {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz the oversampling ratio is {{c:haptic_pzt.osr}} (about 188) and the result is about {{c:haptic_pzt.ideal_1bit_sqnr_200khz_db}} dB, a little under 12 bits (Derived). The constants quote {{c:haptic_pzt.enob_range|range}} bits; the first-order formula does not support that range.
-
-The band was first stated as 150 kHz, which excluded the top tones. It is now {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz, and at that band the ideal figure is already below the acceptance gate of {{c:haptic_pzt.sfdr_gate_min_db}} dB.
-
-The gate is a bit-exact simulation with five tones present, which must show at least {{c:haptic_pzt.sfdr_gate_min_db}} dB between the wanted tones and the largest spurious product. If it fails, the boards take a conventional converter ({{c:haptic_pzt.adc_fallback_mpn}}) on footprints already provided.
-
-**The gate fails (Simulated, 18 November 2026).** A cycle-by-cycle simulation of the 1-bit loop was run with comparator hysteresis, offset, noise, timing skew, jitter, supply ripple, protection-diode behaviour and capacitance mismatch, over three readings of the circuit and 144 combinations of part values. The best result with six tones present is 60.9 dB. An ideal loop of this kind reaches only 70.8 dB at the real 200 kHz band edge, so no choice of part values can pass and the fallback converter is triggered by the written rule. Three further results from the same run:
-
-- A faint echo, 70 dB below the drive, is still recovered in one 14 ms frame at 80 to 87 dB, falling to 75 to 78 dB under board-level stress, provided the firmware filters and reduces the sample rate before it correlates. No single set of part values is good at both the tone test and echo recovery.
-- Square-wave references let the third and fifth harmonics of a tone leak into the estimate of that tone at one third and one fifth strength, because the tones are harmonically related. The firmware must subtract them in a fixed order.
-- No circuit diagram or netlist of this front end exists in the project. The simulation had to assume three possible readings of its description.
+- An echo 70 dB below the drive was still recovered in one 14 ms frame at 80 to 87 dB, and at 75 to 78 dB under board-level stress, after filtering and a lower sample rate.
+- Timing the zero crossings of the current cannot work: such an echo moves a crossing by less than 0.2 ns, and five tones mean ten unknowns where one crossing gives one number.
 
 ### Lock-in detection and its workload
 
-Amplitude and phase at each tone are recovered by correlating the bit stream with a reference sine and cosine. Because the stream is one bit wide, multiplication reduces to an exclusive-or and a count of set bits.
+Lock-in detection finds amplitude and phase at each tone: multiply the samples by a reference sine and cosine at that tone, and add up.
 
-Whether this fits in the controller is Open. Each channel produces {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} million bits per second. Six channels, five tones and two references per tone come to the order of 10⁸ word operations per second, on a controller with 3 × 10⁸ clock cycles per second across two cores. Continuous software demodulation of every channel is unlikely to fit, so firmware will need burst capture or decimation. The {{c:mosquito_smi.total_ommatidia}} laser channels add more.
+- **Piezo channels.** Demodulating the 8 converter channels of a head board takes an estimated 4 ms of each 10 ms frame (Derived from instruction counts). Whether one controller can take in the converter data while it also makes the drive edges is Open.
+- **Square-wave references leak.** With a square-wave reference, the reading for 32 kHz picks up one third of the 96 kHz signal and one fifth of the 160 kHz signal. Firmware must subtract them in a fixed order (Simulated).
+- **Laser channels.** A comparator gives single bits, so multiplying shrinks to an exclusive-or and a count of set bits. The twelve channels of one strip board, at {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} million bits per second each, with five tones and two references per tone, still come to about 3 × 10⁸ word operations per second (Derived). The controller has 3 × 10⁸ clock cycles per second on each of two cores, so continuous demodulation does not fit. Firmware needs burst capture or a reduced sample rate. The scheme is Open.
 
 <a id="optical-mosquito-eye-diffractive-facets-and-self-mixing-interferometry"></a>
 
 ### Laser readout electronics
 
-The optical sensor is a ring of {{c:mosquito_smi.total_ommatidia}} laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm, nicknamed the mosquito eye. Each diode is its own detector: light returning from a reflector re-enters the laser and modulates it, and the photodiode in the same package reads the result. This is self-mixing interferometry (SMI); the optics are in [Optics and optical metamaterials](optics.html).
+The optical sensor is a ring of {{c:mosquito_smi.total_ommatidia}} laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm. Each diode is its own detector, a method called self-mixing ([optics](optics.html#coherent-self-mixing-optical-readout)).
 
-Each channel has one amplifier ({{c:mosquito_smi.tia_mpn}}) and one comparator ({{c:mosquito_smi.comparator_mpn}}) running the same 1-bit conversion as the acoustic channels, so both sensors share one clock and one demodulation method. Published self-mixing work reports changes of tens of microvolts to about a millivolt per optical fringe on a level of about 2 V (Documented: Giuliani et al.). The level expected over this machine's beam path has not been derived and is Open.
+Each channel has one amplifier ({{c:mosquito_smi.tia_mpn}}) and one fast comparator ({{c:mosquito_smi.comparator_mpn}}), which turns the signal into single bits on the same clock as the piezo channels. Whether a comparator gives the laser signal enough range is Open.
 
-The amplifier topology is Open (Derived, as given by the audit). The constants specify a gain of {{c:mosquito_smi.tia_ac_gain}}. As voltage gain in a single stage, a part with about 20 MHz gain-bandwidth rolls off at about 100 kHz, below the top tone. Two stages or a transimpedance design are needed.
+Published work reports tens of microvolts to about a millivolt per optical fringe, on a level of about 2 V (Documented: Giuliani et al.). The level expected on this machine's beam path is Open.
+
+The amplifier circuit is Open. The constants give a gain of {{c:mosquito_smi.tia_ac_gain}}. As voltage gain in a single stage, a part with about 20 MHz gain-bandwidth rolls off at about 100 kHz, below the top tone (Derived). Two stages or a current-input (transimpedance) design are needed.
 
 ### The bus
 
-The head and laser boards do not send raw samples. Each subtracts what it expects (the drift reference and the predicted empty-chamber response to its own drive) and sends the difference as complex numbers per tone, labelled as measurements. Anything the network later fills in is labelled as inferred until a sensor confirms it.
+The head and laser boards do not send raw samples. Each subtracts what it expects: the drift reference and the predicted empty-chamber response to its own drive. It sends the difference as one complex number per tone, labelled as a measurement. Anything the network fills in is labelled inferred until a sensor confirms it.
 
-The link is a serial connection with a design range of {{c:clock_and_bus.spinal_bus_mbps_range|range}} Mbit/s. Its message layout is Open.
+The link is serial, with a design range of {{c:clock_and_bus.spinal_bus_mbps_range|range}} Mbit/s. Its message layout is Open.
 
 <a id="central-complex-sparse-complex-hermitian-cadence-and-the-swappable-brain-slot"></a>
 
 ### Compute card
 
-The backplane has one socket in the M.2 form factor, reached through a side hatch. The card runs the Cadence pattern network, described in [Cadence, memory and wave compute](cadence-memory.html). The network has the same definition on every card, so a different card changes speed and power but not the software above it.
+The backplane has one M.2 socket behind a side hatch. The card runs Prime, the pattern network in [Cadence, memory and wave compute](cadence-memory.html). A different card changes speed and power but not the software above it.
 
 | Card | Status | Network storage | Settle time |
 |---|---|---|---|
-| 1 · RP2350B microcontroller | Default | Sparse 8-bit weights, under {{c:cadence_brain.cadence_sparse_max_kb}} kB of {{c:cadence_brain.rp2350_sram_total_kb}} kB memory. Fits, but accuracy at that size is disputed | About 4 to 5 ms estimated from instruction counts |
+| 1 · RP2350B microcontroller | Default | Sparse 8-bit weights, under {{c:cadence_brain.cadence_sparse_max_kb}} kB of {{c:cadence_brain.rp2350_sram_total_kb}} kB memory. It fits, but accuracy at that size is disputed | Target {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms (Design target). Instruction counts give 4.4 to 6.1 ms (Derived) |
 | 2 · FPGA module | Optional | The same network in block memory | Microseconds as a design target; not modelled |
-| 3 · Optical core | Reserved | Analogue weights in an optical medium | Set by light propagation; long-term research |
+| 3 · Optical core | Reserved | Analogue weights in an optical medium | Set by light travel time; long-term research |
 
-Card 2 is justified only by a need for faster reflexes, wider converters or a large modulator interface. How far the sparse network for Card 1 has been tested is in the [Cadence chapter](cadence-memory.html#in-the-desktop-replicator).
+Card 2 is justified only by a need for faster reflexes, wider converters or a large modulator interface. Tests of the sparse network for Card 1 are in the [Cadence guide](cadence-memory.html#in-the-desktop-replicator).
 
 ## Long-term direction
 
-The prototype electronics are purchasable scaffolding. The long-term design keeps the contract above and replaces what implements it.
+The long-term design keeps the contract above and replaces what implements it. None of this has been simulated as a composed system ([Architecture](architecture.html#long-term-architecture-and-the-desktop-replicator)).
 
-- **Sources.** The twelve wired discs give way to a continuous piezoelectric layer with about 10⁵ optically switched elements. See [Acoustics](acoustics.html).
-- **Sensing.** Discrete laser channels give way to passive diffractive optics and fibre-coupled tomography. See [Optics and optical metamaterials](optics.html).
-- **Computing.** The clocked controller gives way to wave-based computing in optical cavities and, later, excitable soft-matter wave substrates. See the [substrate ladder](cadence-memory.html#long-term-direction-the-substrate-ladder).
-
-None of these has been simulated as a composed system. [Architecture](architecture.html) sets the two designs side by side.
+- **Sources.** A continuous piezoelectric layer with about 10⁵ optically switched elements replaces the twelve wired discs ([Acoustics](acoustics.html#long-term-direction)).
+- **Sensing.** Passive diffractive optics and fibre-coupled tomography replace discrete laser channels ([Optics](optics.html#long-term-direction)).
+- **Computing.** Waves in optical cavities and, later, excitable soft-matter wave substrates replace the clocked controller ([substrate ladder](cadence-memory.html#long-term-direction-the-substrate-ladder)).
 
 ## Open questions
 
 | Question | Who answers it |
 |---|---|
-| Does the receive path meet {{c:haptic_pzt.sfdr_gate_min_db}} dB with the fallback converter, and what is the front-end circuit? | Electrical design and simulation |
+| Does the 16-bit receive path resolve the echo with five tones present, and what is the front-end circuit? | Electrical design and simulation |
 | What drive stage and voltage does a holding pressure require, given the solid plate model? | Electrical design and plate model together |
 | How are fractional tick periods and shared square-wave harmonics handled? | Firmware design |
 | How are the multiplied clocks on different boards phase-aligned? | Circuit and firmware design |
-| Can lock-in detection run continuously on all channels? | Firmware in emulation |
-| Which laser amplifier topology, and what signal level reaches it? | Circuit design |
+| Can one controller take in the converter data beside the drive output, and how are the laser channels demodulated? | Firmware in emulation |
+| Is a comparator good enough for the laser signal? Which amplifier circuit, and what signal level reaches it? | Circuit design and simulation |
 | What is the bus message layout? | Firmware design |
+| What is the laser class? | Safety review |

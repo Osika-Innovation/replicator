@@ -1,10 +1,11 @@
 # Architecture
 
-The Replicator shapes sound, light and electric or magnetic fields inside one shared work volume so that material can be arranged, joined, inspected and taken apart without tools touching it. Every size of the machine, from the [Desktop Replicator](desktop-replicator.html) to the [long-term machine](ultimate-replicator.html), is the same two-zone cylinder: a build chamber above, a plinth for storage, release, power and compute below, and one mid-plane between them. Growing the machine changes diameters and swaps modules across fixed interfaces. It does not change the layout.
+The Replicator shapes sound, light and electric or magnetic fields in one shared work volume, where material is arranged, joined, inspected and taken apart with no tool touching it. Every size of the machine, from the [Desktop Replicator](desktop-replicator.html) to the [long-term machine](ultimate-replicator.html), is the same two-zone cylinder: a build chamber on top, a plinth below for storage, release, power and compute, and one mid-plane between. Growing the machine changes diameters and swaps modules across fixed interfaces. It does not change the layout.
 
-This page is the top of the architecture layer. It gives the whole machine in one diagram, the four flows that cross it with their budgets, and one table that sets the prototype, the alternatives still being traded and the final machine side by side. The per-subsystem datasheets, the interface control matrix and the log of deleted parts are in [Subsystems and interfaces](subsystems.html).
+- **The layout is fixed by ratios, not millimetres** (*Design decision*): plate width against gap height, source spacing against the sound wavelength, and any opening in a plate against the plate's width.
+- **The numbers do not carry over** (*Derived*). Force, heat, loss, bandwidth, manufacture and measurement are worked out again at every size.
 
-**Reading the labels.** Each figure carries one evidence label: *Design decision* (chosen), *Documented* (an identified external source), *Derived* (a calculation), *Simulated* (a project model), *Measured* (a project bench result), *Open* (not settled) or *Claim* (asserted by a source, unverified). No row on this page carries the Measured label. The definitions are in [Current state](status.html#evidence-labels).
+Subsystem datasheets, the interface control matrix and the log of deleted parts are in [Subsystems and interfaces](subsystems.html). Every figure carries an evidence label, defined in [Current state](status.html#evidence-labels). No row on this page is Measured.
 
 ## The machine in one picture
 
@@ -314,120 +315,186 @@ This page is the top of the architecture layer. It gives the whole machine in on
 <p>Master subsystem block diagram. Choose a flow to isolate it. Every block opens its subsystem guide. The stack is drawn as ruled on 24 November 2026; the parts named are those of the current Desktop Replicator model, whose CAD still carries the material store behind the tower rather than under the chamber.</p>
 </div>
 
-The diagram shows where things are, and what crosses between them. It does not show a sequence: the three operations in the work volume share one space and a recipe can overlap them. The prototype fits the acoustic column and optical sensing only; the electric and magnetic block is empty by default.
+The diagram shows where things are and what crosses between them, not a sequence. The prototype fits the acoustic column and optical sensing only. The electric and magnetic block is empty by default.
 
 ## Three zones
 
 | Zone | What it holds | What fixes its size | Evidence |
 |---|---|---|---|
-| Upper build cylinder | Two facing acoustic wafers {{c:desktop_geometry.gap_mm}} mm apart, the optical ring, the glass wall, the work volume | The stock glass tube ({{c:desktop_geometry.glass_cylinder_id_od_mm|x}} mm inside and outside diameter) and the plate spacing | Design decision; acoustics Simulated |
-| Mid-plane | The lower wafer and the flat annulus round it, which reflect sound back up; the gate that lets material up from the plinth; the thermal barrier under the chamber floor | The end reflection the lift needs, and the route material can take without cutting the wafer or the glass | Simulated requirement; layout Open |
-| Lower plinth | Material store on weigh cells, release and reclaim, the lower drive board, clock and bus, the compute card, power conversion, the cooling air path | The store volume and the electronics, not the acoustics | Design decision of 24 November 2026; CAD pending |
+| Upper build cylinder | Two facing acoustic [wafers](glossary.html) {{c:desktop_geometry.gap_mm}} mm apart, the optical ring, the glass wall, the work volume | The stock glass tube ({{c:desktop_geometry.glass_cylinder_id_od_mm|x}} mm inside and outside diameter) and the plate spacing | Design decision; acoustics Simulated |
+| Mid-plane | The lower wafer and flat ring, which reflect sound back up; the gate for material from the plinth; the thermal barrier under the chamber floor | The end reflection the lift needs, and a material route that cuts neither wafer nor glass | Simulated requirement; layout Open |
+| Lower plinth | Material store on weigh cells, release and reclaim, lower drive board, clock and bus, compute card, power conversion, cooling air path | The store volume and the electronics, not the acoustics | Design decision of 24 November 2026; CAD pending |
 
-The mid-plane is the one place where two requirements meet on a single part. Sound wants an uninterrupted, hard, flat end. Material wants a way through it. Two layouts are being compared in simulation before any hardware is cut: a sealed undrilled wafer inside a hard annulus with retractable feed ports round its edge, and one continuous tall cylinder of about 440 to 480 mm with a perforated or retractable separator at mid-height.
+On the mid-plane, sound wants a hard, flat, unbroken end and material wants a way through. The two layouts being compared in simulation are in the mid-plane row of the [comparison table](#long-term-architecture-and-the-desktop-replicator).
 
 ## Four flows and their budgets
 
-The four colours in the diagram are the four things that cross subsystem boundaries. The figures are those of the Desktop Replicator.
+The diagram's four colours are the four things that cross subsystem boundaries. Figures are for the Desktop Replicator.
 
 | Flow | What it carries | Voltage or level | Bandwidth | Power | Latency | Evidence |
 |---|---|---|---|---|---|---|
-| Matter and return | Feedstock from the store to the work volume and unwanted material back | Neutral grains and droplets only; at most {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC per bead; air at {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} % relative humidity | One Ø1.6 mm liquid line; solids have no automated path | Not applicable | Not yet budgeted | Derived; solids path Open |
-| Actuation (sound) | Twelve drive signals from the two boards to the piezo discs | {{c:haptic_pzt.bridge_rail_v}} V bridge supply; up to {{c:haptic_pzt.max_drive_v_peak_single_tone}} V peak on one tone, {{c:haptic_pzt.max_drive_vrms_5tone_per_tone}} V rms per tone when five share the supply | Tones at {{c:desktop_geometry.comb_tones_hz|khz}} kHz; timing step {{c:clock_and_bus.pio_tick_ns}} ns | 0.78 W per channel at the worst pattern, 10.9 W for 14 channels | Pattern repeats every {{c:clock_and_bus.transmit_ring_us}} µs; one frame is 10 ms; the network settles in {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms (target) | Derived; lift Simulated |
-| Actuation (light, EM) | Laser illumination for sensing; no electric or magnetic drive is fitted | {{c:mosquito_smi.total_ommatidia}} lasers at {{c:mosquito_smi.laser_wavelength_nm}} nm, at most 5 mW each, on the 3.3 V supply | Not applicable | 2.0 W for the lasers | Not applicable | Derived; laser class Open |
-| Sensing and telemetry | Echo on the drive wires, optical readings, air temperature, humidity, store weight | 16-bit converter ({{c:haptic_pzt.adc_fallback_mpn}}) behind a one-twentieth tap; echo floor 6.3 mV at the disc | Receive band {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz; board bus 75 Mbit/s inside a design range of {{c:clock_and_bus.spinal_bus_mbps_range|range}} Mbit/s | 0.33 W per board for the converters | One {{c:clock_and_bus.capture_burst_us}} µs capture per 10 ms frame; demodulating 8 channels takes 4 ms; a calibrated read takes 2.3 ms | Derived from instruction counts; converter choice Simulated |
-| Power and heat | Supply in, heat out | USB-C inlet converted to {{c:haptic_pzt.bridge_rail_v}} V, 5 V and 3.3 V | Not applicable | 17.0 W with the first compute card, 22.5 W with the second | Not applicable | Derived from candidate-part datasheets |
-| Timing (shared) | One clock and one frame-start signal to every board | {{c:clock_and_bus.xin_hz|mhz}} MHz | Not applicable | Not applicable | At most {{c:clock_and_bus.sync_skew_max_ns}} ns difference between boards | Derived |
+| Matter and return | Feedstock from store to work volume; unwanted material back | Neutral grains and droplets only; at most {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC per bead; air at {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} % relative humidity | One Ø1.6 mm liquid line; solids have no automated path | n/a | Not yet budgeted | Derived; solids path Open |
+| Actuation (sound) | Twelve drive signals from the two boards to the piezo discs | {{c:haptic_pzt.bridge_rail_v}} V bridge supply; up to {{c:haptic_pzt.max_drive_v_peak_single_tone}} V peak on one tone, {{c:haptic_pzt.max_drive_vrms_5tone_per_tone}} V rms per tone when five share the supply | Tones at {{c:desktop_geometry.comb_tones_hz|khz}} kHz; timing step {{c:clock_and_bus.pio_tick_ns}} ns | 0.78 W per channel at the worst pattern; 10.9 W for 14 channels | Pattern repeats every {{c:clock_and_bus.transmit_ring_us}} µs; one frame is 10 ms; network settle target {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms (Design target), 4.4 to 6.1 ms from instruction counts (Derived) | Derived; lift Simulated |
+| Actuation (light, EM) | Laser light for sensing; no electric or magnetic drive is fitted | {{c:mosquito_smi.total_ommatidia}} lasers at {{c:mosquito_smi.laser_wavelength_nm}} nm, at most 5 mW each, on the 3.3 V supply | n/a | 2.0 W for the lasers | n/a | Derived; laser class Open |
+| Sensing and telemetry | Echo on the drive wires, optical readings, air temperature, humidity, store weight | 16-bit converter ({{c:haptic_pzt.adc_fallback_mpn}}) behind a one-twentieth tap; echo floor 6.3 mV at the disc | Receive band {{c:haptic_pzt.ultrasonic_bw_hz|khz}} kHz; board bus 75 Mbit/s inside a design range of {{c:clock_and_bus.spinal_bus_mbps_range|range}} Mbit/s | 0.33 W per board for the converters | One {{c:clock_and_bus.capture_burst_us}} µs capture per 10 ms frame; picking the tones out of 8 channels takes 4 ms; a calibrated read 2.3 ms | Derived from instruction counts; converter choice Simulated |
+| Power and heat | Supply in, heat out | USB-C inlet converted to {{c:haptic_pzt.bridge_rail_v}} V, 5 V and 3.3 V | n/a | 17.0 W with the first compute card, 22.5 W with the second | n/a | Derived from candidate-part datasheets |
+| Timing (shared) | One clock and one frame-start signal to every board | {{c:clock_and_bus.xin_hz|mhz}} MHz | n/a | n/a | At most {{c:clock_and_bus.sync_skew_max_ns}} ns between boards | Derived |
 
-Two budgets constrain the layout more than the rest.
+Two budgets shape the layout most.
 
-- **Heat.** The chamber floor must not be warmer than its ceiling, or the air overturns and drags on levitated material. The thermal model predicts a ceiling 1.9 K warmer than the floor with thermal pads on the lower board only (Derived, eleven-node model). No cooling air passes through the work volume.
-- **Lift.** One 160 kHz tone on the full supply lifts about 1.2 times the weight of a foam bead; five tones sharing the supply lift about 7 % of it (Simulated). Lifting and field shaping therefore alternate, and the lift depends on an axial resonance of the gap that the machine has to hold ([Subsystems](subsystems.html#s05-gap-actuator-and-resonance-lock)).
+- **Heat.** Warm air under cool air turns over and drags on levitated material, so the chamber floor must not be warmer than its ceiling. The model gives a ceiling wafer 1.9 K warmer than the floor wafer and internal air at most 12.7 K above ambient against a 20 K limit (*Derived*). No cooling air crosses the work volume. See [Heat](desktop-replicator.html#heat).
+- **Lift.** One 160 kHz tone on the full supply lifts about 1.2 times a foam bead's weight. Five tones sharing the supply lift about 7 % of it (*Simulated*). So lifting and field shaping take turns, and the machine must hold a gap [resonance](glossary.html) ([S05](subsystems.html#s05-gap-actuator-and-resonance-lock)). See [Acoustics](acoustics.html#drive-strength-and-lift).
+
+**Build speed is set by the slowest step** (*Derived*). A build must feed, carry, catch, join and check, and the slowest of these sets the pace ([Manufacturing](manufacturing.html)).
 
 ## Long-term architecture and the Desktop Replicator
 
-This is the handbook's single comparison of what is being designed first, what is still being traded, and where the programme is going. The first column is the current prototype design. The second lists the alternatives that have been modelled or ruled on. The third is the final machine, a research direction whose integration is Open throughout; it is set out in [The long-term machine](ultimate-replicator.html). The last column is the test that has to pass before the prototype part is replaced. Where no test has been fixed, the cell says so.
+This is the handbook's one comparison of the prototype, the options still being traded, and the final machine. The final machine is a research direction, Open throughout ([The long-term machine](ultimate-replicator.html)). The last column is the test that must pass on the machine before the prototype part is replaced.
 
 | Subsystem | Prototype 1 (Desktop, coaxial) | Engineering options and trade space | Final machine | Gate that triggers the swap |
 |---|---|---|---|---|
-| [Chamber and stack topology](subsystems.html#s01-chamber-and-stack-topology) | Build cylinder closed by a stock glass tube, {{c:desktop_geometry.gap_mm}} mm between two plates, lifting {{c:desktop_geometry.lift_stroke_mm}} mm with the head, over a coaxial plinth. *Design decision; plinth CAD pending* | Open-fronted chamber with no lift; rotating glass door; the small `boro12` plate pair ({{c:desktop_geometry.boro12_reducer_wafer_mm}} mm wafers, {{c:desktop_geometry.boro12_gap_mm}} mm gap) in the same frame | Same two zones at Ø0.9 m: a barrel head with 62 ports on a Ø1.24 × 0.55 m plinth. An icosahedral shell with 12 three-field ports is the isotropic limit. *Derived concept geometry* | A measured test of whether 12 ports are sufficient. If it fails, the barrel is the reference geometry. *Open* |
-| [Storage and release plinth](subsystems.html#s02-storage-and-release-plinth) | Three 500 mL stock bottles on three load cells, a reversible metering pump, one Ø1.6 mm liquid line; three open crucibles in the chamber; solids dosed by hand with the head raised. *Derived CAD; pump and cells Open* | Store docked behind the tower (modelled 23 November) against a plinth under the build chamber (ruled 24 November). For solids: a raised glass seat with screw feeders, or powder carried as a suspension in the liquid line | Release bin, a store that keeps stock by species, and a loop bus that carries binding energy from release to write. *Derived; the store beyond ordinary condensed stock is Open* | Mass in the part plus mass in the store constant through a build, on the weigh cells. *No threshold fixed* |
-| [Mid-plane interface](subsystems.html#s03-mid-plane-interface) | The undrilled lower wafer and a flat annulus round it reflect sound; liquid rises through the deck between the wafer socket and the glass bore. *Design decision* | Sealed wafer inside a hard annulus with retractable annular feed ports, against one continuous tall cylinder (about 440 to 480 mm) with a perforated or retractable separator. *Simulation in progress* | No plate in the way: the object is written in free levitation from ports on the boundary. *Derived concept* | End reflection of at least 0.85, measured with an empty chamber by sweeping one source across the gap resonance. *Simulated requirement; measurement Open* |
-| [Acoustic array](subsystems.html#s04-acoustic-array) | {{c:desktop_geometry.ports_per_plate}} piezo discs (PZT-8, Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm) behind each of two undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafers, 12 in all, on an {{c:haptic_pzt.bridge_rail_v}} V supply. Foam-bead margin 1.19 at the median gap, 0.87 at the worst. *Simulated* | 12 against 36 sources: 18 smaller discs per plate on a 24 V supply raise the margin to 1.60 and hold it at the worst gap (1.27). A field free of unwanted traps needs 113 V with 12 sources and 30.5 V with 36, against 22.9 V available: neither reaches it | Continuous piezo film with about 100,000 optically switched elements and no per-element wiring. *Documented components; integration Open* | Unwanted-trap volume under 2.0 % at twice the 12-source focal pressure, with under 3.0 W of bridge loss at 160 kHz. Skipped if 12 sources pass the lift and clean-trap test on the bench. *Open* |
-| [Gap actuator and resonance lock](subsystems.html#s05-gap-actuator-and-resonance-lock) | Hold the ratio of gap to sound speed constant: 0.41 mm per kelvin, to ± 0.07 mm. An actuator with ± 1 mm travel in 0.02 mm steps is specified. *Simulated need; not yet in CAD or firmware* | Find the set point from an optical reading or from a one-source sweep of the resonance; without an actuator, recalibrate after every head lift and every few tenths of a kelvin | One clock phase-locks every port and the boundary reads the field back. *Derived concept* | The measured resonance width and lift in an empty chamber agree with the simulated law. *Open* |
-| [Optical tomography](subsystems.html#s06-optical-tomography) | {{c:mosquito_smi.total_ommatidia}} self-mixing laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm give a shadow image and an optical reading of the sound field; in simulation they track air temperature to 0.0005 K and gap to 0.28 µm. *Simulated* | A one-stage or two-stage amplifier (one stage rolls off at about 100 kHz, below the top tone); replicated diffractive strips on the windows | Optically addressed surfaces, structured pulses, tomography, fine optical traps; X-ray absorption edges for shielded parts. *Documented components; integration Open* | Diffractive strips at least double the effective rank of the optical reading in the calibrated chamber. *Open* |
-| [Electromagnetics and consolidation](subsystems.html#s07-electromagnetics-and-consolidation) | No electric or magnetic drive. Joining is an addressed heating step that exists only as a model. *Simulated; recipe Open* | A twelve-arm conductor spiral on the wafer; a pulsed ring coil of {{c:dissolve_and_toroidal.compact_toroid_collar_id_mm_range|range}} mm at one crucible. Large coils across the chamber are ruled out. *Simulated* | Ports that combine sound, light and electromagnetic fields; binding energy returned to the loop as a coherent wave. *Open: this needs physics not yet demonstrated* | A second bead placed within 0.25 mm of a held first bead, and a joint that holds ten times the trapping force in shear. *Open* |
-| [Control and firmware](subsystems.html#s08-control-and-firmware) | Six microcontrollers on {{c:clock_and_bus.pcb_count}} field boards and a plug-in compute card, one {{c:clock_and_bus.xin_hz|mhz}} MHz clock, {{c:haptic_pzt.adc_fallback_mpn}} receive converters. Firmware source passes its tests on a workstation and has never run on a board. *Simulated* | The 1-bit receive converter reached {{c:haptic_pzt.sfdr_simulated_dbc}} dB against a {{c:haptic_pzt.sfdr_gate_min_db}} dB requirement and is replaced. Compute card 1 (microcontroller) against card 2 (gate array, 5 W ceiling) | Wave-based computing in optical or excitable soft-matter wave substrates, using little electrical power. *Documented components; integration Open* | A swapped card reproduces the reference network's output with cosine similarity of at least 0.90 on the same job suite, and settles within 5 µs. *Open* |
-| [Prime world model](subsystems.html#s09-prime-world-model) | Prime, the project's model built on the Cadence library: a sparse network in under {{c:cadence_brain.cadence_sparse_max_kb}} kB on the card, reading the chamber through a calibration image that is replaced after every calibration. *Simulated* | Chamber response fixed in flash against a live calibration image (42 to 50 % against 99.9 to 100 % of sites read correctly after a 0.3 K change). Drawing by retrieve-then-refine against multi-task fine-tuning. Rule-only self-edits against verifier-gated gradient updates | The network's settling carried out by a physical wave medium; object descriptions held in a photorefractive crystal. *Documented components; integration Open* | Same test as the compute card swap. *Open* |
-| [Metrology and calibration](subsystems.html#s10-metrology-and-calibration) | In the assembled chamber, with removable Ø1 to 2 mm spheres: a frequency sweep, a phase reference between the plates, air temperature to {{c:desktop_geometry.air_temp_tolerance_k}} K. Repeated after every head lift. *Simulated procedure* | Calibrate with a bead echo, or with no bead from the optical ring and the symmetry of the source-to-source response (78 pairs in place of 144) | Full-aperture acoustic and optical scattering measurement with reference objects; the whole machine stands on a balance. *Derived concept* | Phase within {{c:desktop_geometry.calibration_phase_tol_deg}}° and gain within {{c:desktop_geometry.calibration_gain_tol_pct}} %; sphere placement repeatable to 0.3 mm over ten runs. *Open* |
-| [Thermal and quench safety](subsystems.html#s11-thermal-and-safety) | 17.0 W in total; cooling air rises through the tower, outside the chamber; ceiling held warmer than floor; a switch removes bridge and laser power when the head is up; glass bending stress limited to {{c:desktop_geometry.plate_bending_stress_limit_mpa}} MPa. *Derived; laser class Open* | Thermal pads on the lower board only, an insulated baffle, an optional guard heater at about 0.8 K per watt | A 39-litre water annulus holding 8.2 MJ, sized above the 5.3 MJ released if energy recapture fails during a write. *Derived* | A dump at least as large as the stored loop energy exists before any experiment stores that energy. *Derived rule* |
+| [Chamber and stack topology](subsystems.html#s01-chamber-and-stack-topology) | A stock glass tube closes the {{c:desktop_geometry.gap_mm}} mm gap between two plates and lifts {{c:desktop_geometry.lift_stroke_mm}} mm with the head, over a coaxial plinth. *Design decision; plinth CAD pending* | Open front with no lift; rotating glass door; the small `boro12` plate pair ({{c:desktop_geometry.boro12_reducer_wafer_mm}} mm wafers, {{c:desktop_geometry.boro12_gap_mm}} mm gap) in the same frame | Same two zones at Ø0.9 m: a barrel head with 62 ports on a Ø1.24 × 0.55 m plinth. The limit: a ball shell with 12 evenly spread ports, each carrying all three fields. *Derived concept geometry* | A measured test of whether 12 ports are enough. If not, the barrel is the reference. *Open* |
+| [Storage and release plinth](subsystems.html#s02-storage-and-release-plinth) | Three 500 mL stock bottles on load cells, a reversible metering pump, one Ø1.6 mm liquid line, three open crucibles in the chamber; solids dosed by hand. *Derived CAD; pump and cells Open* | Store behind the tower (modelled) against a plinth under the chamber (ruled 24 November). Solids: a raised glass seat with screw feeders, or powder suspended in the liquid line | Release bin, a store sorted by species, a loop bus carrying binding energy from release to write. *Derived; store beyond ordinary condensed stock Open* | Part mass plus store mass constant through a build, on the weigh cells. *No threshold fixed* |
+| [Mid-plane interface](subsystems.html#s03-mid-plane-interface) | The undrilled lower wafer and a flat ring reflect sound; liquid rises through the deck between wafer socket and glass bore. *Design decision* | Sealed wafer in a hard ring with retractable feed ports, against one tall cylinder (about 440 to 480 mm) with a perforated or retractable separator. *Simulation in progress* | No plate in the way: the object is written in free levitation from boundary ports. *Derived concept* | End reflection of at least 0.85, from a one-source sweep across the gap resonance in an empty chamber. *Simulated requirement; measurement Open* |
+| [Acoustic array](subsystems.html#s04-acoustic-array) | {{c:desktop_geometry.ports_per_plate}} PZT-8 discs (Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm) behind each of two undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafers, on {{c:haptic_pzt.bridge_rail_v}} V. Foam-bead voltage margin 1.19 at the median gap, 0.87 at the worst. *Simulated* | 36 sources: 18 smaller discs per plate on 24 V give a margin of 1.60 (1.27 at the worst gap). A field free of unwanted traps needs 113 V with 12 sources and 30.5 V with 36; {{c:haptic_pzt.max_drive_v_peak_single_tone}} V is available | A piezo film of about 100,000 elements switched by light, with no wire to each ([how](acoustics.html#long-term-direction)), plus side-facing sources and sensors. *Documented components; integration Open* | Unwanted-trap volume under 2.0 % at twice the 12-source focal pressure, with under 3.0 W of bridge loss at 160 kHz. Skipped if 12 sources pass the lift and clean-trap test on the bench. *Open* |
+| [Gap actuator and resonance lock](subsystems.html#s05-gap-actuator-and-resonance-lock) | Hold gap over sound speed constant: 0.41 mm per kelvin, to ± 0.07 mm. Specified actuator: ± 1 mm travel in 0.02 mm steps. *Simulated need; not yet in CAD or firmware* | Set point from an optical reading or a one-source resonance sweep; with no actuator, recalibrate after every head lift and every few tenths of a kelvin | One clock phase-locks every port and the boundary reads the field back. *Derived concept* | Measured resonance width and lift in an empty chamber agree with the simulated law. *Open* |
+| [Optical tomography](subsystems.html#s06-optical-tomography) | {{c:mosquito_smi.total_ommatidia}} self-mixing laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm give a shadow image and read the sound field; they track air temperature to 0.0005 K and gap to 0.28 µm. *Simulated* | One-stage or two-stage amplifier (one stage rolls off near 100 kHz, below the top tone); replicated diffractive strips on the windows | Surfaces addressed by light, structured pulses, tomography, fine optical traps; X-ray absorption edges for shielded parts. *Documented components; integration Open* | Diffractive strips at least double what the optical reading can tell apart in the calibrated chamber. *Open* |
+| [Electromagnetics and consolidation](subsystems.html#s07-electromagnetics-and-consolidation) | No electric or magnetic drive. Joining is an addressed heating step, modelled only. *Simulated; recipe Open* | A twelve-arm conductor spiral on the wafer; a pulsed ring coil of {{c:dissolve_and_toroidal.compact_toroid_collar_id_mm_range|range}} mm at one crucible. Large coils across the chamber are ruled out. *Simulated* | Ports combining sound, light and electromagnetic fields; binding energy returned to the loop as a coherent wave. *Open: needs physics not yet demonstrated* | A second bead placed within 0.25 mm of a held first bead, and a joint that holds ten times the trapping force in shear. *Open* |
+| [Control and firmware](subsystems.html#s08-control-and-firmware) | Six microcontrollers on {{c:clock_and_bus.pcb_count}} field boards, a plug-in compute card, one {{c:clock_and_bus.xin_hz|mhz}} MHz clock, {{c:haptic_pzt.adc_fallback_mpn}} receive converters. Firmware passes workstation tests; never run on a board. *Simulated* | The 1-bit receive converter failed ({{c:haptic_pzt.sfdr_simulated_dbc}} dB against {{c:haptic_pzt.sfdr_gate_min_db}} dB) and is replaced. Compute card 1 (microcontroller) against card 2 (gate array, 5 W ceiling) | Wave-based computing in optical or excitable soft-matter substrates, on little electrical power. *Documented components; integration Open* | A swapped card matches the reference network on the same jobs (match score at least 0.90, where 1 is identical) and settles within 5 µs. *Open* |
+| [Prime world model](subsystems.html#s09-prime-world-model) | Prime, the project's model built on the Cadence library: a sparse network under {{c:cadence_brain.cadence_sparse_max_kb}} kB on the card, reading the chamber through a calibration image replaced after every calibration. *Simulated* | Chamber response fixed in flash against a live calibration image (42 to 50 % against 99.9 to 100 % of sites read correctly after a 0.3 K change). Retrieve-then-refine drawing against multi-task fine-tuning. Rule-only self-edits against verifier-gated gradient updates | The network's settling done by a physical wave medium; object descriptions held in a photorefractive crystal. *Documented components; integration Open* | Same test as the compute card swap. *Open* |
+| [Metrology and calibration](subsystems.html#s10-metrology-and-calibration) | With removable Ø1 to 2 mm spheres in the assembled chamber: a frequency sweep, a plate-to-plate phase reference, air temperature to {{c:desktop_geometry.air_temp_tolerance_k}} K. Repeated after every head lift. *Simulated procedure* | Calibrate with a bead echo, or with no bead from the optical ring and the symmetry of the source-to-source response ([78 pairs in place of 144](compute-control.html)) | Full-aperture acoustic and optical scattering measurement with reference objects; the whole machine on a balance. *Derived concept* | Phase within {{c:desktop_geometry.calibration_phase_tol_deg}}° and gain within {{c:desktop_geometry.calibration_gain_tol_pct}} %; sphere placement repeatable to 0.3 mm over ten runs. *Open* |
+| [Thermal and quench safety](subsystems.html#s11-thermal-and-safety) | 17.0 W with the first compute card; cooling air stays outside the chamber; ceiling warmer than floor; a hardware switch cuts bridge and laser power when the head is up; glass bending stress under {{c:desktop_geometry.plate_bending_stress_limit_mpa}} MPa. *Derived; laser class Open* | Thermal pads on the lower board only, an insulated baffle, an optional guard heater at about 0.8 K per watt | A 39-litre water ring holding 8.2 MJ, above the 5.3 MJ released if energy recapture fails during a write. *Derived* | A dump at least as large as the stored loop energy exists before any experiment stores it. *Derived rule* |
 
-Three things in this table are easy to misread.
+Two things in this table are easy to misread.
 
-1. **The prototype electronics are scaffolding.** Microcontrollers, converters and discrete lasers are what can be bought now. They are not a small version of the final design, and each sits behind an interface so that it can be replaced without redesigning the machine.
-2. **A gate is a measurement.** A prototype part is replaced when the test in the last column passes on the machine, not when a simulation says it should. Every gate is Open, because each needs an assembled, calibrated chamber.
-3. **Some swaps may never happen.** The 36-source plates are skipped if 12 sources pass on the bench. The list of prototype steps that can be deleted, and the test that deletes each, is kept with the long-term bounds model.
+1. **The prototype electronics are scaffolding**: what can be bought now, not a small version of the final design. Each sits behind an interface, so it can be replaced.
+2. **A gate is a measurement** on an assembled, calibrated chamber, not a simulation. So every gate is Open.
 
 ## Interfaces that survive upgrades
 
-A module can be replaced without redesigning the machine because what crosses each interface is fixed. Every module declares its identity and revision, its position in the shared coordinate frame, its signal, power and optical ports with their limits, and whether its response data is a made-up reference, simulated or measured. Seven contracts carry most of the weight.
+A module can be replaced because what crosses each interface is fixed. Every module declares its identity and revision, its position in the shared frame, its ports with their limits, and whether its response data is a made-up reference, simulated or measured.
 
-| Contract | Kind | What it fixes | What can change behind it |
-|---|---|---|---|
-| `holo-eq/0.2`, `holo-eq/0.3-mm` | File | An object described about its own centre: the field it needs and how it scatters; in the later version, its materials | The chamber, the number of sources, the air temperature |
-| `.fcode` | File and wire | Time-ordered frames: one set of drive values, a duration, a verb and the channels to record | Emulator or hardware; the compute card |
-| `HLEQ v1` | Wire | The goal packet to the on-board network: 1,556 bytes for six strokes, with a checksum | The object, without rewriting the network |
-| `LMQ8 v1` | Wire, held in memory | The chamber's calibration as the network sees it: up to 43,296 bytes, replaced after every calibration | Temperature, gap, the plates themselves |
-| `body-response/0.2` | File | How each drive input moves each patch of the radiating faces at each tone, and how the face is heard back | The plates and sources: the present wafers, 36 sources, a future optically addressed surface |
-| Drive port and enable groups | Electrical | Two bridge outputs per disc, three enable groups per board, enable low is high impedance | The driver part, the supply voltage up to the driver's limit |
-| Clock, bus and environment | Electrical | One {{c:clock_and_bus.xin_hz|mhz}} MHz clock with a frame-start signal; the board bus; I²C for air temperature and humidity | Boards, controllers, sensors |
+| Contract | What it fixes | What can change behind it |
+|---|---|---|
+| `holo-eq/0.2`, `holo-eq/0.3-mm` | A file: an object described about its own centre, the field it needs, how it scatters and, in the later version, its materials | The chamber, the number of sources, the air temperature |
+| `.fcode` | File and wire: time-ordered frames of drive values, duration, verb and channels to record | Emulator or hardware; the compute card |
+| `HLEQ v1` | Wire: the goal packet to the on-board network, 1,556 bytes for six strokes, with a checksum | The object, without rewriting the network |
+| `LMQ8 v1` | Wire: the chamber's calibration as the network sees it, up to 43,296 bytes, replaced after every calibration | Temperature, gap, the plates themselves |
+| `body-response/0.2` | A file: how each drive input moves each patch of the radiating faces at each tone, and how the face is heard back | The plates and sources: the present wafers, 36 sources, a future surface addressed by light |
+| Drive port and enable groups | Two bridge outputs per disc, three enable groups per board, enable low is high impedance | The driver part; the supply voltage up to the driver's limit |
+| Clock, bus and environment | One {{c:clock_and_bus.xin_hz|mhz}} MHz clock with a frame-start signal; the board bus; I²C for air temperature and humidity | Boards, controllers, sensors |
 
-The full interface control matrix, with every contract's exact fields, limits and open points, is in [Subsystems and interfaces](subsystems.html#interface-control-matrix). The compute card socket and the mechanical datums for the wafers, the glass tube and the head are listed there too.
+Exact fields, limits and open points, the compute card socket and the mechanical datums are in the [interface control matrix](subsystems.html#interface-control-matrix). The file formats are explained in [Compute, sensing and control](compute-control.html#one-contract-files-verbs-and-the-machine-interface).
 
 ## What has been deleted
 
-A design improves as much by what is removed as by what is added. Parts and baselines that were tried in design or simulation and then removed are logged, with the finding that removed each, in [Subsystems and interfaces](subsystems.html#deleted-parts-and-retired-baselines). The earlier machine baselines that the Desktop Replicator replaced are in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced).
+Removed parts are logged, each with the finding that removed it, in [Subsystems and interfaces](subsystems.html#deleted-parts-and-retired-baselines). Earlier machine baselines are in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced).
 
 ## One work volume, coordinated fields
 
-Each field is given the job its physics suits.
+Each field is given the job its physics suits (*Design decision*).
 
-- **Sound** applies force. Acoustic radiation pressure holds and moves feedstock at millimetre scale. See [Acoustics](acoustics.html).
-- **Light** measures, and in the long-term design addresses fine detail: wavefront readout, curing exposure and sub-micrometre trapping. See [Optics](optics.html).
-- **Electric and magnetic fields** act selectively on conducting or magnetic material: force, torque or local heating. See [Electromagnetics](electromagnetics.html).
+| Field | Best at | Finest detail | In the Desktop Replicator |
+|---|---|---|---|
+| Sound ([Acoustics](acoustics.html)) | Pushing: by far the most force per watt | About half a wavelength: 1.1 mm at 160 kHz in air (*Derived*) | Fitted: holds and moves feedstock at millimetre scale |
+| Light ([Optics](optics.html)) | Measuring. Long term also fine detail: curing exposure and trapping below a micrometre | Micrometres | Fitted for sensing only |
+| Electric and magnetic fields ([Electromagnetics](electromagnetics.html)) | Force, torque or local heat on material that conducts or is magnetic, and only close to the coil | Centimetres for microwaves; no fine detail from coils | Not fitted; an optional spiral on the wafer only |
 
-Optics is electromagnetic physics; the two modules are named separately because their frequency bands and hardware differ. The fields share a coordinate frame and a time base. Sound and light are not phase-locked to each other unless a measurement deliberately locks them.
+- **Placing is finer than making.** Where a feature can be placed follows the drive timing. How small it can be made follows the wavelength.
+- **Electricity in wires has a narrow job** (*Design decision*): power and amplification at the edge of the chamber, one band per wire. A thin metal pattern looks solid to microwaves and is nearly invisible to sound, so two fields can share a surface.
+- **One frame, one time base.** The fields share a coordinate frame and a clock. Sound and light meet inside the volume only through weak effects, so light can check sound without disturbing it.
+- **The edge sets the field, within limits** (*Derived; in-chamber test Open*). A few sources cannot make any field or see everything inside. The reach depends on the number of independent sources, their spread, their tones, the loss and the power. Some different objects give the same reading. Useful control must be shown on the real object ([why a few sources give many patterns](acoustics.html#why-a-few-sources-give-many-patterns)).
+
+## What more wall buys
+
+Two facing plates are the smallest machine that can both hold material in a standing wave and take sound energy back out ([why two plates](acoustics.html#why-two-plates)). More controlled wall buys more control.
+
+| Controlled boundary | What it can do | Evidence |
+|---|---|---|
+| One plate | Holds and shapes from one side; absorbs only part | Documented ([Marzo et al., 2015](https://doi.org/10.1038/ncomms9661)) |
+| Two facing plates | Holds; can absorb along the line between the plates; weak sideways | Holding Simulated. Two-sided absorption Documented for light ([Wan et al., 2011](https://doi.org/10.1126/science.1200735)); here Open |
+| Six faces of a box | Control along all three directions | Derived concept |
+| Twelve ports spread evenly on a ball | Nearly the same control in every direction | Open: the first gate in the comparison table |
+| A full shell of small elements | Every pattern inside can be reached | Long-term; Open |
 
 ## Two carriers, five wavelength decades and volume crossings
 
-Sound is the better carrier of force and light is the better carrier of information. Both follow from their speeds: 3 × 10⁸ m/s for light, about 343 m/s for sound in air and about 5,000 m/s in solids.
+Sound carries force better and light carries information better. Both follow from their speeds: 3 × 10⁸ m/s for light, about 343 m/s for sound in air and about 5,000 m/s for sound in solids.
 
-**Force per watt (Derived).** A wave of power P that is fully absorbed pushes with a force P divided by its speed. One watt of light gives 3.3 nN. One watt of sound in air gives 2.9 mN, close to a million times more.
+**Force per watt (Derived).** A fully absorbed wave of power P pushes with a force of P divided by its speed. One watt of light gives 3.3 nN. One watt of sound in air gives 2.9 mN, about 900,000 times more.
 
-**Wavelength (Derived).** At the same frequency, sound has a wavelength about a million times shorter than light, so ordinary electronics at kilohertz to megahertz frequencies produce millimetre-scale acoustic features.
+**Wavelength (Derived).** At one frequency, sound in air is about 900,000 times shorter than light (nearly six decades) and sound in a solid about 60,000 times (nearly five). So ordinary kilohertz electronics make millimetre features in air.
 
 | Frequency | Light | Sound in air | Sound in a solid | What it means for the machine |
 |---|---|---|---|---|
 | 1 kHz | 300 km | 343 mm | 5 m | Room-scale acoustic modes |
 | 100 kHz | 3 km | 3.4 mm | 50 mm | The prototype's band: millimetre features in air |
-| 1 MHz | 300 m | 0.34 mm | 5 mm | Sub-millimetre features in gas or melt |
+| 1 MHz | 300 m | 0.34 mm | 5 mm | Sub-millimetre features in a liquid or melt. Air absorbs ultrasound strongly above a few hundred kilohertz, so megahertz work belongs to liquids and solids ([why](acoustics.html#air-sets-the-top-frequency)) |
 | 1 GHz | 300 mm | 0.34 µm | 5 µm | Sound in solids nears optical wavelengths; acousto-optic devices work here and above |
 
-**Degrees of freedom (Derived).** Light has two polarisation states and can carry orbital angular momentum. Sound in a fluid has one wave type, longitudinal. In a solid it has three, plus surface and plate waves whose speed can be engineered. When sound and light interact, energy, momentum and angular momentum are each conserved.
+### What each wave can carry
+
+Sound and light share one short list of knobs (*Documented*: textbook wave physics).
+
+| Knob | Light | Sound | What it is used for |
+|---|---|---|---|
+| Strength | Field strength | Pressure | Energy and force |
+| Timing ([phase](glossary.html)) | Yes | Yes | Where the pattern lands |
+| Pitch (frequency) | Microwave to visible | {{c:desktop_geometry.comb_tones_hz|khz}} kHz in this machine | An address: each tone makes a different pattern |
+| Wavefront shape | Any shape (a hologram) | Any shape (a sound hologram) | The master knob: it sets the whole pattern |
+| Pulse shape in time | Yes | Yes | Arrival time gives distance |
+| Direction of the wiggle (polarisation) | 2 kinds, both sideways | 1 kind in air or liquid (push-pull); 3 in a solid | An address that only light has in air |
+| Waves that hug a surface or a plate | Few | Many. Plates carry them whether designed to or not | The prototype's plates work this way ([bending waves](acoustics.html#bending-waves-in-a-plate)) |
+| Twist round the beam axis (a vortex) | Yes | Yes. A sound vortex can spin a held object (*Documented*: [Marzo et al., 2015](https://doi.org/10.1038/ncomms9661)) | Turning objects |
+| Shape in space tied to shape in time | Yes ([toroidal pulses](optics.html#toroidal-optical-pulses)) | Not used | Long-term optical sensing |
+| New tones made by the medium (nonlinearity) | Weak in ordinary materials | Strong: overtones and difference tones appear easily | A risk at holding level; a possible tool |
+| Speed that depends on frequency (dispersion) | Weak in open space | Strong, and it can be designed into a structure | Why a few sources give many patterns |
+| Needs a medium | No | Yes. There is no sound in a vacuum | Chooses the carrier for each job |
+
+Force is never a knob. It comes from the knobs squared and averaged over time.
+
+### Which waves can be aimed across the gap
+
+A plate can beam a wave at the facing plate only if it is wide compared with the wavelength ([the rule](acoustics.html#why-two-plates)). Sound passes at every tone. With a free glass radius of 89.8 mm (half of {{c:desktop_geometry.clear_glass_diameter_mm}} mm) and a {{c:desktop_geometry.gap_mm}} mm gap, the limit is a 34 mm wavelength (*Derived*). Radio waves below about 9 GHz are longer, so they fill the chamber and the walls must contain them. The rule uses only ratios, so it holds at every size.
+
+### When sound and light meet
+
+When light scatters off sound, three things must balance, and each balance is a tool (*Documented*: textbook physics).
+
+- **Energy.** The light's frequency shifts by exactly the sound's frequency. So measuring the light reads the sound.
+- **Momentum.** The light's direction changes by an amount set by the sound's wavelength. So it works only at chosen angles.
+- **Twist.** A twist in the sound can pass to the light (*Open* in this machine).
+
+The couplings between sound, light and electricity follow. None is a project result.
+
+| Mechanism | Direction | Plain description |
+|---|---|---|
+| [Acousto-optic effect](glossary.html) | Sound to light | Squeezing a material changes how much it bends light. A sound wave becomes a moving grating that deflects a beam |
+| Electrostriction | Light to sound | The reverse: a strong light field squeezes the material |
+| Brillouin scattering | Both | Light bounces off a sound wave and shifts by the sound's frequency: about 11 GHz for 1,550 nm light in silica glass (*Derived*) |
+| Photoacoustic effect | Light to sound | Absorbed light heats a spot, which swells and launches sound. Wasteful, but it works on anything that absorbs |
+| Piezoelectricity | Electric field to and from sound | Voltage strains a crystal, and strain makes voltage. This is the machine's real transducer |
 
 ### Cross-carrier verbs inside the work volume
 
-Sound and light also act on each other inside the gas or melt. These interactions address, trim and cross-check. They never move bulk power from one carrier to the other.
+Inside the gas or melt, sound and light address, trim and cross-check each other. They never move bulk power from one carrier to the other.
 
 | Interaction | Mechanism | Use in the machine | Evidence |
 |---|---|---|---|
-| Light reads sound | Pressure changes the refractive index of air, which shifts the phase of a beam passing through | Optical measurement of the real sound field, independent of the acoustic sensors | Documented effect; in-chamber performance Open |
-| Sound trims light | A sound field acts as a weak, fast, graded-index lens | Fine steering in air; real beam shaping needs a liquid or melt at high pressure | Documented in acousto-optic modulators; melt shaping Open |
+| Light reads sound | Pressure changes the refractive index of air, which shifts the phase of a beam passing through: {{c:mosquito_smi.lightread_coef_rad_per_pa_m}} radians per pascal per metre at {{c:mosquito_smi.laser_wavelength_nm}} nm | Optical measurement of the real sound field, independent of the acoustic sensors ([worked number](optics.html#coherent-self-mixing-optical-readout)) | Derived; in-chamber performance Open |
+| Sound trims light | A sound field acts as a weak, fast lens | A fine trim in air; real beam shaping needs a liquid or melt, which tolerates far higher pressure | Documented in acousto-optic modulators; melt shaping Open |
 | Light writes sound | Patterned light absorbed on a surface heats it and launches sound | A reprogrammable sound source on any lit surface, with no moving parts | Documented effect; in-chamber use Open |
-| Phonon to photon | Coherent coupling in optomechanical cavities | Signal hand-over inside solid interfaces | Documented components; integration Open |
+| Sound hands a signal to light | In a tiny solid resonator, one vibration is linked to both a microwave and a light wave | Passing a signal between carriers inside a part | Documented components; integration Open |
 
-**Worked number for "light reads sound" (Derived).** For the prototype's {{c:mosquito_smi.laser_wavelength_nm}} nm lasers the phase shift is {{c:mosquito_smi.lightread_coef_rad_per_pa_m}} radians per pascal per metre of path. A beam that crosses 100 mm of sound field at a pressure amplitude of 1 kPa, in phase along the whole path, shifts by 1.9 radians, or 0.3 of a wave, in a single pass. The return pass to the laser doubles it. This is an upper bound: the acoustic wavelength at the prototype's tones is 11 to 2 mm, so a real beam crosses many pressure maxima and minima that partly cancel. The figure of 1.38 waves at 155 dB quoted in earlier material assumed 500 nm light and a uniform 300 mm path, longer than any path in the Desktop Replicator.
+### Unused knobs
 
-For "sound trims light", water at equal pressure changes its refractive index less than air does (about 5 × 10⁻⁷ against 7 × 10⁻⁶ at 3.5 kPa), because it is far stiffer. Liquids help only because they tolerate much higher pressures.
+The Desktop Replicator uses strength, timing and pitch on 12 sources and five tones, plus the frequency-dependent bending of its plates. These knobs exist and are not used (all *Open*).
 
-[Manufacturing](manufacturing.html) covers the process and [Digital twin](digital-twin.html) the tooling. Terms are defined in the [Glossary](glossary.html).
+| Unused knob | What it could buy |
+|---|---|
+| Sound vortex, difference tones, shear and designed plate waves | See [Acoustics](acoustics.html#handles-not-yet-used) |
+| Optical twist number | A whole-number address for each light channel |
+| Twist passed from sound to light | A tag written by the sound field into the optical reading |
+| Squeezed light | Lower noise, once photon counting limits the readout. Today it does not |
+
+**Rule.** Write here why a knob stays unused. Do not start using one quietly.
