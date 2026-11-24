@@ -1,0 +1,37 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T11:29:28Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0.5949820280075073,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "32 channels one at a time; worst phase difference 0.01°; 12-bit converter, pulse width 16 steps of 512; the frame log sent is byte for byte the emulator's",
+      "id" : "G-HW1",
+      "measured" : 0.0001727721448809838,
+      "name" : "the controller's records vs the emulated machine's, calibration program (amplitude, fraction)",
+      "passed" : true,
+      "threshold" : 0.02
+    },
+    {
+      "comparison" : "<",
+      "detail" : "",
+      "id" : "G-HW2",
+      "measured" : 0.010841154391064678,
+      "name" : "the controller's records vs the emulated machine's (phase, degrees)",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "<",
+      "detail" : "build: gain ±10 %, phase ±20°, position ±0.20 mm, resonance ±0.3 %, 0.0 % dead; through the link gain within 0.02 %, phase within 0.01°; through the emulator 0.00 %, 0.00°. One microphone at one point: an element's misplacement is found as phase there, not as position. Not found: the phase between the plates, -9.2° on this build (0.11 mm of trap height)",
+      "id" : "G-HW3",
+      "measured" : 0.011901214043500351,
+      "name" : "calibration through the link finds each channel's phase at the probe (degrees, worst channel)",
+      "passed" : true,
+      "threshold" : 1
+    }
+  ],
+  "gitSHA" : "d520be2",
+  "name" : "p0-link-p0x16g46"
+}

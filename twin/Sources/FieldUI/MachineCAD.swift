@@ -17,19 +17,17 @@ public enum MachineCAD {
     public static let model = RH1Model()
     public static let gates: [GateResult] = CADGates.runAll(model, interference: false)
 
-    /// The plate-primary preset the Machine tab describes: the same standard
-    /// machine (room air, slots open) the Compile path simulates.
-    public static let platePreset: MachinePreset = RH1Freestanding.standard().preset
-
-    /// Point the left rail at the free-standing machine: 6 throat gates,
-    /// physical apertures (not the preset's per-gate virtual elements).
+    /// Point the left rail at the machine: two plates of independently driven
+    /// elements (`PlateArray.rh1`, the array the CAD's faces are drawn round).
     public static func applyRail(_ s: inout AppState) {
-        let p = platePreset
+        let a = PlateArray.rh1()
+        let air = RH1Freestanding.roomAir
         s.machineName = "RH-1 FS"
-        s.gateCount = p.gateCount
-        s.elementCount = p.elements.count / RH1Freestanding.gatesPerFace
-        s.buildVolumeText = String(format: "Ø%.0f × %.0f mm", p.buildVolume.radius * 2000,
-                                   p.buildVolume.height * 1000)
+        s.gateCount = 2
+        s.elementCount = a.channels
+        s.buildVolumeText = String(format: "Ø%.0f × %.0f mm", a.plateRadius * 2000, a.gap * 1000)
+        s.wavelengthText = String(format: "50–100 kHz · λ %.1f–%.1f mm", air.wavelength(at: 100_000) * 1000,
+                                  air.wavelength(at: 50_000) * 1000)
     }
 
     public static func design(doorOpen: Bool) -> RH1Design {
@@ -93,12 +91,11 @@ public enum MachineCAD {
                 ("tori", "\(z(f[0].torusZ)) · \(z(d.middleTorusZ)) · \(z(f[3].torusZ))"),
             ]),
             .init(title: "Plate face", rows: [
-                ("sunflower", "\(p.sites.count) sites · \(p.drilled.count) drilled"),
-                ("in slot voids", "\(p.subsumedCount)"),
-                ("slots", "\(d.slotArms) × α \(d.slotAlphaDeg)°"),
-                ("open area", String(format: "slots %.0f cm² · horns %.0f cm²",
-                                     Double(d.slotArms) * p.slotArea / 100,
-                                     p.perforationFaceArea / 100)),
+                ("elements", "\(p.elements.count) × \(p.elementSizeText), one channel each"),
+                ("spiral", String(format: "golden angle, r %.0f–%.0f", d.elementInnerRadius, d.elementFillRadius)),
+                ("slots", "\(d.slotArms) arms × α \(d.slotAlphaDeg)°, \(p.slotCenterlines.count) dashes"),
+                ("area", String(format: "slots %.0f cm² · elements %.0f cm²",
+                                p.slotOpenArea / 100, p.elementArea / 100)),
             ]),
             .init(title: "Register", rows: [
                 ("reconciled", "\(RH1Design.reconciliation.count) conflicts, in code"),

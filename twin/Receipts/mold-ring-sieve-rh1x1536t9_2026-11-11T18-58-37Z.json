@@ -1,0 +1,64 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T18:58:37Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 294.82786202430725,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.59 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.2–7.2% (fair 6.2%), 0.0% rogue; lift contrast 2.22; particles: 100.0% on the shape after 8 s, 16\/16 sites filled (137–247)",
+      "id" : "G-M1",
+      "measured" : 0.8244414107552337,
+      "name" : "acoustic mold (ring): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.59 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.2–7.2% (fair 6.2%), 0.0% rogue; lift contrast 2.22; particles: 100.0% on the shape after 8 s, 16\/16 sites filled (137–247)",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999803,
+      "name" : "acoustic mold (ring): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 605 (open-type scaled to 80.6 kHz, Ø5.0 mm): asked 1.94 m\/s at 80.6 kHz on its Ø5.0 mm face, can give 2.03; rms over the elements 0.87×",
+      "id" : "G-E1",
+      "measured" : 0.9570090404220466,
+      "name" : "element drive (ring): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "159 W electrical at the elements' efficiency, 111 W of it heat in the two plates",
+      "id" : "G-E2",
+      "measured" : 47.73797741283804,
+      "name" : "element drive (ring): acoustic power radiated (W)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "<",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.59 m\/s rms per channel; traced flow: 100.0% on the shape, sites 5.2–7.2% (fair 6.2%), 0.0% rogue; lift contrast 2.22; particles: 100.0% on the shape after 8 s, 16\/16 sites filled (137–247)",
+      "id" : "G-B0",
+      "measured" : 1.965094753586527e-14,
+      "name" : "traced flow vs stepped grains: the share on the shape agrees",
+      "passed" : true,
+      "threshold" : 0.05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "3000 grains, fair share 6.2%; the 26-neighbour lattice map differs by up to 1.3%",
+      "id" : "G-B1",
+      "measured" : 0.010065889994360672,
+      "name" : "traced flow vs stepped grains, site by site (largest difference in share)",
+      "passed" : true,
+      "threshold" : 0.03
+    }
+  ],
+  "gitSHA" : "9c6d226+dirty",
+  "name" : "mold-ring-sieve-rh1x1536t9"
+}

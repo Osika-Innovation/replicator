@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T10:49:45Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 2301.6328790187836,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 2560 elements (Ø390 mm, 460 mm apart, R 0.9); 4\/4 placed; base on the support: yes; top touches 3 of 3; worst gap 0.0 µm; placed beads pushed ≤ 28.75 × weight",
+      "id" : "G-B2",
+      "measured" : 1,
+      "name" : "a tetrahedron between the open-air plates: three PLA beads touching on the support, a fourth resting on all three",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 103 (open-type scaled to 80.6 kHz, Ø5.0 mm): asked 1.66 m\/s at 80.6 kHz on its Ø5.0 mm face, can give 2.03; rms over the elements 0.66×",
+      "id" : "G-E1",
+      "measured" : 0.8209502217746899,
+      "name" : "element drive (building at 4.00× holding): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    }
+  ],
+  "gitSHA" : "9ce6bb5+dirty",
+  "name" : "build-tetra-rh1x2560t9"
+}

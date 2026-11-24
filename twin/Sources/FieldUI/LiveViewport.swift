@@ -19,47 +19,42 @@ public final class ViewportMTKView: MTKView {
     /// Set by the document model when an object is loaded or cleared.
     public var onLoadRequest: ((URL) -> Void)?
 
-    /// Compose the whole scene: machine chrome, plus whichever overlay layers
-    /// are switched on. One upload; no per-frame readback.
-    public func setScene(object: Mesh?, fits: Bool,
-                         fieldMagnitude: [Double]? = nil,
-                         fieldLattice: FieldLattice? = nil,
-                         traps: [(position: Vec3, depth: Double)] = [],
-                         particles: ParticleSim? = nil,
-                         boundary: (elements: [Element], drive: [Complex])? = nil,
-                         chords: (gates: [Scan.Gate], list: [MatrixPencil.Chord])? = nil) {
+    /// The chamber chrome (both plates with every element, the glass, the
+    /// arcade), built once: it does not change with the scene.
+    private lazy var chrome = FieldGPU.SceneBuilder.rh1(palette: palette, design: RH1Design())
+    /// The camera starts on the mold volume at the chamber centre; F toggles
+    /// between that and the whole chamber.
+    private var closeUp = true
+
+    /// Compose the whole scene: machine chrome, the object, and whichever
+    /// overlay layers are switched on. One upload; no per-frame readback.
+    public func setScene(object: Mesh?, fits: Bool, layers: [SceneGeometry] = []) {
         guard let r = renderer else { return }
         var extra = SceneGeometry()
-        func merge(_ g: SceneGeometry) {
+        for g in layers {
             extra.linePositions += g.linePositions
             extra.lineColors += g.lineColors
             extra.trianglePositions += g.trianglePositions
             extra.triangleColors += g.triangleColors
         }
-        if let m = fieldMagnitude, let lat = fieldLattice {
-            merge(FieldGPU.SceneBuilder.fieldSlice(magnitude: m, lattice: lat))
-        }
-        if !traps.isEmpty {
-            merge(FieldGPU.SceneBuilder.traps(traps, palette: palette))
-        }
-        if let b = boundary {
-            merge(FieldGPU.SceneBuilder.boundary(elements: b.elements,
-                                                 drive: b.drive, palette: palette))
-        }
-        if let sim = particles {
-            merge(FieldGPU.SceneBuilder.particles(sim))
-        }
-        if let c = chords {
-            for (i, ch) in c.list.prefix(4).enumerated() {
-                merge(FieldGPU.SceneBuilder.chords(gates: c.gates, chord: ch,
-                                                   rank: i, palette: palette))
-            }
-        }
         if let mesh = object {
-            merge(FieldGPU.SceneBuilder.object(mesh, palette: palette, fits: fits))
+            let g = FieldGPU.SceneBuilder.object(mesh, palette: palette, fits: fits)
+            extra.linePositions += g.linePositions
+            extra.lineColors += g.lineColors
+            extra.trianglePositions += g.trianglePositions
+            extra.triangleColors += g.triangleColors
         }
-        r.load(FieldGPU.SceneBuilder.rh1(palette: palette), object: extra)
+        r.load(chrome, object: extra)
         redraw()
+    }
+
+    /// Look at the mold volume (a 24 mm cube at the chamber centre) or at the
+    /// whole chamber.
+    private func frameMold() {
+        guard let r = renderer else { return }
+        let c = LiveMachine.centre
+        r.camera.target = closeUp ? SIMD3<Float>(Float(c.x), Float(c.y), Float(c.z)) : OrbitCamera.home.target
+        r.camera.distance = closeUp ? 0.085 : OrbitCamera.home.distance
     }
 
     /// Ask for one new frame. The view draws on demand, not on a clock:
@@ -104,9 +99,10 @@ public final class ViewportMTKView: MTKView {
         self.palette = palette
         self.registerForDraggedTypes([.fileURL])
         if let r = try? Renderer(ctx: ctx, pixelFormat: .bgra8Unorm) {
-            r.load(FieldGPU.SceneBuilder.rh1(palette: palette))
             r.background = background
             self.renderer = r
+            r.load(chrome)
+            frameMold()
         }
     }
 
@@ -155,7 +151,7 @@ public final class ViewportMTKView: MTKView {
             return
         }
         guard let r = renderer else { return }
-        r.camera.distance = max(0.25, min(2.0,
+        r.camera.distance = max(0.03, min(2.0,
             r.camera.distance * Float(1 - event.scrollingDeltaY * 0.01)))
         redraw()
     }
@@ -181,9 +177,10 @@ public final class ViewportMTKView: MTKView {
         }
         guard let r = renderer else { return }
         switch event.charactersIgnoringModifiers {
-        case "1": r.camera = .front
-        case "2": r.camera = .top
-        case "3", "0": r.camera = .home
+        case "1": r.camera = .front; frameMold()
+        case "2": r.camera = .top; frameMold()
+        case "3", "0": r.camera = .home; frameMold()
+        case "f": closeUp.toggle(); frameMold()
         case "o": r.camera.orthographic.toggle()
         default: super.keyDown(with: event); return
         }
@@ -206,7 +203,7 @@ public final class ViewportMTKView: MTKView {
     private func urlFrom(_ sender: NSDraggingInfo) -> URL? {
         guard let items = sender.draggingPasteboard.readObjects(
             forClasses: [NSURL.self], options: nil) as? [URL] else { return nil }
-        return items.first { ["stl", "pattern"].contains($0.pathExtension.lowercased()) }
+        return items.first { $0.pathExtension.lowercased() == "stl" }
     }
 
     public override func draw(_ dirtyRect: NSRect) {
@@ -227,14 +224,25 @@ public final class ViewportMTKView: MTKView {
     }
 }
 
-/// The machine the live app simulates: the free-standing RH-1 in room air,
-/// built once. (The desktop `RH1` preset is frozen for receipt replay.)
+/// The machine the live app simulates: the RH-1's two plates in open air, the
+/// same `PlateArray.rh1` every `fieldc` verb drives.
 enum LiveMachine {
-    static let frequency = 40_000.0
-    static let standard = RH1Freestanding.standard(frequency: frequency)
-    static var buildVolume: BuildVolume { standard.preset.buildVolume }
-    /// Compute context for the port-field build; nil falls back to the CPU.
+    static let array = PlateArray.rh1()
+    static let air = RH1Freestanding.roomAir
+    static var centre: Vec3 { array.centre }
+    /// The mold's probe box is ±12 mm round the chamber centre and the powder
+    /// is released 2 mm inside it; an object is placed within ±9.5 mm.
+    static let probeHalf = 12e-3
+    static let fitHalf = 9.5e-3
+    static let band = (lo: 50_000.0, hi: 100_000.0)
+    /// Compute context for the engine (separate from the viewport's).
     nonisolated(unsafe) static let gpu: MetalContext? = try? MetalContext()
+
+    /// Every element of both plates, in channel order (lower plate first).
+    static let elementSites: [(x: Double, y: Double, z: Double, radius: Double)] = array.elements().map {
+        (x: $0.position.x, y: $0.position.y, z: $0.position.z, radius: ($0.area / Double.pi).squareRoot())
+    }
+
 }
 
 struct LiveViewportRepresentable: NSViewRepresentable {
@@ -271,26 +279,24 @@ public final class Document: ObservableObject {
     public private(set) var mesh: Mesh?
     public private(set) var fits = true
     weak var viewport: ViewportMTKView?
-    /// Cached compile products, so overlay toggles are instant.
-    var fieldMagnitude: [Double]?
-    var fieldLattice: FieldLattice?
-    var trapPoints: [(position: Vec3, depth: Double)] = []
-    var potential: [Double]?
-    var driveVector: [Complex]?
-    var elements: [Element] = []
-    var sim: ParticleSim?
-    var matterGain: Double = 1
-    var chordList: [MatrixPencil.Chord] = []
-    var chordGates: [Scan.Gate] = []
-    var patternName: String?
+    /// The shape the engine works on: sites on the object's surface and the
+    /// segments joining neighbours.
+    var sites: [Vec3] = []
+    var segments: [(Vec3, Vec3)] = []
+    /// The last compile (a mold of the object on the plates), kept so overlay
+    /// toggles and the transport bar are instant.
+    var mold: MoldOutcome?
+    var wellDepth: [Double]?
+    var driveAmplitude: [Double]?
+    /// The last scan: the image on its grid and the voxels above half the peak.
+    var scanGrid: FieldLattice?
+    var scanImage: [Double]?
+    var scanHot: [(x: Vec3, value: Double)] = []
+    var scanRead: [Vec3] = []
 
     public init(state: AppState) { self.state = state }
 
     public func load(url: URL) {
-        if url.pathExtension.lowercased() == "pattern" {
-            loadPattern(url: url)
-            return
-        }
         do {
             let raw = try STL.read(contentsOf: url)
             // STLs are conventionally millimetres; this app works in metres.
@@ -303,73 +309,30 @@ public final class Document: ObservableObject {
         }
     }
 
+    /// Place an object at the chamber centre, shrunk if it does not fit the
+    /// mold's probe volume, and read the shape the engine will work on.
     public func adopt(_ raw: Mesh, name: String) {
-        let volume = LiveMachine.buildVolume
-        let placed = raw.placed(in: volume)
-        mesh = placed.mesh
-        fits = placed.fits
-        let b = placed.mesh.bounds
-        let size = b.max - b.min
-        let vol = placed.mesh.signedVolume
+        let rb = raw.bounds
+        let size = rb.max - rb.min
+        let (placed, scale) = meshInMold(raw, centre: LiveMachine.centre, fitHalf: LiveMachine.fitHalf)
+        mesh = placed
+        fits = scale == 1
+        mold = nil; wellDepth = nil; driveAmplitude = nil
+        scanGrid = nil; scanImage = nil; scanHot = []; scanRead = []
+        sites = meshPoints(placed, count: 16, minSpacing: 2.5e-3)
+        segments = meshSegments(joining: sites)
+        let s = size * scale
         state.objects = [.init(
             name: name, material: state.material,
-            detail: String(format: "Ø%.0f × %.0f mm · %.1f cm³",
-                           max(size.x, size.y) * 1000, size.z * 1000, vol * 1e6),
+            detail: String(format: "%.1f × %.1f × %.1f mm · %d sites", s.x * 1000, s.y * 1000, s.z * 1000, sites.count),
             selected: true)]
-        state.statusLine = placed.fits
-            ? "\(placed.mesh.triangles.count) triangles · fits build volume"
-            : String(format: "%d triangles · SCALED %.2f× to fit",
-                     placed.mesh.triangles.count, placed.scale)
+        state.frame = 0; state.frameCount = 0; state.simTimeMs = 0; state.buildPercent = 0
+        state.overlays.insert("solid")
         applyOverlays()
-    }
-
-    /// Load a `.pattern`. Provenance is enforced at the decoder (G17): a chord
-    /// without a provenance tag REJECTS the file rather than defaulting to
-    /// "measured", and the split is reported rather than hidden.
-    public func loadPattern(url: URL) {
-        do {
-            let pat = try PatternFile.decode(Data(contentsOf: url))
-            chordList = pat.chords.map { rec in
-                MatrixPencil.Chord(
-                    pole: Complex(rec.p[0], rec.p[1]),
-                    portVector: rec.r.map { Complex($0[0], $0[1]) },
-                    weight: rec.weight,
-                    provenance: rec.provenance == "inferred" ? .inferred : .measured)
-            }
-            // Gate ring reconstructed from the port count.
-            let n = chordList.first?.portVector.count ?? 0
-            let R = LiveMachine.buildVolume.radius * 0.92
-            let H = LiveMachine.buildVolume.height
-            chordGates = (0..<n).map { i in
-                let a = 2 * Double.pi * Double(i) / Double(max(1, n))
-                return Scan.Gate(position: Vec3(R * cos(a), R * sin(a),
-                                                H * (0.3 + 0.4 * Double(i % 3) / 2)),
-                                 normal: Vec3(-cos(a), -sin(a), 0))
-            }
-            patternName = url.lastPathComponent
-            state.overlays.insert("chords")
-            let m = pat.meta.counts.measured, inf = pat.meta.counts.inferred
-            state.statusLine = "\(url.lastPathComponent): \(chordList.count) chords "
-                + "(\(m) measured / \(inf) inferred) · "
-                + "Green's fn \(pat.meta.reconstruction.greensFunction)"
-            state.inspector = [
-                .init(title: "Pattern", rows:
-                    [("file", url.lastPathComponent),
-                     ("chords", "\(chordList.count)"),
-                     ("measured", "\(m)"),
-                     ("inferred", "\(inf)"),
-                     ("buildable", "\(pat.buildableChords.count)"),
-                     ("Green's fn", pat.meta.reconstruction.greensFunction),
-                     ("rung", pat.meta.reconstruction.rung)]
-                    + chordList.prefix(5).enumerated().map { i, c in
-                        ("chord \(i)", String(format: "%.0f Hz  Q %.0f",
-                                              c.frequencyHz, c.qFactor))
-                    }),
-            ] + state.inspector.filter { $0.title != "Pattern" }
-            applyOverlays()
-        } catch {
-            state.statusLine = "REJECTED \(url.lastPathComponent): \(error)"
-        }
+        state.statusLine = scale == 1
+            ? "\(placed.triangles.count) triangles · fits the mold volume (±\(Int(LiveMachine.fitHalf * 1000 + 0.5)) mm) · \(sites.count) sites"
+            : String(format: "%d triangles · SCALED %.2f× to fit the mold volume (±%.1f mm) · %d sites",
+                     placed.triangles.count, scale, LiveMachine.fitHalf * 1000, sites.count)
     }
 
     public func openPanel() {
@@ -378,7 +341,7 @@ public final class Document: ObservableObject {
         panel.allowsOtherFileTypes = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.message = "Choose an STL or .pattern"
+        panel.message = "Choose an STL"
         if panel.runModal() == .OK, let url = panel.url { load(url: url) }
     }
 
@@ -404,23 +367,19 @@ public final class Document: ObservableObject {
             guard let self else { return }
             self.state.machineView.toggle()
             self.state.statusLine = self.state.machineView
-                ? "Machine View — reconstruction, not ground truth"
+                ? "Machine View — what the plates can hear (run Scan)"
                 : "God View — simulator ground truth"
+            self.applyOverlays()
         } }
         a.setMaterial = { [weak self] m in Task { @MainActor in
             guard let self else { return }
             self.state.material = m
             if !self.state.objects.isEmpty { self.state.objects[0].material = m }
         } }
-        a.setFrame = { [weak self] f in Task { @MainActor in
-            guard let self else { return }
-            self.state.frame = max(0, min(self.state.frameCount, f))
-            self.state.simTimeMs = Double(self.state.frame) * 0.05
-        } }
+        a.setFrame = { [weak self] f in Task { @MainActor in self?.showFrame(f) } }
         a.step = { [weak self] d in Task { @MainActor in
             guard let self else { return }
-            self.state.frame = max(0, min(self.state.frameCount, self.state.frame + d))
-            self.state.simTimeMs = Double(self.state.frame) * 0.05
+            self.showFrame(self.state.frame + d)
         } }
         a.play = { [weak self] in Task { @MainActor in
             self?.togglePlay()
@@ -435,13 +394,10 @@ public final class Document: ObservableObject {
     // ---- Machine tab ------------------------------------------------------
 
     private var savedInspector: [AppState.InspectorSection]?
-    private var savedRail: (String, Int, Int, String)?
     private var machineModel: RH1Model?
 
     func enterMachine() {
         savedInspector = state.inspector
-        savedRail = (state.machineName, state.gateCount, state.elementCount, state.buildVolumeText)
-        MachineCAD.applyRail(&state)
         if !state.overlays.contains("cad.glass") { state.overlays.insert("cad.glass") }
         refreshMachine()
         viewport?.showMachine = true
@@ -452,10 +408,6 @@ public final class Document: ObservableObject {
     func leaveMachine() {
         viewport?.showMachine = false
         if let s = savedInspector { state.inspector = s }
-        if let r = savedRail {
-            state.machineName = r.0; state.gateCount = r.1
-            state.elementCount = r.2; state.buildVolumeText = r.3
-        }
     }
 
     func refreshMachine() {
@@ -490,222 +442,272 @@ public final class Document: ObservableObject {
         state.busy = nil
     }
 
+    // ---- the build: the stepped powder, frame by frame ---------------------
+
     private var timer: Timer?
 
+    /// Share of the powder within 1 mm of the shape in a frame.
+    private func onShapeShare(_ xs: [Vec3]) -> Double {
+        guard !xs.isEmpty else { return 0 }
+        return Double(xs.filter { shapeDistance($0, segments) <= 1e-3 }.count) / Double(xs.count)
+    }
+
+    func showFrame(_ f: Int) {
+        guard let m = mold, !m.frames.isEmpty else { return }
+        state.frame = max(0, min(m.frames.count - 1, f))
+        let fr = m.frames[state.frame]
+        state.simTimeMs = fr.t * 1000
+        state.buildPercent = onShapeShare(fr.x) * 100
+        applyOverlays()
+        state.statusLine = String(format: "powder at %.1f s of %.0f s: %.0f%% on the shape",
+                                  fr.t, m.frames.last!.t, state.buildPercent)
+    }
+
     func togglePlay() {
+        guard let m = mold, m.frames.count > 1 else {
+            state.statusLine = "nothing to play: compile first"
+            return
+        }
         state.isPlaying.toggle()
         timer?.invalidate()
         guard state.isPlaying else { timer = nil; return }
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { _ in
+        if state.frame >= m.frames.count - 1 { state.frame = 0 }
+        if !state.overlays.contains("matter") { state.overlays.insert("matter") }
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20, repeats: true) { _ in
             Task { @MainActor in
-                guard self.state.isPlaying else { return }
-                self.state.frame = (self.state.frame + 1) % max(1, self.state.frameCount)
-                self.state.simTimeMs = Double(self.state.frame) * 0.05
-                if self.sim != nil && self.state.overlays.contains("matter") {
-                    // forceGain is a DISPLAY scaling, not physics — drive
-                    // amplitudes are not in SI yet (known defect).
-                    let gain = self.matterGain
-                    for _ in 0..<6 { self.sim!.step(dt: 2e-4, forceGain: gain) }
-                    let c = self.sim!.counts
-                    self.state.buildPercent =
-                        Double(c.trapped) / Double(max(1, self.sim!.particles.count)) * 100
-                    self.state.statusLine = String(
-                        format: "matter: %d feedstock · %d in transit · %d trapped",
-                        c.feedstock, c.inTransit, c.trapped)
-                    self.applyOverlays()
+                guard self.state.isPlaying, let m = self.mold else { return }
+                if self.state.frame >= m.frames.count - 1 {
+                    self.state.isPlaying = false
+                    self.timer?.invalidate(); self.timer = nil
+                    return
                 }
+                self.showFrame(self.state.frame + 1)
             }
         }
     }
 
     func applyOverlays() {
         let want = state.overlays
-        let showField = want.contains("field") && fieldMagnitude != nil
-        let showTraps = want.contains("traps") && !trapPoints.isEmpty
-        let showMatter = want.contains("matter") && sim != nil
-        let showChords = want.contains("chords") && !chordList.isEmpty
-        var showBoundary: (elements: [Element], drive: [Complex])? = nil
-        if want.contains("boundary"), let d = driveVector, !elements.isEmpty {
-            showBoundary = (elements, d)
-        }
-        viewport?.setScene(
-            object: want.contains("solid") ? mesh : nil, fits: fits,
-            fieldMagnitude: showField ? fieldMagnitude : nil,
-            fieldLattice: showField ? fieldLattice : nil,
-            traps: showTraps ? trapPoints : [],
-            particles: showMatter ? sim : nil,
-            boundary: showBoundary,
-            chords: showChords ? (chordGates, chordList) : nil)
-
-        if let s = sim, want.contains("matter") {
-            let c = s.counts
-            state.buildPercent = Double(c.trapped) / Double(max(1, s.particles.count)) * 100
-        }
-
-        let backed: Set<String> = ["solid", "field", "traps", "matter",
-                                   "boundary", "chords"]
-        let live = want.intersection(backed)
-        let notWired = want.subtracting(backed)
+        var layers: [SceneGeometry] = []
         var notes: [String] = []
-        if want.contains("field") && fieldMagnitude == nil { notes.append("field: compile first") }
-        if want.contains("traps") && trapPoints.isEmpty { notes.append("traps: compile first") }
-        if want.contains("matter") && sim == nil { notes.append("matter: compile first") }
-        if want.contains("boundary") && driveVector == nil { notes.append("boundary: compile first") }
-        if want.contains("chords") && chordList.isEmpty { notes.append("chords: load a .pattern") }
-        if !notWired.isEmpty {
-            notes.append("not yet wired: \(notWired.sorted().joined(separator: ", "))")
+        let probe = Vec3(LiveMachine.probeHalf, LiveMachine.probeHalf, LiveMachine.probeHalf)
+        layers.append(FieldGPU.SceneBuilder.box(min: LiveMachine.centre - probe, max: LiveMachine.centre + probe,
+                                                color: SIMD4<Float>(0.5, 0.6, 0.7, 0.35)))
+        if state.machineView {
+            // What the plates heard: the scan's image, nothing from ground truth.
+            if scanHot.isEmpty { notes.append("machine view: run Scan first") }
+            layers.append(FieldGPU.SceneBuilder.points(
+                scanHot.map(\.x), colors: scanHot.map { FieldGPU.SceneBuilder.ramp($0.value) }, radius: 0.35e-3))
+        } else {
+            if want.contains("field") {
+                if let d = wellDepth, let lat = mold?.lattice {
+                    let zs = sites.map(\.z).reduce(0, +) / Double(max(1, sites.count))
+                    let k = max(1, min(lat.nz - 2, Int(((zs - lat.origin.z) / lat.spacing).rounded())))
+                    layers.append(FieldGPU.SceneBuilder.fieldSlice(magnitude: d, lattice: lat, axis: 2, sliceIndex: k))
+                } else { notes.append("field: compile first") }
+            }
+            if want.contains("boundary") {
+                if let a = driveAmplitude {
+                    layers.append(FieldGPU.SceneBuilder.elementDrive(sites: LiveMachine.elementSites, amplitude: a))
+                } else { notes.append("boundary: compile first") }
+            }
+            if want.contains("traps") {
+                // The sites the engine works on; after a compile, brighter = a
+                // larger share of the powder.
+                let share = mold?.basinPerSite ?? []
+                let peak = max(share.max() ?? 1, 1e-12)
+                layers.append(FieldGPU.SceneBuilder.points(
+                    sites, colors: sites.indices.map { i in
+                        share.isEmpty ? SIMD4<Float>(0.4, 0.85, 0.75, 1) : FieldGPU.SceneBuilder.ramp(0.35 + 0.65 * share[i] / peak)
+                    }, radius: 0.6e-3))
+            }
+            if want.contains("matter") {
+                if let m = mold, !m.frames.isEmpty {
+                    let xs = m.frames[max(0, min(m.frames.count - 1, state.frame))].x
+                    layers.append(FieldGPU.SceneBuilder.points(
+                        xs, colors: xs.map {
+                            shapeDistance($0, segments) <= 1e-3 ? SIMD4<Float>(0.98, 0.72, 0.38, 1) : SIMD4<Float>(0.6, 0.63, 0.68, 0.7)
+                        }, radius: 0.2e-3))
+                } else { notes.append("matter: compile first") }
+            }
+            if want.contains("scan") {
+                if scanHot.isEmpty { notes.append("scan: run Scan first") }
+                layers.append(FieldGPU.SceneBuilder.points(
+                    scanHot.map(\.x), colors: scanHot.map { FieldGPU.SceneBuilder.ramp($0.value) }, radius: 0.35e-3))
+            }
         }
-        state.statusLine = "overlays: \(live.sorted().joined(separator: ", "))"
-            + (notes.isEmpty ? "" : "  ·  " + notes.joined(separator: "  ·  "))
+        viewport?.setScene(object: (want.contains("solid") && !state.machineView) ? mesh : nil, fits: fits, layers: layers)
+        let shown = want.filter { !$0.hasPrefix("cad.") }.sorted().joined(separator: ", ")
+        state.statusLine = "overlays: \(shown)" + (notes.isEmpty ? "" : "  ·  " + notes.joined(separator: "  ·  "))
     }
 
-    /// Compile really runs the inverse solver against the loaded object.
-    func runPrimary() {
+    private var busyTimer: Timer?
+    private func beginBusy(_ verb: String) {
+        let t0 = Date()
+        state.busy = verb + "…"
+        busyTimer?.invalidate()
+        busyTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            Task { @MainActor in
+                guard self.state.busy != nil else { return }
+                self.state.busy = String(format: "%@ %d s", verb, Int(Date().timeIntervalSince(t0)))
+            }
+        }
+    }
+    private func endBusy() { busyTimer?.invalidate(); busyTimer = nil; state.busy = nil }
+
+    /// Scan mode: the plates' gated pulse-echo scan of the object. Every other
+    /// mode: compile a mold of it — one chord drive that makes the shape the
+    /// only place the powder can rest — and step the powder through it.
+    public func runPrimary() {
         guard state.busy == nil else { return }
-        guard let mesh else {
+        guard mesh != nil, !sites.isEmpty else {
             state.statusLine = "load an object first"
             return
         }
-        guard state.mode != .scan else {
-            state.statusLine = "Scan runs FDTD and is CLI-only for now: `fieldc scan`"
+        guard let ctx = LiveMachine.gpu else {
+            state.statusLine = "no Metal device: the engine needs the GPU"
             return
         }
-        state.busy = "Compiling…"
+        if state.mode == .scan { runScan(ctx) } else { runCompile(ctx) }
+    }
+
+    private func runCompile(_ ctx: MetalContext) {
+        beginBusy("Compiling")
+        let sites = self.sites, segments = self.segments
+        let label = state.objects.first?.name ?? "object"
         let material = state.material
         Task.detached(priority: .userInitiated) {
             let t0 = Date()
-            let f = LiveMachine.frequency
-            let (preset, coupling, walls) = LiveMachine.standard
-            let lambda = preset.medium.wavelength(at: f)
-            let inset = 2 * lambda, sp = lambda / 2
-            let R = preset.buildVolume.radius
-            let lat = FieldLattice(
-                origin: Vec3(-R, -R, inset), spacing: sp,
-                nx: Int((2 * R / sp).rounded(.down)) + 1,
-                ny: Int((2 * R / sp).rounded(.down)) + 1,
-                nz: Int(((preset.buildVolume.height - 2 * inset) / sp).rounded(.down)) + 1)
-            // Port fields: each gate's field over the lattice, built once on
-            // the GPU (horn couplings, both plates as walls, air absorption);
-            // every drive after that is a weighted sum of six columns.
-            let tOp = Date()
-            let (prop, onGPU): (Propagator, Bool) = {
-                if let ctx = LiveMachine.gpu,
-                   let p = try? PortFieldsGPU.propagator(ctx: ctx, elements: preset.elements,
-                                                         coupling: coupling, walls: walls, lattice: lat,
-                                                         frequency: f, medium: preset.medium,
-                                                         gateCount: preset.gateCount) {
-                    return (p, true)
-                }
-                return (Propagator(elements: preset.elements, lattice: lat, frequency: f,
-                                   medium: preset.medium, gateCount: preset.gateCount,
-                                   elementCoupling: coupling, walls: walls), false)
-            }()
-            let opSecs = Date().timeIntervalSince(tOp)
-            // Control points on the object surface, chosen by FARTHEST-POINT
-            // sampling so they actually span the shape. Striding over triangle
-            // storage order (the previous version) samples mesh topology, not
-            // geometry, and clusters wherever the exporter happened to order.
-            let b = mesh.bounds
-            let centre = (b.min + b.max) / 2
-            let cands = mesh.triangles.map(\.centroid)
-            var picked: [Vec3] = [cands[0]]
-            let wanted = 6
-            while picked.count < wanted && picked.count < cands.count {
-                var best = cands[0], bestD = -1.0
-                for c in cands {
-                    let d = picked.map { ($0 - c).length }.min() ?? 0
-                    if d > bestD { bestD = d; best = c }
-                }
-                picked.append(best)
+            var setup = MoldSetup()
+            setup.frameEvery = 0.1
+            let result: Result<MoldOutcome, Error> = Result {
+                try runMold(ctx: ctx, label: label, sites: sites, segments: segments,
+                            chamber: .plates(LiveMachine.array), setup: setup, log: { line in
+                    let short = String(line.trimmingCharacters(in: .whitespaces).prefix(150))
+                    Task { @MainActor in self.state.statusLine = short }
+                })
             }
-            // TWIN TRAPS, not foci. A focus is a pressure ANTINODE; a solid in
-            // air has positive contrast and traps at NODES, so compiling foci
-            // onto the surface asks for a field that pushes matter away from it.
-            let targets = picked.map {
-                InverseSolver.ControlPoint(position: $0, targetAmplitude: 1)
-            }
-            let drive = InverseSolver.solve(propagator: prop, points: targets,
-                                            method: .gspat, iterations: 80,
-                                            trap: .twinTrap)
-            let field = prop.forward(drive)
-            let mean = field.reduce(0.0) { $0 + $1.magnitude } / Double(field.count)
-            // Overlay products, computed once here so toggling a chip is instant.
-            let magnitude = field.map(\.magnitude)
-            let gork = Gorkov(medium: preset.medium, particle: .pla())
-            let U = gork.potentialField(propagator: prop, drive: drive)
-            // Show only the significant wells. Every driven chamber has a
-            // lambda/2 node lattice throughout — thousands of shallow minima —
-            // so displaying all of them shows the ambient standing wave, not
-            // the compiled result, which is what made the overlay look random.
-            let allTraps = Gorkov.findTraps(U: U, lattice: lat, limit: 4000)
-            let deepest = allTraps.first?.depth ?? 0
-            let found = allTraps.filter { $0.depth >= 0.45 * deepest }
-            // How close did the compiled traps land to what was asked for?
-            let missDistances = picked.map { p in
-                found.map { ($0.position - p).length }.min() ?? .infinity
-            }
-            let medianMiss = missDistances.sorted()[missDistances.count / 2]
-            let lambdaHere = preset.medium.wavelength(at: f)
-            var seeded = ParticleSim(potential: U, lattice: lat, medium: preset.medium)
-            seeded.seedDelivered(count: 900)
-            let seedGain = seeded.levitationGain(ratio: 3)
-            let els = preset.elements
-            var gain = 0.0
-            for t in targets {
-                gain += prop.pressure(at: t.position, drive: drive).magnitude
-            }
-            gain = mean > 0 ? gain / Double(targets.count) / mean : 0
             let secs = Date().timeIntervalSince(t0)
             await MainActor.run {
-                self.fieldMagnitude = magnitude
-                self.fieldLattice = lat
-                self.trapPoints = found
-                self.potential = U
-                self.driveVector = drive
-                self.elements = els
-                self.sim = seeded
-                self.matterGain = seedGain
-                self.state.overlays.insert("field")
-                self.state.overlays.insert("traps")
-                self.state.overlays.insert("matter")
-                self.state.busy = nil
-                self.state.frameCount = 240
-                self.state.statusLine = String(
-                    format: "compiled %d twin traps · %d significant wells · "
-                          + "median miss %.1f mm (%.2f lambda) · %.1fs",
-                    targets.count, found.count, medianMiss * 1000,
-                    medianMiss / lambdaHere, secs)
-                self.state.inspector = [
-                    .init(title: "Compile", rows: [
-                        ("machine", "\(preset.displayName) · \(preset.gateCount) gates"),
-                        ("operator", String(format: "%@ %.1fs · %d elements",
-                                            onGPU ? "GPU" : "CPU", opSecs, preset.elements.count)),
-                        ("material", material),
-                        ("method", "GS-PAT"),
-                        ("control points", "\(targets.count)"),
-                        ("gates", "\(preset.gateCount)"),
-                        ("focus gain", String(format: "%.2f×", gain)),
-                        ("lattice", "\(lat.count) pts"),
-                        ("elapsed", String(format: "%.2fs", secs)),
-                        ("trap kind", "twin (node)"),
-                        ("wells shown", "\(found.count) of \(allTraps.count)"),
-                        ("median miss", String(format: "%.1f mm", medianMiss * 1000)),
-                    ]),
-                ] + self.state.inspector.filter { $0.title != "Compile" }
-                _ = centre
-                self.applyOverlays()
+                self.endBusy()
+                switch result {
+                case .failure(let e):
+                    self.state.statusLine = "compile failed: \(e)"
+                case .success(let out):
+                    self.mold = out
+                    // Well depth below the landscape's top, clipped at its
+                    // 98th percentile so a few deep wells do not black out the rest.
+                    let uMax = out.potential.max() ?? 0
+                    let depth = out.potential.map { uMax - $0 }
+                    let cap = max(depth.sorted()[Int(Double(depth.count - 1) * 0.98)], 1e-300)
+                    self.wellDepth = depth.map { min($0, cap) }
+                    let ch = LiveMachine.array.channels
+                    var amp = [Double](repeating: 0, count: ch)
+                    for d in out.drives { for c in 0..<min(ch, d.count) { amp[c] += d[c].magnitudeSquared } }
+                    self.driveAmplitude = amp.map { ($0 * out.power).squareRoot() }
+                    for o in ["field", "traps", "matter"] { self.state.overlays.insert(o) }
+                    self.state.frameCount = max(0, out.frames.count - 1)
+                    let fair = 1 / Double(max(1, out.sites.count))
+                    let watts = out.gates.first { $0.id == "G-E2" }?.measured ?? 0
+                    let f = out.frequencies
+                    self.state.inspector = [
+                        .init(title: "Mold", rows: [
+                            ("object", label),
+                            ("powder", "\(material) Ø40 µm, 3000 grains"),
+                            ("sites", "\(out.sites.count)"),
+                            ("tones", String(format: "%d, %.0f–%.0f kHz", out.tones, (f.min() ?? 0) / 1000, (f.max() ?? 0) / 1000)),
+                            ("drive", String(format: "%.2f m/s on the hardest-driven element", out.elementAmplitude.max() ?? 0)),
+                            ("acoustic power", String(format: "%.0f W", watts)),
+                            ("lift contrast", String(format: "%.2f", out.contrast)),
+                            ("on the shape", String(format: "%.1f %%", 100 * out.basinOnShape)),
+                            ("per site", String(format: "%.1f–%.1f %% (fair %.1f %%)",
+                                                100 * (out.basinPerSite.min() ?? 0), 100 * (out.basinPerSite.max() ?? 0), 100 * fair)),
+                            ("stepped grains", String(format: "%d of %d on the shape", out.captured, out.final.count)),
+                            ("elapsed", String(format: "%.0f s", secs)),
+                        ]),
+                        .init(title: "Gates", rows: out.gates.map { g in
+                            (g.id, String(format: "%.3g %@", g.measured, g.passed ? "✓" : "✗ FAILS"))
+                        }),
+                    ] + self.state.inspector.filter { !["Mold", "Gates"].contains($0.title) }
+                    self.showFrame(out.frames.count - 1)
+                    let failed = out.gates.filter { !$0.passed }.map(\.id)
+                    self.state.statusLine = String(
+                        format: "mold compiled in %.0f s: %.0f%% of the powder on the shape, sites %.1f–%.1f%% (fair %.1f%%)%@",
+                        secs, 100 * out.basinOnShape, 100 * (out.basinPerSite.min() ?? 0),
+                        100 * (out.basinPerSite.max() ?? 0), 100 * fair,
+                        failed.isEmpty ? " · all gates pass" : " · FAILS " + failed.joined(separator: ", "))
+                }
+            }
+        }
+    }
+
+    private func runScan(_ ctx: MetalContext) {
+        guard let mesh else { return }
+        beginBusy("Scanning")
+        Task.detached(priority: .userInitiated) {
+            let t0 = Date()
+            // The object as the scan sees it: small rigid scatterers 1 mm
+            // apart over its surface (Born), as `fieldc scan3d` models a wire.
+            let object = meshPoints(mesh, count: 80, minSpacing: 1e-3, relax: false)
+            let half = 14e-3, h = 0.7e-3
+            let n = Int((2 * half / h).rounded()) + 1
+            let c = LiveMachine.centre
+            let grid = FieldLattice(origin: c - Vec3(half, half, half), spacing: h, nx: n, ny: n, nz: n)
+            let setup = ArrayScanSetup()
+            let result: Result<[Double], Error> = Result {
+                try scanImageArray(ctx: ctx, array: LiveMachine.array, object: object, subunit: 0.3e-3,
+                                   grid: grid, setup: setup, log: { line in
+                    let short = String(line.trimmingCharacters(in: .whitespaces).prefix(150))
+                    Task { @MainActor in self.state.statusLine = short }
+                })
+            }
+            let secs = Date().timeIntervalSince(t0)
+            await MainActor.run {
+                self.endBusy()
+                switch result {
+                case .failure(let e):
+                    self.state.statusLine = "scan failed: \(e)"
+                case .success(let I):
+                    let tol = max(2e-3, 1.5 * h)
+                    let sc = scanScore(image: I, grid: grid, object: object, tol: tol)
+                    let pos = grid.positions
+                    self.scanGrid = grid; self.scanImage = I
+                    self.scanHot = I.indices.filter { I[$0] >= 0.5 }.map { (pos[$0], I[$0]) }
+                    self.scanRead = extractShape(image: I, grid: grid, threshold: 0.5, spacing: 3e-3).sites
+                    self.state.overlays.insert("scan")
+                    self.state.inspector = [
+                        .init(title: "Scan", rows: [
+                            ("method", "gated pulse-echo, matched filter"),
+                            ("band", String(format: "%.0f–%.0f kHz, %d frequencies", setup.sweep(on: LiveMachine.array).lo / 1000, setup.sweep(on: LiveMachine.array).hi / 1000, setup.sweep(on: LiveMachine.array).count)),
+                            ("pulses", "\(setup.chords) random chords"),
+                            ("scatterers", "\(object.count), Ø0.6 mm"),
+                            ("grid", String(format: "±%.0f mm at %.1f mm (%d³)", half * 1000, h * 1000, n)),
+                            ("recall", String(format: "%.0f %% within %.0f mm", 100 * sc.recall, tol * 1000)),
+                            ("AUC", String(format: "%.3f", sc.auc)),
+                            ("contrast", String(format: "%.1f×", sc.contrast)),
+                            ("peak", String(format: "%.2f mm from the object", sc.peakDistance * 1000)),
+                            ("sites read", "\(self.scanRead.count)"),
+                            ("elapsed", String(format: "%.0f s", secs)),
+                        ]),
+                    ] + self.state.inspector.filter { $0.title != "Scan" }
+                    self.applyOverlays()
+                    self.state.statusLine = String(
+                        format: "scanned in %.0f s: %.0f%% of the object imaged within %.0f mm, AUC %.3f, %d sites read",
+                        secs, 100 * sc.recall, tol * 1000, sc.auc, self.scanRead.count)
+                }
             }
         }
     }
 
     public func clear() {
         mesh = nil
-        fieldMagnitude = nil; fieldLattice = nil; trapPoints = []
-        potential = nil; driveVector = nil; elements = []; sim = nil
-        chordList = []; chordGates = []; patternName = nil
+        sites = []; segments = []
+        mold = nil; wellDepth = nil; driveAmplitude = nil
+        scanGrid = nil; scanImage = nil; scanHot = []; scanRead = []
         state.objects = []
+        state.frame = 0; state.frameCount = 0; state.buildPercent = 0
+        applyOverlays()
         state.statusLine = "no object loaded"
-        viewport?.setScene(object: nil, fits: true)
     }
 }
 
@@ -747,8 +749,8 @@ public struct LiveAppShell: View {
                                                 { @Sendable (n: String) in f("cad." + n) } })
                             }
                         } else {
-                            ForEach(["field", "traps", "matter", "solid",
-                                     "boundary", "chords"], id: \.self) { c in
+                            ForEach(["solid", "traps", "field", "matter",
+                                     "boundary", "scan"], id: \.self) { c in
                                 OverlayChip(name: c, on: s.overlays.contains(c),
                                             theme: s.theme,
                                             action: doc.actions().toggleOverlay)
@@ -757,7 +759,7 @@ public struct LiveAppShell: View {
                         Spacer()
                         Text(s.mode == .machine
                              ? "drag orbit · scroll zoom · S section · 1 front · 2 top · 3 iso · 4 detail · 5 plate"
-                             : "drop an STL here · drag orbit · scroll zoom · 1 front · 2 top · 3 home")
+                             : "drop an STL here · drag orbit · scroll zoom · 1 front · 2 top · 3 home · F chamber / mold")
                             .font(.system(size: 9.5))
                             .foregroundStyle(Color.white.opacity(0.45))
                     }

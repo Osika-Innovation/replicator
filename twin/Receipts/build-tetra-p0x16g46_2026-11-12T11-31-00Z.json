@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T11:31:00Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 27.79457402229309,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 16 elements (Ø42 mm, 46 mm apart, R 0.9); 4\/4 placed; base on the support: no; top touches 2 of 3; worst gap 0.0 µm; placed beads pushed ≤ 3.99 × weight",
+      "id" : "G-B2",
+      "measured" : 0,
+      "name" : "a tetrahedron between the open-air plates: three PLA beads touching on the support, a fourth resting on all three",
+      "passed" : false,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 0 (open-type scaled to 40.0 kHz, Ø10.0 mm): asked 0.93 m\/s at 40.0 kHz on its Ø10.0 mm face, can give 2.03; rms over the elements 0.37×",
+      "id" : "G-E1",
+      "measured" : 0.4594382005775373,
+      "name" : "element drive (building at 4.00× holding): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    }
+  ],
+  "gitSHA" : "d520be2",
+  "name" : "build-tetra-p0x16g46"
+}

@@ -1,0 +1,234 @@
+{
+  "note": "The platform's upgrade dependency graph (ENGINEERING_MANAGEMENT.md, 2026-11-12). One record per thing made, bought or learned. 'by': external = bought or outsourced seed; workshop = an existing workshop process (the printer); platform = made on the machine; hybrid = the machine plus named external steps; measurement = knowledge a bench run produces. humanMinutes are estimates for planning, not measurements. 'needs' are all required; 'anyOf' lists alternative routes, one of which is enough. Checked by `fieldc upgrades`: no record may depend on itself, and everything not external names its tolerance and how it is inspected.",
+  "records": [
+    {
+      "id": "S-ELEM",
+      "what": "40 kHz open-type transmitters and one receiver (Murata MA40S4S/R or a listed alternate)",
+      "by": "external",
+      "needs": [],
+      "gain": "the radiating elements; the only catalog tone",
+      "status": "order pack",
+      "humanMinutes": 10
+    },
+    {
+      "id": "S-CTRL",
+      "what": "controller board (RP2350B), TC4427A drivers, 15 V supply, air-temperature sensor",
+      "by": "external",
+      "needs": [],
+      "gain": "32 coherent drive channels, one receive channel, a USB link to the twin",
+      "status": "order pack",
+      "humanMinutes": 10
+    },
+    {
+      "id": "S-PRINT",
+      "what": "workshop printer (FDM, PETG)",
+      "by": "external",
+      "needs": [],
+      "gain": "frame parts, aperture plates, fixtures",
+      "status": "assumed available: confirm",
+      "humanMinutes": 0
+    },
+    {
+      "id": "M-FRAME",
+      "what": "P0 frame: two aperture plates A1 (4 × 4), four M4 rods, probe bar",
+      "by": "workshop",
+      "needs": [
+        "S-PRINT",
+        "S-ELEM",
+        "S-CTRL"
+      ],
+      "tolerance": "pin holes ±0.2 mm; gap set by nuts to ±0.5 mm. Neither is held by the print: calibration measures what was built",
+      "inspection": "calipers on the rod square and the gap; then the calibration's phase map",
+      "gain": "the platform's datum (the rods) and its first aperture",
+      "status": "designed, fit-checked (G-P0C1–3)",
+      "humanMinutes": 180
+    },
+    {
+      "id": "C-CAL",
+      "what": "calibration tool: probe receiver on the bar + `Calibration.program` through the link",
+      "by": "workshop",
+      "needs": [
+        "M-FRAME"
+      ],
+      "tolerance": "probe face within ±0.2 mm of the mid-plane (9° of phase at 40 kHz); electrical chain ±1° (G-HW1–3, simulated)",
+      "inspection": "repeat the calibration with the probe removed and refitted: the per-channel phases must repeat within 5°",
+      "gain": "each channel's gain and phase as built; reused by every later aperture",
+      "status": "software tested on the simulated controller",
+      "humanMinutes": 30
+    },
+    {
+      "id": "K-ELEM",
+      "what": "the element measured: level against drive, resonance and Q, unit-to-unit scatter, the plate's reflection",
+      "by": "measurement",
+      "needs": [
+        "C-CAL"
+      ],
+      "tolerance": "relative level ±0.5 dB, phase ±5°, resonance ±100 Hz; absolute level needs a calibrated microphone (external, quote) or stays ±3 dB (the datasheet)",
+      "inspection": "the same sweep on 34 units; one unit re-measured ten times for repeatability",
+      "gain": "replaces four assumptions in `ElementSpec` (face velocity, Q, efficiency, scaling) for the 40 kHz part",
+      "status": "blocked: hardware",
+      "humanMinutes": 60
+    },
+    {
+      "id": "K-HMR",
+      "what": "hold, move, release repeated on the bench against the twin's prediction",
+      "by": "measurement",
+      "needs": [
+        "C-CAL",
+        "K-ELEM"
+      ],
+      "tolerance": "bead within 0.5 mm of each waypoint in ten runs of ten",
+      "inspection": "camera, two views, scale from the 10.5 mm can pitch",
+      "gain": "the first manipulation milestone; the twin's force model checked once",
+      "status": "blocked: hardware",
+      "humanMinutes": 90
+    },
+    {
+      "id": "M-A2",
+      "what": "placing a bead beside a bead (G-B1, G-B2): a requirement, not yet a design",
+      "by": "measurement",
+      "needs": [
+        "K-ELEM"
+      ],
+      "tolerance": "second bead within a tenth of a bead of its site, touching",
+      "inspection": "`fieldc build` on the route's model in the twin, then a five-bead row on the bench",
+      "gain": "multi-bead parts",
+      "status": "open. Established: A1 (4 × 4) and a 6 × 6 one-tone aperture of the 40 kHz part fail in the twin (second bead 1–2 mm off). Not established: which route is needed",
+      "humanMinutes": 0,
+      "anyOf": [
+        "R-BODY",
+        "R-TONES",
+        "R-STAGE",
+        "S-XDCR"
+      ]
+    },
+    {
+      "id": "P-JOIN",
+      "what": "joining: UV-curing adhesive on the beads and a 405 nm lamp",
+      "by": "external",
+      "needs": [],
+      "gain": "a placed bead stays",
+      "status": "candidate; cure dose and bond strength unmeasured",
+      "humanMinutes": 20
+    },
+    {
+      "id": "R-BODY",
+      "what": "route: a few strong piezo inputs into a structured printed body (acoustic-body session)",
+      "by": "external",
+      "needs": [],
+      "gain": "field shapes from geometry instead of channel count",
+      "status": "under study elsewhere; the platform takes its model as `body-response/0.1` (Design/BODY_INTERFACE.md). `fieldc build` does not yet accept a body file",
+      "humanMinutes": 0
+    },
+    {
+      "id": "R-TONES",
+      "what": "route: an aperture of catalog parts at more than one tone (25, 40, 48, 58 kHz parts exist, Ø10–17 mm)",
+      "by": "external",
+      "needs": [],
+      "gain": "more than one tone without a custom part",
+      "status": "candidate, not run in the twin",
+      "humanMinutes": 0
+    },
+    {
+      "id": "R-STAGE",
+      "what": "route: process change — the trap stays put and a small stage brings the work's next site to the bead",
+      "by": "external",
+      "needs": [],
+      "gain": "no bead is ever placed by steering a trap next to a placed bead",
+      "status": "candidate; needs the placed part's echo in the model before the twin can judge it",
+      "humanMinutes": 0
+    },
+    {
+      "id": "U1",
+      "what": "first self-made part: origin fiducial F1 — one Ø1.5 mm bead bonded on the tip of a printed post, at the calibrated trap centre",
+      "by": "hybrid",
+      "needs": [
+        "K-HMR",
+        "P-JOIN"
+      ],
+      "tolerance": "bead centre within 0.2 mm of the post's axis; the bond carries ten bead weights",
+      "inspection": "camera, two views at 20 µm per pixel; a 10 mm drop",
+      "gain": "marks the acoustic origin where a camera can see it: absolute placement (P0-ABS) becomes measurable instead of resting on where the probe sat (±0.2 mm). Production: the platform holds the bead and lowers it onto the post; consolidation: UV-curing adhesive on the tip, a 405 nm lamp. External: the post (workshop print, a seed part), the adhesive and lamp, the bead fed and the adhesive applied by hand",
+      "status": "SIMULATED only: on A1 a first bead is set on a support within a micrometre in the twin (build receipts, bead 0); the support's own echo is not modelled. Blocked: hardware",
+      "humanMinutes": 45
+    },
+    {
+      "id": "U2",
+      "what": "second part: scan phantom T1, four Ø1.5 mm beads bonded as a tetrahedron",
+      "by": "hybrid",
+      "needs": [
+        "U1",
+        "M-A2"
+      ],
+      "tolerance": "bead centres within 0.15 mm of the drawing; every bond carries ten bead weights",
+      "inspection": "camera against F1, two views; a 10 mm drop",
+      "gain": "a known sub-wavelength target for registering a receive module",
+      "status": "blocked on M-A2",
+      "humanMinutes": 60
+    },
+    {
+      "id": "M-RX",
+      "what": "receive module: receivers on the aperture plates, records through `MachineBackend`",
+      "by": "workshop",
+      "needs": [
+        "U2",
+        "K-ELEM"
+      ],
+      "tolerance": "receiver positions from calibration against T1",
+      "inspection": "T1 located within 0.5 mm from its echo",
+      "gain": "the machine sees what it placed: closed-loop placement",
+      "status": "candidate",
+      "humanMinutes": 240
+    },
+    {
+      "id": "S-XDCR",
+      "what": "route and seed: custom transmitters at the mold's tones (53–97 kHz, Ø4–8 mm); no catalog part exists",
+      "by": "external",
+      "needs": [
+        "K-ELEM"
+      ],
+      "gain": "tones a powder mold needs on a dense face; one of four routes to bead-beside-bead placement",
+      "status": "specification written (cad/rh1-freestanding/TRANSDUCER_SPEC.md); no supplier contacted",
+      "humanMinutes": 120
+    },
+    {
+      "id": "M-A3",
+      "what": "aperture module A3: mold-capable (several tones, or a body that does as much)",
+      "by": "workshop",
+      "needs": [
+        "C-CAL"
+      ],
+      "tolerance": "per element gain ±2 %, phase ±5° after calibration; air known to 0.1 K (study S5)",
+      "inspection": "calibration; powder ring mold against G-M1",
+      "gain": "powder molds: the route to parts finer than a bead",
+      "status": "candidate",
+      "humanMinutes": 600,
+      "anyOf": [
+        "S-XDCR",
+        "R-BODY"
+      ]
+    },
+    {
+      "id": "O-MASTER",
+      "what": "optical phase-plate master, nanofabricated",
+      "by": "external",
+      "needs": [],
+      "gain": "a fixed optical wavefront without active channels",
+      "status": "candidate; no function selected yet",
+      "humanMinutes": 0
+    },
+    {
+      "id": "O-REPL",
+      "what": "replicated optical working plates from the master",
+      "by": "hybrid",
+      "needs": [
+        "O-MASTER"
+      ],
+      "tolerance": "relief height to λ·δφ/(2π(n−1)): about 17 nm at 532 nm, n 1.5, 0.1 rad (example only)",
+      "inspection": "a bought interferometer or profilometer: not owned",
+      "gain": "none identified for the acoustic platform yet",
+      "status": "candidate; off the critical path",
+      "humanMinutes": 0
+    }
+  ]
+}

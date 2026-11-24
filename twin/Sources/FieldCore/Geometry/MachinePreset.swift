@@ -73,10 +73,6 @@ public struct MachinePreset: Sendable, Codable {
     public var txElements: [Element] { elements.filter(\.isTX) }
     public var rxElements: [Element] { elements.filter(\.isRX) }
 
-    /// Element indices belonging to each gate, in gate order.
-    public func elementIndices(forGate g: Int) -> [Int] {
-        elements.indices.filter { elements[$0].gateIndex == g }
-    }
 }
 
 public struct Medium: Sendable, Codable {

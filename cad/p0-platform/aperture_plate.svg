@@ -1,0 +1,77 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 616.0 836.0' font-family='Helvetica' font-size='13'>
+<rect width='100%' height='100%' fill='white'/>
+<rect x='48.0' y='48.0' width='520.0' height='520.0' fill='none' stroke='black' stroke-width='1.5'/>
+<circle cx='88.0' cy='528.0' r='8.8' fill='none' stroke='black'/>
+<circle cx='528.0' cy='528.0' r='8.8' fill='none' stroke='black'/>
+<circle cx='528.0' cy='88.0' r='8.8' fill='none' stroke='black'/>
+<circle cx='88.0' cy='88.0' r='8.8' fill='none' stroke='black'/>
+<circle cx='245.0' cy='371.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='235.0' cy='371.0' r='1.8' fill='black'/>
+<circle cx='255.0' cy='371.0' r='1.8' fill='black'/>
+<text x='245.0' y='362.0' text-anchor='middle' fill='#555'>0</text>
+<circle cx='287.0' cy='371.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='277.0' cy='371.0' r='1.8' fill='black'/>
+<circle cx='297.0' cy='371.0' r='1.8' fill='black'/>
+<text x='287.0' y='362.0' text-anchor='middle' fill='#555'>1</text>
+<circle cx='329.0' cy='371.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='319.0' cy='371.0' r='1.8' fill='black'/>
+<circle cx='339.0' cy='371.0' r='1.8' fill='black'/>
+<text x='329.0' y='362.0' text-anchor='middle' fill='#555'>2</text>
+<circle cx='371.0' cy='371.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='361.0' cy='371.0' r='1.8' fill='black'/>
+<circle cx='381.0' cy='371.0' r='1.8' fill='black'/>
+<text x='371.0' y='362.0' text-anchor='middle' fill='#555'>3</text>
+<circle cx='245.0' cy='329.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='235.0' cy='329.0' r='1.8' fill='black'/>
+<circle cx='255.0' cy='329.0' r='1.8' fill='black'/>
+<text x='245.0' y='320.0' text-anchor='middle' fill='#555'>4</text>
+<circle cx='287.0' cy='329.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='277.0' cy='329.0' r='1.8' fill='black'/>
+<circle cx='297.0' cy='329.0' r='1.8' fill='black'/>
+<text x='287.0' y='320.0' text-anchor='middle' fill='#555'>5</text>
+<circle cx='329.0' cy='329.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='319.0' cy='329.0' r='1.8' fill='black'/>
+<circle cx='339.0' cy='329.0' r='1.8' fill='black'/>
+<text x='329.0' y='320.0' text-anchor='middle' fill='#555'>6</text>
+<circle cx='371.0' cy='329.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='361.0' cy='329.0' r='1.8' fill='black'/>
+<circle cx='381.0' cy='329.0' r='1.8' fill='black'/>
+<text x='371.0' y='320.0' text-anchor='middle' fill='#555'>7</text>
+<circle cx='245.0' cy='287.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='235.0' cy='287.0' r='1.8' fill='black'/>
+<circle cx='255.0' cy='287.0' r='1.8' fill='black'/>
+<text x='245.0' y='278.0' text-anchor='middle' fill='#555'>8</text>
+<circle cx='287.0' cy='287.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='277.0' cy='287.0' r='1.8' fill='black'/>
+<circle cx='297.0' cy='287.0' r='1.8' fill='black'/>
+<text x='287.0' y='278.0' text-anchor='middle' fill='#555'>9</text>
+<circle cx='329.0' cy='287.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='319.0' cy='287.0' r='1.8' fill='black'/>
+<circle cx='339.0' cy='287.0' r='1.8' fill='black'/>
+<text x='329.0' y='278.0' text-anchor='middle' fill='#555'>10</text>
+<circle cx='371.0' cy='287.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='361.0' cy='287.0' r='1.8' fill='black'/>
+<circle cx='381.0' cy='287.0' r='1.8' fill='black'/>
+<text x='371.0' y='278.0' text-anchor='middle' fill='#555'>11</text>
+<circle cx='245.0' cy='245.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='235.0' cy='245.0' r='1.8' fill='black'/>
+<circle cx='255.0' cy='245.0' r='1.8' fill='black'/>
+<text x='245.0' y='236.0' text-anchor='middle' fill='#555'>12</text>
+<circle cx='287.0' cy='245.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='277.0' cy='245.0' r='1.8' fill='black'/>
+<circle cx='297.0' cy='245.0' r='1.8' fill='black'/>
+<text x='287.0' y='236.0' text-anchor='middle' fill='#555'>13</text>
+<circle cx='329.0' cy='245.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='319.0' cy='245.0' r='1.8' fill='black'/>
+<circle cx='339.0' cy='245.0' r='1.8' fill='black'/>
+<text x='329.0' y='236.0' text-anchor='middle' fill='#555'>14</text>
+<circle cx='371.0' cy='245.0' r='19.8' fill='none' stroke='#999' stroke-dasharray='4 3'/>
+<circle cx='361.0' cy='245.0' r='1.8' fill='black'/>
+<circle cx='381.0' cy='245.0' r='1.8' fill='black'/>
+<text x='371.0' y='236.0' text-anchor='middle' fill='#555'>15</text>
+<text x='48.0' y='646.0'>P0 aperture plate A1 — 4 × 4 transmitters, 40 kHz. Seen from the cans' side; channel numbers as the twin's.</text>
+<text x='48.0' y='670.0'>Plate 130 × 130 × 4 mm, printed PETG, 4 perimeters, 40 % infill. General tolerance ±0.2 mm.</text>
+<text x='48.0' y='694.0'>4 rod holes Ø4.4 on a 110 mm square (the frame's datum). 32 pin holes Ø0.9: two per can, 5.0 mm apart along x,</text>
+<text x='48.0' y='718.0'>cans at 10.5 mm pitch, centred on the plate. Dashed: the can (Ø9.9 ± 0.3), standing on this side.</text>
+<text x='48.0' y='742.0'>Signal pin at −x of each pair, ground at +x. Print two. The upper plate is this part turned over about the x axis: its channel 16 + n is the can facing n.</text>
+</svg>

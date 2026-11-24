@@ -1,0 +1,145 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-10T14:21:38Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 2771.523691058159,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.89; ring sieve contrast 0.07, 3.0% on the shape (sites 0.0–1.5%, rogue 97.0%), 338.667 m\/s rms per channel, 2785.208 W acoustic",
+      "id" : "S1-3x1",
+      "measured" : 0.8934649782521799,
+      "name" : "2 × 3 elements, 1 tone: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.46; ring sieve contrast 0.10, 6.2% on the shape (sites 0.0–1.8%, rogue 93.8%), 194.638 m\/s rms per channel, 2759.872 W acoustic",
+      "id" : "S1-3x3",
+      "measured" : 0.46329524937311645,
+      "name" : "2 × 3 elements, 3 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.30; ring sieve contrast 0.49, 19.8% on the shape (sites 0.0–6.4%, rogue 80.2%), 77.522 m\/s rms per channel, 1313.438 W acoustic",
+      "id" : "S1-3x9",
+      "measured" : 0.29513309731822185,
+      "name" : "2 × 3 elements, 9 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.67; ring sieve contrast 0.11, 0.4% on the shape (sites 0.0–0.4%, rogue 99.6%), 135.443 m\/s rms per channel, 1781.914 W acoustic",
+      "id" : "S1-12x1",
+      "measured" : 0.6663056369663548,
+      "name" : "2 × 12 elements, 1 tone: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.22; ring sieve contrast 0.76, 30.3% on the shape (sites 0.0–9.6%, rogue 69.7%), 35.708 m\/s rms per channel, 371.566 W acoustic",
+      "id" : "S1-12x3",
+      "measured" : 0.21589347116520274,
+      "name" : "2 × 12 elements, 3 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.16; ring sieve contrast 1.28, 100.0% on the shape (sites 0.0–15.2%, rogue 0.0%), 22.013 m\/s rms per channel, 423.614 W acoustic",
+      "id" : "S1-12x9",
+      "measured" : 0.15715492519170937,
+      "name" : "2 × 12 elements, 9 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.67; ring sieve contrast 0.66, 16.6% on the shape (sites 0.0–6.7%, rogue 83.4%), 25.911 m\/s rms per channel, 260.855 W acoustic",
+      "id" : "S1-48x1",
+      "measured" : 0.6677116113252196,
+      "name" : "2 × 48 elements, 1 tone: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.19; ring sieve contrast 1.26, 100.0% on the shape (sites 0.0–28.7%, rogue 0.0%), 12.683 m\/s rms per channel, 187.502 W acoustic",
+      "id" : "S1-48x3",
+      "measured" : 0.19287501758476108,
+      "name" : "2 × 48 elements, 3 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.12; ring sieve contrast 2.78, 100.0% on the shape (sites 5.6–7.0%, rogue 0.0%), 10.565 m\/s rms per channel, 390.348 W acoustic",
+      "id" : "S1-48x9",
+      "measured" : 0.11607747195707116,
+      "name" : "2 × 48 elements, 9 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.66; ring sieve contrast 0.82, 73.9% on the shape (sites 0.0–30.1%, rogue 26.1%), 7.863 m\/s rms per channel, 96.099 W acoustic",
+      "id" : "S1-192x1",
+      "measured" : 0.6634960085144346,
+      "name" : "2 × 192 elements, 1 tone: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.17; ring sieve contrast 1.47, 100.0% on the shape (sites 0.0–24.6%, rogue 0.0%), 3.226 m\/s rms per channel, 48.537 W acoustic",
+      "id" : "S1-192x3",
+      "measured" : 0.17095801347593148,
+      "name" : "2 × 192 elements, 3 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.14; ring sieve contrast 3.23, 100.0% on the shape (sites 5.9–6.7%, rogue 0.0%), 3.006 m\/s rms per channel, 126.393 W acoustic",
+      "id" : "S1-192x9",
+      "measured" : 0.14111007880936952,
+      "name" : "2 × 192 elements, 9 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.67; ring sieve contrast 0.63, 9.5% on the shape (sites 0.0–3.2%, rogue 90.5%), 2.564 m\/s rms per channel, 40.862 W acoustic",
+      "id" : "S1-768x1",
+      "measured" : 0.6725584158444434,
+      "name" : "2 × 768 elements, 1 tone: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.19; ring sieve contrast 1.47, 100.0% on the shape (sites 0.0–26.0%, rogue 0.0%), 0.786 m\/s rms per channel, 11.515 W acoustic",
+      "id" : "S1-768x3",
+      "measured" : 0.19394222958166435,
+      "name" : "2 × 768 elements, 3 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "trap ratio 0.12; ring sieve contrast 3.27, 100.0% on the shape (sites 5.6–6.8%, rogue 0.0%), 0.726 m\/s rms per channel, 29.468 W acoustic",
+      "id" : "S1-768x9",
+      "measured" : 0.1199086710640553,
+      "name" : "2 × 768 elements, 9 tones: centre trap ratio; ring sieve",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "de0d741+dirty",
+  "name" : "arraysweep"
+}

@@ -1,0 +1,118 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-10T08:00:07Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0.32617998123168945,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "720-segment polygon, z = 0 … 5R",
+      "id" : "G-EM1",
+      "measured" : 1.1960104160602114e-05,
+      "name" : "loop on-axis field vs closed form",
+      "passed" : true,
+      "threshold" : 0.0001
+    },
+    {
+      "comparison" : "<",
+      "detail" : "400-turn helix, three radii across the tube",
+      "id" : "G-EM2",
+      "measured" : 3.3306690738754696e-15,
+      "name" : "toroid interior field vs μ0NI\/2πr",
+      "passed" : true,
+      "threshold" : 0.01
+    },
+    {
+      "comparison" : "<",
+      "detail" : "toroid mode links 88.000 through the tube (expect 88), 0.0000 round it; ring mode 0.0000 and 2.000 (expect 2)",
+      "id" : "G-EM3",
+      "measured" : 3.490409605433342e-05,
+      "name" : "Ampère on the CAD's contrawound pair (amp-turns error)",
+      "passed" : true,
+      "threshold" : 0.05
+    },
+    {
+      "comparison" : "info",
+      "detail" : "wire 10.68 m; continuous 63 A per circuit (assumed 5 A\/mm²)",
+      "id" : "S-EM0",
+      "measured" : 2.80798796449628,
+      "name" : "quasi-static limit of the winding model (MHz)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "the confined mode couples to what is inside or threads the tube; only the ring mode reaches the chambers",
+      "id" : "S-EM1",
+      "measured" : 0.004346902330478706,
+      "name" : "toroid-mode leakage at the build-chamber centre, relative to the ring mode",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "one common wire per pair: 2 (and it must choose ring or toroid at build time)",
+      "id" : "S-EM2",
+      "measured" : 2,
+      "name" : "field patterns above 1 % in the build chamber, six independent feeds",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "r 120 mm, z 1065 mm; on the axis 2.58e-06 at z 420 mm; largest field 0.48 mT",
+      "id" : "S-EM3",
+      "measured" : 5.593104079724979e-06,
+      "name" : "best static lift in the build chamber at the continuous limit, −∂(B²)\/∂z (T²\/m)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "needs 5138 T²\/m, the windings offer 5.59e-06 at 63 A; a block changes nothing — force and weight both scale with volume",
+      "id" : "S-SC1",
+      "measured" : 918615084.8610955,
+      "name" : "limestone levitated by the windings: force short by (×)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "aluminium Ø2 mm at 2.78 MHz; continuous limit 62.8 A — the chambers see one ring turn per winding, the other 44 turns are confined",
+      "id" : "S-EM4",
+      "measured" : 5823.170497029901,
+      "name" : "least current that induction-levitates a metal grain, within the model (A rms per circuit)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "5.9e-09 of a Si–O bond: no softening of stone by this route",
+      "id" : "S-SC2",
+      "measured" : 1.1047288988514858e-06,
+      "name" : "field energy per electron spin at the chamber's largest field, relative to kT",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "centre field, on-axis null and peak gradient swept 1:1.5 … 1:5; k = −8\/9 is one point on a smooth curve",
+      "id" : "S-SC3",
+      "measured" : 0,
+      "name" : "field quantities with an extremum across the 1:3 radius ratio",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "Ø40 µm aluminium powder at 1 MHz: 33011 amp-turns. A bore coil makes R10's induction lift real for millimetre shot only; powder needs the acoustic conveyor",
+      "id" : "S-EM5",
+      "measured" : 376.3825716235933,
+      "name" : "amp-turns (rms) for a Ø20 mm bore coil to hold Ø2 mm aluminium shot at 100 kHz",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "1b708a2+dirty",
+  "name" : "windings"
+}

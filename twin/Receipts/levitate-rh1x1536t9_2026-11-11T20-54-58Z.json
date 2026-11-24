@@ -1,0 +1,64 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T20:54:58Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 85.67759203910828,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "element 1328 (open-type scaled to 52.8 kHz, Ø7.6 mm): asked 1.48 m\/s at 52.8 kHz on its Ø7.6 mm face, can give 2.03; rms over the elements 0.58×",
+      "id" : "G-E1",
+      "measured" : 0.730229558076849,
+      "name" : "element drive (holding PLA Ø200 µm): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 1.48 m\/s (147 dB plane-wave), rms 0.39 m\/s; field peak 155 dB; lateral 7 Hz; sibling ratio 0.10",
+      "id" : "LEV",
+      "measured" : 1.4806549532743185,
+      "name" : "rh1x1536t9, the plate's 9 tones 53–97 kHz: PLA Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "element 2060 (open-type scaled to 86.1 kHz, Ø4.6 mm): asked 2.18 m\/s at 86.1 kHz on its Ø4.6 mm face, can give 2.03; rms over the elements 0.86×",
+      "id" : "G-E1",
+      "measured" : 1.077299003200212,
+      "name" : "element drive (holding aluminium Ø200 µm): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 2.18 m\/s (150 dB plane-wave), rms 0.58 m\/s; field peak 158 dB; lateral 7 Hz; sibling ratio 0.10",
+      "id" : "LEV",
+      "measured" : 2.1843926852903586,
+      "name" : "rh1x1536t9, the plate's 9 tones 53–97 kHz: aluminium Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "element 1328 (open-type scaled to 52.8 kHz, Ø7.6 mm): asked 3.72 m\/s at 52.8 kHz on its Ø7.6 mm face, can give 2.03; rms over the elements 1.47×",
+      "id" : "G-E1",
+      "measured" : 1.8366984389023342,
+      "name" : "element drive (holding steel Ø200 µm): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "hardest element 3.72 m\/s (155 dB plane-wave), rms 0.99 m\/s; field peak 163 dB; lateral 7 Hz; sibling ratio 0.10",
+      "id" : "LEV",
+      "measured" : 3.7241941402565755,
+      "name" : "rh1x1536t9, the plate's 9 tones 53–97 kHz: steel Ø200 µm",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "1cdc269+dirty",
+  "name" : "levitate-rh1x1536t9"
+}

@@ -1,0 +1,13 @@
+policy,gap_mm,reflection,image_order,seed,calibration,outcome,level,step_ms,hardest_of_full,predicted_travel_mm,travel_mm,absolute_mm,between_plates_deg,pair_spread_deg
+P0-planner/1,46.0,0.0,3,7,"point microphone, one pass",pass,4.000,40.000,0.331,0.256,0.380,0.535,0.000,
+P0-planner/1,46.0,0.0,3,8,"point microphone, one pass",pass,8.000,40.000,0.349,0.216,0.291,0.408,0.000,
+P0-planner/1,46.0,0.0,3,9,"point microphone, one pass",pass,4.000,40.000,0.358,0.329,0.214,0.429,-0.000,
+P0-planner/1,46.0,0.0,3,10,"point microphone, one pass",pass,4.000,40.000,0.313,0.245,0.263,0.465,0.000,
+P0-planner/1,46.0,0.5,3,7,"point microphone, one pass",pass,4.000,40.000,0.415,0.181,0.139,0.220,-0.000,
+P0-planner/1,46.0,0.5,3,8,"point microphone, one pass",pass,4.000,40.000,0.394,0.157,0.107,0.165,-0.000,
+P0-planner/1,46.0,0.5,3,9,"point microphone, one pass",pass,4.000,40.000,0.432,0.150,0.169,0.100,-0.000,
+P0-planner/1,46.0,0.5,3,10,"point microphone, one pass",pass,4.000,40.000,0.400,0.208,0.150,0.163,-0.000,
+P0-planner/1,46.0,0.9,3,7,"point microphone, one pass",pass,4.000,40.000,0.405,0.139,0.130,0.366,0.000,
+P0-planner/1,46.0,0.9,3,8,"point microphone, one pass",lost,4.000,40.000,0.404,0.289,,,0.000,
+P0-planner/1,46.0,0.9,3,9,"point microphone, one pass",pass,4.000,40.000,0.487,0.130,0.098,0.179,0.000,
+P0-planner/1,46.0,0.9,3,10,"point microphone, one pass",pass,8.000,40.000,0.392,0.199,0.291,0.408,0.000,

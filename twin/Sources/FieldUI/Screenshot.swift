@@ -40,6 +40,73 @@ public enum Screenshot {
         }
     }
 
+    // MARK: golden comparison (§21)
+
+    public struct Comparison {
+        public var sizeMatches: Bool
+        /// Fraction of pixels whose largest channel difference exceeds the tolerance.
+        public var changedFraction: Double
+        public var maxDelta: Int
+        /// The golden in grey with every changed pixel red.
+        public var diff: CGImage?
+        public func passes(maxChanged: Double) -> Bool { sizeMatches && changedFraction <= maxChanged }
+    }
+
+    public static func loadPNG(_ url: URL) -> CGImage? {
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        return CGImageSourceCreateImageAtIndex(src, 0, nil)
+    }
+
+    static func rgba(_ image: CGImage) -> [UInt8]? {
+        let w = image.width, h = image.height
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        guard let cs = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        let ok = px.withUnsafeMutableBytes { buf -> Bool in
+            guard let ctx = CGContext(data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                      space: cs, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+            ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+            return true
+        }
+        return ok ? px : nil
+    }
+
+    /// Compare a fresh screenshot with its golden. Not bit-exact, because GPU
+    /// rasterisation and text anti-aliasing are not bit-stable across OS
+    /// updates: a pixel counts as changed when any sRGB channel differs by
+    /// more than `tolerance` (of 255), and the caller caps the changed
+    /// fraction. (The spec asks for ΔE; a per-channel bound is the simpler
+    /// stand-in and is stricter on saturated colours.)
+    public static func compare(_ actual: CGImage, golden: CGImage, tolerance: Int = 12) -> Comparison {
+        guard actual.width == golden.width, actual.height == golden.height,
+              let a = rgba(actual), let g = rgba(golden) else {
+            return Comparison(sizeMatches: false, changedFraction: 1, maxDelta: 255, diff: nil)
+        }
+        let n = actual.width * actual.height
+        var out = [UInt8](repeating: 255, count: n * 4)
+        var changed = 0, maxDelta = 0
+        for i in 0..<n {
+            let b = i * 4
+            let d = max(abs(Int(a[b]) - Int(g[b])), abs(Int(a[b + 1]) - Int(g[b + 1])), abs(Int(a[b + 2]) - Int(g[b + 2])))
+            maxDelta = max(maxDelta, d)
+            if d > tolerance {
+                changed += 1
+                out[b] = 255; out[b + 1] = 0; out[b + 2] = 0
+            } else {
+                let grey = UInt8((Int(g[b]) + Int(g[b + 1]) + Int(g[b + 2])) / 3 / 2 + 64)
+                out[b] = grey; out[b + 1] = grey; out[b + 2] = grey
+            }
+        }
+        var diff: CGImage?
+        if changed > 0, let cs = CGColorSpace(name: CGColorSpace.sRGB) {
+            out.withUnsafeMutableBytes { buf in
+                diff = CGContext(data: buf.baseAddress, width: actual.width, height: actual.height, bitsPerComponent: 8,
+                                 bytesPerRow: actual.width * 4, space: cs,
+                                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)?.makeImage()
+            }
+        }
+        return Comparison(sizeMatches: true, changedFraction: Double(changed) / Double(n), maxDelta: maxDelta, diff: diff)
+    }
+
     /// One labelled PNG grid of every scene. §21: this is the deliverable —
     /// how a reviewer inspects the entire application in a single look.
     public static func contactSheet(images: [(String, CGImage)],

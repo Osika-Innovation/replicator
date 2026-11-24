@@ -1,0 +1,374 @@
+import FieldCore
+import Foundation
+
+// Scanning as functions, so `fieldc scan3d` and `fieldc replicate` share the
+// physics. By reciprocity a small scatterer at x couples gate j to gate i
+// through what each gate's field does there:
+//     ΔT_ij(f) ∝ −(f1/3) k²a³ p_i(x) p_j(x) − (f2/2) a³ ∇p_i(x)·∇p_j(x)
+// (the chamber-only transfer is calibrated away). An object is a cloud of such
+// scatterers — the Born approximation for a cloud, the coupled solve for a few
+// beads. The image is the matched field, the data correlated at every grid
+// point with what a point scatterer there would have produced:
+//     I(x) = |Σ_f Σ_ij M_ij(x,f)* ΔT_ij(f)| / (Σ|M|²)^½.
+
+/// Maximum-intensity projections of an image (peak 1) for the figures:
+/// rows "view,i,j,value" for xy, xz and yz.
+public func mipCSV(_ I: [Double], grid: FieldLattice) -> String {
+    let n = grid.nx
+    var csv = "view,i,j,value\n"
+    for (view, axes) in [("xy", (0, 1, 2)), ("xz", (0, 2, 1)), ("yz", (1, 2, 0))] {
+        var mip = [[Double]](repeating: [Double](repeating: 0, count: n), count: n)
+        for k2 in 0..<n { for j2 in 0..<n { for i2 in 0..<n {
+            let v = I[grid.index(i2, j2, k2)]
+            let idx = [i2, j2, k2]
+            mip[idx[axes.0]][idx[axes.1]] = max(mip[idx[axes.0]][idx[axes.1]], v)
+        } } }
+        for u in 0..<n { for w in 0..<n { csv += "\(view),\(u),\(w),\(String(format: "%.4f", mip[u][w]))\n" } }
+    }
+    return csv
+}
+
+/// Read a shape off an image (peak 1): the brightest voxel is a site, then the
+/// brightest one at least `spacing` from every site taken, and so on down to
+/// `threshold`; two sites closer than 1.8 spacing are joined when the image
+/// stays bright along the segment between them (its mean ≥ 0.6 threshold).
+/// A site left unjoined is kept as a lone point.
+public func extractShape(image I: [Double], grid: FieldLattice, threshold: Double,
+                  spacing: Double, within: (Vec3) -> Bool = { _ in true }) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
+    let order = I.indices.filter { I[$0] >= threshold && within(grid.positions[$0]) }.sorted { I[$0] > I[$1] }
+    var sites: [Vec3] = []
+    for n in order {
+        let x = grid.positions[n]
+        if sites.allSatisfy({ ($0 - x).length >= spacing }) { sites.append(x) }
+    }
+    // Sub-voxel: each site moves to the brightness-weighted centroid of the
+    // voxels within 1.2 mm that are at least 70 % as bright as its peak. On a
+    // wire the patch is symmetric along the wire, so this lands on its
+    // centreline; snapped to the 0.7 mm grid, sites of an 8 mm ring sat at
+    // radii 7.6–8.1 mm and the ones pulled inward got no powder.
+    let r = 1.2e-3, steps = Int((r / grid.spacing).rounded(.up))
+    sites = sites.map { x in
+        let f = (x - grid.origin) / grid.spacing
+        let ci = Int(f.x.rounded()), cj = Int(f.y.rounded()), ck = Int(f.z.rounded())
+        let peak = I[grid.index(ci, cj, ck)]
+        var sum = Vec3(0, 0, 0), w = 0.0
+        for dk in -steps...steps { for dj in -steps...steps { for di in -steps...steps {
+            let i = ci + di, j = cj + dj, k = ck + dk
+            guard i >= 0, j >= 0, k >= 0, i < grid.nx, j < grid.ny, k < grid.nz else { continue }
+            let p = grid.position(i, j, k)
+            guard (p - x).length <= r else { continue }
+            let v = I[grid.index(i, j, k)] - 0.7 * peak
+            if v > 0 { sum = sum + p * v; w += v }
+        } } }
+        return w > 0 ? sum * (1 / w) : x
+    }
+    var segments: [(Vec3, Vec3)] = []
+    var joined = [Bool](repeating: false, count: sites.count)
+    for a in sites.indices {
+        for b in (a + 1)..<max(a + 1, sites.count) where (sites[a] - sites[b]).length < 1.8 * spacing {
+            let m = max(2, Int(((sites[a] - sites[b]).length / grid.spacing).rounded()))
+            let mean = (0...m).reduce(0.0) { acc, q in
+                acc + ForceCompiler.interpolate(I, lattice: grid, at: sites[a] + (sites[b] - sites[a]) * (Double(q) / Double(m)))
+            } / Double(m + 1)
+            if mean >= 0.6 * threshold { segments.append((sites[a], sites[b])); joined[a] = true; joined[b] = true }
+        }
+    }
+    for a in sites.indices where !joined[a] { segments.append((sites[a], sites[a])) }
+    return (sites, segments)
+}
+
+/// Pearson correlation of two images.
+public func pearson(_ a: [Double], _ b: [Double]) -> Double {
+    let n = Double(a.count)
+    let ma = a.reduce(0, +) / n, mb = b.reduce(0, +) / n
+    var sab = 0.0, saa = 0.0, sbb = 0.0
+    for i in a.indices {
+        let da = a[i] - ma, db = b[i] - mb
+        sab += da * db; saa += da * da; sbb += db * db
+    }
+    return sab / max((saa * sbb).squareRoot(), 1e-300)
+}
+
+// MARK: - Scanning in open air (ENGINE.md, study S3)
+
+public struct ArrayScanSetup {
+    public var fLo = 30_000.0
+    public var fHi = 100_000.0
+    /// Frequencies, evenly spaced: Δf sets the time window 1/Δf, which must
+    /// hold the direct echoes without the plate bounces wrapping onto them.
+    public var frequencies = 320
+    /// Coded pulses: each chord drives every element of ONE plate with a
+    /// random phase, the same pattern at every frequency; the plates alternate.
+    public var chords = 8
+    public var snrDB = 40.0
+    public var seed: UInt64 = 17
+    /// Keep only the direct echoes (time gate); false = the whole response.
+    public var gate = true
+    /// Listen on both plates (the direct path through the volume to the far
+    /// plate arrives in the same window as the direct echo, and carries the
+    /// forward scattering of surfaces that do not face the firing plate);
+    /// false = the firing plate only.
+    public var listenBoth = false
+    /// Resonant elements: the floor their resonance curves are equalised to
+    /// (`PlateArray.gains`). 0.3: each element is used ±6 % round its tone,
+    /// at up to 1.8× its noise.
+    public var equalise = 0.3
+    public init() {}
+
+    /// The sweep a scan of these plates makes: its band (Hz) and how many
+    /// frequencies. Resonant elements only answer near their tones, so the
+    /// band is the plate's own, 5 % past its outermost tones. The frequency
+    /// step stays the one the full band has: it sets the time window 1/df,
+    /// and the plates' later bounces (every 2L/c) fold back into that
+    /// window. At 219 Hz (window 4.56 ms) the second and third bounces fold
+    /// to 0.80 and 3.48 ms, clear of the echo gate; keeping the count
+    /// instead widened the window to 6.40 ms and folded the third bounce
+    /// into the gate (AUC 0.56, 2026-11-12).
+    public func sweep(on array: PlateArray) -> (lo: Double, hi: Double, count: Int) {
+        guard let t = array.tones else { return (fLo, fHi, frequencies) }
+        let lo = max(fLo, 0.95 * t.min()!), hi = min(fHi, 1.05 * t.max()!)
+        let step = (fHi - fLo) / Double(max(1, frequencies - 1))
+        return (lo, hi, Int(((hi - lo) / step).rounded()) + 1)
+    }
+}
+
+/// The matched-field image of `object` (small rigid scatterers of radius
+/// `subunit`) on `grid`, seen by the open-air plate array, normalised to its
+/// peak. Pulse-echo, one plate at a time: a coded pulse (a random phase per
+/// element, the same at every frequency) fires one plate and that plate
+/// listens. The plates reflect (R 0.9), so a scatterer's echo also comes back
+/// by way of the other plate — plate → scatterer → far plate → home, a path
+/// of 2L whatever the scatterer's height — which carries no depth and smeared
+/// the image ~10 mm along z. So the echo is time-gated: the spectrum each
+/// element receives is taken to the time domain, cut to the window where the
+/// direct echoes from the work volume arrive, and taken back. Then the gated
+/// echo is sent back time-reversed and correlated at every grid point with
+/// the outgoing field the way a point scatterer there would couple them:
+///     I(x) = |Σ_{f,pulse} cM f(x) b(x) + cD ∇f(x)·∇b(x)|,
+/// the matched filter rₓᴴ r. Two forward passes over the grid per pulse and
+/// frequency; nothing stored.
+public func scanImageArray(ctx: MetalContext, array: PlateArray, object: [Vec3], subunit: Double, grid: FieldLattice,
+                    setup: ArrayScanSetup, log: (String) -> Void = { print($0) }) throws -> [Double] {
+    let t0 = Date()
+    let air = RH1Freestanding.roomAir
+    let (fLo, fHi, nF) = setup.sweep(on: array)
+    let df = (fHi - fLo) / Double(max(1, nF - 1))
+    let freqs = (0..<nF).map { fLo + df * Double($0) }
+    if array.tones != nil { log(String(format: "  resonant elements (Q %.0f): sweeping %.1f–%.1f kHz, each element sent and heard through its own resonance curve, equalised to %.1f", array.elementQ, fLo / 1000, fHi / 1000, setup.equalise)) }
+    let field = try ArrayFieldGPU(ctx: ctx, array: array, frequencies: freqs, medium: air,
+                                  lattice: FieldLattice(origin: grid.origin, spacing: grid.spacing, nx: 1, ny: 1, nz: 1), curve: true, equalise: setup.equalise)
+    // Equalising what an element hears raises its noise where it is off its
+    // tone: by |H|/(|H|² + ε²), relative to an element on its tone.
+    let raw = array.gains(freqs, curve: true)
+    func noiseGain(_ t: Int, _ e: Int) -> Double {
+        guard let h = raw?[t][e].magnitude else { return 1 }
+        let eps = setup.equalise
+        return h / (h * h + eps * eps) * (1 + eps * eps)
+    }
+    let gridPts = grid.positions.map { SIMD4(Float($0.x), Float($0.y), Float($0.z), 0) }
+    var acc = [Complex](repeating: .zero, count: grid.count)
+    var rng = SplitMix64(seed: setup.seed)
+    func gauss() -> Double {
+        let u1 = max(rng.nextUnit(), 1e-300), u2 = rng.nextUnit()
+        return (-2 * Foundation.log(u1)).squareRoot() * cos(2 * Double.pi * u2)
+    }
+    let a3 = subunit * subunit * subunit
+    let C = array.channels, half = C / 2
+    let c0 = air.soundSpeed
+    // The direct-echo window for a plate: from the nearest work-volume point
+    // straight back, to the farthest point by way of the plate's rim.
+    let gridHalf = Double(grid.nx - 1) / 2 * grid.spacing
+    let centre = grid.origin + Vec3(gridHalf, gridHalf, gridHalf)
+    let reach = gridHalf * 3.0.squareRoot()
+    let W = 1 / df                                           // time window of the frequency grid
+    var logged = false
+    for q in 0..<setup.chords {
+        let side = q % 2
+        let mine = (side * half)..<((side + 1) * half)
+        let zPlate = side == 0 ? 0.0 : array.gap
+        let D = abs(centre.z - zPlate)
+        let tA = 2 * max(0, D - reach) / c0 - 20e-6
+        let tB = 2 * ((D + reach) * (D + reach) + array.plateRadius * array.plateRadius).squareRoot() / c0 + 20e-6
+        if !logged {
+            log(String(format: "  echo gate %.2f–%.2f ms (the first plate bounce arrives at %.2f ms); time window %.2f ms",
+                       tA * 1000, tB * 1000, 2 * array.gap / c0 * 1000, W * 1000))
+            logged = true
+        }
+        var d = [Complex](repeating: .zero, count: C)
+        for e in mine { d[e] = Complex.expi(2 * Double.pi * rng.nextUnit()) * (1 / Double(half).squareRoot()) }
+        // 1. What this plate hears, at every frequency, with noise.
+        var R = [[Complex]](repeating: [Complex](repeating: .zero, count: C), count: nF)
+        for (t, f) in freqs.enumerated() {
+            let k = air.wavenumber(at: f)
+            var r = try field.scattered(by: object, monopole: -k * k * a3 / 3, dipole: -a3 / 2, drive: d, tone: t)
+            let ears: [Int] = setup.listenBoth ? Array(0..<C) : Array(mine)
+            if !setup.listenBoth { for e in 0..<C where !mine.contains(e) { r[e] = .zero } }
+            let rms = (ears.reduce(0.0) { $0 + r[$1].magnitudeSquared } / Double(ears.count)).squareRoot()
+            let sigma = rms * pow(10, -setup.snrDB / 20) / 2.0.squareRoot()
+            for e in ears { let s = sigma * noiseGain(t, e); r[e] += Complex(gauss() * s, gauss() * s) }
+            R[t] = r
+        }
+        // 2. Time gate per element: to the time domain over the band, keep the
+        //    direct-echo window (raised-cosine edges), and back.
+        if setup.gate {
+            let earsG: [Int] = setup.listenBoth ? Array(0..<C) : Array(mine)
+            let gate: [Double] = (0..<nF).map { m in
+                let tm = Double(m) * W / Double(nF)
+                let edge = 30e-6
+                if tm < tA - edge || tm > tB + edge { return 0 }
+                if tm < tA { return 0.5 * (1 + cos(Double.pi * (tA - tm) / edge)) }
+                if tm > tB { return 0.5 * (1 + cos(Double.pi * (tm - tB) / edge)) }
+                return 1
+            }
+            let tw = (0..<nF).map { Complex.expi(-2 * Double.pi * Double($0) / Double(nF)) }
+            for e in earsG {
+                var sig = [Complex](repeating: .zero, count: nF)
+                for m in 0..<nF where gate[m] > 0 {
+                    var v = Complex.zero
+                    for i in 0..<nF { v += R[i][e] * tw[(i * m) % nF] }
+                    sig[m] = v * gate[m]
+                }
+                for i in 0..<nF {
+                    var v = Complex.zero
+                    for m in 0..<nF where gate[m] > 0 { v += sig[m] * tw[(nF - (i * m) % nF) % nF] }
+                    R[i][e] = v * (1 / Double(nF))
+                }
+            }
+        }
+        // 3. Send the echo back time-reversed and correlate on the grid.
+        for (t, f) in freqs.enumerated() {
+            let k = air.wavenumber(at: f)
+            let cM = -k * k * a3 / 3, cD = -a3 / 2
+            let fi = try field.fields(d, tone: t, points: gridPts)
+            let fb = try field.fields(R[t].map { $0.conjugate }, tone: t, points: gridPts)
+            acc.withUnsafeMutableBufferPointer { ab in
+                DispatchQueue.concurrentPerform(iterations: 64) { ch in
+                    for n in (ch * grid.count / 64)..<((ch + 1) * grid.count / 64) {
+                        let b = n * 4
+                        var v = fi[b] * fb[b] * cM
+                        for c in 1...3 { v += fi[b + c] * fb[b + c] * cD }
+                        ab[n] += v
+                    }
+                }
+            }
+        }
+        log(String(format: "  pulse %d/%d (%@ plate) done (%.0f s)", q + 1, setup.chords, side == 0 ? "lower" : "upper",
+                   Date().timeIntervalSince(t0)))
+    }
+    let I = acc.map { $0.magnitude }
+    let peak = max(I.max() ?? 1, 1e-300)
+    return I.map { $0 / peak }
+}
+
+/// Resample a read shape at even spacing. The scan's sites sit where the
+/// image peaked — irregularly (3.2–5.3 mm apart on a ring read at 3 mm), and
+/// uneven spacing lets neighbouring sites steal each other's powder. Keep the
+/// shape, not the peaks: junctions and ends (sites with ≠ 2 neighbours) stay
+/// where they are; every chain between them, and every closed loop, is walked
+/// and sampled at equal arc length, about `spacing` apart.
+public func resampleShape(sites: [Vec3], segments: [(Vec3, Vec3)], spacing: Double) -> (sites: [Vec3], segments: [(Vec3, Vec3)]) {
+    func idx(_ p: Vec3) -> Int? { sites.firstIndex { ($0 - p).length < 1e-9 } }
+    var adj = [[Int]](repeating: [], count: sites.count)
+    for (a, b) in segments {
+        guard let i = idx(a), let j = idx(b), i != j else { continue }
+        if !adj[i].contains(j) { adj[i].append(j); adj[j].append(i) }
+    }
+    var outSites: [Vec3] = [], outSegs: [(Vec3, Vec3)] = []
+    func add(_ p: Vec3) -> Vec3 {
+        if let q = outSites.first(where: { ($0 - p).length < 1e-9 }) { return q }
+        outSites.append(p); return p
+    }
+    var usedEdge = Set<Int>()                      // i * count + j, i < j
+    func key(_ i: Int, _ j: Int) -> Int { min(i, j) * sites.count + max(i, j) }
+    func sample(_ chain: [Vec3], closed: Bool) {
+        var pts = chain
+        if closed { pts.append(chain[0]) }
+        var lens = [0.0]
+        for q in 1..<pts.count { lens.append(lens[q - 1] + (pts[q] - pts[q - 1]).length) }
+        let total = lens.last!
+        let n = max(1, Int((total / spacing).rounded()))
+        var placed: [Vec3] = []
+        let count = closed ? n : n + 1
+        for m in 0..<count {
+            let s = total * Double(m) / Double(n)
+            var q = 1
+            while q < pts.count - 1 && lens[q] < s { q += 1 }
+            let seg = lens[q] - lens[q - 1]
+            let u = seg > 0 ? (s - lens[q - 1]) / seg : 0
+            placed.append(add(pts[q - 1] + (pts[q] - pts[q - 1]) * u))
+        }
+        for m in 1..<placed.count { outSegs.append((placed[m - 1], placed[m])) }
+        if closed && placed.count > 2 { outSegs.append((placed.last!, placed[0])) }
+    }
+    let anchors = sites.indices.filter { adj[$0].count != 2 }
+    // Chains from every anchor.
+    for a in anchors {
+        if adj[a].isEmpty { _ = add(sites[a]); continue }
+        for b0 in adj[a] where !usedEdge.contains(key(a, b0)) {
+            var chain = [sites[a]], prev = a, cur = b0
+            usedEdge.insert(key(a, b0))
+            while true {
+                chain.append(sites[cur])
+                if adj[cur].count != 2 { break }
+                guard let nxt = adj[cur].first(where: { $0 != prev }), !usedEdge.contains(key(cur, nxt)) else { break }
+                usedEdge.insert(key(cur, nxt))
+                prev = cur; cur = nxt
+            }
+            sample(chain, closed: false)
+        }
+    }
+    // Closed loops (every site has two neighbours).
+    for s0 in sites.indices where adj[s0].count == 2 {
+        guard let b0 = adj[s0].first(where: { !usedEdge.contains(key(s0, $0)) }) else { continue }
+        var chain = [sites[s0]], prev = s0, cur = b0
+        usedEdge.insert(key(s0, b0))
+        while cur != s0 {
+            chain.append(sites[cur])
+            guard let nxt = adj[cur].first(where: { $0 != prev }) else { break }
+            if usedEdge.contains(key(cur, nxt)) { break }
+            usedEdge.insert(key(cur, nxt))
+            prev = cur; cur = nxt
+        }
+        sample(chain, closed: true)
+    }
+    return (outSites, outSegs)
+}
+
+
+/// How an image sits on its object. `precision` and `recall` use voxels above
+/// half the peak within `tol` of an object point; `auc` is threshold-free: the
+/// chance a voxel within `tol` of the object is brighter than one beyond 2·tol
+/// (0.5 = no image); `contrast` is the mean image on the object ÷ off it.
+public struct ScanScore: Sendable {
+    public var hot = 0
+    public var precision = 0.0, recall = 0.0, auc = 0.0, contrast = 0.0
+    public var spill = 0.0, spillReach = 0.0, objectShare = 0.0
+    public var peakDistance = 0.0
+    public init() {}
+}
+
+public func scanScore(image I: [Double], grid: FieldLattice, object: [Vec3], tol: Double) -> ScanScore {
+    var s = ScanScore()
+    let pos = grid.positions
+    let dist = pos.map { x in object.map { ($0 - x).length }.min() ?? 0 }
+    let hot = I.indices.filter { I[$0] >= 0.5 }
+    s.hot = hot.count
+    s.precision = Double(hot.filter { dist[$0] <= tol }.count) / Double(max(1, hot.count))
+    let hotPts = hot.map { pos[$0] }
+    s.recall = Double(object.filter { o in hotPts.contains { ($0 - o).length <= tol } }.count) / Double(max(1, object.count))
+    if let pk = I.indices.max(by: { I[$0] < I[$1] }) { s.peakDistance = dist[pk] }
+    let onIdx = I.indices.filter { dist[$0] <= tol }, offIdx = I.indices.filter { dist[$0] > 2 * tol }
+    let order = (onIdx + offIdx).sorted { I[$0] < I[$1] }
+    var rankSum = 0.0
+    for (r, i) in order.enumerated() where dist[i] <= tol { rankSum += Double(r + 1) }
+    let nOn = Double(onIdx.count), nOff = Double(offIdx.count)
+    s.auc = nOn > 0 && nOff > 0 ? (rankSum - nOn * (nOn + 1) / 2) / (nOn * nOff) : 0
+    let meanOn = onIdx.reduce(0) { $0 + I[$1] } / max(1, nOn), meanOff = offIdx.reduce(0) { $0 + I[$1] } / max(1, nOff)
+    s.contrast = meanOff > 0 ? meanOn / meanOff : 0
+    var eAll = 0.0, eOut = 0.0, dOut = 0.0
+    for i in I.indices { eAll += I[i]; if dist[i] > tol { eOut += I[i]; dOut += I[i] * (dist[i] - tol) } }
+    s.spill = eAll > 0 ? eOut / eAll : 0
+    s.spillReach = eOut > 0 ? dOut / eOut : 0
+    s.objectShare = nOn / Double(max(1, I.count))
+    return s
+}

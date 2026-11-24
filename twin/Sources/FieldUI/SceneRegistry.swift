@@ -1,4 +1,6 @@
 import SwiftUI
+import FieldCore
+import FieldGPU
 import CoreGraphics
 
 /// THE screenshot registry (§21).
@@ -20,121 +22,121 @@ public enum SceneRegistry {
 
     public static var all: [Scene] { simulation + machine }
 
+    /// The object every fixture shows: the default ring, as the live app
+    /// describes it once loaded.
+    static let ring = AppState.ObjectRow(name: "ring.stl", material: "PLA",
+                                         detail: "17.0 × 17.0 × 1.0 mm · 16 sites", selected: true)
+
+    /// Fixtures of the simulation modes. The mold's numbers are the default
+    /// ring's (receipt `mold-ring-stl-sieve-rh1x192_2026-11-11T05-00-42Z`, the
+    /// same run the live app makes); the live app shows its own run's.
     public static let simulation: [Scene] = [
         Scene(id: "empty", description: "Empty state — the machine alone",
               camera: "iso", make: { theme in
             var s = AppState(); s.theme = theme
+            s.overlays = []
             s.statusLine = "no object loaded"
             s.inspector = machineSections()
             return s
         }),
 
-        Scene(id: "imported", description: "STL imported and placed",
+        Scene(id: "imported", description: "STL loaded and placed in the mold volume",
               camera: "iso", make: { theme in
             var s = AppState(); s.theme = theme
-            s.objects = [.init(name: "cup.stl", material: "PLA",
-                               detail: "Ø72 × 95 mm · 41 cm³", selected: true)]
-            s.statusLine = "object fits build volume"
+            s.objects = [ring]
+            s.statusLine = "960 triangles · fits the mold volume (±10 mm) · 16 sites"
             s.inspector = machineSections()
             return s
         }),
 
-        Scene(id: "compiled", description: "Compile complete, .fcode emitted",
+        Scene(id: "compiled", description: "Compile complete: a mold of the object",
               camera: "iso", make: { theme in
             var s = AppState(); s.theme = theme
-            s.objects = [.init(name: "cup.stl", material: "PLA",
-                               detail: "Ø72 × 95 mm · 41 cm³", selected: true)]
-            s.overlays = ["field", "traps"]
-            s.frameCount = 240
-            s.statusLine = "compiled · residual 3.1e-3 · 240 frames"
-            s.inspector = machineSections() + [
-                .init(title: "Solve", rows: [
-                    ("method", "GS-PAT"), ("iterations", "80"),
-                    ("residual", "3.1e-3"), ("phase bits", "9"),
-                ])]
+            s.objects = [ring]
+            s.overlays = ["solid", "traps", "field", "matter"]
+            s.frame = 80; s.frameCount = 80; s.simTimeMs = 8000; s.buildPercent = 100
+            s.statusLine = "mold compiled: 100% of the powder on the shape, sites 0.0–14.6% (fair 6.2%) · FAILS G-M1"
+            s.inspector = [moldSection, moldGates] + machineSections()
             return s
         }),
 
-        Scene(id: "field-slice", description: "Field overlay, |p| on a slice plane",
-              camera: "front", make: { theme in
+        Scene(id: "field-slice", description: "Field overlay: well depth on a slice through the sites",
+              camera: "top", make: { theme in
             var s = AppState(); s.theme = theme
-            s.overlays = ["field"]
-            s.statusLine = "slice z = 150 mm · log-compressed"
-            s.inspector = machineSections() + [
-                .init(title: "Field", rows: [
-                    ("carrier", "acoustic"), ("frequency", "40.0 kHz"),
-                    ("verb", "ADD"), ("peak", "1.00 (norm.)"),
-                ])]
+            s.objects = [ring]
+            s.overlays = ["field", "traps"]
+            s.frame = 80; s.frameCount = 80; s.simTimeMs = 8000; s.buildPercent = 100
+            s.statusLine = "overlays: field, traps"
+            s.inspector = [moldSection] + machineSections()
             return s
         }),
 
-        Scene(id: "build-midway", description: "Build in progress, matter forming",
+        Scene(id: "build-midway", description: "Build: the stepped powder part-way down",
               camera: "iso", make: { theme in
             var s = AppState(); s.theme = theme
             s.mode = .build
-            s.objects = [.init(name: "cup.stl", material: "PLA",
-                               detail: "Ø72 × 95 mm · 41 cm³", selected: true)]
+            s.objects = [ring]
             s.overlays = ["matter", "solid", "traps"]
-            s.frame = 96; s.frameCount = 240
-            s.simTimeMs = 12.4; s.buildPercent = 34; s.overspillPercent = 0.8
-            s.statusLine = "S(f) error 0.21 · listening"
-            s.inspector = machineSections() + [
-                .init(title: "Matter", rows: [
-                    ("feedstock", "PLA powder"), ("particle", "200 µm"),
-                    ("in flight", "1,284"), ("latched", "48,910"),
-                ])]
+            s.frame = 10; s.frameCount = 80
+            s.simTimeMs = 1000; s.buildPercent = 47
+            s.statusLine = "powder at 1.0 s of 8 s: 47% on the shape"
+            s.inspector = [moldSection, moldGates] + machineSections()
             return s
         }),
 
-        Scene(id: "scan-running", description: "Scan mode, coded runs in progress",
+        Scene(id: "scan-running", description: "Scan mode: the plates' pulse-echo image",
+              camera: "iso", make: { theme in
+            var s = AppState(); s.theme = theme
+            s.mode = .scan
+            s.objects = [ring]
+            s.overlays = ["solid", "scan"]
+            s.statusLine = "scanned in 249 s: 100% of the object imaged within 2 mm, AUC 0.980, 12 sites read"
+            s.inspector = [scanSection] + machineSections()
+            return s
+        }),
+
+        Scene(id: "gate-report", description: "Inspect: the last compile's gates",
+              camera: "top", make: { theme in
+            var s = AppState(); s.theme = theme
+            s.mode = .inspect
+            s.objects = [ring]
+            s.overlays = ["traps", "boundary"]
+            s.frame = 80; s.frameCount = 80; s.simTimeMs = 8000; s.buildPercent = 100
+            s.statusLine = "overlays: boundary, traps"
+            s.inspector = [moldGates, moldSection]
+            return s
+        }),
+
+        Scene(id: "machine-view", description: "Machine View — only what the plates heard",
               camera: "iso", make: { theme in
             var s = AppState(); s.theme = theme
             s.mode = .scan
             s.machineView = true
-            s.overlays = ["boundary", "chords"]
-            s.frame = 7; s.frameCount = 24
-            s.statusLine = "run 7/24 · Welch–Costas · coverage 61%"
-            s.inspector = machineSections() + [
-                .init(title: "Scan", rows: [
-                    ("probe code", "Welch–Costas"), ("runs", "7 / 24"),
-                    ("reciprocity", "0.031 ✓"), ("chords", "18 measured"),
-                    ("provenance", "18 measured / 0 inferred"),
-                ])]
-            return s
-        }),
-
-        Scene(id: "gate-report", description: "Physics acceptance gates",
-              camera: "top", make: { theme in
-            var s = AppState(); s.theme = theme
-            s.mode = .inspect
-            s.statusLine = "all 10 gates passed · receipt written"
-            s.inspector = [
-                .init(title: "Gates", rows: [
-                    ("G1 voxelizer", "0.40% ✓"), ("G2 energy", "0.71% ✓"),
-                    ("G3 time of flight", "0.44% ✓"), ("G6 node spacing", "2.5e-5 ✓"),
-                    ("G7 Gor'kov", "3.6e-7 ✓"), ("G9a placement", "1.79 mm ✓"),
-                    ("G9b sidelobe", "−7.2 dB ⚠"), ("G-GPU vs CPU", "3.8e-6 ✓"),
-                ])]
-            return s
-        }),
-
-        Scene(id: "machine-view", description: "Machine View — reconstruction, not truth",
-              camera: "iso", make: { theme in
-            var s = AppState(); s.theme = theme
-            s.mode = .inspect
-            s.machineView = true
-            s.overlays = ["solid", "boundary"]
-            s.buildPercent = 100
-            s.statusLine = "L1 DORT · coverage-weighted · 12% of volume unobserved"
-            s.inspector = machineSections() + [
-                .init(title: "Reconstruction", rows: [
-                    ("rung", "L1 DORT"), ("Green's fn", "measured"),
-                    ("held-out err", "11.4%"), ("unobserved", "12.0%"),
-                    ("provenance", "measured only"),
-                ])]
+            s.objects = [ring]
+            s.overlays = ["scan"]
+            s.statusLine = "Machine View — what the plates can hear (run Scan)"
+            s.inspector = [scanSection] + machineSections()
             return s
         }),
     ]
+
+    static let moldSection = AppState.InspectorSection(title: "Mold", rows: [
+        ("object", "ring.stl"), ("powder", "PLA Ø40 µm, 3000 grains"),
+        ("sites", "16"), ("tones", "9, 53–97 kHz"),
+        ("drive", "1.11 m/s on the hardest-driven element"), ("acoustic power", "26 W"),
+        ("lift contrast", "1.75"), ("on the shape", "100.0 %"),
+        ("per site", "0.0–14.6 % (fair 6.2 %)"),
+    ])
+    static let moldGates = AppState.InspectorSection(title: "Gates", rows: [
+        ("G-M1", "0 ✗ FAILS"), ("G-M2", "1 ✓"), ("G-E1", "0.546 ✓"), ("G-E2", "26.1 ✓"),
+        ("G-B0", "0.000333 ✓"), ("G-B1", "0.00776 ✓"),
+    ])
+    static let scanSection = AppState.InspectorSection(title: "Scan", rows: [
+        ("method", "gated pulse-echo, matched filter"),
+        ("band", "50–100 kHz, 228 frequencies"), ("pulses", "8 random chords"),
+        ("grid", "±14 mm at 0.7 mm (41³)"),
+        ("recall", "100 % within 2 mm"), ("AUC", "0.980"), ("contrast", "10.8×"),
+    ])
 
     /// Machine-tab scenes: the CAD model, closed, cut, and the plate face.
     public static let machine: [Scene] = [
@@ -165,23 +167,35 @@ public enum SceneRegistry {
             MachineCAD.applyRail(&s)
             s.overlays = ["cad.section"]
             let p = MachineCAD.model.pattern
-            s.statusLine = "plate face · \(p.drilled.count) micro-horns drilled · \(p.subsumedCount) of 380 sites fall in slot voids"
+            s.statusLine = "plate face · \(p.elements.count) driven elements \(p.elementSizeText) · " + (p.slotCenterlines.isEmpty ? "no room left for the light slots" : "\(p.slotCenterlines.count) slot dashes on 12 arms")
             s.inspector = MachineCAD.inspector()
             return s
         }, solid: "plate"),
     ]
 
-    /// Fixture rows for the simulated machine — the same numbers the live app
-    /// reads from `RH1Freestanding.standard()` at launch.
-    static func machineSections() -> [AppState.InspectorSection] {
-        [.init(title: "Machine", rows: [
-            ("preset", "RH-1 free-standing"), ("gates", "6 acoustic (3 throat piezos × 2 faces)"),
-            ("build volume", "Ø380 × 460"), ("λ @ 40 kHz", "8.597 mm"),
+    /// The machine every mode simulates, as inspector rows: the RH-1's two
+    /// plates in room air, read from `PlateArray.rh1` (the live app and the
+    /// screenshot fixtures show the same rows).
+    public static func machineSections() -> [AppState.InspectorSection] {
+        let a = PlateArray.rh1()
+        let air = RH1Freestanding.roomAir
+        return [.init(title: "Machine", rows: [
+            ("preset", "RH-1 free-standing"),
+            ("plates", String(format: "2, %.0f mm apart, open air", a.gap * 1000)),
+            ("elements", a.tones == nil
+                ? String(format: "2 × %d, Ø%.0f mm pistons", a.perPlate, a.elementRadius * 2000)
+                : String(format: "2 × %d resonant, Ø%.1f–%.1f mm", a.perPlate,
+                         2000 * ((0..<a.channels).map { a.pistonRadius($0) }.min() ?? 0),
+                         2000 * ((0..<a.channels).map { a.pistonRadius($0) }.max() ?? 0))),
+            ("layout", String(format: "golden-angle spiral, r %.0f–%.1f mm", a.innerRadius * 1000, a.plateRadius * 1000)),
+            ("mold volume", "24 mm cube at the centre"),
         ]),
          .init(title: "Carrier", rows: [
-            ("band", "30–75 kHz"), ("medium", "air 20 °C 50 % RH, 343.87 m/s"),
-            ("walls", "plates, 3 image orders, R 0.90"),
-            ("solver", "T0 port fields (GPU)"),
+            ("mold band", a.tones.map { String(format: "%.0f–%.0f kHz, %d tones, one per element", $0.min()! / 1000, $0.max()! / 1000, $0.count) } ?? "50–100 kHz, 9 tones"),
+            ("scan band", String(format: "%.0f–%.0f kHz, %d frequencies", ArrayScanSetup().sweep(on: a).lo / 1000, ArrayScanSetup().sweep(on: a).hi / 1000, ArrayScanSetup().sweep(on: a).count)),
+            ("medium", String(format: "air %.0f °C %.0f %% RH, %.2f m/s", air.air?.temperatureC ?? 20, air.air?.humidity ?? 50, air.soundSpeed)),
+            ("walls", String(format: "plates, %d image orders, R %.2f", a.imageOrder, a.reflection)),
+            ("solver", "matrix-free array field (GPU)"),
          ])]
     }
 }

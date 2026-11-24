@@ -58,7 +58,83 @@ public struct RH1Design: Codable, Sendable {
     /// Plate back face → torus centre, top and deck assemblies (spec §8).
     public var torusSetback = 43.0
 
-    // MARK: Plate face — sunflower field and spiral slots
+    // MARK: Plate face — the element array (ruling of 2026-11-10)
+    /// What a radiating face carries. `.elementArray`: the face is drawn
+    /// round ENGINE.md's plate — independently driven elements on a Vogel
+    /// spiral — and the light slots give way where an element sits.
+    /// `.microHorns`: the v0.4 face (380-site passive micro-horn sunflower fed
+    /// by one horn, twelve unbroken slots), kept for the six-throat-gate
+    /// preset `RH1Freestanding` and its receipts.
+    public enum FaceStyle: String, Codable, Sendable { case elementArray, microHorns }
+    public var faceStyle = FaceStyle.elementArray
+    /// The gyroid horn, copper cone and three throat piezos behind a plate
+    /// exist only on the micro-horn face, where they are the sound source.
+    /// On the element face every element radiates from the face itself and
+    /// the plate's back is closed by the wiring board: a horn behind it has
+    /// no path to the chamber and nothing to feed (SYS-01, 2026-11-12,
+    /// proposal). What would reverse it: a measured need for a source the
+    /// face elements cannot be, e.g. a tone below their band through the bore.
+    public var rearStack: Bool { faceStyle == .microHorns }
+    /// Elements per face: the face filled. The drive a mold asks of each
+    /// element falls as 1/N until no more fit; shape control stops improving
+    /// near 550 (the patterns the plate can make in the mold volume), so the
+    /// count is what the annulus holds with 1 mm of metal between holes
+    /// (DR11): 2,560 mixed-size elements, over half the face radiating.
+    /// 1,536 until 2026-11-12 was the spiral's limit, not the plate's. The
+    /// operator's ruling of 2026-11-11 was 192, made on ideal pistons.
+    public var elementCount = 2560
+    /// The tones the plate plays (Hz). Every element is a resonant open-type
+    /// transmitter tuned to one of them (`ElementSpec.scaled`, proposal of
+    /// 2026-11-12: a piezo disc radiating directly gives a twentieth of the
+    /// face velocity the molds need). Empty = that directly radiating disc,
+    /// Ø`elementDiameter`, playing every tone: the face until 2026-11-12.
+    public var elementTones: [Double] = (0..<9).map { 50_000 + 50_000 * (Double($0) + 0.5) / 9 }
+    /// Face diameter of the 40 kHz transmitter; the others scale ∝ 1/f.
+    public var elementFaceAt40k = 10.0
+    /// A transmitter's can is this fraction of its diameter tall.
+    public var elementCanAspect = 0.7
+    /// Diameter of the directly radiating disc (`elementTones` empty).
+    public var elementDiameter = 5.0
+    /// The wiring board on the plate's back, inside the plate's envelope:
+    /// the face plate proper is `plateThickness` less this.
+    public var wiringBoardThickness = 1.0
+    /// Copper layers of the wiring board that carry element traces.
+    public var wiringBoardLayers = 4
+    public var resonantElements: Bool { !elementTones.isEmpty }
+    public var largestElementDiameter: Double {
+        resonantElements ? elementFaceAt40k * 40_000 / elementTones.min()! : elementDiameter
+    }
+    /// The spiral fills this radius: the outermost element's hole then clears
+    /// the Ø400 storage liner by 0.9 mm (DR12 asks 0.5); 196.5 for Ø5 holes.
+    public var elementFillRadius: Double { storageLinerID / 2 - 0.9 - largestElementDiameter / 2 - elementHoleClearance }
+    /// …and starts here (an equal-area annulus, as the old sunflower was), so
+    /// the innermost element's hole leaves a real web to the Ø14 collar hole.
+    /// A spiral from r = 0 would put it 0.4 mm from the collar.
+    /// 13 (12 until 2026-11-12): the first element of the spiral sits almost on
+    /// the inner radius, and a Ø7.8 hole there needs its 2 mm to the collar.
+    public var elementInnerRadius = 13.0
+    /// Radial clearance of an element in its through-hole (bond line).
+    public var elementHoleClearance = 0.1
+    /// The piezo disc at the radiating surface; a damping backing fills the
+    /// rest of the hole (broadband, bonded — acoustic-hologram paper).
+    public var elementPZTThickness = 2.0
+    /// Metal left between two element holes (DR11, resonant face).
+    public var elementHoleWeb = 1.0
+    /// Metal left between an element's hole and a slot dash.
+    public var elementSlotWeb = 1.0
+    /// A slot dash shorter than this is not cut.
+    public var slotMinDash = 8.0
+    /// Slab the metal face plate occupies inside the 12 mm envelope.
+    public var facePlateThickness: Double { plateThickness - (resonantElements ? wiringBoardThickness : 0) }
+
+    /// The v0.4 micro-horn face (see `FaceStyle`).
+    public static var microHornFace: RH1Design {
+        var d = RH1Design()
+        d.faceStyle = .microHorns
+        return d
+    }
+
+    // MARK: Plate face — sunflower field (v0.4) and spiral slots
     public var siteCount = 380
     public var siteInnerRadius = 26.0
     public var siteOuterRadius = 196.5
@@ -109,6 +185,8 @@ public struct RH1Design: Codable, Sendable {
     public var rimOuterRadius = 204.0
     public var rimDepthFrom = 2.0
     public var rimDepthTo = 14.0
+    /// The rim annulus holds ring boards stacked at this pitch (drivers).
+    public var rimBoardPitch = 4.0
 
     // MARK: Enclosure
     public var rearGlassOD = 444.0
@@ -156,6 +234,25 @@ public struct RH1Design: Codable, Sendable {
     public var carrierOuterRadius: Double { carrierOD / 2 }
     public var throatRadius: Double { throatDiameter / 2 }
     public var mouthRadius: Double { mouthDiameter / 2 }
+    /// Centreline of one winding of a contrawound pair, in mm: a closed
+    /// (windingTurns, 1) torus knot on the former. `hand` +1 is the inner
+    /// layer (CW, feed A), −1 the outer layer (CCW, feed B); the two are
+    /// mirror images in the torus plane. The solid model sweeps a wire along
+    /// this path and the field solver integrates Biot–Savart along it.
+    public func windingCenterline(torusZ: Double, hand: Double, samplesPerTurn: Int) -> [Vec3] {
+        let aw = torusTubeRadius + (hand > 0 ? windingInnerLayerGap : windingOuterLayerGap)
+        let n = windingTurns * samplesPerTurn
+        var path: [Vec3] = []
+        path.reserveCapacity(n)
+        for i in 0..<n {
+            let t = 2 * Double.pi * Double(i) / Double(n)
+            let q = Double(windingTurns) * t
+            let rr = torusMajorRadius + aw * cos(q)
+            path.append(Vec3(rr * cos(t), rr * sin(t), torusZ + hand * aw * sin(q)))
+        }
+        return path
+    }
+
     public var torusMajorRadius: Double { torusMajorDiameter / 2 }
     public var torusTubeRadius: Double { torusTubeDiameter / 2 }
     public var buildChamberHeight: Double { chamberCeiling - chamberFloor }
@@ -352,6 +449,12 @@ public struct RH1Design: Codable, Sendable {
             site: "FIG.2: 380 dots, golden angle, radii 26.5–197.3, hole radius grows 1.3 → 3.0 mm with r; slots α 76.05°, r 32.6–189.7, 1.13 turns",
             model: "FIG.2 laws; sites whose opening would cut a slot web are left to the slot void",
             why: "the slot is already open through the plate at those sites"),
+        Reconciliation(
+            topic: "Plate face: elements vs micro-horns and slots",
+            papers: "ENGINE.md 2026-10-01: each plate N independently driven elements on a Vogel spiral, ≲5 mm (S1: N = 192); spec §3 / mech §3c: 380 passive micro-horns behind one horn + 12 slots",
+            site: "FIG.2: the 380-dot sunflower and twelve unbroken slots",
+            model: "ruling 2026-11-10: 192 Ø5 elements in through-holes on the engine's spiral (fill Ø393), upper faces turned half a golden angle; no micro-horns; the twelve slots keep their spirals but are cut into dashes that leave 1 mm of metal round every element",
+            why: "120 of the engine's 192 sites hit a slot, a micro-horn or the rim of the v0.4 face (G-CAD9, 2026-11-10); the mold needs the elements. OPEN: the element wiring layer is not modelled, and the gyroid horn + throat piezos behind the plate now serve only the slots"),
         Reconciliation(
             topic: "Side panels",
             papers: "spec v0.4: side paneling = plan B (phononic); PHOTONIC_PANEL_NOTE 08-10: DRAFT proposal",

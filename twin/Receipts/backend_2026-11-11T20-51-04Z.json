@@ -1,0 +1,73 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T20:51:04Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 0.29476308822631836,
+  "gates" : [
+    {
+      "comparison" : "<",
+      "detail" : "3 frames, 48 channels, 13642 bytes",
+      "id" : "G-FC1",
+      "measured" : 0,
+      "name" : ".fcode JSON round trip (value and bytes)",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "2070 bytes; a flipped bit is rejected by the CRC",
+      "id" : "G-FC2",
+      "measured" : 0,
+      "name" : "frame log re-encodes byte for byte (differing bytes)",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "half a step is 1.53e-5",
+      "id" : "G-FC2b",
+      "measured" : 1.5181676553077464e-05,
+      "name" : "16-bit drive vs the file (fraction of full scale)",
+      "passed" : true,
+      "threshold" : 2e-05
+    },
+    {
+      "comparison" : "<",
+      "detail" : "3 frames, 2070 log bytes; the log is the wire encoding of the file",
+      "id" : "G-FC3",
+      "measured" : 0,
+      "name" : "replay through the emulated backend is identical (M9)",
+      "passed" : true,
+      "threshold" : 0.5
+    },
+    {
+      "comparison" : "<",
+      "detail" : "max |H_et − H_te| \/ max |H| at 40 and 70 kHz",
+      "id" : "G-FC4",
+      "measured" : 0,
+      "name" : "calibration matrix reciprocity, 48 channels",
+      "passed" : true,
+      "threshold" : 1e-09
+    },
+    {
+      "comparison" : "<",
+      "detail" : "max |H_et − H_te| \/ max |H| at 40 and 70 kHz",
+      "id" : "G-FC4b",
+      "measured" : 2.0598644753402702e-16,
+      "name" : "calibration matrix reciprocity, 3072 channels",
+      "passed" : true,
+      "threshold" : 1e-09
+    },
+    {
+      "comparison" : "<",
+      "detail" : "matched filter 1.0000 at the peak; searched ±6 mm along x, y, z at 0.25 mm",
+      "id" : "G-FC5",
+      "measured" : 0,
+      "name" : "locate a scatterer through play + calibrate alone (m)",
+      "passed" : true,
+      "threshold" : 0.0003
+    }
+  ],
+  "gitSHA" : "1cdc269+dirty",
+  "name" : "backend"
+}

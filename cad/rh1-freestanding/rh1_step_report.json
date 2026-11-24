@@ -38,45 +38,33 @@
   },
   {
    "part": "plate.top/face plate top",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.0710305308,
-   "rel": 9.759725627553766e-05
+   "brep_mm3": 694292.1730681648,
+   "mesh_mm3": 693968.125596187,
+   "rel": 0.00046673070005366765
+  },
+  {
+   "part": "plate.top/elements top",
+   "brep_mm3": 269142.7613629201,
+   "mesh_mm3": 269142.76136284805,
+   "rel": 2.677429771692925e-13
+  },
+  {
+   "part": "plate.top/element carriers top",
+   "brep_mm3": 437240.37226408726,
+   "mesh_mm3": 437240.37226399226,
+   "rel": 2.172601356980896e-13
+  },
+  {
+   "part": "plate.top/wiring board top",
+   "brep_mm3": 131871.49322708513,
+   "mesh_mm3": 131842.0343659946,
+   "rel": 0.00022339066897350744
   },
   {
    "part": "plate.top/carrier ring top",
    "brep_mm3": 341214.6612916952,
    "mesh_mm3": 341095.0562845419,
    "rel": 0.00035052716287313447
-  },
-  {
-   "part": "plate.top/gyroid horn top",
-   "brep_mm3": 321435.6147100012,
-   "mesh_mm3": 321308.5363692359,
-   "rel": 0.00039534617494073126
-  },
-  {
-   "part": "plate.top/inner cone top",
-   "brep_mm3": 2873.193562264776,
-   "mesh_mm3": 2861.9605645297256,
-   "rel": 0.003909586142256342
-  },
-  {
-   "part": "plate.top/throat piezo top.1",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.2387924368036,
-   "rel": 0.0016056069643608914
-  },
-  {
-   "part": "plate.top/throat piezo top.2",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.23879243661,
-   "rel": 0.001605606964437971
-  },
-  {
-   "part": "plate.top/throat piezo top.3",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.2387924370487,
-   "rel": 0.0016056069642633656
   },
   {
    "part": "plate.top/rim electronics top",
@@ -86,45 +74,33 @@
   },
   {
    "part": "plate.mid-up/face plate mid-up",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.0710305502,
-   "rel": 9.759725629236809e-05
+   "brep_mm3": 694109.6209199684,
+   "mesh_mm3": 693785.5734480749,
+   "rel": 0.00046685345099235944
+  },
+  {
+   "part": "plate.mid-up/elements mid-up",
+   "brep_mm3": 269251.71741068363,
+   "mesh_mm3": 269251.7174107347,
+   "rel": 1.895925460087163e-13
+  },
+  {
+   "part": "plate.mid-up/element carriers mid-up",
+   "brep_mm3": 437308.3906588208,
+   "mesh_mm3": 437308.3906588803,
+   "rel": 1.3603267333595528e-13
+  },
+  {
+   "part": "plate.mid-up/wiring board mid-up",
+   "brep_mm3": 131871.49322708513,
+   "mesh_mm3": 131842.03436599404,
+   "rel": 0.0002233906689777007
   },
   {
    "part": "plate.mid-up/carrier ring mid-up",
    "brep_mm3": 341214.6612916952,
    "mesh_mm3": 341095.0562845783,
    "rel": 0.000350527162766516
-  },
-  {
-   "part": "plate.mid-up/gyroid horn mid-up",
-   "brep_mm3": 321435.6147100016,
-   "mesh_mm3": 321308.53636478516,
-   "rel": 0.0003953461887884179
-  },
-  {
-   "part": "plate.mid-up/inner cone mid-up",
-   "brep_mm3": 2873.193562264776,
-   "mesh_mm3": 2861.960564530222,
-   "rel": 0.003909586142083509
-  },
-  {
-   "part": "plate.mid-up/throat piezo mid-up.1",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.23879243685,
-   "rel": 0.0016056069643424356
-  },
-  {
-   "part": "plate.mid-up/throat piezo mid-up.2",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.2387924366703,
-   "rel": 0.0016056069644139062
-  },
-  {
-   "part": "plate.mid-up/throat piezo mid-up.3",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.23879243687,
-   "rel": 0.0016056069643344743
   },
   {
    "part": "plate.mid-up/rim electronics mid-up",
@@ -134,45 +110,33 @@
   },
   {
    "part": "plate.mid-down/face plate mid-down",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.071030568,
-   "rel": 9.759725630798184e-05
+   "brep_mm3": 694292.1730681648,
+   "mesh_mm3": 693968.1255963034,
+   "rel": 0.0004667306998859928
+  },
+  {
+   "part": "plate.mid-down/elements mid-down",
+   "brep_mm3": 269142.76136291627,
+   "mesh_mm3": 269142.76136286074,
+   "rel": 2.063221326490377e-13
+  },
+  {
+   "part": "plate.mid-down/element carriers mid-down",
+   "brep_mm3": 437240.37226408074,
+   "mesh_mm3": 437240.37226408586,
+   "rel": 1.1715007317054025e-14
+  },
+  {
+   "part": "plate.mid-down/wiring board mid-down",
+   "brep_mm3": 131871.49322708513,
+   "mesh_mm3": 131842.0343660148,
+   "rel": 0.00022339066882034274
   },
   {
    "part": "plate.mid-down/carrier ring mid-down",
    "brep_mm3": 341214.6612916952,
    "mesh_mm3": 341095.05628457264,
    "rel": 0.0003505271627830632
-  },
-  {
-   "part": "plate.mid-down/gyroid horn mid-down",
-   "brep_mm3": 321435.61471000826,
-   "mesh_mm3": 321308.53636697464,
-   "rel": 0.0003953461819974837
-  },
-  {
-   "part": "plate.mid-down/inner cone mid-down",
-   "brep_mm3": 2873.193562264777,
-   "mesh_mm3": 2861.9605645307292,
-   "rel": 0.00390958614190735
-  },
-  {
-   "part": "plate.mid-down/throat piezo mid-down.1",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.2387924368327,
-   "rel": 0.0016056069643493112
-  },
-  {
-   "part": "plate.mid-down/throat piezo mid-down.2",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.238792436799,
-   "rel": 0.0016056069643627007
-  },
-  {
-   "part": "plate.mid-down/throat piezo mid-down.3",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.238792436761,
-   "rel": 0.0016056069643778995
   },
   {
    "part": "plate.mid-down/rim electronics mid-down",
@@ -182,45 +146,33 @@
   },
   {
    "part": "plate.deck/face plate deck",
-   "brep_mm3": 1148215.008396097,
-   "mesh_mm3": 1148327.0710305546,
-   "rel": 9.759725629622084e-05
+   "brep_mm3": 694109.6209199684,
+   "mesh_mm3": 693785.5734480633,
+   "rel": 0.0004668534510089636
+  },
+  {
+   "part": "plate.deck/elements deck",
+   "brep_mm3": 269251.7174106767,
+   "mesh_mm3": 269251.71741066535,
+   "rel": 4.215569723112957e-14
+  },
+  {
+   "part": "plate.deck/element carriers deck",
+   "brep_mm3": 437308.39065882406,
+   "mesh_mm3": 437308.39065886004,
+   "rel": 8.225850501136961e-14
+  },
+  {
+   "part": "plate.deck/wiring board deck",
+   "brep_mm3": 131871.49322708513,
+   "mesh_mm3": 131842.0343660089,
+   "rel": 0.0002233906688649238
   },
   {
    "part": "plate.deck/carrier ring deck",
    "brep_mm3": 341214.6612916952,
    "mesh_mm3": 341095.0562845858,
    "rel": 0.0003505271627445099
-  },
-  {
-   "part": "plate.deck/gyroid horn deck",
-   "brep_mm3": 321435.6147100078,
-   "mesh_mm3": 321308.5363666889,
-   "rel": 0.00039534618288498936
-  },
-  {
-   "part": "plate.deck/inner cone deck",
-   "brep_mm3": 2873.193562264775,
-   "mesh_mm3": 2861.960564529631,
-   "rel": 0.003909586142288948
-  },
-  {
-   "part": "plate.deck/throat piezo deck.1",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.2387924367413,
-   "rel": 0.00160560696438568
-  },
-  {
-   "part": "plate.deck/throat piezo deck.2",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.2387924367526,
-   "rel": 0.0016056069643811564
-  },
-  {
-   "part": "plate.deck/throat piezo deck.3",
-   "brep_mm3": 2513.2741228718346,
-   "mesh_mm3": 2509.23879243677,
-   "rel": 0.0016056069643742808
   },
   {
    "part": "plate.deck/rim electronics deck",
@@ -556,6 +508,6 @@
  "worstRatio": 0.4275432570529863,
  "worstPart": "base/feed pump",
  "missing": [],
- "seconds": 7.992049932479858,
+ "seconds": 48.28750467300415,
  "passed": true
 }

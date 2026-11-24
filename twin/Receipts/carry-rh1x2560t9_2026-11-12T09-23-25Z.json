@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T09:23:25Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 762.2650120258331,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 2560 elements (Ø390 mm, 460 mm apart, R 0.9); 40 steps of 0.25 mm, 9 tones 53–97 kHz; worst offset 0.04 mm, shallowest 0.95; sibling ratio worst 0.29, 0 steps ≥ 0.5",
+      "id" : "G-P1",
+      "measured" : 1,
+      "name" : "bead carried 5 mm up and 5 mm across between the open-air plates: on the point, continuous, downhill, still the deepest well",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "9ce6bb5+dirty",
+  "name" : "carry-rh1x2560t9"
+}

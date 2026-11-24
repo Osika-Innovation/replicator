@@ -140,7 +140,7 @@ struct ObjectRail: View {
             }
             Divider().overlay(s.theme.stroke).padding(.vertical, 6)
             SectionHeader("MACHINE", theme: s.theme)
-            KV("gates", "\(s.gateCount)", s.theme)
+            KV("plates", "\(s.gateCount)", s.theme)
             KV("elements", "\(s.elementCount)", s.theme)
             KV("volume", s.buildVolumeText, s.theme)
             KV("band", s.wavelengthText, s.theme)
@@ -177,7 +177,7 @@ struct ViewportPane: View {
                                     action: a.toggleOverlay.map { f in { @Sendable (c: String) in f("cad." + c) } })
                     }
                 } else {
-                    ForEach(["field", "traps", "matter", "solid", "boundary", "chords"], id: \.self) { c in
+                    ForEach(["solid", "traps", "field", "matter", "boundary", "scan"], id: \.self) { c in
                         OverlayChip(name: c, on: s.overlays.contains(c), theme: s.theme,
                                     action: a.toggleOverlay)
                     }

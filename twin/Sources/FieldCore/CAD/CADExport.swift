@@ -122,6 +122,11 @@ public enum CADExport {
         public var sites: [[Double]]               // x, y, faceR, throatR, subsumed(0/1), index
         public var slotCenterlines: [[[Double]]]   // per arm: [x, y, width]
         public var slotOutlines: [[[Double]]]      // per arm: closed outline [x, y]
+        /// Element-array face. Up-facing faces: x, y, piston radius, hole radius, channel.
+        public var elements: [[Double]]
+        /// Down-facing faces (spiral turned half a golden angle), and their slot dashes.
+        public var elementsDown: [[Double]]
+        public var slotCenterlinesDown: [[[Double]]]
         public var provenance: [RH1Design.Provenance]
         public var reconciliation: [RH1Design.Reconciliation]
         public var partVolumesMm3: [String: Double]
@@ -142,6 +147,11 @@ public enum CADExport {
                 zip(c, w).map { [$0.0.x, $0.0.y, $0.1] }
             },
             slotOutlines: pat.slotOutlines.map { $0.map { [$0.x, $0.y] } },
+            elements: pat.elements.map { [$0.center.x, $0.center.y, $0.pistonRadius, $0.holeRadius, Double($0.index)] },
+            elementsDown: model.patternDown.elements.map { [$0.center.x, $0.center.y, $0.pistonRadius, $0.holeRadius, Double($0.index)] },
+            slotCenterlinesDown: zip(model.patternDown.slotCenterlines, model.patternDown.slotWidths).map { (c, w) in
+                zip(c, w).map { [$0.0.x, $0.0.y, $0.1] }
+            },
             provenance: d.provenance,
             reconciliation: RH1Design.reconciliation,
             partVolumesMm3: vols)
@@ -256,10 +266,21 @@ public enum CADExport {
                          site.subsumed ? "subsumed" : "hole", cx + site.center.x * ps,
                          cy - site.center.y * ps, site.faceRadius * ps)
         }
+        for e in model.pattern.elements {
+            pv += String(format: "<circle class=\"hole\" cx=\"%.2f\" cy=\"%.2f\" r=\"%.2f\"/>\n",
+                         cx + e.center.x * ps, cy - e.center.y * ps, e.holeRadius * ps)
+        }
         pv += String(format: "<circle class=\"bore\" cx=\"%.1f\" cy=\"%.1f\" r=\"%.2f\"/>\n", cx, cy, d.boreRadius * ps)
+        if d.faceStyle == .elementArray {
+            let dashes = model.pattern.slotCenterlines.count
+            pv += String(format: "<text text-anchor=\"middle\" x=\"%.1f\" y=\"%.1f\">PLATE FACE (UP-FACING), PLAN — %d driven elements %@, %@</text>\n",
+                         cx, cy + d.plateRadius * ps + 30, model.pattern.elements.count, model.pattern.elementSizeText,
+                         dashes == 0 ? "no room left for the light slots" : "\(d.slotArms) slot arms in \(dashes) dashes")
+        } else {
         pv += String(format: "<text x=\"%.1f\" y=\"%.1f\">PLATE FACE, PLAN — %d micro-horns drilled, %d inside slot voids, %d slots</text>\n",
                      cx - 250, cy + d.plateRadius * ps + 30, model.pattern.drilled.count,
                      model.pattern.subsumedCount, d.slotArms)
+        }
 
         let css = """
         text{font:12px ui-monospace,Menlo,monospace;fill:#1d1d1f}

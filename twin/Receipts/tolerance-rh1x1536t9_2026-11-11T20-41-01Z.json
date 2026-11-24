@@ -1,0 +1,289 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T20:41:01Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 610.7858880758286,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.61 m\/s rms per channel; traced flow: 100.0% on the shape, sites 4.2–7.9% (fair 6.2%), 0.0% rogue; lift contrast 2.44",
+      "id" : "G-M1",
+      "measured" : 0.6777437957731712,
+      "name" : "acoustic mold (ring): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.61 m\/s rms per channel; traced flow: 100.0% on the shape, sites 4.2–7.9% (fair 6.2%), 0.0% rogue; lift contrast 2.44",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999902,
+      "name" : "acoustic mold (ring): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 139 (open-type scaled to 80.6 kHz, Ø5.0 mm): asked 2.01 m\/s at 80.6 kHz on its Ø5.0 mm face, can give 2.03; rms over the elements 0.90×",
+      "id" : "G-E1",
+      "measured" : 0.9928684839830313,
+      "name" : "element drive (ring): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "171 W electrical at the elements' efficiency, 120 W of it heat in the two plates",
+      "id" : "G-E2",
+      "measured" : 51.35464387808554,
+      "name" : "element drive (ring): acoustic power radiated (W)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.71–1.28 of a fair share, weakest site lifts 1.15× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.7123118593340784,
+      "name" : "ring mold on a build with gain ±2 % (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.74–1.27 of a fair share, weakest site lifts 1.15× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.7376913658632154,
+      "name" : "ring mold on a build with gain ±5 % (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.77–1.28 of a fair share, weakest site lifts 1.14× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.7676638561194915,
+      "name" : "ring mold on a build with gain ±10 % (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.14–1.90 of a fair share, weakest site lifts 1.14× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0.14381221246937373,
+      "name" : "ring mold on a build with phase ±5° (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.00–2.01 of a fair share, weakest site lifts 1.11× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with phase ±10° (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "99.8 % on the shape, sites 0.00–2.90 of a fair share, weakest site lifts 0.99× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with phase ±20° (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.67–1.27 of a fair share, weakest site lifts 1.15× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.6707353654978897,
+      "name" : "ring mold on a build with position ±0.05 mm (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.67–1.28 of a fair share, weakest site lifts 1.15× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.6689672164509611,
+      "name" : "ring mold on a build with position ±0.10 mm (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.60–1.26 of a fair share, weakest site lifts 1.14× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.599158314072569,
+      "name" : "ring mold on a build with position ±0.20 mm (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.61–1.35 of a fair share, weakest site lifts 1.14× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.6064908008428413,
+      "name" : "ring mold on a build with resonance ±0.1 % (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.00–1.88 of a fair share, weakest site lifts 1.09× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with resonance ±0.3 % (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "0.0 % on the shape, sites 0.00–0.00 of a fair share, weakest site lifts 0.79× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with resonance ±1.0 % (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.50–1.55 of a fair share, weakest site lifts 1.15× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.5032526634261042,
+      "name" : "ring mold on a build with 0.5 % dead (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.00–1.99 of a fair share, weakest site lifts 1.09× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0.00017558299039780522,
+      "name" : "ring mold on a build with 2.0 % dead (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.00–3.77 of a fair share, weakest site lifts 0.99× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with 5.0 % dead (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.70–1.32 of a fair share, weakest site lifts 1.13× a grain; passes G-M1 and G-M2",
+      "id" : "S5",
+      "measured" : 0.7033203440407211,
+      "name" : "ring mold on a build with air 0.1 K warmer (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.00–1.80 of a fair share, weakest site lifts 1.02× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with air 0.3 K warmer (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "0.0 % on the shape, sites 0.00–0.00 of a fair share, weakest site lifts 0.64× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with air 1.0 K warmer (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.12–2.47 of a fair share, weakest site lifts 1.09× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0.1246022318614912,
+      "name" : "ring mold on a build with calibrated: gain ±2 %, phase ±5°, position ±0.1 mm, 0.5 % dead, air 0.1 K (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "0.0 % on the shape, sites 0.00–0.00 of a fair share, weakest site lifts 0.37× a grain; FAILS",
+      "id" : "S5",
+      "measured" : 0,
+      "name" : "ring mold on a build with as assembled: gain ±10 %, phase ±20°, position ±0.2 mm, resonance ±1 %, 2 % dead, air 1 K (emptiest site ÷ fair share, worst of 2 builds)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.57 m\/s rms per channel; traced flow: 100.0% on the shape, sites 4.3–8.3% (fair 6.2%), 0.0% rogue; lift contrast 2.02",
+      "id" : "G-M1",
+      "measured" : 0.6815182182659498,
+      "name" : "acoustic mold (ring, calibrated machine): every site holds ≥ ¼ of its fair share of the powder",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 1536 elements; sieve objective, 9 tones, 1.15× holding, 0.57 m\/s rms per channel; traced flow: 100.0% on the shape, sites 4.3–8.3% (fair 6.2%), 0.0% rogue; lift contrast 2.02",
+      "id" : "G-M2",
+      "measured" : 0.9999999999999702,
+      "name" : "acoustic mold (ring, calibrated machine): ≥95% of a random powder cloud ends on the shape (within 1 mm)",
+      "passed" : true,
+      "threshold" : 0.95
+    },
+    {
+      "comparison" : "<",
+      "detail" : "element 1195 (open-type scaled to 97.2 kHz, Ø4.1 mm): asked 1.89 m\/s at 97.2 kHz on its Ø4.1 mm face, can give 2.03; rms over the elements 0.84×",
+      "id" : "G-E1",
+      "measured" : 0.9339624209443818,
+      "name" : "element drive (ring, calibrated machine): the most any element is asked for ÷ what it can give",
+      "passed" : true,
+      "threshold" : 1
+    },
+    {
+      "comparison" : "info",
+      "detail" : "150 W electrical at the elements' efficiency, 105 W of it heat in the two plates",
+      "id" : "G-E2",
+      "measured" : 44.87887004941329,
+      "name" : "element drive (ring, calibrated machine): acoustic power radiated (W)",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.70–1.33 of a fair share, weakest site lifts 1.13× a grain; passes G-M1 and G-M2",
+      "id" : "S5c",
+      "measured" : 0.7028442373441138,
+      "name" : "ring mold compiled on a calibrated machine, calibration leaving gain ±1 %, phase ±2°, air 0.05 K (emptiest site ÷ fair share, worst of 2)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.67–1.31 of a fair share, weakest site lifts 1.10× a grain; passes G-M1 and G-M2",
+      "id" : "S5c",
+      "measured" : 0.6651300952879028,
+      "name" : "ring mold compiled on a calibrated machine, calibration leaving gain ±2 %, phase ±5°, air 0.1 K (emptiest site ÷ fair share, worst of 2)",
+      "passed" : true,
+      "threshold" : 0.25
+    },
+    {
+      "comparison" : "info",
+      "detail" : "100.0 % on the shape, sites 0.00–2.28 of a fair share, weakest site lifts 0.99× a grain; FAILS",
+      "id" : "S5c",
+      "measured" : 0,
+      "name" : "ring mold compiled on a calibrated machine, calibration leaving gain ±5 %, phase ±10°, air 0.3 K (emptiest site ÷ fair share, worst of 2)",
+      "passed" : true,
+      "threshold" : 0.25
+    }
+  ],
+  "gitSHA" : "1cdc269+dirty",
+  "name" : "tolerance-rh1x1536t9"
+}

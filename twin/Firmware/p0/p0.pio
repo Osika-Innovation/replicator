@@ -1,0 +1,6 @@
+; One pattern word to 32 pins every step. The DMA channel feeds the FIFO from
+; a ring of FC_STEPS words; the clock divider sets steps × tone.
+.program p0_drive
+.wrap_target
+    out pins, 32
+.wrap

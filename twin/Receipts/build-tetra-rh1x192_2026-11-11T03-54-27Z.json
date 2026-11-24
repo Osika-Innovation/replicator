@@ -1,0 +1,19 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-11T03:54:27Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 164.24106395244598,
+  "gates" : [
+    {
+      "comparison" : ">",
+      "detail" : "open air, 2 × 192 elements (Ø393 mm, 460 mm apart, R 0.9); 4\/4 placed; base on the support: yes; top touches 3 of 3; worst gap 0.0 µm; placed beads pushed ≤ 15.32 × weight",
+      "id" : "G-B2",
+      "measured" : 1,
+      "name" : "a tetrahedron between the open-air plates: three PLA beads touching on the support, a fourth resting on all three",
+      "passed" : true,
+      "threshold" : 0.5
+    }
+  ],
+  "gitSHA" : "a8f002a",
+  "name" : "build-tetra-rh1x192"
+}

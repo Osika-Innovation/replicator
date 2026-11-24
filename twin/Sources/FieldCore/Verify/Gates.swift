@@ -98,3 +98,32 @@ public struct Receipt: Sendable, Codable {
         return out.joined(separator: "\n")
     }
 }
+
+public extension Receipt {
+    /// The newest receipt of each name in a folder (charter rule 9: the
+    /// document is the run), names containing `filter` only.
+    static func latest(in dir: URL, containing filter: String = "") -> [Receipt] {
+        let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
+        var newest: [String: Receipt] = [:]
+        for f in files where f.pathExtension == "json" && f.lastPathComponent.contains(filter) {
+            guard let data = try? Data(contentsOf: f), let r = try? Receipt.decode(data) else { continue }
+            if let old = newest[r.name], old.date >= r.date { continue }
+            newest[r.name] = r
+        }
+        return newest.values.sorted { $0.name < $1.name }
+    }
+
+    /// The gates with a bar, as one Markdown table.
+    static func statusMarkdown(_ receipts: [Receipt]) -> String {
+        var s = "| receipt | gate | measured | bar | |\n|---|---|---:|---:|---|\n"
+        for r in receipts {
+            for g in r.gates where g.comparison != .informational {
+                s += String(format: "| `%@` | %@ %@ | %.3g | %@ %.3g | %@ |\n", r.name, g.id,
+                            g.name.count > 90 ? String(g.name.prefix(90)) + "…" : g.name,
+                            g.measured, g.comparison.rawValue, g.threshold, g.passed ? "pass" : "**FAIL**")
+            }
+        }
+        return s
+    }
+}
+

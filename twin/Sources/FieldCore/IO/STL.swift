@@ -112,47 +112,24 @@ public enum STL {
         try data.write(to: url)
     }
 
-    /// A revolved cup — the sample object, and a better default than a sphere
-    /// because it has an interior, a rim and a wall thickness, so the viewport
-    /// shows something with real structure the moment the app opens.
-    public static func sampleCup(height: Double = 0.095,
-                                 outerRadius: Double = 0.036,
-                                 wall: Double = 0.004,
-                                 segments: Int = 64) -> Mesh {
-        // Profile in (r, z), traced up the outside, across the rim, down the
-        // inside, then across the floor.
-        var profile: [(Double, Double)] = []
-        let n = 12
-        for i in 0...n {                       // outer wall, slightly flared
-            let t = Double(i) / Double(n)
-            profile.append((outerRadius * (0.72 + 0.28 * t), height * t))
+    /// A wire ring (torus) — the default object: ring radius 8 mm, wire
+    /// Ø1 mm, lying flat. The size the mold and the scan are gated on.
+    public static func sampleRing(radius R: Double = 0.008, wire r: Double = 0.0005,
+                                  around: Int = 48, tube: Int = 10) -> Mesh {
+        func p(_ i: Int, _ j: Int) -> Vec3 {
+            let u = 2 * Double.pi * Double(i % around) / Double(around)
+            let v = 2 * Double.pi * Double(j % tube) / Double(tube)
+            let rr = R + r * cos(v)
+            return Vec3(rr * cos(u), rr * sin(u), r * sin(v))
         }
-        profile.append((outerRadius - wall, height))          // across the rim
-        for i in stride(from: n, through: 0, by: -1) {        // inner wall
-            let t = Double(i) / Double(n)
-            let r = (outerRadius * (0.72 + 0.28 * t)) - wall
-            profile.append((max(0.001, r), max(wall, height * t)))
-        }
-        profile.append((0.001, wall))                          // floor centre
-        profile.append((0.001, 0))
-        profile.append((outerRadius * 0.72, 0))                // base
-
         var tris: [Triangle] = []
-        for s in 0..<segments {
-            let a0 = 2 * Double.pi * Double(s) / Double(segments)
-            let a1 = 2 * Double.pi * Double(s + 1) / Double(segments)
-            for i in 0..<(profile.count - 1) {
-                let (r0, z0) = profile[i], (r1, z1) = profile[i + 1]
-                let p00 = Vec3(r0 * cos(a0), r0 * sin(a0), z0)
-                let p01 = Vec3(r0 * cos(a1), r0 * sin(a1), z0)
-                let p10 = Vec3(r1 * cos(a0), r1 * sin(a0), z1)
-                let p11 = Vec3(r1 * cos(a1), r1 * sin(a1), z1)
-                tris.append(Triangle(p00, p01, p11))
-                tris.append(Triangle(p00, p11, p10))
-            }
-        }
+        for i in 0..<around { for j in 0..<tube {
+            tris.append(Triangle(p(i, j), p(i + 1, j), p(i + 1, j + 1)))
+            tris.append(Triangle(p(i, j), p(i + 1, j + 1), p(i, j + 1)))
+        } }
         return Mesh(triangles: tris)
     }
+
 }
 
 extension Mesh {

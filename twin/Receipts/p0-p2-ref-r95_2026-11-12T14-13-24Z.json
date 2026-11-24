@@ -1,0 +1,28 @@
+{
+  "configHash" : "",
+  "date" : "2026-11-12T14:13:24Z",
+  "device" : "Apple M5",
+  "durationSeconds" : 58.028878927230835,
+  "gates" : [
+    {
+      "comparison" : "info",
+      "detail" : "gaps [46.0] mm × reflection [0.95] × image order [3.0] × builds 7–9: 3 of 3 pass, 0 refused by the planner, 0 played and failed; travel error 0.22–0.28 (median 0.24) mm; absolute 0.31–0.39 (median 0.36) mm; plates left 0.00–0.27 (median 0.18)° apart",
+      "id" : "P0-MX",
+      "measured" : 1,
+      "name" : "P0 job matrix (P0-planner\/2; receiver can, one pass per plate and a side reference pass): cases that pass ÷ cases",
+      "passed" : true,
+      "threshold" : 0
+    },
+    {
+      "comparison" : "info",
+      "detail" : "a refusal is the planner declining; this is the planner being wrong",
+      "id" : "P0-MX2",
+      "measured" : 0,
+      "name" : "P0 job matrix: jobs played that lost the bead or missed the travel bar ÷ cases",
+      "passed" : true,
+      "threshold" : 0
+    }
+  ],
+  "gitSHA" : "408b8c5",
+  "name" : "p0-p2-ref-r95"
+}
