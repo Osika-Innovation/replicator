@@ -16,7 +16,7 @@ Cymatics is the study of patterns that vibration makes in sand or liquid. It sug
 
 ## From arrangement to a permanent structure
 
-Acoustic assembly is the starting point. Published experiments have arranged microparticles into three-dimensional structures using several acoustic holograms, then fixed them by gelation (Documented). This shows a route from designed fields to lasting particle structures, within the reported materials and conditions. It also names four jobs: transport the feedstock, form the arrangement, consolidate it and inspect the result ([Manufacturing](manufacturing.html#the-loop-feed-trap-move-consolidate-check)). [Holographic assembly in three dimensions](https://pmc.ncbi.nlm.nih.gov/articles/PMC9908023/)
+Acoustic assembly is the starting point. Published experiments have arranged microparticles into three-dimensional structures using several acoustic holograms, then fixed them by gelation (Documented). This shows a route from designed fields to lasting particle structures, within the reported materials and conditions. It also names four jobs: transport the feedstock, form the arrangement, consolidate it and inspect the result ([Manufacturing](manufacturing.html#the-loop-feed-shape-lock-check)). [Holographic assembly in three dimensions](https://pmc.ncbi.nlm.nih.gov/articles/PMC9908023/)
 
 ## Optical-wavelength structures
 

@@ -46,4 +46,4 @@ Two machines are kept apart throughout: the first, built from electronics that c
 
 ## How to trust what you read
 
-Every claim carries an [evidence label](guides/status.html#evidence-labels). Desktop Replicator numbers come from the shared engineering constants, and the site build fails if they drift. Known disagreements inside the design are [listed openly](guides/status.html#known-inconsistencies-in-the-design).
+Every claim carries an [evidence label](guides/status.html#evidence-labels). Desktop Replicator numbers come from the shared engineering constants, and the site build fails if they drift. Known disagreements inside the design are [listed openly](guides/status.html#active-engineering-gates).

@@ -1,28 +1,50 @@
 # From fields to manufactured parts
 
-<div class="lead">A part is made in five steps that share one work volume: feed, trap, move, consolidate and check. Trapping and moving a single small bead are supported by simulation. Joining material, and placing one bead beside another, are not yet shown for the first machine.</div>
+<div class="lead">The machine does not build a part bead by bead. It shapes the whole 3D field at once: sound gathers matter into the programmed shape in parallel, and patterned light locks it in one exposure. Both halves are published by other groups, in liquids and gels. Neither has been simulated yet in this machine's cylinder.</div>
 
 The first machine is the [Desktop Replicator](desktop-replicator.html). Scanning, recovery and the stores are in [Scan, recover and matter stores](matter-loop.html).
 
-## The loop: feed, trap, move, consolidate, check
+## Volumetric single-shot assembly
 
-The planner turns the target shape into a timed schedule of drive signals. There are no layers: material can arrive from any direction the fields can reach. Two rules order the steps (Design decision). Every piece has a clear path to its place. Each new piece is joined to material that is already fixed, never to something still floating.
+**The idea (Design decision).** Do not pick up grains one at a time. Fill the whole build zone with a computed 3D sound pattern whose quiet pockets are the shape you want. Feed matter in. It settles into the pockets all at once. Then shine a computed light pattern through the clear wall, and the shape sets. The same plan runs at three sizes. The desktop machine uses grains and slurry from 10 µm to 1 mm. The freestanding machine is the same stack, larger. The [long-term machine](ultimate-replicator.html) uses light holograms to place atoms and nanoparticles in parallel.
+
+**Why two kinds of field (Derived).** Per watt, sound pushes 200,000 to 900,000 times harder than light: 2.9 mN/W in air and 0.68 mN/W in water, against 3.3 nN/W for light. So for grains above about 10 µm, only sound can move matter. Light is too weak to move them but is precise to 19 µm in a published experiment, so it does the fixing. Below about 10 µm light can take over the placing ([the size ladder](optics.html#the-size-ladder-for-optical-traps)).
+
+**What other groups have shown (Documented; see [Proven in the lab](evidence.html)).**
+
+| Step | Result | Source |
+|---|---|---|
+| Sound shapes a 3D pattern | Printed plates bent sound into chosen 3D patterns | [Melde et al., 2016](https://doi.org/10.1038/nature19755) |
+| Sound gathers particles in a liquid, light hardens it | Particles arranged in a resin by sound, then cured by light | [Greenhall and Raeymaekers, 2017](https://doi.org/10.1002/admt.201700122) |
+| Sound hardens ink deep inside opaque material | Ultrasound-triggered volumetric printing | [Kuang et al., 2023](https://doi.org/10.1126/science.adi1563) |
+| The same, in a living animal | Imaging-guided printing under the skin | [Davoodi et al., 2025](https://doi.org/10.1126/science.adt0293) |
+| Light hardens a whole object at once | 0.6 s, 19 µm detail across 1 cm | [Wang, Dai et al., 2026](https://doi.org/10.1038/s41586-026-10114-5) |
+| Light places atoms in parallel | About 360,000 traps from a flat metasurface | [Holman et al., 2026](https://doi.org/10.1038/s41586-025-09961-5) |
+
+**What the machine adds (Design decision; Open).** The waterproof lower glass cylinder holds feedstock. The cylinder above builds. Streamed matter would sit in a fluid of nearly the same density, so the weight the field must carry falls 10 to 100 times, glass stress falls well below the 10 MPa cap (to about 0.3 to 1.4 MPa, Derived, to be checked), and dry sticking to glass disappears. The ceiling and floor are driven plates, and six flat panels inside the glass carry sensors and later light tiles ([Optics](optics.html#locking-the-shape-in-one-shot)). A fluid-loaded simulation, S-VOL1, will score the result as a 3D overlap: how much of the target volume is filled and how much matter lands outside it.
+
+**What this retires.** Earlier plans held one dry foam bead (30 kg/m³) in air and placed the next one beside it. That is the hardest possible way to use sound: it fights gravity in air, needs nearly the whole voltage supply, and it was where the "second bead beside the first" problem came from. It is now only a dry calibration check of the plates and electronics ([Drive strength and lift](acoustics.html#drive-strength-and-lift)).
+
+**What is not yet shown (Open).** No simulation has put sound and light into the fluid-filled cylinder. There is no joining or consolidation recipe. A shape that sets must still be recoverable. Nothing tracks mass through a build. These are the active gates in [Current state](status.html#active-engineering-gates).
+
+## The loop: feed, shape, lock, check
+
+The planner turns the target shape into a timed schedule of drive signals and light patterns. There are no layers (Design decision).
 
 | Step | What happens | In the Desktop Replicator |
 |---|---|---|
-| 1 · Feed | Material is made available to the fields | Three open crucibles at the back of the chamber: {{c:desktop_geometry.in_chamber_crucibles}} |
-| 2 · Trap | Sound from the plates forms quiet pockets that hold a bead or droplet | Two plates {{c:desktop_geometry.gap_mm}} mm apart, twelve sources, tones of {{c:desktop_geometry.comb_tones_hz|khz}} kHz |
-| 3 · Move | The drive signals change smoothly and the pockets travel | Same sources; no arm, nozzle or stage |
-| 4 · Consolidate | Material that has arrived is joined to what is already there | An addressed heating step that exists only as a model. No recipe yet |
-| 5 · Check | The machine senses the result and corrects before errors build up | Piezo discs that listen while driving, plus {{c:mosquito_smi.total_ommatidia}} lasers |
+| 1 · Feed | Matter is made available to the fields | The storage bucket under the mid-plane cassette. It has a 12 mm transfer port. The way matter crosses it is not designed |
+| 2 · Shape | A 3D sound pattern holds matter in the target form | Three driven plates, tones of {{c:desktop_geometry.comb_tones_hz|khz}} kHz, {{c:desktop_geometry.gap_mm}} mm build zone |
+| 3 · Lock | Patterned light sets the shape in one exposure | Planned through the clear wall and the six panels. Not designed |
+| 4 · Check | The machine senses the result and corrects | Piezo discs that listen while driving, plus {{c:mosquito_smi.total_ommatidia}} lasers |
 
-Different regions of the chamber can be at different steps at once. Each step is checked before the next starts, so small errors are fixed before they pile up ([what a scan may claim](matter-loop.html#what-a-scan-is-allowed-to-claim)). Fields can move many grains at once, but the slowest of the five steps sets the build speed (Derived).
+Each step is checked before the next starts ([what a scan may claim](matter-loop.html#what-a-scan-is-allowed-to-claim)). The slowest step sets the build speed (Derived).
 
 ## The physics that matters
 
 **Trapping.** A small bead in a sound field is pushed toward the quiet spots (Documented; formula in [Acoustics](acoustics.html#the-radiation-force-and-where-traps-sit)). The force depends on the squared field, so reversing a field does not reverse the force ([why](matter-loop.html#why-reversing-a-holding-pattern-removes-nothing)). Sound does the carrying because it gives about 900,000 times more force per watt than light ([Acoustics](acoustics.html#why-sound-carries-the-force)).
 
-**Moving.** A pocket is carried in two steps: steer the sources toward the next waypoint, then deepen the pocket. In an earlier simulation on a 2,560-element plate, a bead was carried 5 mm up and 5 mm across with a worst error of 0.04 mm (Simulated). It has not been repeated for twelve sources at the {{c:desktop_geometry.gap_mm}} mm spacing.
+**Moving (single-bead check).** A pocket is carried in two steps: steer the sources toward the next waypoint, then deepen the pocket. In an earlier simulation on a 2,560-element plate, a bead was carried 5 mm up and 5 mm across with a worst error of 0.04 mm (Simulated). It has not been repeated for twelve sources at the {{c:desktop_geometry.gap_mm}} mm spacing.
 
 **Use the gentlest form of matter that works.** Use the lowest of four forms that meets the tolerance. The energy column is for iron (Derived from standard heats of melting, boiling and first ionisation).
 
@@ -38,6 +60,8 @@ Different regions of the chamber can be at different steps at once. Each step is
 <a id="consolidation-and-athermal-softening-r15"></a>
 
 ## Consolidation
+
+**Two ways to make a shape stay (Open).** The first is light-set material: a liquid or slurry that hardens where light falls, as in the published single-shot results above. The second is joining grains one join at a time with an addressed heat source. The plan favours the first. The rest of this section is the physics of the second, which is also what an all-powder build would need.
 
 **Sound alone does not melt a levitated grain.** A free grain smaller than a millimetre absorbs far too little ultrasound to sinter or melt. Sound can carry, press and rub material against a fixed surface. Melting or sintering needs a separate, addressed source of heat.
 
@@ -68,9 +92,9 @@ A piece is in the store, on its way, molten, touching a fixed neighbour, or fixe
 An earlier plan joined beads with ultraviolet-curing adhesive applied by hand. That route is retired because it put a person in the loop for every joint. The replacement is consolidation by the fields: acoustic pressure, heat and phase change.
 
 - No end-to-end joining recipe has been simulated.
-- The prototype's parts list contains no heat source for joining.
+- The prototype's parts list contains no heat source for joining, and no light source for locking. The laser ring only measures.
 - A [pulsed ring coil at a crucible](electromagnetics.html#what-remains-open-a-small-pulsed-ring-coil-at-a-crucible) is a candidate for softening conductive material. It is not in the CAD model.
-- The test that would add a joining part is fixed: a second bead placed within 0.25 mm of a held first bead, and a joint that holds ten times the trapping force in shear (Open; see [Architecture](architecture.html#long-term-architecture-and-the-desktop-replicator)).
+- The test that would add a locking or joining part is fixed: a whole 3D shape filled and held in the fluid-loaded cylinder, and a locked sample that holds ten times the trapping force in shear (Open; see [Architecture](architecture.html#long-term-architecture-and-the-desktop-replicator)).
 
 ## A candidate combined-field recipe
 
@@ -82,9 +106,9 @@ These limits bound what the Desktop Replicator can be claimed to do.
 
 | Limit | Evidence | Consequence |
 |---|---|---|
-| Lift is marginal | Simulated: one 160 kHz tone on the full supply lifts about 1.2 times a foam bead's weight. The voltage margin is 1.19 at the median gap and 0.87 at the worst. Five tones sharing the supply lift about 7 % | One tone holds a foam bead at the median gap but not at the worst gap. Holding a solid bead is a failing simulation check ([Current state](status.html)) |
-| A second bead cannot be placed beside a first | Simulated, earlier 4 × 4 and 6 × 6 arrays at 40 kHz: the second bead lands 1 to 2 mm off | Building from more than one bead is Open. Candidate remedies, none chosen: more tones, a structured plate driven from a few inputs, a larger or reshaped set of sources, or moving the work to the bead |
-| Fields from few sources contain extra wells | Simulated, earlier six-source study: 8 to 26 unwanted wells in the working region | One bead can be handled. Powder would collect in the wrong places |
+| Dry-air lift is marginal | Simulated, dry calibration case: one 160 kHz tone on the full supply lifts about 1.2 times a foam bead's weight. The voltage margin is 1.19 at the median gap and 0.87 at the worst. Five tones sharing the supply lift about 7 % | One tone holds a foam bead at the median gap but not at the worst gap. Holding a solid bead is a failing simulation check ([Current state](status.html)) |
+| A second bead cannot be placed beside a first | Simulated, earlier 4 × 4 and 6 × 6 arrays at 40 kHz: the second bead lands 1 to 2 mm off | Placing beads one beside another is retired as the build method. Volumetric assembly fills the whole shape at once, so it never meets this problem. Whether it meets a new one (matter crowding the pockets, streaming) is S-VOL1's job (Open) |
+| Fields from few sources contain extra wells | Simulated, earlier six-source study: 8 to 26 unwanted wells in the working region | The shape score in S-VOL1 replaces the count of wells. Dry powder would still collect in the wrong places |
 | No joining recipe | No simulation exists | A part cannot yet be completed in the model |
 | No mass accounting | No simulation tracks mass through a build | Yield and loss are unknown |
 | Closed chamber | Design decision: a stock glass cylinder that lifts with the head | Recalibration after each lift. See [Desktop Replicator](desktop-replicator.html#the-enclosure) |
@@ -96,16 +120,16 @@ A [light-switched surface](acoustics.html#long-term-direction) of roughly 100,00
 
 - **Fine placement by light.** Sound brings a piece within reach and light does the last alignment ([Optics](optics.html#the-size-ladder-for-optical-traps)). The hand-off is Open.
 - **Other holds.** A close-wound coil can hold and heat a molten metal drop. An electric field can hold a charged droplet, but only with a fast sensor and correction. Cold, uncharged insulators are the class those fields barely grip, which is why sound is in the machine ([Electromagnetic control](electromagnetics.html)).
-- **Automatic feed.** Feedstock rises from a plinth below the build cylinder, sorted and inspected on the way ([the stores](matter-loop.html#the-stores-equation-library-vs-matter-pantry)).
+- **Automatic feed.** Revision S already puts a storage bucket below the build cylinder. Sorting and inspecting feedstock on its way up is long-term ([the stores](matter-loop.html#the-stores-equation-library-vs-matter-pantry)).
 
 ## Open questions
 
 | Question | Who answers it |
 |---|---|
-| What joins material without adhesive, and where does the heat come from? | Process simulation |
-| Which remedy places a second bead beside a first? | Simulation |
-| Can twelve sources hold a bead denser than foam, and carry it, at the {{c:desktop_geometry.gap_mm}} mm spacing? | Simulation |
-| How are unwanted wells suppressed or tolerated when handling powder? | Simulation |
+| Does a 3D sound field in a buoyancy-matched fluid fill a target shape, and how fast does it settle against streaming? | S-VOL1 simulation |
+| What medium can both carry sound and be set by light, and be taken apart again? | Process simulation |
+| How does matter cross the 12 mm mid-plane port without breaking the seal the sound needs? | CAD and simulation |
+| Does light reach the whole shape through curved glass and a cloudy slurry? | Optics simulation |
 | Does mass in the part plus mass in the stores stay constant through a build? | Simulation |
 | What is the first part the machine makes for itself? | [Upgrade loop](upgrades.html) |
 

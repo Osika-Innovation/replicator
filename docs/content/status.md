@@ -6,29 +6,41 @@ The engineering record is a parametric CAD model of the [Desktop Replicator](des
 
 | Area | What exists | Evidence | What blocks the next step |
 |---|---|---|---|
-| Machine design | Parametric CAD model, exact geometry export, drawings, parts list with candidate part numbers, power estimate | Derived | Simulation gates below; operator approval before any order |
-| [Plate acoustics](acoustics.html) | A reduced plate model for planning, and a three-dimensional solid model that contradicts it | Simulated | The two models disagree; a measured plate response is required; all results repeated at the {{c:desktop_geometry.gap_mm}} mm plate spacing |
+| Machine design | Parametric CAD of the Desktop Replicator, revision S: a storage bucket under a drop-in mid-plane cassette, a lifting build cylinder, three gap-trim steppers in the head. Exact geometry export, drawings, parts list with candidate part numbers, power estimate. 11 of 11 design gates and 74 `fieldc` tests pass | Derived | Simulation gates below; operator approval before any order |
+| [Plate acoustics](acoustics.html) | A reduced plate model for planning, and a three-dimensional solid model. The sealed mid-plane cassette reaches 1.9 to 2.4 times a foam bead's weight in simulation; without it only 0.17 to 0.74 times | Simulated | A measured plate response; the fluid-loaded simulation (S-VOL1); all results repeated at the {{c:desktop_geometry.gap_mm}} mm plate spacing |
 | [Drive and receive electronics](compute-control.html) | Circuit concept with a proposed front-end netlist. The 1-bit converter failed its simulated test, so a 16-bit converter ({{c:haptic_pzt.adc_fallback_mpn}}) is fitted. A candidate drive part is named. No board layout | Simulated; Open | Datasheet values re-read; a check that the larger piezo discs keep pattern control |
-| [Optical ring](optics.html) | Geometry in the CAD model and a signal model in simulation | Simulated | A check on data the same model did not generate; the laser class |
-| [Pattern network](cadence-memory.html) (Prime, the project's model built on the Cadence library) | Trained in simulation at full size. A reduced form fits the controller's memory but loses the accuracy needed on the solid plate model | Simulated | A ruling: a smaller task, a larger memory budget, or the second compute card |
-| Firmware | Source for the drive, receive, laser, bus and pattern-network modules, tested on a workstation (59 checks). Never run on a board | Simulated | A main program, a build, and a board to run on |
-| [Assembly and joining](manufacturing.html) | A transport model, and a modelled joining step that heats the joint with a laser pulse. Placing one bead beside another is unsolved | Simulated; Open | Enough drive for transport; the beside-bead problem; any evidence for the heating step |
-| [Removal and recovery](matter-loop.html) | The simulation and the twin model removal as absorption at a measured resonance, then transport to a crucible, and conserve mass. The earlier reversed-pattern shortcut was wrong and has been removed from the code. On the solid plate model little energy reaches the part, so removal is slow | Simulated | A measured scattering response; more energy on the part |
+| [Optical ring](optics.html) | Six flat panels inside the glass carry the laser windows. A signal model in simulation | Simulated | A check on data the same model did not generate; the laser class |
+| [Pattern network](cadence-memory.html) (Prime, the project's model built on the Cadence library) | A reduced 8-bit form (LMQ8 v1) fits the controller: 58.7 kB working set, 59.4 kB static RAM on the host build, against the 60 kB limit | Simulated | Accuracy on a plate response that was not simulated by the same code |
+| Firmware | Source for the drive, receive, laser, bus, gap-lock and sweep modules. 411 checks on a workstation, and the code compiles for the target chip. Never run on a board | Simulated | A main program, a build, and a board to run on |
+| Thermal | The base's power supply and compute card warm the lower glass. A lumped model gives +0.61 K at the bottom wafer and +0.18 K at the build floor. The goal is under 0.05 K | Derived; Open | A heat break between the cartridge socket and the base. The CAD team has not found one that keeps the gap pads |
+| [Assembly and joining](manufacturing.html) | The design target is volumetric single-shot assembly: sound shapes the whole 3D matter field at once, and patterned light locks it. Neither half has been simulated in the fluid-filled cylinder yet. The dry-air foam-bead lift is kept as a calibration check | Design decision; Open | S-VOL1 simulation; a locking recipe |
+| [Removal and recovery](matter-loop.html) | The simulation and the twin model removal as absorption at a measured resonance, and conserve mass. The earlier reversed-pattern shortcut was wrong and has been removed from the code | Simulated | A measured scattering response; a recovery loop in the fluid-filled bucket |
 | [Scanning](matter-loop.html#scan-non-moving-3d-tomography-and-scattering) | Acoustic and optical scan models on the present geometry; their checks are reported passing | Simulated | Stored results of those checks; tests on independently generated data |
 | [Electromagnetic control](electromagnetics.html) | Large coils across the chamber are ruled out by simulation. A small pulsed coil is a candidate | Simulated; Open | A model of what the small coil can and cannot reach |
 | [Long-term architecture](ultimate-replicator.html) | Design studies on published component physics, a bounds model (energy, information, force and time floors) and a parametric concept chamber with checked geometry | Documented; Open; Derived | Demonstrations of the components at useful scale |
 
-## Known inconsistencies in the design
+## Active engineering gates
 
-Reviews and simulations found places where the design disagrees with itself or with its models. All are in the [insight register](insights.html). Three are settled: the receive converter (a 16-bit part is fitted), the air temperature sensors (added) and the chamber (closed by a glass cylinder). The ones that matter most now:
+Four things stand between the design and a first test. Everything else that used to be listed here is either solved in simulation or is history.
 
-1. **Drive strength.** Sound pressure from a glass plate is limited by bending stress in the glass, not by voltage. Solid polystyrene would overstress the plates with any piezo. A foam bead of 30 kg/m³ can be held in simulation: one 160 kHz tone on the full {{c:haptic_pzt.bridge_rail_v}} V supply lifts about 1.2 times its weight, at a glass bending stress of 3.7 to 5.0 MPa against a {{c:desktop_geometry.plate_bending_stress_limit_mpa}} MPa limit. Five tones sharing the supply lift about 7 %. So lifting and field clean-up take turns ([why](acoustics.html#drive-strength-and-lift)).
-2. **Plate response.** The solid model shows that the plates ring, and that the response shifts too much between nominally identical plates to be predicted. It must be measured in the chamber for each plate, and again after every head lift and every few tenths of a kelvin. A stored calibration matches the true response only about 0.63 after 0.5 K and 0.65 after 200 µm of gap change, where 1 is perfect (Simulated).
-3. **Unwanted traps.** With one tone from twelve sources, 10 to 17 % of the work volume is above 70 % of the target spot's amplitude. The limit is 2 %. Filling several sites evenly also falls short.
-4. **Pattern network size.** The form of the network that fits in {{c:cadence_brain.cadence_sparse_max_kb}} kB keeps its speed but not its accuracy on the solid plate model. A second simulation, on a different task, reports the opposite. They are not reconciled ([Cadence, memory and wave compute](cadence-memory.html#in-the-desktop-replicator)).
-5. **Laser class.** The glass cylinder is clear, so it does not enclose the laser beams. A hardware switch cuts laser power when the head is raised. The laser class is Open.
-6. **Placing beads side by side.** A bead already in place disturbs the field that should hold its neighbour. This is unsolved. Touching beads also scatter sound as a coupled group, which the simple model gets wrong above the lowest tone, and about 1 pC of static charge cancels the weak attraction between two beads.
-7. **Static charge.** A foam bead sticks to bare glass at about 5 pC. The glass needs a charge-bleeding surface and the air a controlled humidity. Neither is a specified part.
+1. **Bench Gate 0: does the empty cavity ring?** Before any matter goes in, a one-port sweep from 156 to 164 kHz in 10 Hz steps compares the closed cavity with an absorber in it. The ratio of the second echo to the first must show a reflection of at least 0.85 (ratio 0.466; 0.523 would mean 0.90). The firmware for the sweep is written and tested on a workstation. No board has run it (Open).
+2. **S-VOL1: does volumetric assembly work in water-like fluid?** The new simulation must shape a whole 3D region at once, in a buoyancy-matched fluid, inside the glass cylinder. It replaces the old count of unwanted wells with a shape score: how much of the target volume is filled and how little is outside it. It must also show how fast matter settles against the stirring the sound itself causes, and that glass stress stays under the 10 MPa cap with real densities (Open; queued).
+3. **Laser class and enclosure.** The glass cylinder is clear, so it does not enclose the laser beams. A hardware switch cuts laser power when the head is raised. The six flat panels sit inside the glass, but the laser modules sit outside, and a worst-case glass tube leaves them 0.4 mm short of the bore. The laser class is Open.
+4. **One-shot locking and recovery.** Light must lock the shape in one exposure, and the machine must then take it apart again and account for every gram. A joining recipe has not been simulated, and nothing tracks mass through a build (Open).
+
+### What was removed from the old list, and why
+
+An earlier version of this page listed seven "known inconsistencies". Three are solved in simulation. Three were problems of one particular test, and the new plan avoids that test. They stay in the record as calibration history ([insight register](insights.html), INS-43).
+
+| Old item | What happened |
+|---|---|
+| Plate response drifts | Solved in simulation. Laser readout of the plate, the small pattern network and the gap lock (0.41 mm per kelvin) track it. Still needs a measured plate response (Simulated) |
+| Unwanted traps | Solved at 0.3 % median on 36 ports in simulation. The shape score in S-VOL1 replaces the trap count (Simulated) |
+| Pattern network size | Reconciled: the reduced form fits in 58.7 of 60 kB (Simulated) |
+| Drive strength | A 30 kg/m³ foam bead in air needs nearly the whole supply: one tone lifts about 1.2 times its weight at 3.7 to 5.0 MPa glass stress, and five tones lift about 7 %. That was a limit of lifting one dry bead against gravity in air. In a liquid with the same density as the matter, the weight that has to be carried is 10 to 100 times smaller. Kept as a dry check (Simulated) |
+| Placing beads side by side | A placed bead disturbs the field that should hold its neighbour. Volumetric assembly never places one bead at a time (Simulated; retired) |
+| Static charge | A foam bead sticks to dry glass at about 5 pC. In a liquid or slurry there is no dry clamping. A 2025 paper uses charge on purpose to keep many particles apart, so charge is now a possible control, not only a hazard ([Proven in the lab](evidence.html)) (Open) |
+| Laser class | Still open. Now gate 3 above |
 
 ## What must exist before hardware is ordered
 
@@ -37,7 +49,7 @@ Hardware may be released for purchase only when all five exist:
 1. A frozen revision of the design with file hashes.
 2. A parts list with quantities, part numbers, live stock and prices.
 3. Exact CAD geometry, drawings, tolerances, wiring and a thermal budget.
-4. Passed simulation gates: a receive path that meets {{c:haptic_pzt.sfdr_gate_min_db}} dB, and agreement between the solid model and the plate model. The 1-bit converter failed the first and is replaced. Three more gates fail now: predicting the plate response offline, holding a solid bead, and keeping unwanted traps under the limit.
+4. Passed simulation gates: a receive path that meets {{c:haptic_pzt.sfdr_gate_min_db}} dB, and the fluid-loaded volumetric simulation (S-VOL1). The 1-bit converter failed the first and is replaced. The second has not been run.
 5. A fixed acceptance procedure to run in the built chamber.
 
 None of the five is complete. Ordering parts or contacting suppliers also needs the operator's explicit approval.

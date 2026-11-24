@@ -35,7 +35,7 @@ Findings 28 to 30 are simulation results from 18 November 2026 that settle sever
 
 Findings 31 to 36 were added on 22 November 2026. They cover static charge on beads (31), a shape file format that works in any chamber (32), the limits of sound for telling materials apart (33), lifting with one tone and cleaning the field with several (34), and how touching beads scatter sound together (35). Finding 36 sets bounds for the long-term machine and does not change the Desktop Replicator.
 
-Each has an owner and a task. [Current state](status.html#known-inconsistencies-in-the-design) summarises them.
+Each has an owner and a task. [Current state](status.html#active-engineering-gates) summarises them.
 
 ## Adding a finding
 

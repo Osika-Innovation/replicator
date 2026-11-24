@@ -62,12 +62,15 @@ ASSEMBLIES = {
     'optics': ('Laser ring', 'Two strips of small lasers that look across the chamber. Each laser is also its own detector.', 'S06', 'optics', (-95, 235)),
     'tower': ('Rear tower and lift rails', 'The hollow rear column. It carries the head on rails, covers the laser strips and carries cooling air.', 'S01', 'desktop', (-240, 90)),
     'head-upper': ('Upper acoustic plate', 'The matching wafer and piezo discs in the head. It is the ceiling of the build chamber.', 'S04', 'acoustics', (0, 570)),
-    'head': ('Head', 'The lid that carries the upper plate, the gap actuators and the display.', 'S05', 'desktop', (0, 670)),
-    'ui': ('Display and knob', 'The small screen, status light and rotary knob on the head.', 'S08', 'desktop', (150, 670)),
+    'head': ('Head', 'The lid that carries the upper plate and the gap actuators.', 'S05', 'desktop', (0, 670)),
+    'console': ('Touchscreen wedge', 'A hollow aluminium wedge on the front of the base, tilted 45 degrees. It carries a 7-inch touchscreen, a status light and a USB-C socket.', 'S08', 'desktop', (170, -30)),
 }
 
 # First match wins. (regex on the part slug) -> (datasheet, guide, plain description)
 PART_RULES = [
+    (r'rear-panel|bucket-panel', 'S06', 'optics', 'One of six flat aluminium panels standing inside the glass on the rear half. They carry temperature and humidity sensors, sound-absorbing baffles and windows for the lasers, and can later be swapped for active tiles.'),
+    (r'bore-plug|plug-o-ring', 'S03', 'matter', 'A sandwich cartridge made as a plug. Two soft rings press evenly on the inside of the glass tube, so it seals against liquid and puts no point load on the glass.'),
+    (r'lift-plug', 'S03', 'matter', 'A handle point for lifting the mid-plane cassette out by hand.'),
     (r'^gap-trim', 'S05', 'acoustics', 'A small stepper motor under a datum seat in the head. Three of them tilt and lift the upper plate by up to 1 mm, to keep the gap tuned as the air warms.'),
     (r'^head-down-interlock|^interlock-plunger', 'S11', 'desktop', 'A safety switch that notices the head is down. With the head up, the drive stage and the lasers lose power.'),
     (r'^pzt-patch|^m1-pzt-patch', 'S04', 'acoustics', 'A small piezo disc glued behind a glass wafer. Voltage shakes it, and the glass sends sound into the chamber. It also listens.'),
