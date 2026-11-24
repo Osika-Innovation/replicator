@@ -8,8 +8,9 @@ The Desktop Replicator is the machine we are designing to build first. It is a b
 
 | | Value | Evidence |
 |---|---|---|
-| Outside size | 380 × 294 × 644 mm closed, 794 mm with the head raised | Derived from the CAD model |
-| Mass | 21.1 kg. Of that, 7.05 kg rises with the head | Derived from model densities |
+| Outside size | 379 × 294 × 644 mm closed, 909 mm with the head raised (the head rises 265 mm) | Derived from the CAD model |
+| Mass | 18.8 kg. Of that, 7.2 kg rises with the head | Derived from model densities |
+| Head lift | Motor-driven. A servo turns two belt-linked ball screws and lifts the head 265 mm in 2.5 s from the touchscreen. A brake holds it if power is lost | Design decision; motion times Derived, parts not chosen |
 | Two zones | A build zone on top and a storage zone below, each {{c:desktop_geometry.gap_mm}} mm tall, with a mid-plane cassette between them | Design decision |
 | Storage zone | A fixed, waterproof [DURAN](glossary.html) glass cylinder, Ø250 × 5 mm, about 10.0 L | Design decision; volume Derived from CAD |
 | Build zone | A stock glass cylinder of the same size. It lifts with the head and closes the top | Design decision |
@@ -51,13 +52,13 @@ The machine is one clear glass tube standing on another. A hollow rear tower, wi
 
 - **Storage glass.** The bottom cylinder is fixed and waterproof. Stack 1 is a plug in its floor. Two radial O-rings seal the plug. It stands on three PEEK feet and puts no load on the glass ends (Design decision).
 - **Build glass.** The top cylinder is a stock glass cylinder of the same size. It runs 25 mm into the head and lifts with it. It shields material from room draughts. In simulation it raises the sound pressure by {{c:desktop_geometry.chamber_gain_closed_gap_median|range}} times over an open chamber (Simulated, for the single-chamber layout). Stack 3 is the same plug as Stack 1, in the top of this glass. A drum and three arms hang it from the head, so the head sets the gap, not the glass.
-- **Rim ring.** A ring on the storage glass holds three balls and 12 spring contacts. The cassette drops onto the balls and a person lifts it out by hand with the head raised.
-- **Gap trim.** Three geared stepper motors in the head set the gap. They move ±1.0 mm in steps of 0.0016 mm. One kelvin of air temperature shifts the resonant gap by 0.409 mm, so they cover ±2.4 K (Derived).
+- **Rim ring.** A ring on the storage glass holds three balls and 12 spring contacts. The cassette drops onto the balls and a person lifts it out by hand once the motor has raised the head.
+- **Gap trim.** The lift servo also sets the gap. The head lands on two hard stops 1 mm below its nominal height, so the servo can trim ±1.0 mm either way in steps of 0.0016 mm per encoder count. One kelvin of air temperature shifts the resonant gap by 0.409 mm, so that covers ±2.4 K (Derived). The three stepper motors and three ball-in-vee seats of the earlier Rev S build are gone.
 - **Six rear panels.** Flat aluminium panels, 57 × 2.5 mm, line the rear half of both cylinders on the inside, 108.5 mm from the axis. They carry the laser windows, two TMP117 temperature sensors, a humidity sensor and passive sound baffles. They are ready for active tiles later. In the build zone they hang from Stack 3 and rise with the head. In the storage zone they stand on Stack 1.
 - **Static charge.** A foam bead that rubs glass picks up charge. At about {{c:electrostatics_and_matter_loop.eps_r0p5mm_image_clamp_1g_pc}} pC a 1 mm bead sticks to the glass with a force equal to its weight. Plates and cylinders need a slightly conductive, grounded surface. The chamber air needs a relative humidity of {{c:electrostatics_and_matter_loop.chamber_ambient_rh_pct_range|range}} %. That keeps the charge under {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC (Derived). No surface treatment has been chosen.
 - **One coating, three possible jobs (Open).** A clear, slightly conductive, grounded coating would bleed away static charge and keep radio-frequency fields inside. Cut into driven patches, it would later turn a passive wall into a controlled one ([what more wall buys](architecture.html#what-more-wall-buys)). The lasers must still see through it.
-- **Lifting head.** To load, the head, the build glass and the panels rise. The open machine is 794 mm tall, against 644 mm closed. The head is partly balanced by springs. The hand pull is 20 N or less. The tip angle is 15° head down and 13° raised (Derived from CAD). The upper plate moves with the head, so calibration is repeated after every opening.
-- **Interlock.** A hardware safety switch sits in series with the bridge-enable supply and the laser supply. Head up: drive outputs high impedance and lasers off, so the machine can listen but not transmit. The firmware also refuses to drive. Clear glass does not block laser light, so it is not an enclosure around the laser beams. The laser class is Open ([S11](subsystems.html#s11-thermal-and-safety)).
+- **Lifting head.** The lift is electric. Two fixed corner pieces stand on the base. Each holds a 12 mm ball screw (10 mm lead), two guide carriages, and, in the left one, a brushless servo with a brake that engages when power is off. Belts in the base turn the screws together. The centre spine rides with the head on a rail each side, and an arm at its foot carries the nut on each screw through a slot in the corner piece. Moving mass is 7.2 kg. The full 265 mm stroke takes 2.5 s at 132 mm/s peak, and the servo needs about 0.09 N·m against a 0.32 N·m class (Derived; parts assumed, none chosen). It draws about 25 W during a move. The head moves only from the touchscreen, with hold-to-run to close. Motor current is limited so the closing force stays under 75 N, and the last 20 mm is slow. Optical home and top-limit sensors, and a separate head-down switch, report the position. The tip angle is 17° head down and 13° raised (Derived from CAD). The upper plate moves with the head, so calibration is repeated after every opening. Open: how to raise the head with no power (a brake-release connector or a small backup supply), the brush seals on the screw slots, the cable grommets, the pinch-detection firmware, measured repeatability, and the choice of every part.
+- **Interlock.** A hardware safety switch sits in series with the bridge-enable supply and the laser supply. Head up: drive outputs high impedance and lasers off, so the machine can listen but not transmit. The switch is independent of the lift controller: the spine's bottom plate presses it when the head is down. The firmware also refuses to drive. Clear glass does not block laser light, so it is not an enclosure around the laser beams. The laser class is Open ([S11](subsystems.html#s11-thermal-and-safety)).
 - **Console.** The 7-inch touchscreen sits on a hollow aluminium wedge at 45°. It also carries USB-C and a status LED.
 - **Cooling.** Air enters and leaves through louvres at the rear. None passes through the work chamber.
 
@@ -149,11 +150,12 @@ The microcontrollers, comparators and discrete lasers are scaffolding that can b
 | Does a sealed M1 behave as simulated, with its annulus, seam and 12 mm round port in the field? | Simulation, then the assembled machine |
 | Can plinth heat be kept off both floors to 50 mK? The model gives 0.61 K and 0.18 K | Thermal design, then the assembled machine |
 | What drive voltage, tones and source size reach a holding pressure for a solid bead on the Ø{{c:desktop_geometry.wafer_diameter_mm}} mm wafer? | Simulation, then design |
-| Does the head return to the same position after each lift, closely enough to keep a calibration? | CAD tolerance study, then the assembled machine |
+| Does the head return to the same position after each motor-driven lift, closely enough to keep a calibration? The servo encoder and hard stops set it. Repeatability is not measured | CAD tolerance study, then the assembled machine |
+| How is the head raised with no power, and how do the screw slots stay sealed and pinch-safe? | Mechanical and firmware design |
 | Which surface treatment bleeds static charge from the glass without disturbing the lasers or the sound? | Materials selection, then the assembled machine |
 | How large is the buoyant air motion for a given floor-to-ceiling temperature difference? | Simulation |
 | How are plugs sized to a measured tube, given the catalogue bore spread? | Mechanical design |
-| Which mechanisms need design: the gate, the cassette grooves, the rim contacts and the actuator brackets? | Mechanical design |
+| Which mechanisms need design: the gate, the cassette grooves, the rim contacts, the screw-slot seals and the cable grommets? | Mechanical design |
 | What joins material without adhesive, and what removes joined material on the real plates? | Process simulation |
 | Which vendors can supply the custom piezo discs and at what tolerance? | Procurement, after approval |
 

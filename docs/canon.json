@@ -3,7 +3,7 @@
   "synced_at": "2026-11-24",
   "constants": {
     "architecture_status": {
-      "active_prototype": "Desktop Replicator (Rev F)",
+      "active_prototype": "Desktop Replicator (Rev S)",
       "active_cad_dir": "cad/desktop-replicator/",
       "active_twin_cmd": "fieldc desktop",
       "active_presets": [
@@ -99,7 +99,10 @@
       "tia_mpn": "OPA320",
       "tia_ac_gain": 200,
       "comparator_mpn": "TLV3501",
-      "lightread_coef_rad_per_pa_m": 0.01889
+      "lightread_coef_rad_per_pa_m": 0.01889,
+      "emitter_cap_mw": 0.3,
+      "class1_limit_mw": 0.39,
+      "default_fitted": false
     },
     "cadence_brain": {
       "hermitian_reciprocity": true,
@@ -123,9 +126,9 @@
     },
     "desktop_geometry": {
       "envelope_mm": [
-        313.0,
+        379.0,
         294.0,
-        384.0
+        644.0
       ],
       "wafer_material": "Schott Borofloat 33",
       "wafer_diameter_mm": 200.0,
@@ -147,11 +150,7 @@
         20.0,
         198.0
       ],
-      "in_chamber_crucibles": [
-        "powder",
-        "liquid",
-        "seed"
-      ],
+      "in_chamber_crucibles": [],
       "moth_absorber_thickness_mm": 1.2,
       "pinna_facets": 48,
       "pinna_arc_deg": [
@@ -169,11 +168,11 @@
         160000,
         200000
       ],
-      "enclosure_rev": "F",
+      "enclosure_rev": "S",
       "door_half_sweep_deg": 78.0,
       "door_opening_chord_mm": 204.2,
-      "clear_view_deg": 214.4,
-      "nominal_mass_kg": 14.1,
+      "clear_view_deg": 211.0,
+      "nominal_mass_kg": 18.8,
       "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Rev F2 (#37/#41, 2026-11-22) closes the chamber with a stock DURAN O250x5 borosilicate cylinder on the lifting head, placing the lateral glass boundary at r=120 mm (ID 240 mm, OD 250 mm, 5 mm wall).",
       "enclosure_minor_rev": 0,
       "chamber_glass": true,
@@ -185,9 +184,9 @@
         24.0
       ],
       "chamber_wall": "glass cylinder on lifting head (Rev F, operator 2026-11-18); --no-lift = open front, --glass = rotating door",
-      "lift_stroke_mm": 150.0,
-      "lift_moving_mass_kg": 6.97,
-      "envelope_open_height_mm": 534.0,
+      "lift_stroke_mm": 265.0,
+      "lift_moving_mass_kg": 7.22,
+      "envelope_open_height_mm": 909.0,
       "glass_cylinder_id_od_mm": [
         240.0,
         250.0
@@ -212,7 +211,30 @@
         1.5,
         1.3,
         1.8
-      ]
+      ],
+      "envelope_body_mm": [
+        313.0,
+        294.0,
+        644.0
+      ],
+      "envelope_note": "Rev S closed: 379 mm deep with the 45° console wedge (313 mm body), 294 mm wide, 644 mm tall; 909 mm with the head raised. Rev F2 was 313 x 294 x 384 mm. CAD DERIVED, not weighed or measured (#101/#102, 2026-11-24).",
+      "storage_zone": "coaxial_waterproof_bucket",
+      "bucket_depth_mm": 240.0,
+      "midplane_default": "M1 sealed cassette, Ø12 mm transfer port (0.25 % of end area)",
+      "telescoping_spine_overlap_mm": [
+        493.0,
+        228.0
+      ],
+      "console": "7-inch narrow-border touchscreen at 45° in a front wedge",
+      "fill_drain": "Ø6 fill/drain port in the Stack 1 annulus to a dry-break coupling; Ø6 membrane bubble vent in Stack 3",
+      "bore_plug_sorted_tube_id_mm": [
+        240.0,
+        0.5
+      ],
+      "laser_class": "Class 1 by construction: no lasers in the default build (SMI off since #108; --smi restores it with each emitter capped at 0.30 mW under the 0.39 mW visible Class 1 limit, IEC 60825-1:2014 as recalled, to verify). Cure light OPEN.",
+      "lift_drive": "motorised (#110, inverted #113): fixed corner pieces on the base hold 2 x Ø12 lead-10 ball screws, the guide carriages and a brushless servo with power-off brake; belts in the base; the centre spine (112 mm body, 154 mm plates) rides with the head on rails, driven by nut arms at its foot; --sleeve-lift keeps the spring version",
+      "lift_move_s": 2.5,
+      "smi_default": false
     },
     "dissolve_and_toroidal": {
       "matter_state_fields": [
@@ -256,8 +278,8 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 169,
-    "total_surfaces": 170,
+    "implemented_surfaces": 173,
+    "total_surfaces": 173,
     "items": [
       {
         "id": "INS-01",
@@ -368,7 +390,7 @@
         "summary": "The enclosure became a rounded-square body with a rear tower that carries structure, cabling and cooling air outside the chamber.",
         "effect": "Makes the machine loadable and serviceable.",
         "evidence": "DERIVED",
-        "implemented": 5,
+        "implemented": 6,
         "surfaces": 6
       },
       {
@@ -602,6 +624,14 @@
         "evidence": "DERIVED",
         "implemented": 2,
         "surfaces": 2
+      },
+      {
+        "id": "INS-44",
+        "summary": "The pattern-network software now runs on the laptop's graphics chip instead of one overheating processor core, and the small controller version is frozen.",
+        "effect": "The large model reads the handbook text, a 3D shape grid and a fast physics stand-in, and every answer is checked by the exact physics before it counts. The same entry sets the limits for assembling in a liquid: a density match of roughly 100 to 130 kg/m³, and 12 to 42 sound ports.",
+        "evidence": "DERIVED",
+        "implemented": 3,
+        "surfaces": 3
       }
     ],
     "notes": {
@@ -776,6 +806,10 @@
       "INS-43": {
         "summary": "The machine is now planned to build a whole 3D shape at once instead of placing one dry foam bead after another in air.",
         "effect": "Sound gathers matter into the programmed shape in parallel, and patterned light locks it in one exposure. The dry foam-bead lift stays as a calibration check only, and the old list of seven known problems became four active gates."
+      },
+      "INS-44": {
+        "summary": "The pattern-network software now runs on the laptop's graphics chip instead of one overheating processor core, and the small controller version is frozen.",
+        "effect": "The large model reads the handbook text, a 3D shape grid and a fast physics stand-in, and every answer is checked by the exact physics before it counts. The same entry sets the limits for assembling in a liquid: a density match of roughly 100 to 130 kg/m³, and 12 to 42 sound ports."
       }
     }
   },
