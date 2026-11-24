@@ -1,12 +1,12 @@
 # The upgrade loop
 
-The upgrade loop is the plan for how one machine improves itself. It is a dependency graph that starts from purchased parts and ends at modules the machine helps to make. The graph is planning data: **nothing in it has been ordered, built or measured**, and it does not yet name a part made by the platform itself.
+The upgrade loop is the plan for how one machine improves itself. It is a dependency graph that starts from purchased parts and ends at modules the machine helps to make. The graph is planning data, and it does not yet name a part made by the platform itself.
 
 The aim is to spend as little human engineering and experiment time as possible. Two searches meet in the graph: forward from what an affordable [Desktop Replicator](desktop-replicator.html) can do, and backward from the long-term design described in [Architecture](architecture.html).
 
 ## One enduring platform
 
-There is one machine, and it is upgraded in place. The mechanical reference surfaces, the optical sightlines, the coordinate convention, the job and pattern file formats and the software interface to the machine stay fixed from one generation to the next. Only the module that limits performance is replaced.
+There is one machine, and it is upgraded in place. The mechanical reference surfaces, the optical sightlines, the coordinate convention, the job and holographic-equation file formats and the software interface to the machine stay fixed from one generation to the next. Only the module that limits performance is replaced.
 
 There are no disposable test rigs. Calibration happens in the assembled chamber, using removable spheres and the crucibles, so the tool that calibrates the first machine is the machine.
 
@@ -39,8 +39,8 @@ The table lists every record in `twin/Design/upgrade_graph.json`, in build order
 | `S-META-MASTER` | Externally made nanostructured optical master, for later imprint copies | Candidate; not ordered | Nothing |
 | `C-FW-DESKTOP` | Controller firmware for the three boards: drive, receive, laser readout, shared clock and pattern network | Source written and tested on a workstation; never run on a board | `C-SIM-GATES` |
 | `X-EM` | Optional contactless exciter (magnet and flat coil) for testing metal plates outside the glass baseline | Drafted; off the critical path | `S-WORKSHOP` |
-| `M-DESKTOP-REV-D` | The assembled Desktop Replicator | CAD model passes its geometry checks; no parts ordered | `S-SEEDS`, `S-WORKSHOP`, `C-FW-DESKTOP` |
-| `K-INCHAMBER-CAL` | Calibration inside the assembled chamber with removable spheres and crucibles: hold, move and transfer repeatability | Blocked until the machine is built | `M-DESKTOP-REV-D` |
+| `M-DESKTOP-REV-D` | The assembled Desktop Replicator | CAD model passes its geometry checks | `S-SEEDS`, `S-WORKSHOP`, `C-FW-DESKTOP` |
+| `K-INCHAMBER-CAL` | Calibration inside the assembled chamber with removable spheres and crucibles: hold, move and transfer repeatability | Needs the assembled machine | `M-DESKTOP-REV-D` |
 | `U1-PINNA-KINO` | First upgrade designed from the machine's own calibration data: a faceted rear reflector and an optional printed phase insert | Simulated; waits for calibration | `K-INCHAMBER-CAL` |
 | `U2-TIO2-META` | Imprinted diffractive strips on the laser sightlines, to double the independent optical measurements | Simulated; waits for calibration and the master | `K-INCHAMBER-CAL`, `S-META-MASTER` |
 | `U4-SPIRAL-TOROIDAL` | Optional thin-film spiral conductor on the wafers, for launching short toroidal pulses | Candidate; waits for a pulse simulation and calibration | `K-INCHAMBER-CAL`, `S-WORKSHOP` |

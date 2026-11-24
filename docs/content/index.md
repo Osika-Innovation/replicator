@@ -7,7 +7,7 @@
 
 <div class="lead">The Replicator holds, moves and joins material with sound, light and electromagnetic fields in one chamber with no tools inside it. This handbook is the working engineering reference for the programme.</div>
 
-The first machine is the [Desktop Replicator](guides/desktop-replicator.html), a benchtop chamber designed from parts that can be bought today. It exists as a CAD model and a set of simulations. **No hardware has been built, ordered or measured yet.** The long-term aim is a machine that makes an increasing share of the parts of its own successor.
+The first machine is the [Desktop Replicator](guides/desktop-replicator.html), a benchtop chamber designed from parts that can be bought today. It exists as a CAD model and a set of simulations. The long-term aim is a machine that makes an increasing share of the parts of its own successor.
 
 <div class="diagram">
 <img src="assets/desktop/desktop_iso.jpg" alt="CAD render of the Desktop Replicator: a rounded-square base and head joined by a rear tower, with a glass cylinder enclosing the chamber between them and a round glass plate at the chamber floor." width="1600" height="1200">
@@ -15,6 +15,7 @@ The first machine is the [Desktop Replicator](guides/desktop-replicator.html), a
 </div>
 
 <div class="cards">
+<a class="card" href="guides/evidence.html"><span class="eyebrow">00 / THIRD-PARTY PROOF</span><h2>Proven in the lab</h2><p>Peer-reviewed <em>Nature</em>, <em>Science</em>, and <em>PRL</em> demonstrations behind every cornerstone mechanism.</p></a>
 <a class="card" href="guides/desktop-replicator.html"><span class="eyebrow">01 / THE MACHINE</span><h2>Desktop Replicator</h2><p>What is being designed first, how it works, and what is still open.</p></a>
 <a class="card" href="guides/status.html"><span class="eyebrow">02 / TODAY</span><h2>Current state</h2><p>What exists, the evidence behind it, and what blocks each next step.</p></a>
 <a class="card" href="guides/architecture.html"><span class="eyebrow">03 / THE SYSTEM</span><h2>Architecture</h2><p>How sound, light and electromagnetic fields share one work volume, now and in the long-term design.</p></a>
@@ -25,6 +26,7 @@ The first machine is the [Desktop Replicator](guides/desktop-replicator.html), a
 
 | You want to | Start with | Then read |
 |---|---|---|
+| Verify lab-proven scientific cornerstones | [Proven in the lab](guides/evidence.html) | [Research library](guides/research.html), [Current state](guides/status.html) |
 | Understand the project in ten minutes | [Start here](guides/start.html) | [Desktop Replicator](guides/desktop-replicator.html), [Current state](guides/status.html) |
 | Design or review a subsystem | [Architecture](guides/architecture.html) | [Acoustic bodies](guides/acoustics.html), [Optics and metamaterials](guides/optics.html), [Electromagnetic control](guides/electromagnetics.html), [Compute, sensing and control](guides/compute-control.html) |
 | Follow material through a build | [Manufacturing](guides/manufacturing.html) | [Scan, recover and matter stores](guides/matter-loop.html) |

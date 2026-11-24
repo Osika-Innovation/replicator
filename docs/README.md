@@ -26,3 +26,7 @@ Guides do not type design numbers. They quote them with a token such as `{{c:des
 `tools/check_canon.py` fails when a token does not resolve, when a current guide contains a phrase listed under `rules.forbidden` (a retired design presented as current, a superseded number, a private name), when a phrase under `rules.required` is missing, or, where the engineering checkout is present, when the snapshot no longer equals the live constants. A forbidden phrase is excused on a line that states the history explicitly (for example "retired" or "earlier"). CI runs the check without the engineering checkout, so it enforces the rules against the committed snapshot.
 
 When the constants change: run `sync_canon.py`, rebuild, and re-read every guide that quotes the changed constant. A changed number usually changes the prose around it.
+
+## Block diagrams
+
+The master subsystem block diagram in content/architecture.md and the zone map in content/subsystems.md are generated. Edit the block lists in `docs/diagrams/master_stack.py` and run `python3 docs/diagrams/master_stack.py`; it rewrites the SVG between the marker comments in both guides. Numbers in the diagram are `{{c:...}}` tokens like any other.

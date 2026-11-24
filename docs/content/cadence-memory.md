@@ -1,6 +1,6 @@
 # Cadence, memory and wave compute
 
-<div class="lead">Cadence is the pattern network that chooses drive signals from what the sensors report. It uses complex numbers and reciprocal connections so that the same equations can run on a microcontroller now and in a physical wave medium later. This chapter covers the network, the chord memory beside it and the long-term route to computing with waves. All results are from simulation; none of the optical or wave hardware exists.</div>
+<div class="lead">Cadence is the pattern network that chooses drive signals from what the sensors report. It uses complex numbers and reciprocal connections so that the same equations can run on a microcontroller now and in a physical wave medium later. This chapter covers the network, the chord memory beside it and the long-term route to computing with waves. All results on this page are from simulation.</div>
 
 <div class="diagram">
 <svg viewBox="0 0 880 510" role="group" aria-labelledby="cm-title cm-desc" xmlns="http://www.w3.org/2000/svg">
@@ -34,7 +34,7 @@
 <text x="757" y="106" font-size="12">ADD · REMOVE · LISTEN</text>
 <text x="757" y="128" font-size="11.5" fill="#186b60">Writes .fcode frames</text>
 <text x="440" y="224" font-size="14.5" font-weight="650">Chord memory</text>
-<text x="440" y="245" font-size="12">Stored .pattern chords · recall efficiency η = (M# / M)²</text>
+<text x="440" y="245" font-size="12">Stored chords · recall efficiency η = (M# / M)²</text>
 <text x="440" y="264" font-size="12">Recall by correlation · labelled inferred until a sensor confirms</text>
 <text x="440" y="346" font-size="14" font-weight="700">SAME EQUATIONS, THREE SUBSTRATES</text>
 <text x="172" y="388" font-size="14" font-weight="650">1 · Prototype</text>
@@ -63,7 +63,7 @@
 
 ## What this subsystem does
 
-Cadence takes the measurements from the piezo discs and the laser ring, together with a target, and settles on a chord: an amplitude and phase for each source at each tone. A chord memory beside it stores chords for known shapes, so a familiar shape is recalled instead of solved again. How a chord relates to the `.pattern` and `.fcode` files is defined once, in [Compute, sensing and control](compute-control.html#one-contract-files-verbs-and-the-machine-interface).
+Cadence takes the measurements from the piezo discs and the laser ring, together with a target, and settles on a chord: an amplitude and phase for each source at each tone. A chord memory beside it stores chords for known shapes, so a familiar shape is recalled instead of solved again. Objects themselves are stored as holographic equations (`.holo` files), which do not depend on the chamber; a chord is what one chamber computes from an equation. The relation between equations, chords and `.fcode` files is defined once, in [Compute, sensing and control](compute-control.html#one-contract-files-verbs-and-the-machine-interface).
 
 <a id="why-three-cavities-the-8v-33-mode-count-theorem"></a>
 
@@ -121,7 +121,7 @@ Memory has two layers: a working state that lasts for one settle, and a non-vola
 | Layer | Holds | In the prototype | Long-term |
 |---|---|---|---|
 | Working state | The network's state while it settles | Controller memory | The field in an optical or wave cavity |
-| Store | Chords for known shapes, calibration data | `.pattern` files on storage | Low-loss phase-change or photorefractive media |
+| Store | Holographic equations for known objects, calibration data, and chords compiled for this chamber | `.holo` files on storage; compiled chords as a cache | Low-loss phase-change or photorefractive media |
 
 **Capacity is set by noise, not geometry** (Derived). One value per half-wavelength cube at 500 nm, four bits each, is about 32 terabytes per cubic centimetre. Real media do not approach that. Storing M pages in one volume divides a fixed refractive-index budget, written M#, among them, and the light returned per page falls as
 
@@ -132,14 +132,14 @@ With M# = 20, 100 pages give η of 4 × 10⁻², 1,000 pages give 4 × 10⁻⁴ 
 Three consequences follow.
 
 - **Material.** The low-loss chalcogenides Sb₂S₃ and Sb₂Se₃ are preferred to the common alloy Ge₂Sb₂Te₅, which absorbs strongly when crystalline and wastes the index budget. Thick, low-loss multilayer stacks are Open.
-- **Chords, not bits.** A `.pattern` file already holds complex drive values. Storing them directly allows recall by correlation: present a partial measurement and retrieve the stored chords that match best.
-- **Recall is a hypothesis.** The memory returns a ranked guess. Every chord in a `.pattern` file must state whether it was measured or inferred, with no default, and an inferred chord must name the model and inputs it came from.
+- **Wave amplitudes, not bits.** A holographic equation and a chord both hold complex wave amplitudes. Storing them directly allows recall by correlation: present a partial measurement and retrieve the stored entries that match best. The recall code today works on chords compiled for one chamber, in the earlier `.pattern` format; recall over the chamber-independent equations has not been built.
+- **Recall is a hypothesis.** The memory returns a ranked guess. Every stored entry must state whether it was measured or inferred, with no default, and an inferred one must name the model and inputs it came from.
 
 <a id="3d-form-drawing-curriculum-oph-quarantine-and-teacher-distillation"></a>
 
 ## Training and checks in simulation
 
-All training happens on a workstation. Nothing here has touched hardware (Simulated).
+All training happens on a workstation (Simulated).
 
 - **Curriculum.** The network learns to form thirteen basic shapes (the five regular polyhedra and eight primitives such as sphere, ring, rod and helix) at arbitrary orientations. The set also holds part shapes from the earlier, retired HA-0 design, kept as test geometry only.
 - **Boundary inputs only.** Three-dimensional ground truth is used for the training loss and for scoring held-out cases. In operation the network sees only port responses and laser beams. It is also tested with each sensor alone.

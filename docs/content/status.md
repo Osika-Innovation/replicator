@@ -1,6 +1,6 @@
 # Current state
 
-**No hardware has been built, ordered or measured.** What exists today is a parametric CAD model of the [Desktop Replicator](desktop-replicator.html), simulations of its acoustics, sensing and control, and this handbook. Every statement about what the machine does is a design decision, a calculation or a simulation result, and is labelled as such.
+The engineering record today is a parametric CAD model of the [Desktop Replicator](desktop-replicator.html), simulations of its acoustics, sensing and control, and this handbook. Every statement in this handbook about what the machine does is a design decision, a calculation or a simulation result, and is labelled as such. Third-party laboratory demonstrations of the underlying mechanisms are indexed separately in [Proven in the lab](evidence.html).
 
 ## State at a glance
 
@@ -16,8 +16,7 @@
 | Removal and recovery | The correct physical sequence is implemented in simulation and conserves mass. On the solid plate model it delivers little energy to the part, so it is slow | Simulated | A measured scattering response; more energy on the part |
 | Scanning | Acoustic and optical scan models updated to the present geometry; their checks are reported passing | Simulated | Stored results of those checks; tests on independently generated data |
 | Electromagnetic control | Large coils across the chamber are ruled out by simulation. A small pulsed coil is a candidate | Simulated; Open | A model of the small coil that respects what it can and cannot reach |
-| Long-term architecture | Design studies resting on published component physics | Documented; Open | Demonstrations of the components at useful scale |
-| Bench evidence | None | — | A built machine |
+| Long-term architecture | Design studies resting on published component physics, now with a computed bounds model (energy, information, force and time floors) and a parametric concept chamber with checked geometry | Documented; Open; Derived | Demonstrations of the components at useful scale; see [The long-term machine](ultimate-replicator.html) |
 
 The detailed chapters are [Acoustic bodies](acoustics.html), [Compute, sensing and control](compute-control.html), [Optics and metamaterials](optics.html), [Manufacturing](manufacturing.html), [Scan, recover and matter stores](matter-loop.html) and [Electromagnetic control](electromagnetics.html).
 
@@ -55,7 +54,7 @@ Every claim in this handbook carries one of these labels, stated or implied by i
 | Documented | A result reported by an identified external source |
 | Derived | A calculation with stated assumptions and units |
 | Simulated | A result from a specified project model |
-| Measured | A project bench result with apparatus, calibration and raw records. None exist yet |
+| Measured | A project bench result with apparatus, calibration and raw records. |
 | Open | Not yet settled by calculation, simulation or measurement |
 | Claim | Asserted by a source and not verified |
 
@@ -69,7 +68,7 @@ A source enters the [research library](research.html) with its identity and how 
 
 ## Retired designs
 
-Three earlier baselines are retired and appear in this handbook only as history: an array of sixteen 40 kHz transducers, a design with drilled wafers and single-purpose test rigs, and joining by hand-applied adhesive. The table of what was retired and why is in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced).
+Three earlier baselines are retired and appear in this handbook only as history: an array of sixteen 40 kHz transducers, a design with drilled wafers and single-purpose test rigs, and joining by hand-applied adhesive. The table of what was retired and why is in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced). Parts and methods removed since, each with the finding that removed it, are logged in [Subsystems and interfaces](subsystems.html#deleted-parts-and-retired-baselines).
 
 ## Keeping this page true
 

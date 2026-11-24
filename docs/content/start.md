@@ -6,7 +6,7 @@ The programme has one long-term aim: a machine that makes an increasing share of
 
 ## What exists today
 
-A design, not a machine. **No hardware has been built, ordered or measured.** The current work is:
+The current work is:
 
 - a parametric CAD model of the first machine, the [Desktop Replicator](desktop-replicator.html);
 - simulations of its acoustic field, its sensors and its controller;
@@ -48,6 +48,7 @@ The microcontrollers and discrete lasers of the first machine are scaffolding. T
 
 | If you want to | Read |
 |---|---|
+| Trace every cornerstone mechanism to peer-reviewed lab experiments | [Proven in the lab](evidence.html) |
 | See the machine being designed | [Desktop Replicator](desktop-replicator.html) |
 | Know what is real today | [Current state](status.html) |
 | Look up a term | [Glossary](glossary.html) |
@@ -63,4 +64,4 @@ The handbook is the current explanation. The papers in the [research library](re
 
 ## How claims are labelled
 
-Each claim is a design decision, documented in published work, derived, simulated, measured, open or an unverified claim. The definitions are in [Current state](status.html#evidence-labels). Nothing in this handbook is labelled measured, because no project measurement exists yet.
+Each claim is a design decision, documented in published work, derived, simulated, measured, open or an unverified claim. The definitions are in [Current state](status.html#evidence-labels).

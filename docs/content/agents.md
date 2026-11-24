@@ -4,7 +4,7 @@ This page is for engineers and AI agents who will change the design, the code or
 
 ## The goal you are working toward
 
-One modular machine that lasts and that increasingly makes its own upgrades, reached with the least human hands-on time. Two things must never be confused in anything you write: the [Desktop Replicator](desktop-replicator.html), which is the first machine and is built from purchasable parts, and the long-term architecture it leads to. **No hardware has been built, ordered or measured.**
+One modular machine that lasts and that increasingly makes its own upgrades, reached with the least human hands-on time. Two things must never be confused in anything you write: the [Desktop Replicator](desktop-replicator.html), which is the first machine and is built from purchasable parts, and the long-term architecture it leads to.
 
 ## Read in this order
 

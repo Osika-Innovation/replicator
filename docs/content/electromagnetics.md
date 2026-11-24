@@ -1,6 +1,6 @@
 # Electromagnetic control
 
-This chapter covers electric and magnetic fields used to act on material: coils, induction and pulsed fields. Its message has two parts. Large coils acting across the chamber do not work, and the project's own models show why. A small pulsed ring coil at a crucible is a different case and remains open. The [Desktop Replicator](desktop-replicator.html) contains no electromagnetic process module, and nothing here has been built or measured.
+This chapter covers electric and magnetic fields used to act on material: coils, induction and pulsed fields. Its message has two parts. Large coils acting across the chamber do not work, and the project's own models show why. A small pulsed ring coil at a crucible is a different case and remains open. The [Desktop Replicator](desktop-replicator.html) contains no electromagnetic process module.
 
 Light is treated in [Optics](optics.html). The piezo discs that drive the plates are electrical parts, but they belong to [Acoustics](acoustics.html).
 

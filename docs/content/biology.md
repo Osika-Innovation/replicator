@@ -6,7 +6,7 @@ This page lists every such idea in the project, says plainly what it is, and rec
 
 ## How far this work has got
 
-Everything on this page is simulation or calculation. **No hardware has been built, ordered or measured.**
+The results on this page are simulations and calculations.
 
 - The ideas were first written for an earlier, smaller chamber that is now retired. On 18 November 2026 the sensing models and their checks were updated to the present machine: {{c:mosquito_smi.total_ommatidia}} lasers, undrilled plates {{c:desktop_geometry.gap_mm}} mm apart and a glass cylinder.
 - Three acceptance checks cover this page: one for sensing with sound, one for the laser ring and the pattern network, and one for the whole loop from scan to quality check. They were reported as passing on that date. The project has no stored record of those runs, so the result is recorded here as reported, not as verified.

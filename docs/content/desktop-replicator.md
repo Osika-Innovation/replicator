@@ -1,10 +1,10 @@
 # Desktop Replicator
 
-The Desktop Replicator is the machine we are designing to build first. It is a benchtop chamber, about the size of an espresso machine, in which two vibrating glass plates hold and move small amounts of material in mid-air while a ring of low-power lasers watches. Everything on this page is a design: **no parts have been ordered, nothing has been built and nothing has been measured.**
+The Desktop Replicator is the machine we are designing to build first. It is a benchtop chamber, about the size of an espresso machine, in which two vibrating glass plates hold and move small amounts of material in mid-air while a ring of low-power lasers watches. This page describes its design; each figure is labelled as a design decision, a calculation or a simulation result.
 
 <div class="diagram">
 <img src="../assets/desktop/desktop_iso.jpg" alt="CAD render of the Desktop Replicator. A rounded-square base and head are joined by a rear tower; between them a clear glass cylinder encloses the chamber, with a round glass plate at the floor and three small crucibles at the back." width="1600" height="1200">
-<p>CAD render. The round plate on the chamber floor is the lower acoustic wafer; an identical one faces it from the head. The crucibles at the rear hold feedstock. This is a model, not a photograph.</p>
+<p>CAD render. The round plate on the chamber floor is the lower acoustic wafer; an identical one faces it from the head. The crucibles at the rear hold feedstock.</p>
 </div>
 
 ## At a glance
@@ -21,9 +21,8 @@ The Desktop Replicator is the machine we are designing to build first. It is a b
 | Optical sensing | {{c:mosquito_smi.total_ommatidia}} laser diodes at {{c:mosquito_smi.laser_wavelength_nm}} nm that each double as their own detector, looking through the glass | Simulated |
 | Electronics | {{c:clock_and_bus.pcb_count}} circuit boards and one plug-in compute card | Design decision |
 | Controller memory | Under {{c:cadence_brain.cadence_sparse_max_kb}} kB for the on-board pattern network | Design target |
-| Electrical power | 5.7 W with the first compute card, 11.3 W with the second | Derived from assumed datasheet values |
+| Electrical power | 17.0 W with the first compute card, 22.5 W with the second, every source driven with its worst pattern | Derived from candidate-part datasheets |
 | Feedstock | Open crucibles for powder, liquid and seed parts, inside the chamber | Design decision |
-| Hardware built | None | — |
 
 A smaller configuration, called `boro12`, fits Ø{{c:desktop_geometry.boro12_reducer_wafer_mm}} mm wafers {{c:desktop_geometry.boro12_gap_mm}} mm apart into the same frame. It uses tones of {{c:desktop_geometry.boro12_comb_tones_hz|khz}} kHz and exists so that the first experiments can run on a small, cheap pair of plates.
 
@@ -84,7 +83,7 @@ All part numbers are candidates. Their electrical values were entered from memor
 
 ## Heat
 
-With the first compute card the whole machine dissipates an estimated 5.7 W, of which the {{c:mosquito_smi.total_ommatidia}} lasers account for 2.0 W. The estimated rise of the internal air is 5.5 K. This is a single-node estimate from assumed values, not a flow simulation.
+With the first compute card the whole machine dissipates an estimated 17.0 W when every source is driven with its worst pattern, of which the drive stages account for 10.9 W and the {{c:mosquito_smi.total_ommatidia}} lasers for 2.0 W. The estimated rise of the warmest internal air is 12.7 K against a limit of 20 K. This is an eleven-node estimate from candidate-part datasheet values, not a flow simulation. An earlier figure of 5.7 W predates the larger piezo discs and is superseded.
 
 One thermal rule follows from the physics of the chamber and constrains the layout: **the chamber floor must not be warmer than its ceiling.** Air heated from below overturns. For a chamber {{c:desktop_geometry.gap_mm}} mm tall the estimate is that a floor warmer than the ceiling by a few thousandths of a kelvin is enough to start that motion, and moving air drags on anything levitated in it. The base holds most of the electronics, so the default arrangement is the unstable one. The stable arrangement is a ceiling slightly warmer than the floor. How fast the air would move, and whether that drag matters next to the acoustic holding force, has not yet been calculated.
 
@@ -129,7 +128,7 @@ Ordering parts or contacting suppliers also requires explicit approval from the 
 
 ## Prototype, not destination
 
-The microcontrollers, comparators and discrete lasers above are purchasable scaffolding for a first machine. They are not the architecture the programme is aiming at. The long-term design replaces the twelve wired sources with a continuously addressable surface of roughly 100,000 optically switched elements and replaces the digital controller with wave-based computing that needs little electrical power. [Architecture](architecture.html) sets the two side by side.
+The microcontrollers, comparators and discrete lasers above are purchasable scaffolding for a first machine. They are not the architecture the programme is aiming at. The long-term design replaces the twelve wired sources with a continuously addressable surface of roughly 100,000 optically switched elements and replaces the digital controller with wave-based computing that needs little electrical power. [Architecture](architecture.html) sets the two side by side, and [Subsystems and interfaces](subsystems.html) lists the interfaces that make each replacement possible.
 
 ## Open questions
 

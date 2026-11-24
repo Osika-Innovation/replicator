@@ -9,3 +9,12 @@
 @media print{.site-header,.sidebar,.page-toc,.page-footer,.skip-link,.page-meta{display:none}.page-layout{display:block}.content-column{padding:0}body{background:white;color:black;font-size:11pt}h1{font-size:28pt}h2{font-size:18pt}a{color:inherit}.card,.callout,.diagram,pre{break-inside:avoid}table{display:table}pre{white-space:pre-wrap}h2,h3{break-after:avoid}}
 /* canon-tables: words in table cells never break mid-word; wide tables scroll. */
 th,td{overflow-wrap:normal;word-break:normal}.diagram img{display:block;margin:auto;border-radius:4px}
+/* Master block diagram: wide, scrollable on small screens, flow filter without script. */
+.diagram.master{overflow-x:auto}.diagram.master svg{max-height:none;width:100%;height:auto;min-width:720px}
+.master a.bk rect{transition:fill .12s,stroke-width .12s}.master a.bk:hover rect,.master a.bk:focus rect{fill:#fff3d6;stroke-width:2.2}.master a.bk{cursor:pointer}
+.master .flowradio{position:absolute;opacity:0;width:1px;height:1px}.master .flowradio+label{display:inline-block;margin:0 6px 12px 0;padding:4px 12px;border:1px solid var(--line);border-radius:999px;font-size:12px;cursor:pointer;background:var(--paper);color:var(--ink)}
+.master .flowradio:checked+label{background:var(--teal);border-color:var(--teal);color:#fff}.master .flowradio:focus-visible+label{outline:2px solid var(--copper);outline-offset:2px}
+.master .fl,.master .bk{transition:opacity .15s}
+#fl-matter:checked~svg .fl:not(.fl-matter),#fl-act:checked~svg .fl:not(.fl-act),#fl-sense:checked~svg .fl:not(.fl-sense),#fl-power:checked~svg .fl:not(.fl-power){opacity:.08}
+#fl-matter:checked~svg .bk:not(.on-matter),#fl-act:checked~svg .bk:not(.on-act),#fl-sense:checked~svg .bk:not(.on-sense),#fl-power:checked~svg .bk:not(.on-power){opacity:.22}
+@media print{.master .flowradio+label{display:none}}

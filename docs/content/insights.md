@@ -8,7 +8,7 @@ The register exists because findings made in one corner of the project were bein
 
 - **Finding** says what was learned.
 - **What it changes** says why it matters to the machine.
-- **Evidence** uses the labels defined in [Current state](status.html#evidence-labels). None is labelled measured, because no hardware exists.
+- **Evidence** uses the labels defined in [Current state](status.html#evidence-labels). Every finding in the register so far rests on published work, calculation or simulation.
 - **Carried into code and documents** counts the places that already reflect the finding against the places that should. A low count is not a failure of the finding. It is the list of work still to do.
 
 The checks look for specific text in specific files. They show that a finding has been written into a file, not that the resulting code is correct. Correctness is established by the model checks and, eventually, by measurement.

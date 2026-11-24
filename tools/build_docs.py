@@ -146,12 +146,38 @@ def build():
                 for paper in [p for p in DOCS if p['type'] == 'paper']:
                     rows.append(f'| [{paper["title"]}]({relative(paper["url"], d["url"])}) | {paper["status"]} | {paper["summary"]} |')
                 raw = raw.replace('<!-- PAPER_TABLE -->', '\n'.join(rows))
-                rows = ['| ID / primary source | Engineering use | Review depth |', '|---|---|---|']
-                for e in SOURCES['entries']:
-                    title = e['title'].replace('|', '/')
-                    note = e['possible_insight'].replace('|', '/')
-                    rows.append(f'| {e["id"]} · [{title}]({e["canonical_url"]}) | {note} | {e["review_status"].replace("_", " ")} |')
-                raw = raw.replace('<!-- SOURCE_TABLE -->', '\n'.join(rows))
+
+                def source_tier(e):
+                    ev = e['evidence_status'].lower()
+                    k = e['kind']
+                    if (k in {'patent', 'patent_application', 'historical_book', 'experiment_report_summary'}
+                            or 'patent' in ev or 'philosophical' in ev or 'attributed replication' in ev):
+                        return 'exploratory'
+                    if ('published experimental' in ev or 'water-tank experimental' in ev
+                            or 'published fabrication protocol' in ev or 'documented experiment' in ev
+                            or 'reported experiment' in ev or 'reports a realized' in ev
+                            or 'reports fabricated' in ev or 'experimental characterization' in ev):
+                        return 'experimental'
+                    return 'reference'
+
+                tier_defs = [
+                    ('experimental', '### 1. Published Laboratory Experiments & Fabrication Protocols',
+                     'Peer-reviewed third-party laboratory demonstrations and fabrication protocols backing Replicator subsystems. None are measurements on Replicator hardware yet.'),
+                    ('reference', '### 2. Reference Data, Datasheets, Facilities & Analytical Models',
+                     'Established physical constants, databases, operating facilities, manufacturer datasheets, and mathematical frameworks.'),
+                    ('exploratory', '### 3. Patents & Exploratory Leads (Provenance Only — Not Experimental Evidence)',
+                     'Recorded strictly for provenance and literature completeness. Patents and exploratory claims are not experimental demonstrations and do not enter Replicator design budgets.'),
+                ]
+                blocks = []
+                for key, heading, intro in tier_defs:
+                    tier_rows = [e for e in SOURCES['entries'] if source_tier(e) == key]
+                    blocks.append(heading + '\n\n' + intro + '\n\n| ID / primary source | Engineering use | Evidence class |\n|---|---|---|')
+                    for e in tier_rows:
+                        title = e['title'].replace('|', '/')
+                        note = e['possible_insight'].replace('|', '/')
+                        ev_txt = e['evidence_status'].replace('|', '/')
+                        blocks.append(f'| {e["id"]} · [{title}]({e["canonical_url"]}) | {note} | {ev_txt} |')
+                raw = raw.replace('<!-- SOURCE_TABLE -->', '\n\n'.join(blocks))
             md = markdown.Markdown(extensions=['tables', 'fenced_code', 'toc', 'sane_lists'])
             body = md.convert(raw)
             output = shell(d['title'], d['summary'], body, d['url'], d['source'], md.toc)

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "synced_at": "2026-11-22",
+  "synced_at": "2026-11-24",
   "constants": {
     "architecture_status": {
       "active_prototype": "Desktop Replicator (Rev F)",
@@ -256,8 +256,8 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 151,
-    "total_surfaces": 151,
+    "implemented_surfaces": 166,
+    "total_surfaces": 166,
     "items": [
       {
         "id": "INS-01",
@@ -546,6 +546,46 @@
         "evidence": "DERIVED",
         "implemented": 4,
         "surfaces": 4
+      },
+      {
+        "id": "INS-37",
+        "summary": "Public pages and investor documentation link every core mechanism of the Replicator to peer-reviewed third-party laboratory demonstrations across acoustic holography, coherent wave absorption, optical sound imaging, physical wave computing, crystal holographic memory, atom-tweezer arrays, and room-temperature cold welding.",
+        "effect": "Adds the Proven in the lab guide, separates published experiments from patents and exploratory claims in the research library, and adds a third-party evidence table to the engineering repository README.",
+        "evidence": "DOCUMENTED",
+        "implemented": 4,
+        "surfaces": 4
+      },
+      {
+        "id": "INS-38",
+        "summary": "Splitting calibration from 3D object understanding fixes temperature drift and lets the software model objects independently of one chamber state. A tiny live adapter tracks the chamber air and gap using 24 light rays and fresh calibration, while the main world model settles compact procedural 3D shapes into holographic equations and only commits self-rewritten weights when cached physics checks pass.",
+        "effect": "Moves chamber echo inversion out of static flash into a recalibrated boundary adapter, frees the Desktop simulation workflow to focus M5 compute on procedural 3D world modeling, and sets up the Wave 5 software tasks.",
+        "evidence": "DERIVED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-39",
+        "summary": "Distilled design rules from the binary-SSM and settling-network studies keep Wave 5 models from repeating dead ends: keep couplings symmetric and feedback-tied, gate every architecture on both determinism and input separation before training, combine modalities in one shared state, trigger growth from write-strain rather than erasing stiff weights, verify self-generated synthetic examples against held-out physics before learning from them, and map sparse settles onto fused on-chip SRAM kernels.",
+        "effect": "Establishes the concrete architecture and Apple M5 execution rules for the Wave 5 Inner-Eye and Weight-Surgeon simulation modules.",
+        "evidence": "MEASURED",
+        "implemented": 2,
+        "surfaces": 2
+      },
+      {
+        "id": "INS-40",
+        "summary": "At 160 kHz the chamber lift sits on an axial gap resonance, changing almost five-fold over half a wavelength, and depends strongly on how well the circular plate edges reflect sound. Keeping the chamber gap matched to air speed within 0.07 mm and using a hard flat border around the glass wafer turns the gap into an active tuning control rather than a fixed dimension, while unifying Desktop, freestanding, and long-term designs around a shared coaxial cylindrical stack with storage underneath the build volume.",
+        "effect": "Requires a fine gap actuator, hard sealed border ring, a zero-bead one-port resonance sweep before full array testing, and guides the coaxial cylindrical stack geometry.",
+        "evidence": "SIMULATED",
+        "implemented": 3,
+        "surfaces": 3
+      },
+      {
+        "id": "INS-41",
+        "summary": "Testing our neural architecture on unseen procedural 3D shapes showed a clear division of labour: the Prime world model reliably reconstructs scenes from echoes through live calibration updates, while goal-directed part design works better by retrieving a close match and refining it directly against a physics check. An automated held-out verifier gate blocks self-harming updates, and our local learning engine stays pinned to MIT-licensed cadence-net 0.11.0.",
+        "effect": "Separates echo reconstruction from physics-refined part synthesis, enforces verifier gating before committing weight updates, standardizes Prime model naming, and preserves the MIT dependency boundary.",
+        "evidence": "SIMULATED",
+        "implemented": 3,
+        "surfaces": 3
       }
     ],
     "notes": {
@@ -692,6 +732,26 @@
       "INS-36": {
         "summary": "Bounds for the long-term machine, worked for a 250 g iron reference object. A description of the object at 10 µm resolution fits in one cubic centimetre of holographic crystal and can be read out in under a millisecond. A description exact to the atom is about 10¹⁴ times too large to store or send. The time to make the object is set by the energy supply, about nine minutes at 10 kW, not by how fast fields or data move.",
         "effect": "Fixes the stored description at the 10 µm scale for long-term planning and identifies energy storage as the limit on build time. Does not affect the Desktop Replicator."
+      },
+      "INS-37": {
+        "summary": "Public pages and investor documentation link every core mechanism of the Replicator to peer-reviewed third-party laboratory demonstrations across acoustic holography, coherent wave absorption, optical sound imaging, physical wave computing, crystal holographic memory, atom-tweezer arrays, and room-temperature cold welding.",
+        "effect": "Adds the Proven in the lab guide, separates published experiments from patents and exploratory claims in the research library, and adds a third-party evidence table to the engineering repository README."
+      },
+      "INS-38": {
+        "summary": "Splitting calibration from 3D object understanding fixes temperature drift and lets the software model objects independently of one chamber state. A tiny live adapter tracks the chamber air and gap using 24 light rays and fresh calibration, while the main world model settles compact procedural 3D shapes into holographic equations and only commits self-rewritten weights when cached physics checks pass.",
+        "effect": "Moves chamber echo inversion out of static flash into a recalibrated boundary adapter, frees the Desktop simulation workflow to focus M5 compute on procedural 3D world modeling, and sets up the Wave 5 software tasks."
+      },
+      "INS-39": {
+        "summary": "Distilled design rules from the binary-SSM and settling-network studies keep Wave 5 models from repeating dead ends: keep couplings symmetric and feedback-tied, gate every architecture on both determinism and input separation before training, combine modalities in one shared state, trigger growth from write-strain rather than erasing stiff weights, verify self-generated synthetic examples against held-out physics before learning from them, and map sparse settles onto fused on-chip SRAM kernels.",
+        "effect": "Establishes the concrete architecture and Apple M5 execution rules for the Wave 5 Inner-Eye and Weight-Surgeon simulation modules."
+      },
+      "INS-40": {
+        "summary": "At 160 kHz the chamber lift sits on an axial gap resonance, changing almost five-fold over half a wavelength, and depends strongly on how well the circular plate edges reflect sound. Keeping the chamber gap matched to air speed within 0.07 mm and using a hard flat border around the glass wafer turns the gap into an active tuning control rather than a fixed dimension, while unifying Desktop, freestanding, and long-term designs around a shared coaxial cylindrical stack with storage underneath the build volume.",
+        "effect": "Requires a fine gap actuator, hard sealed border ring, a zero-bead one-port resonance sweep before full array testing, and guides the coaxial cylindrical stack geometry."
+      },
+      "INS-41": {
+        "summary": "Testing our neural architecture on unseen procedural 3D shapes showed a clear division of labour: the Prime world model reliably reconstructs scenes from echoes through live calibration updates, while goal-directed part design works better by retrieving a close match and refining it directly against a physics check. An automated held-out verifier gate blocks self-harming updates, and our local learning engine stays pinned to MIT-licensed cadence-net 0.11.0.",
+        "effect": "Separates echo reconstruction from physics-refined part synthesis, enforces verifier gating before committing weight updates, standardizes Prime model naming, and preserves the MIT dependency boundary."
       }
     }
   },
@@ -781,14 +841,13 @@
         "pattern": "bench[- ]measured|validated on the bench",
         "unless": "no |not |none|never|nothing|yet|once|will|until|label|means",
         "reason": "no project bench measurement exists"
+      },
+      {
+        "pattern": "[Nn]o (Replicator-specific )?hardware (has been|exists)|[Nn]othing (here |on this page |in it )?has been (ordered, )?built",
+        "reason": "the public handbook does not make blanket statements that no hardware exists (operator, 2026-11-22); label each result by its evidence instead"
       }
     ],
     "required": [
-      {
-        "doc": "status",
-        "pattern": "No hardware has been built, ordered or measured",
-        "reason": "the status page must say plainly that nothing physical exists"
-      },
       {
         "doc": "desktop-replicator",
         "pattern": "\\{\\{c:desktop_geometry\\.gap_mm\\}\\}",
