@@ -1,12 +1,14 @@
 # Acoustics
 
-Sound makes the force that holds and moves material. Two facing plates send ultrasound into the chamber, and small objects settle into the quiet pockets of the standing pattern. The same sources also listen. No figure here is Measured by this project. Every claim has an [evidence label](status.html#evidence-labels).
+Sound makes the force that holds and moves material. Driven plates send ultrasound into the chamber, and small objects settle into the quiet pockets of the standing pattern. The plan is to shape the whole 3D pattern at once, so that streamed matter settles into the programmed shape in parallel ([Manufacturing](manufacturing.html#volumetric-single-shot-assembly)). Holding one dry foam bead is only the calibration case. The same sources also listen. No figure here is Measured by this project. Every claim has an [evidence label](status.html#evidence-labels).
 
 ## The physics that matters
 
 ### Why sound carries the force
 
-Per watt, sound in air pushes close to a million times harder than light ([why](architecture.html#two-carriers-five-wavelength-decades-and-volume-crossings), Derived). Its wavelengths are millimetres at frequencies that ordinary electronics handle.
+Per watt, sound pushes 200,000 to 900,000 times harder than light (Derived): about 2.9 mN per watt in air and 0.68 mN per watt in water, against 3.3 nN per watt for a light beam ([why](architecture.html#two-carriers-five-wavelength-decades-and-volume-crossings)). Its wavelengths are millimetres at frequencies that ordinary electronics handle.
+
+So for grains larger than about 10 µm, sound is the mould: it shapes where matter goes. Light has too little force to move such grains, so it does a different job: it fixes the shape once the matter is in place ([Optics](optics.html#in-the-desktop-replicator)). Both halves are published by other groups, in liquids and gels ([Proven in the lab](evidence.html)). Neither has been simulated in this machine's cylinder yet (Open).
 
 ### Why two plates
 
@@ -103,12 +105,13 @@ With air at 1.204 kg/m³ and 343 m/s and Φ = 2.5, solid polystyrene (1,050 kg/m
 
 Consequences for the design:
 
-- **The force depends on squared amplitudes.** Reversing the sign or phase of a holding pattern gives the same force, so it cannot push material out ([why](matter-loop.html#why-reversing-a-holding-pattern-removes-nothing)). Removal is absorption at a measured resonance, then transport to a crucible (Simulated).
+- **The force depends on squared amplitudes.** Reversing the sign or phase of a holding pattern gives the same force, so it cannot push material out ([why](matter-loop.html#why-reversing-a-holding-pattern-removes-nothing)). Removal is absorption at a measured resonance, then transport to the storage bucket under the build zone (Simulated; the route through the mid-plane port is a Design decision).
 - **Tones add as forces, not as pressures (Derived).** Cross terms between two tones average to zero, so tones cannot cancel each other.
 - **Loud sound makes its own overtones (Derived).** A loud tone grows overtones at 2, 3, 4 times its pitch over a distance ρ₀c₀³ / (β ω p), with β = 1.2 for air: at 160 kHz about 270 mm at 0.15 kPa and 45 mm at 0.9 kPa. So the tones are whole multiples of 32 kHz, which mix only into other whole multiples, as do the harmonics of a [square-wave drive](compute-control.html#drive-stage).
 - **The formula has a size limit (Derived).** At 160 kHz the wavelength is 2.1 mm, so the Ø1 to 2 mm calibration spheres are not small. Forces on them need a full scattering calculation (Open).
 - **Sharing costs force (Derived).** Split a fixed power between N holding sites and the pressure at each falls as 1/√N, the force as 1/N.
 - **Holding costs only the losses (Derived).** The power needed is P = ω · E_stored / Q: 2π times the tone, times the sound energy in the chamber, divided by the quality factor Q, the number of cycles the chamber rings.
+- **A liquid changes the numbers a lot (Derived; the fluid-loaded simulation S-VOL1 is queued, Open).** In a fluid whose density is close to the matter's, the weight that sound has to carry shrinks 10 to 100 times, and the glass couples to the load about 3,600 times better than to air. That moves the wafer stress for dense solids from the 10 MPa wall toward 0.3 to 1.4 MPa. Dry static clamping, the 5 pC sticking of foam to glass, does not exist in a liquid.
 - **Dense solids are held by the air round them.** Steel reflects 99.996 % of the sound that hits it (Derived). Solid iridium, 22.6 g/cm³, has been levitated in a tuned single-axis levitator ([Xie et al., 2002](https://doi.org/10.1103/PhysRevLett.89.104304), Documented). In three dimensions with several tones it is Open, and the pressure would overstress the prototype's glass ([Drive strength and lift](#drive-strength-and-lift)).
 
 ### How fine the field can be
@@ -139,10 +142,10 @@ The echo from a 2 mm droplet is estimated at 60 to 80 dB below the drive current
 
 ## In the Desktop Replicator
 
-Two identical acoustic bodies sit in the floor and ceiling of the chamber, {{c:desktop_geometry.gap_mm}} mm apart, inside a stock glass cylinder that lifts with the head. See [Desktop Replicator](desktop-replicator.html) and the datasheet [S04 Acoustic array](subsystems.html#s04-acoustic-array).
+Three driven acoustic bodies (stacks) are built from one cartridge design: Stack 1 in the floor of the storage bucket, Stack 2 as the drop-in mid-plane cassette M1, and Stack 3 in the ceiling of the build cylinder. The build zone is the {{c:desktop_geometry.gap_mm}} mm between Stack 2 and Stack 3, inside a stock glass cylinder that lifts with the head. The acoustic simulations so far used two plates; the mid-plane study (S-UNI1) is the first on three (Simulated). See [Desktop Replicator](desktop-replicator.html) and the datasheet [S04 Acoustic array](subsystems.html#s04-acoustic-array).
 
 - **Plates.** Each is an undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} × {{c:desktop_geometry.wafer_thickness_mm}} mm borosilicate wafer ({{c:desktop_geometry.wafer_material}}) held only at its rim in a soft silicone ring, with Ø{{c:desktop_geometry.clear_glass_diameter_mm}} mm of bare glass free to vibrate.
-- **Sources.** {{c:desktop_geometry.ports_per_plate}} discs of the hard piezoceramic PZT-8, Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm, are bonded to the back of each wafer at different radii: 12 in total.
+- **Sources.** {{c:desktop_geometry.ports_per_plate}} discs of the hard piezoceramic PZT-8, Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm, are bonded to the back of each wafer at different radii: 12 across the two plates of the original simulations, and 6 more on the mid-plane cassette (Derived from CAD).
 - **Tones.** {{c:desktop_geometry.comb_tones_hz|khz}} kHz, driven together. The gap is 22 wavelengths at 32 kHz and 112 at 160 kHz.
 - **Behind the plate.** A {{c:desktop_geometry.moth_absorber_thickness_mm}} mm absorbing layer damps reflections from the cavity behind the wafer. The electronics sit within millimetres of the discs.
 - **Small preset.** `boro12` uses Ø{{c:desktop_geometry.boro12_reducer_wafer_mm}} mm wafers {{c:desktop_geometry.boro12_gap_mm}} mm apart with Ø{{c:desktop_geometry.boro12_pzt_diameter_mm}} mm discs and tones of {{c:desktop_geometry.boro12_comb_tones_hz|khz}} kHz.
@@ -174,6 +177,8 @@ None of these limits is resolved. An "earlier study" predates the rise in spacin
 
 ### Drive strength and lift
 
+**This section is the dry-air calibration case (Simulated).** It asks how hard sound must work to hold a single dry bead against gravity in air, which is the hardest version of the job. It is kept as a check that the plates, drive and readout behave as modelled. It is not how the machine is meant to build. Building happens in a buoyancy-matched fluid, where the weight to carry is far smaller ([the physics above](#the-radiation-force-and-where-traps-sit)). The fluid-loaded numbers are not simulated yet (Open).
+
 **Drive strength is the limit, and the glass sets it (Simulated).** With all twelve sources phased onto one point, the Ø{{c:desktop_geometry.pzt_diameter_mm}} × {{c:desktop_geometry.pzt_thickness_mm}} mm discs give {{c:haptic_pzt.drive_authority_pa_per_volt|and}} Pa per volt at the five tones. A solid polystyrene bead needs about 0.9 to 2.0 kPa. Larger discs lower the voltage needed but not the limit: a bending wave stresses the glass by about 21 MPa for each metre per second of plate velocity (Derived). Holding solid polystyrene puts 15 to 21 MPa in the plates and 11 to 15 W of heat. The assumed design limit is {{c:desktop_geometry.plate_bending_stress_limit_mpa}} MPa, and the glass maker's characteristic strength is {{c:desktop_geometry.plate_characteristic_strength_mpa}} MPa. More sources, a stronger plate or lighter feedstock are the ways round it.
 
 **A foam bead is the first test particle (Simulated).** A bead of 30 kg/m³ needs about one sixth of the pressure. Glass stress is then 3.7 to 5.0 MPa against the {{c:desktop_geometry.plate_bending_stress_limit_mpa}} MPa limit. The recipe is a single tone at 128 or 160 kHz on a {{c:haptic_pzt.bridge_rail_v}} V supply, which gives {{c:haptic_pzt.max_drive_v_peak_single_tone}} V at the disc. One 160 kHz tone on the full supply lifts about 1.2 times the bead's weight (1.22 in the force check) and holds 40 % of targets in three dimensions. The voltage margin is 1.19 at the median gap and 0.87 at the worst.
@@ -186,11 +191,11 @@ None of these limits is resolved. An "earlier study" predates the rise in spacin
 
 **The gap must sit on a resonance.** The chamber is loudest when the gap is a whole number of half-wavelengths. At 160 kHz that repeats every 1.07 mm of gap (Derived). The lift changes 4.7 to 4.9 times between peak and trough (Simulated). Air carries sound about 0.17 % faster per kelvin, so the best gap moves 0.41 mm per kelvin (Derived). The gap must be held to ± 0.07 mm, which means knowing the air temperature to ± 0.15 K. The specified actuator has ± 1 mm of travel in 0.02 mm steps (Design decision). It is a requirement, not yet a part ([S05 Gap actuator and resonance lock](subsystems.html#s05-gap-actuator-and-resonance-lock)).
 
-**The ends must reflect (Simulated).** The lift needs each end of the chamber to reflect at least 0.85 of the sound. Bare glass reflects almost everything. The flat ring round the lower wafer, 31 % of the end area, dominates the figure ([S03 Mid-plane interface](subsystems.html#s03-mid-plane-interface)).
+**The ends must reflect (Simulated).** The lift needs each end of the chamber to reflect at least 0.85 of the sound. Bare glass reflects almost everything. The mid-plane is the weak end. A sealed M1 cassette (an undrilled wafer, a hard flat aluminium ring out to the glass, and one 12 mm transfer port that is 0.25 % of the end area) reaches 1.9 to 2.4 times a foam bead's weight at 18 V. A mesh or retracted mid-plane reaches only 0.17 to 0.74 times, so a mesh cassette (M2) is a test and catch part, not a levitating one ([S03 Mid-plane interface](subsystems.html#s03-mid-plane-interface), Simulated). Bench Gate 0 scores the real cavity with a one-port sweep: the ratio of the second echo to the first is 0.466 at a reflection of 0.85 and 0.523 at 0.90 (Derived; not yet run).
 
 **The glass cylinder helps modestly (Simulated).** Closing the chamber with the present cylinder ({{c:desktop_geometry.glass_cylinder_id_od_mm|x}} mm inside and outside diameter) raises the pressure by {{c:desktop_geometry.chamber_gain_closed_nominal|and}} times at the five tones for the nominal spacing, and by {{c:desktop_geometry.chamber_gain_closed_gap_median|range}} times as the median over a ±20 % range of spacing. Without it the figure is 1.01 to 1.08. The sound leaves at an angle and walks off the opposite plate.
 
-**Air temperature (Derived).** Across the {{c:desktop_geometry.gap_mm}} mm spacing, one kelvin shifts the phase by roughly 70° at 160 kHz and 14° at 32 kHz. The warmest air inside the enclosure is estimated at 12.7 K above the room, against a 20 K limit, and the ceiling wafer runs 1.9 K warmer than the floor wafer ([Heat](desktop-replicator.html#heat)).
+**Air temperature (Derived).** Across the {{c:desktop_geometry.gap_mm}} mm spacing, one kelvin shifts the phase by roughly 70° at 160 kHz and 14° at 32 kHz. Heat from the base warms the lower glass by about 0.6 K at the bottom wafer and 0.2 K at the build floor, and the goal is under 0.05 K (Derived, Open; [Heat](desktop-replicator.html#heat)). The head's gap steppers can follow about ±2.4 K of air drift.
 
 **Calibration goes stale quickly (Simulated).** The measured response stays valid (correlation 0.97, where 1 is a perfect match) after a {{c:desktop_geometry.air_temp_tolerance_k}} K change in air temperature or a 50 µm change in spacing. After 0.5 K it falls to 0.63, and after 200 µm to 0.65. It has to be re-measured or tracked after every head lift and every few tenths of a kelvin ([Metrology and calibration](subsystems.html#s10-metrology-and-calibration)).
 

@@ -122,7 +122,7 @@ The pressure field is p = H·u. Here u is the drive signals and H the chamber's 
 
 Sound takes time to cross the chamber, so a mirrored drive does not mirror the field. Even if it did, the [radiation force](acoustics.html#the-radiation-force-and-where-traps-sit) depends only on the squared size of the pressure and of its slope. The same trap is rebuilt. Negative sound intensity, which would push material out of a well, does not exist.
 
-The simulation and the twin now implement removal as absorption at a measured resonance followed by transport to a crucible (Simulated). The earlier shortcut, replaying a mirrored holding pattern, was wrong and has been removed from the code.
+The simulation and the twin now implement removal as absorption at a measured resonance followed by transport to a store (Simulated; in revision S the store is the bucket under the mid-plane, route Open). The earlier shortcut, replaying a mirrored holding pattern, was wrong and has been removed from the code.
 
 ### The four-stage sequence
 
@@ -151,7 +151,7 @@ The model keeps two fields: density ρ(x), which says where material is, and bon
 1. **Ring-down scan.** Excite the chamber briefly at low power and read the joint's resonances ([scanning](#scan-non-moving-3d-tomography-and-scattering)).
 2. **Absorption at a measured resonance.** The machine searches for the mix of drive signals that sends the least sound back (the smallest singular vector of S at that frequency). The energy goes into whatever is lossy at that resonance. That is the joint only if the joint is the lossy part (Derived). It may be the air, glass or mounts. Perfect absorption is Documented in optics ([Chong et al., 2010](https://doi.org/10.1103/PhysRevLett.105.053901); [Wan et al., 2011](https://doi.org/10.1126/science.1200735)). Energy in a joint may only warm, bend or damage it. It does not undo chemistry.
 3. **Cold unbinding.** Break the bond without heating the bulk, with short, high-peak pulses at a very low duty cycle, or a pulsed electric field from a [small ring coil at a crucible](electromagnetics.html#what-remains-open-a-small-pulsed-ring-coil-at-a-crucible). Which joints this releases is Open.
-4. **Return to a crucible.** Reshape the field so the freed fragment sits on a slope instead of in a well, and carry it back. Mass in the part plus mass in the stores stays constant.
+4. **Return to a store.** Reshape the field so the freed fragment sits on a slope instead of in a well, and carry it back. Mass in the part plus mass in the stores stays constant.
 
 **Time reversal is a way to aim (Documented: [Fink, 1992](https://doi.org/10.1109/58.156174); [Wu et al., 1992](https://doi.org/10.1109/58.156175); [Draeger and Fink, 1997](https://doi.org/10.1103/PhysRevLett.79.407)).** Record how a sound arrives, play the recording backwards, and the sound returns to where it came from. This works while the chamber stays the same between recording and playback. More sources and more tones sharpen the focus. It puts energy in a known place. It does not choose which bond breaks and does not remove material. A joint changes as it is worked, so the recording is renewed.
 
@@ -187,11 +187,11 @@ The equation store holds information. The matter stores hold atoms.
 | Store | Holds | Constraint | In the Desktop Replicator |
 |---|---|---|---|
 | Equation store | [Holographic equations](compute-control.html#holographic-equations) of objects, the calibrated chamber response, the trained [pattern network](cadence-memory.html), build recipes | Storage capacity; every item tagged measured or inferred | Workstation disk, plus under {{c:cadence_brain.cadence_sparse_max_kb}} kB on the compute card |
-| Matter stores | Feed materials | Conservation of mass, chemical stability, safety | Three open crucibles in the chamber: {{c:desktop_geometry.in_chamber_crucibles}} |
+| Matter stores | Feed materials | Conservation of mass, chemical stability, safety | Revision S: one storage bucket under the mid-plane cassette. The earlier three open crucibles are retired |
 
 ### Stores in the Desktop Replicator
 
-The crucibles hold material of recorded origin. Below the chamber, the plinth holds three stock bottles on weigh cells and one liquid line, and solids are dosed by hand with the head raised (Derived design; pump and weigh cells Open). See [Storage and release plinth](subsystems.html#s02-storage-and-release-plinth).
+The store holds material of recorded origin. In revision S it is a fixed 10-litre glass bucket under the chamber, with a waterproof plug as its floor. The earlier bottles, pump, liquid line and weigh cells are not in the default CAD, so how feed is dosed and weighed is Open ([Storage and release plinth](subsystems.html#s02-storage-and-release-plinth)).
 
 **Material moves as neutral grains (Design decision).** A stream of charged particles would repel itself and screen the fields meant to steer it. Stray static charge on a bead is limited to {{c:electrostatics_and_matter_loop.max_bead_charge_pc}} pC by grounded, slightly conductive glass and controlled humidity ([Desktop Replicator](desktop-replicator.html#the-enclosure)).
 

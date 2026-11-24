@@ -256,8 +256,8 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 168,
-    "total_surfaces": 168,
+    "implemented_surfaces": 169,
+    "total_surfaces": 170,
     "items": [
       {
         "id": "INS-01",
@@ -368,7 +368,7 @@
         "summary": "The enclosure became a rounded-square body with a rear tower that carries structure, cabling and cooling air outside the chamber.",
         "effect": "Makes the machine loadable and serviceable.",
         "evidence": "DERIVED",
-        "implemented": 6,
+        "implemented": 5,
         "surfaces": 6
       },
       {
@@ -594,6 +594,14 @@
         "evidence": "DOCUMENTED",
         "implemented": 2,
         "surfaces": 2
+      },
+      {
+        "id": "INS-43",
+        "summary": "The machine is now planned to build a whole 3D shape at once instead of placing one dry foam bead after another in air.",
+        "effect": "Sound gathers matter into the programmed shape in parallel, and patterned light locks it in one exposure. The dry foam-bead lift stays as a calibration check only, and the old list of seven known problems became four active gates.",
+        "evidence": "DERIVED",
+        "implemented": 2,
+        "surfaces": 2
       }
     ],
     "notes": {
@@ -764,6 +772,10 @@
       "INS-42": {
         "summary": "A search of 2024 to 2026 laboratory papers found a newer published result for each of the eight evidence areas.",
         "effect": "The evidence page can cite current work. One 2025 result suggests static charge could be used to control bead spacing, which changes how the charge limit is read."
+      },
+      "INS-43": {
+        "summary": "The machine is now planned to build a whole 3D shape at once instead of placing one dry foam bead after another in air.",
+        "effect": "Sound gathers matter into the programmed shape in parallel, and patterned light locks it in one exposure. The dry foam-bead lift stays as a calibration check only, and the old list of seven known problems became four active gates."
       }
     }
   },

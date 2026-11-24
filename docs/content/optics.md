@@ -1,6 +1,6 @@
 # Optics and optical metamaterials
 
-In the prototype, light has one job: it measures. A ring of small laser diodes looks across the chamber and reports where material is and what the sound field is doing. In the long-term design, light also switches the acoustic elements, cures and heats material, and handles particles too small for sound.
+Light has two jobs in the machine. The first is to measure: a ring of small laser diodes looks across the chamber and reports where material is and what the sound field is doing. The second is to lock: after sound has gathered matter into the programmed 3D shape, patterned light fixes it in place in one exposure. Sound is far stronger per watt, so it does the moving ([Acoustics](acoustics.html#why-sound-carries-the-force)). Light is too weak to move grains larger than about 10 µm, but it is precise, so it does the fixing. In the long-term design, light also switches the acoustic elements and handles particles too small for sound. Measuring is in the Desktop Replicator's CAD. Locking is a Design decision with no simulation yet (Open).
 
 Optics shares one coordinate frame with [acoustics](acoustics.html) and [electromagnetic control](electromagnetics.html). The whole machine is in [Desktop Replicator](desktop-replicator.html).
 
@@ -39,9 +39,18 @@ The prototype uses {{c:mosquito_smi.total_ommatidia}} laser diodes at {{c:mosqui
 
 - **Layout.** The diodes sit on two strips beside the rear tower, at azimuth ±{{c:mosquito_smi.window_azimuth_deg}}°. Each beam crosses the chamber to a retro-reflective strip, which sends light back the way it came, on a post at ∓{{c:mosquito_smi.retro_azimuth_deg}}°. The two sets of beams cross in the work volume. That gives two shadow views, not a three-dimensional image.
 - **Detector.** Each diode is a standard three-pin package with a built-in monitor photodiode. Its signal is amplified and read by a fast comparator ({{c:mosquito_smi.comparator_mpn}}), a part that reports only "above" or "below". The piezo discs no longer use this 1-bit scheme: it failed its simulated test there and was replaced by a 16-bit converter. See [Laser readout electronics](compute-control.html#laser-readout-electronics).
+- **The six flat panels.** In revision S, six flat aluminium panels, each about 57 mm wide and 2.5 mm thick, line the rear half of the inside of both glass cylinders. They carry the air-temperature and humidity sensors and sound-absorbing baffles. Two panels are left open over the laser band. Sensors inside the glass avoid the lens effect of the curved 5 mm wall. The panels are plain today. Later rungs can swap in active light or sound tiles without changing the glass (Derived from CAD).
 - **What is not there.** No cameras, facets or ultraviolet cure module. The wafers are undrilled, so no beam passes through a plate.
 
 **Laser safety.** The clear glass wall lets laser light out, so it is not a laser enclosure. A hardware safety switch sits in series with the laser supply and the supply that enables the drive stages. With the head up, the lasers are off and the drive stages are disconnected. Firmware also refuses to drive ([Thermal and safety](subsystems.html#s11-thermal-and-safety)). The candidate diodes are rated up to 5 mW each and none is selected. The laser class is Open and must be settled before the lasers are operated.
+
+### Locking the shape in one shot
+
+**What others have shown (Documented).** A computed pattern of light can harden a 3D object all at once instead of point by point. [Wang, Dai et al., *Nature* 2026](https://doi.org/10.1038/s41586-026-10114-5) printed millimetre parts in 0.6 s with 19 µm detail across 1 cm of depth, also inside a liquid channel ([Proven in the lab](evidence.html)). Sound and light together, one to arrange and one to harden, has been done in liquid resin ([Greenhall and Raeymaekers, 2017](https://doi.org/10.1002/admt.201700122)).
+
+**What the machine plans (Design decision; Open).** After the sound field has gathered the feedstock, light shone through the clear cylinder wall and the six panels' windows sets the shape in one exposure. The medium would be a liquid or slurry whose density matches the feedstock, and it must also be a material that light hardens. None of this is in the CAD or the simulations yet. It is queued as part of S-VOL1.
+
+**What decides it (Open).** The light dose has to reach the whole shape through a curved glass wall and a cloudy slurry. A part that has been hardened must also be recoverable, because the machine has to be able to take it apart again ([Removal and recovery](matter-loop.html)).
 
 Signal size and amplifier bandwidth are also [Open](#open-questions). Inside opaque powder the beams see nothing, and [acoustic sensing through the piezo discs](acoustics.html#self-sensing-on-the-same-two-wires) takes over. The retired optical layout is listed in [Desktop Replicator](desktop-replicator.html#what-this-design-replaced).
 
@@ -82,7 +91,7 @@ Some wave patterns carry a whole-number tag, such as how many times the field wr
 ## Long-term direction
 
 - **Switching the acoustic surface.** Light, not wires, selects what each element of the light-switched surface does. See [Acoustics](acoustics.html#long-term-direction).
-- **Patterned illumination.** A reconfigurable [metasurface](glossary.html) modulator shapes light for curing and heating. [Fan et al., 2026](https://doi.org/10.1038/s41565-026-02128-x) showed visible holography with an optically addressed metasurface at 756 nm pixel pitch (Documented). Pitch is a property of the modulator. It is not a guaranteed resolution in the chamber.
+- **Patterned illumination.** A reconfigurable [metasurface](glossary.html) modulator shapes light for locking and heating. [Fan et al., 2026](https://doi.org/10.1038/s41565-026-02128-x) showed visible holography with an optically addressed metasurface at 756 nm pixel pitch (Documented). Pitch is a property of the modulator. It is not a guaranteed resolution in the chamber.
 - **Small particles.** Light takes over below the sizes sound can place. See [The size ladder for optical traps](#the-size-ladder-for-optical-traps).
 - **Light-to-sound coupling.** Patterned light absorbed at a surface heats it, and the swelling launches sound (photoacoustics). It is a candidate for trimming the sound field and checking it independently. Each lit spot is a sound source in a new place, which adds views to a [scan](matter-loop.html#scan-non-moving-3d-tomography-and-scattering) with no extra transducers. Half-on, half-off patterns give less noisy readings than one moving dot (Claim; use in the chamber is Open).
 - **Passive optical processing.** A patterned piece of glass rearranges light before the detector. It does one fixed sum and uses no electricity. Diffractive facets in front of the laser ring are a later upgrade of this kind.
@@ -100,7 +109,7 @@ A tightly focused beam pulls a small clear particle toward its brightest point. 
 | Optical tweezer | About 10 µm down to about 10 nm | The trap is about half a light wavelength wide. Forces are piconewtons (a millionth of a millionth of a newton). Positioning reaches nanometres |
 | Near-field trap | Below a few tens of nanometres | The pull shrinks with the particle's volume. For tiny particles, heat jiggling beats a plain trap |
 
-One computed hologram can make many traps and steer each one ([Grier, 2003](https://doi.org/10.1038/nature01935), Documented). The plan is that sound carries a piece into reach and light does the last alignment. Trap stiffness, heating and the hand-over are Open. No published work shows the two working together in one chamber. Nanometre-scale building is not claimed.
+One computed hologram can make many traps and steer each one ([Grier, 2003](https://doi.org/10.1038/nature01935), Documented). At the extreme, [Holman et al., *Nature* 2026](https://doi.org/10.1038/s41586-025-09961-5) trapped single atoms in a flat metasurface's array of about 360,000 traps, so the hologram is the machine for atoms and very small particles (Documented; the long-term rung, not the desktop). The plan is that sound carries a piece into reach and light does the last alignment. Trap stiffness, heating and the hand-over are Open. No published work shows the two working together in one chamber. Nanometre-scale building is not claimed.
 
 ### Printed radiating surfaces
 

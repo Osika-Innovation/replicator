@@ -18,22 +18,22 @@ One axis runs from the plinth at the bottom to the head at the top. The stack is
 
 | Zone | What it holds | Datasheet |
 |---|---|---|
-| Plinth | Base, boards, power supply, the lower acoustic plate | [S08 Control and firmware](subsystems.html#s08-control-and-firmware), [S04 Acoustic array](subsystems.html#s04-acoustic-array) |
+| Plinth | Base, boards, power supply, the lower acoustic plate, and the 45° console wedge with the 7-inch touchscreen | [S08 Control and firmware](subsystems.html#s08-control-and-firmware), [S04 Acoustic array](subsystems.html#s04-acoustic-array) |
 | Storage bucket | A fixed glass tube, the same size as the build tube, for feedstock | [S02 Storage and release](subsystems.html#s02-storage-and-release-plinth) |
 | Mid-plane | The slot and the cassette: a flat wafer in a hard ring that reflects sound and lifts out by hand | [S03 Mid-plane interface](subsystems.html#s03-mid-plane-interface) |
 | Build cylinder | The lifting glass tube, the rear liner and the laser ring | [S01 Chamber and stack](subsystems.html#s01-chamber-and-stack-topology), [S06 Optical ring](subsystems.html#s06-optical-tomography) |
-| Head | The upper acoustic plate, three gap actuators, the display | [S05 Gap lock](subsystems.html#s05-gap-actuator-and-resonance-lock) |
+| Head | The upper acoustic plate and three gap actuators | [S05 Gap lock](subsystems.html#s05-gap-actuator-and-resonance-lock) |
 | Rear tower | The rails the head rides on, the cooling duct, the laser strips | [Desktop Replicator](desktop-replicator.html#the-enclosure) |
 
 ## How the model is made
 
 The twin generates the model from a parametric description, so a change to a number in the design redraws every part that depends on it. The same description writes an exact solid model (STEP files) and the mesh in this viewer. The geometry checks confirm that the solids close, that parts do not collide and that the mesh matches the exact solids. Those checks show the model is self-consistent. They do not show that the machine works ([Digital twin](digital-twin.html#what-each-kind-of-check-proves)).
 
-The viewer shows the current default build, called Rev S in the design files. It is the first model with the storage bucket and the mid-plane cassette directly under the build chamber, as the [architecture](architecture.html) describes. Part descriptions are written for this page. Sizes are the bounding box of each part in millimetres, read from the mesh.
+The viewer shows the current default build, called Rev S in the design files: 380 × 294 × 644 mm closed and about 21 kg (Derived from the model; the screen module's mass is assumed). It is the first model with the storage bucket and the mid-plane cassette directly under the build chamber, as the [architecture](architecture.html) describes. Part descriptions are written for this page. Sizes are the bounding box of each part in millimetres, read from the mesh.
 
 ## What the model does not settle
 
-- No acoustic simulation covers the bucket, the hard ring, the gate seam or the mesh variant of the cassette yet (*Open*).
+- One acoustic study covers the sealed cassette, its 12 mm port and the mesh variant (*Simulated*, S-UNI1). None covers the bucket's contents, the six rear panels or the fluid-filled cylinder (*Open*).
 - The mechanisms for the transfer gate, the cassette's seats, the rim contact and the actuator brackets are not designed (*Open*).
 - The thermal split between the plinth and the chamber floors is not yet met in the lumped model (*Simulated*).
 - The cooling and wiring paths are drawn as space claims. Cables are not shown.
