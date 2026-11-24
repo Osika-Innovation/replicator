@@ -8,7 +8,8 @@ OUT="${TMPDIR:-/tmp}/desktop_fw_host"
 mkdir -p "$OUT"
 python3 tests/check_constants.py
 cc -std=c11 -O2 -Wall -Wextra -Werror -o "$OUT/host_test" tests/host_test.c \
-   lockin_xor.c cadence_sparse_q8.c frame_scheduler.c pulse_shocklet.c spinal_bus.c -lm
+   lockin_xor.c cadence_sparse_q8.c frame_scheduler.c pulse_shocklet.c spinal_bus.c \
+   resonance_lock.c bench_gate0.c plinth_io.c desktop_ram.c -lm
 # CSQ8 images SIM exported; the NumPy reference settles one input for the C loader to match.
 # PY=/path/to/python with MLX also cross-checks the reference against SIM's own class.
 export CSQ8_DIR="${CSQ8_DIR:-$(cd ../../../holo/runs 2>/dev/null && pwd)}" CSQ8_REF="$OUT"

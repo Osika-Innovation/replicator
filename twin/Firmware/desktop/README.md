@@ -2,7 +2,7 @@
 
 Firmware for the six `RP2350B` of the Desktop Replicator Rev F (240 mm chamber, lifting glass cylinder). Numbers come from [`coordination/system_constants.json`](../../../coordination/system_constants.json) through [`desktop_constants.h`](desktop_constants.h); `tests/check_constants.py` fails the test run if the header drifts.
 
-**Status.** Everything that does not touch a pin is written and tested on the host (`./run_host_tests.sh`: 295 checks, and 42 constants against `coordination/system_constants.json` with 0 drifted). The `.pio` files assembled with `pioasm` from pico-sdk 2.x on 2026-11-22 and have not been re-assembled since: `#40` changed comments only, `#58` added comments and one `.define` to `haptic.pio`. The C modules compile for Cortex-M33 (`arm-none-eabi-gcc 15.2 -O2 -Wall -Wextra -Werror`, hard float, re-checked 2026-11-22 after the `#77` changes; against stub libc headers, so nothing is linked). **Nothing here has run on a board.** There is no `main`, no board file and no CMake build yet, the pin map below is a proposal. `P0` firmware (`../p0/`) is untouched.
+**Status.** Everything that does not touch a pin is written and tested on the host (`./run_host_tests.sh`: 411 checks, and 42 constants against `coordination/system_constants.json` with 0 drifted). The `.pio` files assembled with `pioasm` from pico-sdk 2.x on 2026-11-22 and have not been re-assembled since: `#40` changed comments only, `#58` added comments and one `.define` to `haptic.pio`. The C modules compile for Cortex-M33 (`arm-none-eabi-gcc 15.2 -O2 -Wall -Wextra -Werror`, hard float, re-checked 2026-11-24 after the `#93` changes; `-ffreestanding` against stub `math.h` / `string.h`, so nothing is linked). **Nothing here has run on a board.** There is no `main`, no board file and no CMake build yet, the pin map below is a proposal. `P0` firmware (`../p0/`) is untouched.
 
 ## Files
 
@@ -17,6 +17,10 @@ Firmware for the six `RP2350B` of the Desktop Replicator Rev F (240 mm chamber, 
 | `tests/lmq8_reference.py` | `LMQ8` images at +0 / +0.3 / +1 K, one goal packet and scenes, from SIM's operators and functions | `INS-38` |
 | `frame_scheduler.c` | 95 % CF / 5 % FM frames, ternary comb and chirp patterns (zero = both legs low) on the 6.67 ns or the 100 ns grid, three comb pulse-length profiles, the three-level 120° single-tone pattern, receive windows on the shared enable, head-down interlock | `INS-07`, `INS-22` |
 | `pulse_shocklet.c` | One-bit time reversal and ring (toroidal) shocklet bursts, duty-limited | `INS-12` |
+| `resonance_lock.c` | Holds gap / c: takes LightRead's `(c_air, gap)` or a sweep's detune, gives one gap step of at most 0.02 mm per frame, says whether the cavity is in lock | `INS-40` |
+| `bench_gate0.c` | Bench Gate 0: the 158–162 kHz one-port sweep, the linewidth and `r_eff` estimate, the USB messages | `INS-40` |
+| `plinth_io.c` | Pin budget of the lamina and plinth MCUs; load cells, pump and humidity interlocks; dose by loss of weight | `INS-31`, `INS-40` |
+| `desktop_ram.h`, `desktop_ram.c` | The compile-time RAM sum | |
 | `tests/host_test.c` | Host tests of all of the above | |
 
 ## Timing
@@ -73,6 +77,7 @@ Conclusion for the front-end choice: on cycle budget alone the ADC path serves e
 | The reference against SIM's own `SparseCadenceQ8.settle` (run with `PY=` an MLX Python) | agrees to 1.1e-7 |
 | `CSQ8` settle cost | 61 120 and 50 752 complex MACs (66 % and 65 % of pushing every block every step): 6.1 ms and 5.0 ms at SIM's `ASSUMED` 8 cycles per MAC and 60 per soma |
 | RAM of the Card 1 brain (`#77`) | settle state 15.4 kB + live-M calibration slot 43.3 kB = 58.7 kB of the 60 kB (58 748 B on Cortex-M33). The `CSQ8` image (35.7 or 39.1 kB) is flash and is not counted |
+| Static RAM with `#93` | settle 15 432 + calibration slot 43 360 + scheduler 32 + resonance lock 68 + Bench Gate 0 424 + plinth 128 = **59 444 B** on the host, **59 392 B** on Cortex-M33, of 60 000. 608 B are left |
 | One `HLEQ` packet read through a live `LMQ8` calibration at +0 / +0.3 / +1 K | 99.7 % / 100 % / 100 % exact occupancy on 320 scenes each (`SIMULATED` scenes); through the stale calibration 99.7 % / 20.9 % / 16.6 % |
 | `HLEQ v1` packet from NumPy, 6 strokes × 64 outputs | 1 556 bytes; loads; all 12 448 one-bit errors refused, every one in the biases, CRC, echo norm or tolerance as `HLEQ_BAD_CRC`; NaN, infinity, tolerance 0 or NaN, reserved flag refused as `HLEQ_BAD_VALUE` with a correct CRC |
 | `csq8_settle_biased` against NumPy, 6 strokes per image, event threshold off | worst difference 2.5e-7 and 3.3e-7. **The spec's `< 2e-7` is not met**; the test holds 1e-6 (see below) |
@@ -164,6 +169,105 @@ Four things to know:
 3. **The inverse is built off the MCU.** The firmware applies it. Solving the ridge system from a measured site dictionary on Card 1 is not written.
 4. **`verify_tol` and `echo_norm_q15` of the packet are still unused.** The verdict here is the mismatch count; the spec does not say how the tolerance should be applied.
 
+## Resonance lock: gap / c (`#93`, `INS-40`)
+
+SIM `#79`: the 160 kHz lift is a resonance of the gap, 4.7–4.9× from trough to peak over 1.07 mm, and holding gap / c at its calibrated value restores full lift at +0.9 K with the nominal drive. `resonance_lock.c` is that control law. It moves nothing itself: it returns the step and the caller passes it to the gap actuator.
+
+- **Law.** `c = 331.3 √(T / 273.15)`, so the gap follows the air by `gap / 2T` = **0.4093 mm/K** at 240 mm and 20 °C (SIM: 0.41). Target gap = `gap_ref · c / c_ref`.
+- **Two observations.** LightRead's fit `(c_air, gap)` (`LM-1`: 0.0005 K and 0.28 µm median) gives the error directly. A one-port sweep gives where the resonance nearest the tone sits, and the error is `gap · detune / tone` (170 Hz = 0.255 mm). The sweep sees only gap / c, which is all the lock needs.
+- **Step.** One per 10 ms frame, at most 0.02 mm, none inside a 0.002 mm deadband. Between observations the error is the last one less the steps made since, so a slow observer does not make it overshoot.
+- **In lock** means inside ±0.06 mm and ±0.15 K (0.0614 mm), the tighter of the two.
+
+Host test (`SIMULATED` plant: the gap is the sum of the steps, no backlash, no actuator lag):
+
+| Case | Result |
+|---|---|
+| Air warms 0.9 K in 90 s, LightRead every 100 ms with 2 µm and 0.003 K of noise | worst error 0.0037 mm = 0.009 K; largest step 0.0063 mm; never out of lock. Without control 0.368 mm |
+| Head closes 0.2 mm short with the air 0.3 K warm (error 0.323 mm) | in lock on the 14th frame (140 ms), no overshoot, every step 0.02 mm or less |
+| 0.2 K/s for 5 s | worst error 0.0074 mm: the lag of one observation period |
+| A sweep that finds the resonance 60 Hz below the tone | moved −0.090 mm in 5 steps, in lock |
+
+Refused or held, each with its own code: no observation yet; one older than 1 s; `c` outside 300–380 m/s or a gap more than 2 mm from nominal; a resonance spacing more than 10 % from `c / 2 gap`; head up (the observation is dropped, since the gap after a lift is unknown); the end of the actuator's travel.
+
+Three things to know:
+
+1. **There is no gap actuator.** The lifting head has a 150 mm stroke and nothing in CAD resolves 0.02 mm. Travel (±0.6 mm), resolution (0.002 mm) and the absence of backlash are `ASSUMED`. `OPEN` for CAD.
+2. **`gap_ref` must be the gap on the resonance,** not the drawing's 240.0 mm. SIM `#79` has the best lift at −0.05 mm from nominal. Bench Gate 0's detune gives it.
+3. **The lock does not gate the drive.** `rl_state.locked` is there for the planner; `fs_gate` does not read it, because Bench Gate 0 has to drive an unlocked cavity.
+
+## Bench Gate 0 (`#93`, `INS-40`)
+
+SIM `#82`: the peak lift scales with the end reflection (0.65× bead weight at 0.70, 1.1–1.4× at 0.88, 2.2× for bare glass), and 0.88 is `ASSUMED`. The first bench number to take is the width of the axial resonance, with one PZT, one receive channel and no bead.
+
+**The sweep.** One port plays the three-level full-rail tone; a port of another enable group is held high impedance and read through its `AD7380` channel. 158–162 kHz in 201 points of 20 Hz, two frames per point: **402 frames, 4.02 s**. The band holds five resonances 715 Hz apart. The magnitudes are kept as 201 × `uint16` (402 B). `bg0_begin` arms through the scheduler's gate, so it needs the head down, and refuses a receive port in the driving port's group and a board with one shared enable. A head lift during the sweep voids it.
+
+**The estimate.** The power response of a cavity with round-trip amplitude factor ρ is the Airy comb, whose Fourier series over one spacing is `1 + 2 Σ ρⁿ cos nx`. With `C_n` the Fourier coefficients of the measured power over a whole number of spacings: `ρ = |C1| / C0`, also `ρ = |C2| / |C1|`, the phase of `C1` is the detune, and the width is `fsr · (2/π) asin((1 − ρ) / 2√ρ)`. The smaller ρ is used. The spacing is searched ±3 % around `c / 2 gap`. Then two readings of the reflection:
+
+- plane wave: `ρ = r² exp(−2 α gap)` with α = 0.69 Np/m at 160 kHz (`DERIVED` from the ISO 9613-1 form at 20 °C, 50 % RH, from memory of the standard; to be checked);
+- SIM anchors: `#82`'s widths in gap, 0.15 mm near-rigid, 0.25 mm = 0.88, 0.35 mm = 0.70 (`SIMULATED`, read on a 0.05 mm grid).
+
+The gate is `r_eff ≥ 0.85`: PASS when both readings say so, FAIL when neither does, MARGINAL between.
+
+Host test on a synthetic Airy comb (`SIMULATED`; "rough" adds a 20 % transducer slope across the band, noise of 0.5 % of the peak and a 3 % floor):
+
+| End reflection | Width, analytic | Clean: width, r plane wave, r SIM anchor | Rough: the same |
+|---|---|---|---|
+| 0.70 | 263.1 Hz | 261.9 Hz, 0.701, 0.623: FAIL | 283.8 Hz, 0.677, 0.564: FAIL |
+| 0.82 | 173.6 Hz | 173.3 Hz, 0.820, 0.862: MARGINAL | 182.6 Hz, 0.805, 0.837: FAIL |
+| 0.88 | 137.6 Hz | 137.5 Hz, 0.880, 0.928: PASS | 145.3 Hz, 0.866, 0.915: PASS |
+| 0.95 | 100.3 Hz | 100.4 Hz, 0.950, 0.989: PASS | 108.9 Hz, 0.933, 0.975: PASS |
+| 0.99 | 80.8 Hz | 80.9 Hz, 0.990, 0.990: PASS | 90.5 Hz, 0.969, 0.990: PASS |
+
+- The detune is found within 3 Hz clean and 8 Hz rough (0.012 mm of gap).
+- With the air 3 K warm and the gap 0.5 mm off the values given to the estimate: r 0.880, detune within 0.5 Hz, spacing 713.6 Hz against 717.2. **The spacing is only good to about 1 %**: five periods do not pin it. Do not read `c / gap` from it.
+- One 500 µs burst locks in a tone that is not a whole number of periods to within 0.20 % of amplitude.
+- A dead channel and a flat response return `BG0_NO_RESONANCE`.
+
+Four things to know:
+
+1. **The two readings disagree by about 0.05.** SIM's three widths through the plane-wave formula give 0.951, 0.831 and 0.736 where SIM has near-rigid, 0.88 and 0.70. At SIM's own 0.25 mm the plane-wave reading is below the gate and the anchor reading above it. So a chamber that really is at 0.88 by SIM's model may read MARGINAL here. SIM (`#90`) should say how its width is defined (of pressure or of lift, at what level) and what absorption it carries; then one reading can go.
+2. **Noise and floor read low.** The rough case loses 0.015–0.025 of r. The bias is toward FAIL.
+3. **Magnitude only.** A coherent path from the driving port through the wafer to the receiving port adds to the acoustic signal and bends the line. The points sent to the host carry re and im so that a baseline can be taken out there; neither the firmware nor the Swift estimate does it yet.
+4. **One Airy comb for a chamber with about 25 000 duct modes at 160 kHz.** Oblique modes have other axial spacings. If they smear the comb, `ρ2` falls below `ρ1` and the estimate reads lower; how much is not known until SIM's field or the bench gives a real sweep.
+
+**Over USB-C** (little-endian, CRC-32 as `HLEQ`): start `"BG0S"` 24 B, one `"BG0P"` point per tone 24 B (index, Hz, re, im), result `"BG0R"` 44 B. Layouts are in `bench_gate0.h`. The host side is `twin/Sources/FieldCore/Machine/BenchGate0.swift`: it writes the start message (same bytes: CRC `3b768c99` in both test suites and from `zlib`), reads points and results, and has the same estimate in doubles. The USB transport itself (CDC, framing of the stream) is not written; there is no `main`.
+
+## Plinth I/O (`#93`, `CAD #84`, `INS-31`)
+
+`plinth_io.c`. Parts are `OPEN` in CAD; `ASSUMED` here: `HX711`-class 24-bit bridge ADCs on one shared clock, a two-input reversible pump bridge with an enable, an I²C humidity sensor, a step/direction gap actuator.
+
+| Interlock | Rule | On violation |
+|---|---|---|
+| Pump | runs only with the head down; a missing reader is an open head | pump off, fault latched until cleared with the head down |
+| Humidity | a drive that will carry matter starts only at 45–55 % RH from a reading at most 5 s old | start refused (`RH_LOW`, `RH_HIGH`, `RH_STALE`). It is a start gate and a flag, not a trip: dropping the field under a bead because the air dried would drop the bead |
+| Load cell | a dose is metered by the liquid bottle's loss of weight | stops at the target; stops and latches on no loss of weight after 3 s, on 60 s, or on a cell that stops answering |
+| Dose request | at most 50 g, and not below the bottle's empty weight | refused |
+
+- The empty-chamber sweep needs the head down and nothing else: Bench Gate 0 runs at any humidity.
+- A draw back is timed (at most 5 s), not weighed, and needs only the head down.
+- Host test: a 5 g dose at an `ASSUMED` 0.5 g/s with the cell read 10 times a second stops after 10.00 s with 5.000 g logged. With a real cell the overshoot is one cell period of flow (0.05 g here) plus what the line holds.
+
+Three things to know:
+
+1. **The humidity sensor CAD asked for is in the store bay.** `INS-31`'s 45–55 % is for the chamber air around the bead. One sensor in the bay does not measure that once the glass is down. `OPEN` for CAD: a second sensor, or the bay's reading taken before the head closes.
+2. **This is the firmware half.** The pump driver's enable should run through the head-down switch in hardware, as the bridge enable shifters do.
+3. **Powder and seed are weighed, not dosed.** One liquid line exists (`CAD #84`); the other two cells are inventory.
+
+### Pin budget
+
+| MCU | Use | Pins |
+|---|---|---|
+| Lamina, `AD7380`-only build | TX 12, bus 6, `SYNC`, head-down, **enable groups A, B, C on 25, 26, 27**, `AD7380` 10, I²C 2 | **35 of 48**; 18–24 and 28–33 spare |
+| Plinth | load cell DOUT × 3 + shared SCK (0–3), pump IN_A, IN_B, EN (4–6), head-down (7), I²C humidity (8, 9), gap actuator STEP, DIR, EN, HOME (10–13), `SYNC` (14), bus (15–20) | **21 of 48** |
+
+- The three enable groups fit on the lamina MCU only because the `AD7380` fallback is triggered: GPIO 26 and 27 were `FB_A` and `FB_B` of the one-bit path. A board that populates both receive paths has one enable pin and cannot run Bench Gate 0 as written.
+- Which of the six `RP2350B` is the plinth MCU is `OPEN` (`clock_and_bus.mcu_count_full_machine` is 6 on 3 PCBs; this README has only ever assigned the lamina ones).
+- `pl_pins_used()` checks the table for overlaps and range; the host test holds the two counts.
+
+## Enable groups (`#93`, `CAD #59`)
+
+`fs_rx_window_group(s, mask, open)` opens the receive window of some of the three groups while the others keep driving; `fs_rx_window` is the same call for all three. A latched fault takes all three low and none can be raised. On a HAL without `tx_enable_group` anything less than all three is refused (`FS_REFUSED_GROUP`). **Which port is in which group is `ASSUMED`** (`fs_port_group`: port mod 3, so opposite ports pair); CAD says "by azimuth so each group spans the plate" and no schematic exists.
+
 ## Receive paths (`INS-28`)
 
 SIM's cycle-accurate model gave 60.9 dBc SFDR for the 1-bit comparator front-end against the 72 dB gate, which triggers the `AD7380` fallback. Both paths are supported:
@@ -251,7 +355,7 @@ No schematic exists; this is what the PIO programs assume.
 | 12–15 | spinal bus: D0, D1, FRAME out; FRAME in |
 | 16 | `SYNC` |
 | 17 | head-down interlock |
-| 18–25 | comparator outputs Q_A…Q_F, Q_ref; 25 = shared bridge enable (was spare) |
+| 18–25 | comparator outputs Q_A…Q_F, Q_ref; 25 = shared bridge enable (was spare). In the `AD7380`-only build 25, 26, 27 are the three enable groups: see "Pin budget" |
 | 26–33 | sigma-delta feedback FB_A…FB_F, FB_ref, spare |
 | 34, 35 | AD7380 SCLK, /CS |
 | 36–43 | AD7380 SDOA/SDOB × 4 |
@@ -337,6 +441,7 @@ With zero = both legs low (`CAD #35`), the comb code at 18 % of full scale per t
 ## Open
 
 - Board bring-up: `main`, DMA rings, CMake, flashing. Not started.
+- `#93`: the gap actuator and its driver; the USB transport for the Bench Gate 0 messages; complex baseline removal before the linewidth estimate; a real swept response (SIM's field or the bench) through `bg0_estimate`; SIM's definition of its resonance width; the `HX711` and humidity sensor readers; which MCU is the plinth's; the port-to-group map. RAM is at 59.4 kB of 60 kB: the next addition has 608 B.
 - `LMQ8`: the bus message that carries the 43 kB download in pieces, who computes the echo error, and a Swift writer for the image are not written. The network (`csq8_settle_biased`) and the linear read (`lmq8_listen`) are separate calls; nothing combines their answers.
 - HSTX for the bus (150 Mbit/s). The PIO bus is 75 Mbit/s.
 - `IXDD604` minimum pulse width and first pulse after a high-impedance window are `OPEN` in its datasheet (CAD acceptance 2.9). The shortest pulse asked for is 107 ns (`FS_COMB_FINE`, fine grid) or 100 ns (100 ns grid); the low-loss profiles ask for 200 ns and 400 ns. The three-level pattern's shortest state is the 1/6-period zero: 1.04 µs at 160 kHz.

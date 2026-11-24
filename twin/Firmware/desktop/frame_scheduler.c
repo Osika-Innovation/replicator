@@ -22,7 +22,7 @@ size_t fs_ring_steps(const fs_config *c) { return DR_TX_RING_TICKS / step_ticks(
 float fs_cf_duty(const fs_config *c) { return 1.0f - (float)c->fm_rings / (float)c->rings_per_frame; }
 
 void fs_init(fs_state *s, const fs_config *c, const fs_hal *hal) {
-    s->cfg = *c; s->hal = hal; s->ring = 0; s->armed_level_q15 = 0; s->fault = false;
+    s->cfg = *c; s->hal = hal; s->ring = 0; s->armed_level_q15 = 0; s->fault = false; s->rx_open_mask = 0;
 }
 
 fs_slot fs_slot_at(const fs_config *c, uint32_t ring) {
@@ -49,6 +49,8 @@ fs_slot fs_tick(fs_state *s) {
     if (s->armed_level_q15 > FS_LISTEN_LEVEL_Q15 &&
         !(s->hal && s->hal->interlock_asserted && s->hal->interlock_asserted())) {
         if (s->hal && s->hal->tx_enable) s->hal->tx_enable(false);
+        if (s->hal && s->hal->tx_enable_group) s->hal->tx_enable_group(FS_EN_ALL, false);
+        s->rx_open_mask = FS_EN_ALL;
         if (s->hal && s->hal->lasers_off) s->hal->lasers_off();
         s->armed_level_q15 = 0; s->fault = true;
     }
@@ -56,9 +58,16 @@ fs_slot fs_tick(fs_state *s) {
     return fs_slot_at(&s->cfg, s->ring);
 }
 
-fs_result fs_rx_window(fs_state *s, bool open) {
+fs_result fs_rx_window(fs_state *s, bool open) { return fs_rx_window_group(s, FS_EN_ALL, open); }
+
+fs_result fs_rx_window_group(fs_state *s, uint8_t mask, bool open) {
+    if (mask == 0 || (mask & ~FS_EN_ALL)) return FS_REFUSED_GROUP;
     if (!open && s->fault) return FS_FAULT_LATCHED;
-    if (s->hal && s->hal->tx_enable) s->hal->tx_enable(!open);
+    bool grouped = s->hal && s->hal->tx_enable_group;
+    if (!grouped && mask != FS_EN_ALL) return FS_REFUSED_GROUP;  // one shared enable cannot split
+    if (grouped) s->hal->tx_enable_group(mask, !open);
+    else if (s->hal && s->hal->tx_enable) s->hal->tx_enable(!open);
+    s->rx_open_mask = (uint8_t)(open ? (s->rx_open_mask | mask) : (s->rx_open_mask & ~mask));
     return FS_OK;
 }
 

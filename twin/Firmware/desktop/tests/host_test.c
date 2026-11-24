@@ -5,11 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../bench_gate0.h"
 #include "../cadence_sparse_q8.h"
+#include "../desktop_ram.h"
 #include "../desktop_constants.h"
 #include "../frame_scheduler.h"
 #include "../lockin_xor.h"
+#include "../plinth_io.h"
 #include "../pulse_shocklet.h"
+#include "../resonance_lock.h"
 #include "../spinal_bus.h"
 
 static int failed = 0, passed = 0;
@@ -19,6 +23,7 @@ static uint64_t rng_state = 0x9E3779B97F4A7C15ull;
 static uint32_t rnd(void) { rng_state ^= rng_state << 13; rng_state ^= rng_state >> 7; rng_state ^= rng_state << 17; return (uint32_t)(rng_state >> 16); }
 static double unit(void) { return (rnd() & 0xFFFFFF) / 16777216.0; }
 static const double PI = 3.14159265358979323846;
+#define BG0_GOLDEN_START_CRC 0x3b768c99u   // the default plan's start message, equal to zlib.crc32 of its 20 bytes; MachineTests.swift holds the same
 
 // ------------------------------------------------------------------ lock-in
 static double c_to_e_db(const lk_cpx *got, const double *re, const double *im, int n) {
@@ -197,7 +202,11 @@ static bool hal_interlock(void) { return head_down; }
 static bool tx_on = true;
 static void hal_hiz(bool on) { tx_on = on; if (!on) hiz_calls++; }
 static void hal_lasers(void) { laser_calls++; }
-static const fs_hal hal = { hal_interlock, hal_hiz, hal_lasers };
+static const fs_hal hal = { hal_interlock, hal_hiz, hal_lasers, NULL };
+// A lamina with CAD's three enable groups: bit g of en_groups = group g drives.
+static uint8_t en_groups = FS_EN_ALL;
+static void hal_group(uint8_t mask, bool on) { en_groups = (uint8_t)(on ? (en_groups | mask) : (en_groups & ~mask)); }
+static const fs_hal hal3 = { hal_interlock, hal_hiz, hal_lasers, hal_group };
 
 static void tone_of(const uint16_t *steps, size_t n, int ch, double hz, double *re, double *im) {
     double ar = 0, ai = 0;
@@ -868,8 +877,328 @@ static void test_live_m(void) {
     free(bad); free(pk); free(stale); free(flash);
 }
 
+// ------------------------------------------------------------------ enable groups (#93)
+static void test_enable_groups(void) {
+    printf("three enable groups\n");
+    fs_config cfg = fs_default_config(); fs_state st;
+    head_down = true; en_groups = FS_EN_ALL; tx_on = true;
+    fs_init(&st, &cfg, &hal3);
+    CHECK(fs_port_group(0) == fs_port_group(3) && fs_port_group(1) != fs_port_group(0) && fs_port_group(5) == 2, "ports pair by opposite azimuth");
+    CHECK(fs_rx_window_group(&st, 1u << 1, true) == FS_OK && en_groups == 5 && st.rx_open_mask == 2, "group B listens, A and C drive: enables %u", en_groups);
+    CHECK(fs_port_listening(&st, 1) && fs_port_listening(&st, 4) && !fs_port_listening(&st, 0) && !fs_port_listening(&st, 5), "which ports are heard");
+    CHECK(fs_rx_window_group(&st, 0, true) == FS_REFUSED_GROUP && fs_rx_window_group(&st, 8, true) == FS_REFUSED_GROUP, "an empty or unknown group mask");
+    CHECK(fs_rx_window(&st, true) == FS_OK && en_groups == 0 && fs_rx_window(&st, false) == FS_OK && en_groups == FS_EN_ALL && st.rx_open_mask == 0, "the whole-lamina window moves all three");
+    // the fault takes every group low and no group can be raised
+    CHECK(fs_arm(&st, 32767) == FS_OK, "arm");
+    fs_rx_window_group(&st, 1, true); head_down = false; fs_tick(&st);
+    CHECK(st.fault && en_groups == 0 && st.rx_open_mask == FS_EN_ALL, "a head lift under drive takes all three groups high impedance");
+    CHECK(fs_rx_window_group(&st, 2, false) == FS_FAULT_LATCHED && en_groups == 0, "no group is raised under a latched fault");
+    head_down = true; fs_clear_fault(&st);
+    CHECK(fs_rx_window_group(&st, FS_EN_ALL, false) == FS_OK && en_groups == FS_EN_ALL, "after the clear the groups drive again");
+    // a board with one shared enable cannot split
+    fs_state one; fs_init(&one, &cfg, &hal);
+    CHECK(fs_rx_window_group(&one, 1, true) == FS_REFUSED_GROUP && fs_rx_window_group(&one, FS_EN_ALL, true) == FS_OK && !tx_on, "one shared enable: all or nothing");
+    fs_rx_window(&one, false);
+}
+
+// ------------------------------------------------------------------ resonance lock (#93, INS-40)
+static double c_of(double t_c) { return 331.3 * sqrt(1.0 + t_c / 273.15); }
+static double noise(double half) { return (2.0 * unit() - 1.0) * half; }
+
+static void test_resonance_lock(void) {
+    printf("resonance lock: gap / c\n");
+    rl_config cfg = rl_default_config(); rl_state s; float step;
+    printf("  law: %.4f mm per K at %.0f mm and c %.2f m/s; resonance period %.4f mm of gap\n",
+           rl_mm_per_k(&cfg), cfg.gap_ref_mm, cfg.c_ref_ms, rl_resonance_period_mm(&cfg));
+    CHECK(fabsf(rl_mm_per_k(&cfg) - 0.41f) < 0.005f, "gap / c law %.4f mm/K, SIM #79 gives 0.41", rl_mm_per_k(&cfg));
+    CHECK(fabsf(rl_resonance_period_mm(&cfg) - 1.0725f) < 0.002f, "half wavelength %.4f mm, SIM #79 gives 1.0719", rl_resonance_period_mm(&cfg));
+    CHECK(fabsf(rl_c_air(20.0f) - cfg.c_ref_ms) < 0.01f, "c_ref is 20 C");
+    CHECK(fabsf(rl_target_gap_mm(&cfg, (float)c_of(20.9)) - 240.0f - 0.9f * rl_mm_per_k(&cfg)) < 0.002f, "+0.9 K asks for +0.37 mm");
+
+    // 1. The air warms 0.9 K in 90 s. LightRead every 100 ms, noise at LM-1's 10 dB case (2 um, 0.003 K).
+    for (int arm = 0; arm < 2; arm++) {
+        rl_init(&s, &cfg); double gap = 240.0, worst = 0, worst_step = 0, worst_k = 0; int unlocked = 0;
+        for (int f = 0; f < 9000; f++) {
+            double c = c_of(20.0 + 0.9 * f / 9000.0);
+            if (arm && f % 10 == 0) rl_observe_lightread(&s, (float)(c + noise(0.0018)), (float)(gap + noise(0.002)));
+            rl_result r = rl_step(&s, true, &step);
+            if (arm) { gap += step; if (f > 10 && r != RL_LOCKED) unlocked++; }
+            double e = fabs(240.0 * c / cfg.c_ref_ms - gap);
+            if (e > worst) worst = e;
+            if (fabs(step) > worst_step) worst_step = fabs(step);
+            if (e / rl_mm_per_k(&cfg) > worst_k) worst_k = e / rl_mm_per_k(&cfg);
+        }
+        printf("  +0.9 K in 90 s, %s: worst error %.4f mm = %.3f K of air; largest step %.4f mm; %u steps\n",
+               arm ? "locked" : "no control", worst, worst_k, worst_step, arm ? s.steps : 0u);
+        if (!arm) CHECK(worst > 0.3, "without control the gap is %.3f mm off: the test would not show the lock", worst);
+        else CHECK(worst <= 0.06 && worst_k <= 0.15 && worst_step <= 0.02 + 1e-7 && unlocked == 0, "lock: %.4f mm, %.3f K, step %.4f mm, %d frames out of lock", worst, worst_k, worst_step, unlocked);
+    }
+    // 2. A head close: the gap lands 0.2 mm short and the air is 0.3 K warm (LM-1's states go to 200 um).
+    rl_init(&s, &cfg); double gap = 239.8, c = c_of(20.3); int frames = 0, overshoot = 0; double biggest = 0;
+    double e0 = 240.0 * c / cfg.c_ref_ms - gap;
+    for (int f = 0; f < 200; f++) {
+        if (f % 10 == 0) rl_observe_lightread(&s, (float)c, (float)gap);
+        rl_result r = rl_step(&s, true, &step); gap += step;
+        double e = 240.0 * c / cfg.c_ref_ms - gap;
+        if (fabs(step) > biggest) biggest = fabs(step);
+        if (e < -(double)cfg.deadband_mm) overshoot++;
+        if (r != RL_LOCKED) frames = f + 2;                      // the frame on which it first reads locked
+    }
+    printf("  head close 0.2 mm short and +0.3 K: error %.3f mm, in lock after %d frames (%d ms), final error %.4f mm\n",
+           e0, frames, frames * 10, 240.0 * c / cfg.c_ref_ms - gap);
+    CHECK(frames == (int)ceil((e0 - 0.06) / 0.02) && biggest <= 0.02 + 1e-7 && overshoot == 0 && fabs(240.0 * c / cfg.c_ref_ms - gap) <= cfg.deadband_mm + 1e-4,
+          "head close: %d frames to lock, largest step %.4f, %d frames of overshoot", frames, biggest, overshoot);
+    // 3. Fast warming: 0.2 K/s for 5 s (a hand on the glass), the same observation rate.
+    rl_init(&s, &cfg); gap = 240.0; double worst = 0;
+    for (int f = 0; f < 500; f++) {
+        c = c_of(20.0 + 0.2 * f / 100.0);
+        if (f % 10 == 0) rl_observe_lightread(&s, (float)c, (float)gap);
+        rl_step(&s, true, &step); gap += step;
+        double e = fabs(240.0 * c / cfg.c_ref_ms - gap); if (e > worst) worst = e;
+    }
+    printf("  0.2 K/s for 5 s: worst error %.4f mm (the lag of one 100 ms observation period)\n", worst);
+    CHECK(worst <= 0.06, "0.2 K/s: %.4f mm", worst);
+    // 4. Refusals.
+    rl_init(&s, &cfg);
+    CHECK(rl_step(&s, true, &step) == RL_NO_OBSERVATION && step == 0, "no observation, no step");
+    CHECK(rl_observe_lightread(&s, NAN, 240) == RL_REFUSED_VALUE && rl_observe_lightread(&s, 200, 240) == RL_REFUSED_VALUE &&
+          rl_observe_lightread(&s, 343, 250) == RL_REFUSED_VALUE && !s.have, "a c or gap that is no chamber");
+    rl_observe_lightread(&s, 343.5f, 240.0f);
+    for (unsigned f = 0; f < cfg.stale_frames; f++) rl_step(&s, true, &step);
+    CHECK(rl_step(&s, true, &step) == RL_STALE && step == 0 && !s.locked, "an observation older than 1 s is not acted on");
+    rl_observe_lightread(&s, 343.5f, 240.0f);
+    CHECK(rl_step(&s, false, &step) == RL_REFUSED_INTERLOCK && step == 0 && !s.have, "head up: no step, and the observation is dropped");
+    CHECK(rl_step(&s, true, &step) == RL_NO_OBSERVATION, "after a lift the gap must be measured again");
+    rl_init(&s, &cfg); rl_result last = RL_LOCKED; float moved = 0;
+    for (int f = 0; f < 60; f++) { if (f % 10 == 0) rl_observe_lightread(&s, cfg.c_ref_ms, 240.0f + moved - 1.0f); last = rl_step(&s, true, &step); moved += step; }
+    CHECK(last == RL_TRAVEL_LIMIT && fabsf(moved - cfg.travel_mm) < 1e-5f, "1 mm short: stops at the %.1f mm travel (moved %.3f) and says so", cfg.travel_mm, moved);
+    // 5. The sweep observation: where the resonance sits against the tone.
+    rl_init(&s, &cfg);
+    CHECK(rl_observe_sweep(&s, 170.0f, 715.0f) == RL_LOCKED && fabsf(s.err_mm - 0.255f) < 1e-4f, "resonance 170 Hz above the tone: widen by 0.255 mm, got %.4f", s.err_mm);
+    CHECK(rl_observe_sweep(&s, 500.0f, 715.0f) == RL_LOCKED && fabsf(s.err_mm + 0.3225f) < 1e-4f, "500 Hz above is 215 Hz below the next one: %.4f mm", s.err_mm);
+    CHECK(rl_observe_sweep(&s, 10.0f, 900.0f) == RL_REFUSED_VALUE && rl_observe_sweep(&s, NAN, 715.0f) == RL_REFUSED_VALUE, "a spacing that is not this chamber's");
+}
+
+// ------------------------------------------------------------------ Bench Gate 0 (#93, INS-40)
+// A cavity's response at the receiving port, ADC counts: the Airy comb with
+// round-trip factor rho, peak `amp`, the resonance nearest 160 kHz at
+// 160 kHz + detune; a transducer slope of `tilt` across the band; noise.
+static void synth_sweep(uint16_t *q, int n, double rho, double fsr, double detune, double amp, double tilt, double sigma, double floor_counts) {
+    for (int i = 0; i < n; i++) {
+        double f = BG0_F_LO_HZ + BG0_F_STEP_HZ * i, x = 2 * PI * (f - 160000.0 - detune) / fsr;
+        double p = (1 - rho) * (1 - rho) / (1 - 2 * rho * cos(x) + rho * rho);
+        double a = amp * sqrt(p) * (1.0 + tilt * (f - 160000.0) / 2000.0);
+        double re = a + noise(sigma) + floor_counts, im = noise(sigma);
+        double m = 2.0 * hypot(re, im);
+        q[i] = (uint16_t)(m > 65535 ? 65535 : m + 0.5);
+    }
+}
+
+static void test_bench_gate0(void) {
+    printf("Bench Gate 0: one-port sweep, linewidth, r_eff\n");
+    const double gap = 240.0, c0 = c_of(20.0), alpha = BG0_ALPHA_NP_PER_M, fsr = 500.0 * c0 / gap;
+    static uint16_t q[BG0_POINTS]; bg0_fit fit;
+    // The estimate against the analytic width, clean and with a 20 % transducer slope, noise and a 3 % floor.
+    const double rs[5] = { 0.70, 0.82, 0.88, 0.95, 0.99 };
+    const int want[5] = { BG0_FAIL, BG0_MARGINAL, BG0_PASS, BG0_PASS, BG0_PASS };
+    printf("  end reflection | rho | width, Hz (analytic) | clean: width, r plane wave, r SIM anchor, verdict | rough: the same\n");
+    for (int k = 0; k < 5; k++) {
+        double rho = rs[k] * rs[k] * exp(-2 * alpha * gap * 1e-3), w = bg0_airy_fwhm_hz((float)rho, (float)fsr);
+        float got_w[2], got_r[2], got_a[2]; int verdict[2]; float det[2];
+        for (int rough = 0; rough < 2; rough++) {
+            synth_sweep(q, BG0_POINTS, rho, fsr, 123.0, 8000, rough ? 0.2 : 0, rough ? 40 : 0, rough ? 240 : 0);
+            bg0_result r = bg0_estimate(q, BG0_POINTS, BG0_F_LO_HZ, BG0_F_STEP_HZ, 160000.0f, (float)gap, (float)c0, (float)alpha, &fit);
+            CHECK(r == BG0_OK, "r %.2f: estimate refused (%d)", rs[k], r);
+            got_w[rough] = fit.fwhm_hz; got_r[rough] = fit.r_plane_wave; got_a[rough] = fit.r_sim_anchor; verdict[rough] = fit.verdict; det[rough] = fit.detune_hz;
+        }
+        static const char *vn[3] = { "PASS", "MARGINAL", "FAIL" };
+        printf("  %.2f | %.3f | %.1f | %.1f, %.3f, %.3f, %s | %.1f, %.3f, %.3f, %s\n", rs[k], rho, w,
+               got_w[0], got_r[0], got_a[0], vn[verdict[0]], got_w[1], got_r[1], got_a[1], vn[verdict[1]]);
+        CHECK(fabs(got_w[0] - w) < 0.03 * w && fabs(got_r[0] - rs[k]) < 0.01, "r %.2f clean: width %.1f Hz against %.1f, r %.3f", rs[k], got_w[0], w, got_r[0]);
+        CHECK(fabs(got_w[1] - w) < 0.15 * w && fabs(got_r[1] - rs[k]) < 0.03, "r %.2f rough: width %.1f Hz against %.1f, r %.3f", rs[k], got_w[1], w, got_r[1]);
+        CHECK(verdict[0] == want[k], "r %.2f: verdict %d, expected %d", rs[k], verdict[0], want[k]);
+        CHECK(fabsf(det[0] - 123.0f) < 3.0f && fabsf(det[1] - 123.0f) < 8.0f, "r %.2f: resonance found %.1f and %.1f Hz from the tone, placed at 123", rs[k], det[0], det[1]);
+    }
+    // the two readings of the reflection against SIM #82's three widths
+    printf("  SIM #82 widths through the plane-wave reading (alpha %.2f Np/m): ", alpha);
+    const double sw[3] = { 0.15, 0.25, 0.35 }, sr[3] = { 0.99, 0.88, 0.70 };
+    for (int k = 0; k < 3; k++) {
+        // invert the Airy width for rho: (1 - rho) / (2 sqrt(rho)) = sin(pi fwhm / (2 fsr))
+        double a = sin(PI * sw[k] * 160000.0 / gap / (2 * fsr)), sq = -a + sqrt(a * a + 1), rho = sq * sq;
+        printf("%.2f mm -> %.3f (SIM %.2f)%s", sw[k], bg0_r_plane_wave((float)rho, (float)gap, (float)alpha), sr[k], k < 2 ? ", " : "\n");
+        CHECK(fabsf(bg0_r_sim_anchor((float)sw[k]) - (float)sr[k]) < 1e-5f, "anchor %d", k);
+    }
+    // a wrong nominal chamber: the air 3 K warm and the gap 0.5 mm off the values given to the estimate
+    {
+        double rho = 0.88 * 0.88 * exp(-2 * alpha * gap * 1e-3), f2 = 500.0 * c_of(23.0) / 240.5;
+        synth_sweep(q, BG0_POINTS, rho, f2, -200.0, 8000, 0, 10, 0);
+        bg0_estimate(q, BG0_POINTS, BG0_F_LO_HZ, BG0_F_STEP_HZ, 160000.0f, (float)gap, (float)c0, (float)alpha, &fit);
+        printf("  air +3 K and gap +0.5 mm unknown to the estimate: spacing %.1f Hz found (true %.1f), r %.3f, detune %.1f Hz (placed -200)\n", fit.fsr_hz, f2, fit.r_plane_wave, fit.detune_hz);
+        CHECK(fabs(fit.fsr_hz - f2) < 0.015 * f2 && fabs(fit.r_plane_wave - 0.88) < 0.02 && fabsf(fit.detune_hz + 200.0f) < 5.0f, "off-nominal chamber: fsr %.1f, r %.3f, detune %.1f", fit.fsr_hz, fit.r_plane_wave, fit.detune_hz);
+    }
+    // nothing there
+    memset(q, 0, sizeof q);
+    CHECK(bg0_estimate(q, BG0_POINTS, BG0_F_LO_HZ, BG0_F_STEP_HZ, 160000.0f, 240, 343, 0.69f, &fit) == BG0_NO_RESONANCE, "a dead channel");
+    for (int i = 0; i < BG0_POINTS; i++) q[i] = (uint16_t)(2000 + (rnd() % 40));
+    CHECK(bg0_estimate(q, BG0_POINTS, BG0_F_LO_HZ, BG0_F_STEP_HZ, 160000.0f, 240, 343, 0.69f, &fit) == BG0_NO_RESONANCE && fit.verdict == BG0_FAIL, "a flat response has no resonance (rho1 %.3f)", fit.rho1);
+    CHECK(bg0_estimate(q, 30, BG0_F_LO_HZ, BG0_F_STEP_HZ, 160000.0f, 240, 343, 0.69f, &fit) == BG0_REFUSED_PLAN, "a sweep shorter than two spacings");
+
+    // The lock-in at a tone that is not a comb tone: 750 samples at 1.5 MSa/s.
+    double worst_amp = 0;
+    for (int k = 0; k < 201; k += 10) {
+        static int16_t x[750]; lk_tones t = { 1, { 0 } }; t.hz[0] = BG0_F_LO_HZ + BG0_F_STEP_HZ * (float)k;
+        double ph = 2 * PI * unit();
+        for (int i = 0; i < 750; i++) x[i] = (int16_t)lrint(8000.0 * cos(2 * PI * t.hz[0] * i / 1.5e6 + ph));
+        lk_cpx z[LK_MAX_TONES]; lk_adc_burst(x, 750, 1, 1.5e6f, &t, z);
+        double e = fabs(32768.0 * hypot(z[0].re, z[0].im) / 8000.0 - 1.0); if (e > worst_amp) worst_amp = e;
+    }
+    printf("  lock-in of one 500 us burst at the sweep's tones (not whole periods): amplitude within %.2f %%\n", 100 * worst_amp);
+    CHECK(worst_amp < 0.01, "burst lock-in off a comb tone: %.2f %%", 100 * worst_amp);
+
+    // The sweep through the scheduler: who may start it, what it holds, how long it takes.
+    fs_config cfg = fs_default_config(); fs_state st; static bg0_sweep sw_; bg0_plan plan = bg0_default_plan();
+    head_down = false; en_groups = FS_EN_ALL; fs_init(&st, &cfg, &hal3);
+    CHECK(bg0_begin(&sw_, &plan, &st) == BG0_REFUSED_INTERLOCK && en_groups == FS_EN_ALL, "the sweep is full drive: refused with the head up");
+    head_down = true;
+    bg0_plan same = plan; same.rx_port = 3;
+    CHECK(bg0_begin(&sw_, &same, &st) == BG0_REFUSED_PORTS && st.armed_level_q15 == 0, "a port of the driving group cannot be heard");
+    fs_state one; fs_init(&one, &cfg, &hal);
+    CHECK(bg0_begin(&sw_, &plan, &one) == BG0_REFUSED_PORTS && one.armed_level_q15 == 0, "one shared enable: no port can listen while another drives");
+    bg0_plan bad = plan; bad.n = 202; CHECK(bg0_begin(&sw_, &bad, &st) == BG0_REFUSED_PLAN, "more points than the buffer");
+    CHECK(bg0_begin(&sw_, &plan, &st) == BG0_OK && st.armed_level_q15 == 32767 && fs_port_listening(&st, plan.rx_port) && !fs_port_listening(&st, plan.tx_port), "begin: armed, the receiving group listens");
+    double rho = 0.88 * 0.88 * exp(-2 * alpha * gap * 1e-3); int frames = 0; static uint16_t steps_[DR_TX_RING_TICKS]; int pattern_ok = 1;
+    while (sw_.running) {
+        frames++; fs_tick(&st);
+        if (!bg0_frame(&sw_, &st)) continue;
+        double f = bg0_frequency(&sw_), x = 2 * PI * (f - 160000.0 + 60.0) / fsr;
+        if (sw_.at % 50 == 0) { memset(steps_, 0, sizeof steps_); if (fs_three_level_pattern(&cfg, plan.tx_port, (float)f, 0, steps_, DR_TX_RING_TICKS) != 32767) pattern_ok = 0; }
+        double a = 8000 * sqrt((1 - rho) * (1 - rho) / (1 - 2 * rho * cos(x) + rho * rho)), ph = 2 * PI * unit();
+        uint8_t msg[BG0_POINT_BYTES]; bg0_encode_point(sw_.at, (float)f, (float)(a * cos(ph)), (float)(a * sin(ph)), msg);
+        bg0_record(&sw_, (float)(a * cos(ph)), (float)(a * sin(ph)));
+    }
+    bg0_end(&sw_, &st);
+    CHECK(sw_.done && frames == BG0_POINTS * BG0_SETTLE_FRAMES && pattern_ok, "sweep: %d frames", frames);
+    CHECK(en_groups == FS_EN_ALL && st.armed_level_q15 == 0 && st.rx_open_mask == 0, "end: window closed, drive disarmed");
+    bg0_estimate(sw_.rms_q1, sw_.plan.n, sw_.plan.f_lo_hz, sw_.plan.f_step_hz, 160000.0f, (float)gap, (float)c0, (float)alpha, &fit);
+    printf("  sweep: %d points in %d frames (%.2f s), %zu B of buffer; r %.3f, width %.1f Hz = %.3f mm of gap, resonance %.1f Hz from the tone\n",
+           sw_.plan.n, frames, frames * 0.01, sizeof sw_.rms_q1, fit.r_plane_wave, fit.fwhm_hz, fit.width_mm, fit.detune_hz);
+    CHECK(fit.verdict == BG0_PASS && fabsf(fit.detune_hz + 60.0f) < 3.0f, "sweep estimate: verdict %d, detune %.1f", fit.verdict, fit.detune_hz);
+    // the sweep closes the lock: its detune is the lock's observation
+    rl_config rc = rl_default_config(); rl_state rl; rl_init(&rl, &rc); float step, moved = 0; int n_steps = 0;
+    CHECK(rl_observe_sweep(&rl, fit.detune_hz, fit.fsr_hz) == RL_LOCKED, "the lock takes the sweep's result");
+    for (int f = 0; f < 50; f++) { rl_step(&rl, true, &step); moved += step; if (step != 0) n_steps++; }
+    printf("  the lock on that sweep: resonance 60 Hz below the tone = gap %.3f mm too wide; moved %.3f mm in %d steps\n", 240.0 * 60.0 / 160000.0, moved, n_steps);
+    CHECK(fabsf(moved + 0.090f) < 0.006f && rl.locked, "sweep lock: moved %.4f mm, expected -0.090", moved);
+    // a head lift during the sweep voids it
+    CHECK(bg0_begin(&sw_, &plan, &st) == BG0_OK, "begin again");
+    for (int f = 0; f < 10; f++) { fs_tick(&st); if (bg0_frame(&sw_, &st)) bg0_record(&sw_, 100, 0); }
+    head_down = false; fs_tick(&st);
+    CHECK(!bg0_frame(&sw_, &st) && !sw_.running && !sw_.done && en_groups == 0 && bg0_record(&sw_, 1, 1) == BG0_NOT_RUNNING, "a head lift mid-sweep: every group high impedance, the sweep is void");
+    bg0_end(&sw_, &st);
+    CHECK(en_groups == 0 && bg0_begin(&sw_, &plan, &st) == BG0_REFUSED_FAULT, "ending a voided sweep raises nothing; the fault refuses the next");
+    head_down = true; CHECK(bg0_begin(&sw_, &plan, &st) == BG0_REFUSED_FAULT, "head down again, fault still latched");
+    fs_clear_fault(&st); fs_rx_window(&st, false);
+
+    // The USB messages.
+    uint8_t m[BG0_RESULT_BYTES]; bg0_plan back;
+    CHECK(bg0_encode_start(&plan, m) == BG0_START_BYTES && bg0_parse_start(m, BG0_START_BYTES, &back) == BG0_OK &&
+          back.f_lo_hz == plan.f_lo_hz && back.f_step_hz == plan.f_step_hz && back.n == plan.n && back.tx_port == plan.tx_port && back.rx_port == plan.rx_port && back.settle_frames == plan.settle_frames, "start message round trip");
+    printf("  start message, default plan: crc %08x\n", hleq_crc32(m, BG0_START_BYTES - 4));
+    CHECK(hleq_crc32(m, BG0_START_BYTES - 4) == BG0_GOLDEN_START_CRC, "start message bytes changed: crc %08x (the Swift test holds the same value)", hleq_crc32(m, BG0_START_BYTES - 4));
+    int taken = 0;
+    for (int bit = 0; bit < 8 * BG0_START_BYTES; bit++) { uint8_t d[BG0_START_BYTES]; memcpy(d, m, sizeof d); d[bit / 8] ^= (uint8_t)(1u << (bit % 8)); if (bg0_parse_start(d, sizeof d, &back) == BG0_OK) taken++; }
+    CHECK(taken == 0 && bg0_parse_start(m, 23, &back) == BG0_SHORT, "%d damaged start messages accepted", taken);
+    CHECK(bg0_encode_point(7, 158140.0f, 1.5f, -2.5f, m) == BG0_POINT_BYTES && m[4] == 7 && hleq_crc32(m, 20) == (uint32_t)(m[20] | m[21] << 8 | m[22] << 16 | (uint32_t)m[23] << 24), "point message");
+    CHECK(bg0_encode_result(&fit, m) == BG0_RESULT_BYTES && m[7] == fit.verdict && memcmp(m + 8, &fit.fsr_hz, 4) == 0, "result message");
+}
+
+// ------------------------------------------------------------------ plinth I/O (#93, CAD #84, INS-31)
+static int pump_dir = 0, pump_calls = 0;
+static void hal_pump(int d) { pump_dir = d; pump_calls++; }
+static const pl_hal plinth_hal = { hal_interlock, hal_pump };
+
+static void test_plinth(void) {
+    printf("plinth I/O: pins, load cells, pump and humidity interlocks\n");
+    int lam = pl_pins_used(PL_MCU_LAMINA), pli = pl_pins_used(PL_MCU_PLINTH);
+    printf("  pins: lamina MCU (AD7380-only build, three enable groups) %d of %d; plinth MCU %d of %d\n", lam, PL_GPIO_COUNT, pli, PL_GPIO_COUNT);
+    CHECK(lam == 35 && pli == 21, "pin budget %d and %d (-1 = an overlap)", lam, pli);
+    pl_config cfg = pl_default_config(); pl_state s;
+    CHECK(cfg.rh_lo_pct == 45.0f && cfg.rh_hi_pct == 55.0f, "the humidity range is INS-31's");
+    head_down = true; pump_dir = 9; pl_init(&s, &cfg, &plinth_hal);
+    CHECK(pump_dir == 0, "init turns the pump off");
+    #define CELL(g) (int32_t)lrint((g) * 420.0)
+    // humidity
+    CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_REFUSED_RH_STALE && pl_gate(&s, PL_OP_EMPTY_SWEEP) == PL_OK, "no humidity reading: no matter drive, the empty sweep may run");
+    pl_rh_sample(&s, 50.0f, 21.0f); CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_OK && !s.rh_out_flag, "50 %% RH");
+    pl_rh_sample(&s, 44.9f, 21.0f); CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_REFUSED_RH_LOW && s.rh_out_flag && pl_gate(&s, PL_OP_EMPTY_SWEEP) == PL_OK, "44.9 %% RH");
+    pl_rh_sample(&s, 55.1f, 21.0f); CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_REFUSED_RH_HIGH, "55.1 %% RH");
+    pl_rh_sample(&s, 45.0f, 21.0f); CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_OK, "45.0 %% RH is inside");
+    for (int f = 0; f < 500; f++) pl_tick(&s);
+    CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_OK, "a reading 5 s old still counts");
+    pl_tick(&s); CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_REFUSED_RH_STALE, "older than 5 s does not");
+    pl_rh_sample(&s, 50.0f, 21.0f);
+    CHECK(pl_rh_sample(&s, NAN, 21.0f) == PL_REFUSED_VALUE && pl_rh_sample(&s, 101.0f, 21.0f) == PL_REFUSED_VALUE && pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_REFUSED_RH_STALE, "a reading that is not a humidity forgets the sensor");
+    head_down = false; pl_rh_sample(&s, 50.0f, 21.0f);
+    CHECK(pl_gate(&s, PL_OP_MATTER_DRIVE) == PL_REFUSED_HEAD_UP && pl_gate(&s, PL_OP_EMPTY_SWEEP) == PL_REFUSED_HEAD_UP && pl_gate(&s, PL_OP_PUMP) == PL_REFUSED_HEAD_UP, "head up refuses all three");
+    pl_state none; pl_init(&none, &cfg, NULL); CHECK(pl_gate(&none, PL_OP_PUMP) == PL_REFUSED_HEAD_UP, "no head-down reader is an open head");
+    // load cells
+    head_down = true;
+    CHECK(pl_gate(&s, PL_OP_PUMP) == PL_REFUSED_CELL && pl_dose_begin(&s, 5) == PL_REFUSED_CELL, "no liquid cell reading: no pump");
+    CHECK(pl_cell_sample(&s, PL_CELL_POWDER, CELL(612.0)) == PL_OK && fabsf(s.mass_g[PL_CELL_POWDER] - 612.0f) < 0.01f, "counts to grams");
+    CHECK(pl_cell_sample(&s, PL_CELL_SEED, CELL(-80.0)) == PL_REFUSED_CELL && pl_cell_sample(&s, PL_CELL_SEED, CELL(3100.0)) == PL_REFUSED_CELL && pl_cell_sample(&s, 3, 0) == PL_REFUSED_VALUE, "a cradle reading that is not a bottle");
+    // a 5 g dose at 0.5 g/s, the cell read at 10 samples per second (ASSUMED flow and rate)
+    double bottle = 800.0; pl_cell_sample(&s, PL_CELL_LIQUID, CELL(bottle));
+    CHECK(pl_dose_begin(&s, 5.0f) == PL_OK && pump_dir == 1 && pl_dose_begin(&s, 1.0f) == PL_REFUSED_BUSY, "dose begins; a second is refused while it runs");
+    int frames = 0;
+    while (s.pump != PL_PUMP_OFF && frames < 5000) { bottle -= 0.005; frames++; if (frames % 10 == 0) pl_cell_sample(&s, PL_CELL_LIQUID, CELL(bottle)); pl_tick(&s); }
+    printf("  5 g dose by loss of weight at 0.5 g/s, cell at 10 Sa/s: stopped after %.2f s, %.3f g logged, %.3f g gone from the bottle\n", frames * 0.01, s.last_dose_g, 800.0 - bottle);
+    CHECK(pump_dir == 0 && s.fault == PL_FAULT_NONE && s.doses == 1 && s.last_dose_g >= 5.0f && 800.0 - bottle < 5.06, "dose: %.3f g logged, %.3f g gone", s.last_dose_g, 800.0 - bottle);
+    // refusals of a dose
+    CHECK(pl_dose_begin(&s, 0) == PL_REFUSED_VALUE && pl_dose_begin(&s, 51.0f) == PL_REFUSED_VALUE && pl_dose_begin(&s, NAN) == PL_REFUSED_VALUE, "a dose of nothing, too much, or NaN");
+    pl_cell_sample(&s, PL_CELL_LIQUID, CELL(252.0)); CHECK(pl_dose_begin(&s, 5.0f) == PL_REFUSED_EMPTY && pump_dir == 0, "5 g from a bottle 2 g above its empty weight");
+    // the head lifts during a dose
+    pl_cell_sample(&s, PL_CELL_LIQUID, CELL(800.0)); pl_dose_begin(&s, 5.0f); pl_tick(&s);
+    head_down = false;
+    CHECK(pl_tick(&s) == PL_FAULT_HEAD_LIFT && pump_dir == 0 && s.pump == PL_PUMP_OFF, "head lift under a running pump: pump off, fault");
+    CHECK(pl_clear_fault(&s) == PL_REFUSED_HEAD_UP, "no clear with the head up");
+    head_down = true;
+    CHECK(pl_dose_begin(&s, 5.0f) == PL_FAULT_LATCHED && pl_draw_back_begin(&s, 10) == PL_FAULT_LATCHED && pl_gate(&s, PL_OP_EMPTY_SWEEP) == PL_FAULT_LATCHED, "a latched fault refuses everything");
+    CHECK(pl_clear_fault(&s) == PL_OK && pl_dose_begin(&s, 5.0f) == PL_OK, "clear with the head down");
+    // no flow: the pump runs and the bottle does not get lighter
+    pl_fault fl = PL_FAULT_NONE; frames = 0;
+    while (fl == PL_FAULT_NONE && frames < 1000) { fl = pl_tick(&s); frames++; }
+    CHECK(fl == PL_FAULT_NO_FLOW && frames == cfg.no_flow_frames && pump_dir == 0, "a dry line stops the pump after %d frames (fault %d)", frames, fl);
+    pl_clear_fault(&s);
+    // overrun: a trickle that never reaches the target
+    bottle = 800.0; pl_cell_sample(&s, PL_CELL_LIQUID, CELL(bottle)); pl_dose_begin(&s, 50.0f); fl = PL_FAULT_NONE; frames = 0;
+    while (fl == PL_FAULT_NONE && frames < 10000) { bottle -= 0.002; pl_cell_sample(&s, PL_CELL_LIQUID, CELL(bottle)); fl = pl_tick(&s); frames++; }
+    CHECK(fl == PL_FAULT_OVERRUN && frames == cfg.dose_max_frames && pump_dir == 0 && fabsf(s.last_dose_g - 12.0f) < 0.1f, "a dose that takes over 60 s is stopped (%d frames, %.2f g logged)", frames, s.last_dose_g);
+    pl_clear_fault(&s);
+    // the cell stops answering during a dose
+    pl_cell_sample(&s, PL_CELL_LIQUID, CELL(800.0)); pl_dose_begin(&s, 5.0f); pl_tick(&s);
+    pl_cell_sample(&s, PL_CELL_LIQUID, CELL(-500.0));
+    CHECK(pl_tick(&s) == PL_FAULT_CELL && pump_dir == 0, "a bottle lifted off its cradle during a dose stops the pump");
+    pl_clear_fault(&s);
+    // draw back: timed, needs the head down and nothing else
+    CHECK(pl_draw_back_begin(&s, 501) == PL_REFUSED_VALUE && pl_draw_back_begin(&s, 0) == PL_REFUSED_VALUE, "a draw back longer than its limit");
+    CHECK(pl_draw_back_begin(&s, 50) == PL_OK && pump_dir == -1, "draw back runs with the liquid cell not answering");
+    frames = 0; while (s.pump != PL_PUMP_OFF && frames < 100) { pl_tick(&s); frames++; }
+    CHECK(frames == 50 && pump_dir == 0 && s.fault == PL_FAULT_NONE, "draw back stops after its %d frames", frames);
+    pl_draw_back_begin(&s, 50); head_down = false;
+    CHECK(pl_tick(&s) == PL_FAULT_HEAD_LIFT && pump_dir == 0, "head lift during a draw back");
+    head_down = true;
+    #undef CELL
+}
+
+static void test_ram(void) {
+    printf("static RAM (#93): settle %zu + calibration slot %zu + scheduler %zu + resonance lock %zu + Bench Gate 0 %zu + plinth %zu = %zu B of %u\n",
+           sizeof(csq8_work), sizeof(lmq8_slot), sizeof(fs_state), sizeof(rl_state), sizeof(bg0_sweep), sizeof(pl_state), (size_t)DR_RAM_STATIC_BYTES, DR_CADENCE_SPARSE_MAX_BYTES);
+    CHECK(DR_RAM_STATIC_BYTES < 60000, "static RAM %zu B", (size_t)DR_RAM_STATIC_BYTES);
+}
+
 int main(void) {
     test_lockin(); test_cadence(); test_csq8(); test_scheduler(); test_shocklet(); test_bus(); test_drive_patterns(); test_live_m();
+    test_enable_groups(); test_resonance_lock(); test_bench_gate0(); test_plinth(); test_ram();
     printf("%d checks passed, %d failed\n", passed, failed);
     return failed ? 1 : 0;
 }

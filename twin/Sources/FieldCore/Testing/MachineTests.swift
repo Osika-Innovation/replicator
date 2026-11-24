@@ -540,6 +540,47 @@ extension CoreTests {
             let frac: String = json.replacingOccurrences(of: "[[11,1],[17,1]]", with: "[[11.5,1],[17,1]]")
             t.check(frac != json && (try? HoloEquationMM.read(Data(frac.utf8))) == nil, "a fractional atomic number is refused")
         }
+        h.test("Bench Gate 0: the firmware's messages and its linewidth estimate (INS-40, #93)") { t in
+            // The default plan's start message, as zlib.crc32 and the C host test have it.
+            let hex = "4247305300010200004c1a480000a041c9000000998c763b"
+            var want: [UInt8] = []
+            var it = hex.makeIterator()
+            while let a = it.next(), let b = it.next() { want.append(UInt8(String([a, b]), radix: 16)!) }
+            t.check(BenchGate0.startMessage(BenchGate0.Plan()) == want, "start message bytes")
+            // A point as the firmware writes it.
+            var pt: [UInt8] = Array("BG0P".utf8)
+            FCodeWire.put(UInt16(7), &pt); FCodeWire.put(UInt16(0), &pt)
+            FCodeWire.put(Float(158_140), &pt); FCodeWire.put(Float(1.5), &pt); FCodeWire.put(Float(-2.5), &pt)
+            FCodeWire.put(FCodeWire.crc32(pt[...]), &pt)
+            let p = try? BenchGate0.parsePoint(pt)
+            t.check(p == BenchGate0.Point(index: 7, frequency: 158_140, value: Complex(1.5, -2.5)), "point parses")
+            var refused = 0
+            for bit in 0..<(8 * pt.count) { var d = pt; d[bit / 8] ^= UInt8(1 << (bit % 8)); if (try? BenchGate0.parsePoint(d)) == nil { refused += 1 } }
+            t.check(refused == 8 * pt.count && (try? BenchGate0.parsePoint(Array(pt.dropLast()))) == nil, "every one-bit error and a short point are refused")
+            // The Airy comb of a 240 mm cavity at 20 °C: the width and the reflection come back.
+            let c = 331.3 * (1 + 20 / 273.15).squareRoot(), gap = 0.240, fsr = c / (2 * gap)
+            func sweep(_ r: Double, detune: Double) -> [BenchGate0.Point] {
+                let rho = r * r * exp(-2 * BenchGate0.alpha * gap)
+                return (0..<201).map { i in
+                    let f = 158_000 + 20 * Double(i), x = 2 * Double.pi * (f - 160_000 - detune) / fsr
+                    let power = (1 - rho) * (1 - rho) / (1 - 2 * rho * cos(x) + rho * rho)
+                    return BenchGate0.Point(index: i, frequency: f, value: Complex(0, 8000 * power.squareRoot()))
+                }
+            }
+            for (r, verdict) in [(0.70, BenchGate0.Verdict.fail), (0.82, .marginal), (0.88, .pass), (0.95, .pass)] {
+                guard let fit = BenchGate0.estimate(sweep(r, detune: 123), soundSpeed: c) else { t.fail("no fit at r \(r)"); continue }
+                let width = BenchGate0.airyFWHM(rho: r * r * exp(-2 * BenchGate0.alpha * gap), fsr: fsr)
+                t.near(fit.fwhm, width, 0.03 * width, "width at r \(r), Hz")
+                t.near(fit.rPlaneWave, r, 0.01, "reflection read back at r \(r)")
+                t.near(fit.detune, 123, 3, "the resonance is found where it was put")
+                t.check(fit.verdict == verdict, "r \(r): \(fit.verdict), expected \(verdict)")
+            }
+            t.check(BenchGate0.estimate((0..<201).map { BenchGate0.Point(index: $0, frequency: 0, value: Complex(2000, 0)) }, soundSpeed: c) == nil, "a flat response has no resonance")
+            // SIM #79's law and #82's width, as the lock uses them.
+            t.near(BenchGate0.gapPerKelvin() * 1e3, 0.41, 0.005, "mm of gap per K")
+            t.near(BenchGate0.gapCorrection(detune: 170) * 1e3, 0.255, 1e-6, "170 Hz at 160 kHz is 0.255 mm of gap")
+            t.near(BenchGate0.rSimAnchor(width: 0.25e-3), 0.88, 1e-9, "SIM's 0.25 mm is 0.88")
+        }
         h.test("body response: an aliased export is refused for planning; 0.2 carries what the inputs hear (INS-19)") { t in
             let desk = BodyResponse.desktop200()
             t.check((try? desk.validate()) != nil, "the shipped file still loads")

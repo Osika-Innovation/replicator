@@ -44,7 +44,7 @@ static inline int fs_step_value(uint16_t step, int ch) {
 // Listen level: -60 dB of full drive (ChordDrive.Verb.listen is 1e-3), Q15.
 #define FS_LISTEN_LEVEL_Q15 33
 
-typedef enum { FS_OK = 0, FS_REFUSED_INTERLOCK, FS_REFUSED_LEVEL, FS_REFUSED_DUTY, FS_FAULT_LATCHED } fs_result;
+typedef enum { FS_OK = 0, FS_REFUSED_INTERLOCK, FS_REFUSED_LEVEL, FS_REFUSED_DUTY, FS_FAULT_LATCHED, FS_REFUSED_GROUP } fs_result;
 typedef enum { FS_SLOT_CF = 0, FS_SLOT_FM = 1 } fs_slot;
 
 #define FS_GRID_FINE_TICKS 1u
@@ -67,7 +67,19 @@ typedef struct {
     bool (*interlock_asserted)(void);       // head-down switch: true = chamber closed
     void (*tx_enable)(bool on);             // the shared bridge enable: false = every output high impedance, now
     void (*lasers_off)(void);
+    // The three enable groups of a lamina (CAD #59), bit g = group g. NULL on
+    // a board with one shared enable: then only all three together can move.
+    void (*tx_enable_group)(uint8_t group_mask, bool on);
 } fs_hal;
+
+// Three enable groups per lamina, so one group can listen while two drive.
+// CAD assigns ports to groups by azimuth so that each group spans the plate;
+// which port is in which group is not in a schematic yet. ASSUMED here:
+// group = port mod 3, so the 6-port lamina pairs opposite ports (0,3) (1,4)
+// (2,5). Change fs_port_group() when the schematic exists.
+#define FS_EN_GROUPS 3
+#define FS_EN_ALL 7u
+static inline unsigned fs_port_group(int ch) { return (unsigned)ch % FS_EN_GROUPS; }
 
 typedef struct {
     fs_config cfg;
@@ -75,6 +87,7 @@ typedef struct {
     uint32_t ring;                  // rings since the SYNC downbeat
     uint16_t armed_level_q15;       // what is playing
     bool fault;                     // interlock opened while driving above listen level
+    uint8_t rx_open_mask;           // enable groups that are high impedance now (listening)
 } fs_state;
 
 fs_config fs_default_config(void);
@@ -100,6 +113,13 @@ fs_slot fs_tick(fs_state *s);
 // the ports can be heard), close = enable high again. A code of 0 does not
 // do this: it shorts the port. Closing is refused while a fault is latched.
 fs_result fs_rx_window(fs_state *s, bool open);
+// The same for some of the three enable groups: the ports of those groups
+// listen while the others keep driving. Refused (FS_REFUSED_GROUP) for an
+// empty or unknown mask, and for fewer than all groups on a board whose HAL
+// has no tx_enable_group. Closing is refused while a fault is latched.
+fs_result fs_rx_window_group(fs_state *s, uint8_t group_mask, bool open);
+// Is this port high impedance now (it can be heard, it cannot drive)?
+static inline bool fs_port_listening(const fs_state *s, int ch) { return (s->rx_open_mask >> fs_port_group(ch)) & 1u; }
 // Only with the interlock asserted again.
 fs_result fs_clear_fault(fs_state *s);
 
