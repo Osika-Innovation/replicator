@@ -53,6 +53,23 @@ def sidebar(current):
     return ''.join(result)
 
 
+def connections(d):
+    """Footer on every guide: the guides it connects to, then previous and next
+    in reading order. Built from catalog.json so no guide hand-maintains it."""
+    guides = [g for g in DOCS if g['type'] == 'guide']
+    by_id = {g['id']: g for g in guides}
+    links = ''.join(f'<a href="{esc(relative(by_id[r]["url"], d["url"]))}">{esc(by_id[r]["title"])}</a>'
+                    for r in d['related'] if r in by_id)
+    i = guides.index(d)
+    step = ''
+    if i > 0:
+        step += f'<a class="prev" href="{esc(relative(guides[i - 1]["url"], d["url"]))}"><span>Previous</span>{esc(guides[i - 1]["title"])}</a>'
+    if i + 1 < len(guides):
+        step += f'<a class="next" href="{esc(relative(guides[i + 1]["url"], d["url"]))}"><span>Next</span>{esc(guides[i + 1]["title"])}</a>'
+    related = f'<div class="connects"><span class="eyebrow">Connects to</span>{links}</div>' if links else ''
+    return f'<nav class="guide-nav" aria-label="Connected guides">{related}<div class="steps">{step}</div></nav>'
+
+
 def shell(title, description, content, url, source, toc='', status='Current guide'):
     values = {'TITLE': esc(title), 'DESCRIPTION': esc(description),
               'BASE': './' if '/' not in url else '../', 'CONTENT': content,
@@ -142,9 +159,11 @@ def build():
             # Shared numbers and the insight register come from docs/canon.json.
             raw = canon.expand(raw).replace('<!-- INSIGHT_TABLE -->', canon.insight_table())
             if d['id'] == 'research':
-                rows = ['| Paper | Role | Current use |', '|---|---|---|']
+                by_id = {g['id']: g for g in DOCS}
+                rows = ['| Retired paper | What it covered | Now lives in |', '|---|---|---|']
                 for paper in [p for p in DOCS if p['type'] == 'paper']:
-                    rows.append(f'| [{paper["title"]}]({relative(paper["url"], d["url"])}) | {paper["status"]} | {paper["summary"]} |')
+                    homes = ', '.join(f'[{by_id[g]["title"]}]({relative(by_id[g]["url"], d["url"])})' for g in paper.get('superseded_by', []))
+                    rows.append(f'| [{paper["title"]}]({relative(paper["url"], d["url"])}) | {paper["summary"]} | {homes} |')
                 raw = raw.replace('<!-- PAPER_TABLE -->', '\n'.join(rows))
 
                 def source_tier(e):
@@ -180,14 +199,16 @@ def build():
                 raw = raw.replace('<!-- SOURCE_TABLE -->', '\n\n'.join(blocks))
             md = markdown.Markdown(extensions=['tables', 'fenced_code', 'toc', 'sane_lists'])
             body = md.convert(raw)
-            output = shell(d['title'], d['summary'], body, d['url'], d['source'], md.toc)
+            output = shell(d['title'], d['summary'], body + connections(d), d['url'], d['source'], md.toc)
             write('text/' + d['id'] + '.md', agent_text(raw, d['url']))
         else:
             output = rewrite_paper_links(raw, d)
-            review = ('Updated engineering prose; see source for scope.' if d['status'] == 'Editorially updated'
-                      else 'Preserved research/design paper. Use the handbook for the current configuration and implementation state.')
+            by_id = {g['id']: g for g in DOCS}
+            homes = ', '.join(f'<a href="{esc(relative(by_id[g]["url"], d["url"]))}">{esc(by_id[g]["title"])}</a>' for g in d.get('superseded_by', []))
+            review = ('This paper is retired and is kept only as a record. It may describe earlier designs. Its content now lives in the handbook: ' + homes + '.'
+                      if homes else 'Preserved research/design paper. Use the handbook for the current configuration and implementation state.')
             nav = f'''<nav class="handbook-return" aria-label="Handbook navigation"><a href="../index.html">← Replicator Handbook</a><a href="../guides/research.html">Paper library</a><a href="../guides/architecture.html">Current architecture</a><a href="../guides/status.html">Current state</a></nav>
-<aside class="handbook-context"><strong>{esc(d['status'])}</strong> · {esc(d['owner'])}<br>{esc(review)}<br><small>Navigation reviewed {d['reviewed']}. <a href="{REPO}/blob/main/{d['source']}">Source and history</a></small></aside>'''
+<aside class="handbook-context"><strong>{esc(d['status'])}</strong> · {esc(d['owner'])}<br>{review}<br><small>Navigation reviewed {d['reviewed']}. <a href="{REPO}/blob/main/{d['source']}">Source and history</a></small></aside>'''
             style = '<style>.handbook-return{display:flex;flex-wrap:wrap;gap:8px 20px;padding:14px 0;border-bottom:1px solid #ccd6cf;font:14px system-ui,sans-serif}.handbook-return a{color:#165f55}.handbook-return + .handbook-context + .banner{margin-top:0}.handbook-context{margin:18px 0;padding:15px 18px;background:#eef4ef;border-left:3px solid #186b60;font:14px/1.6 system-ui,sans-serif;color:#173630}</style>'
             output = output.replace('</head>', style + '</head>', 1)
             output = re.sub(r'(<body\b[^>]*>)', lambda m: m.group(1) + nav, output, count=1, flags=re.I)

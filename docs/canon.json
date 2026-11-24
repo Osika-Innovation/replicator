@@ -256,8 +256,8 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 166,
-    "total_surfaces": 166,
+    "implemented_surfaces": 168,
+    "total_surfaces": 168,
     "items": [
       {
         "id": "INS-01",
@@ -586,6 +586,14 @@
         "evidence": "SIMULATED",
         "implemented": 3,
         "surfaces": 3
+      },
+      {
+        "id": "INS-42",
+        "summary": "A search of 2024 to 2026 laboratory papers found a newer published result for each of the eight evidence areas.",
+        "effect": "The evidence page can cite current work. One 2025 result suggests static charge could be used to control bead spacing, which changes how the charge limit is read.",
+        "evidence": "DOCUMENTED",
+        "implemented": 2,
+        "surfaces": 2
       }
     ],
     "notes": {
@@ -752,6 +760,10 @@
       "INS-41": {
         "summary": "Testing our neural architecture on unseen procedural 3D shapes showed a clear division of labour: the Prime world model reliably reconstructs scenes from echoes through live calibration updates, while goal-directed part design works better by retrieving a close match and refining it directly against a physics check. An automated held-out verifier gate blocks self-harming updates, and our local learning engine stays pinned to MIT-licensed cadence-net 0.11.0.",
         "effect": "Separates echo reconstruction from physics-refined part synthesis, enforces verifier gating before committing weight updates, standardizes Prime model naming, and preserves the MIT dependency boundary."
+      },
+      "INS-42": {
+        "summary": "A search of 2024 to 2026 laboratory papers found a newer published result for each of the eight evidence areas.",
+        "effect": "The evidence page can cite current work. One 2025 result suggests static charge could be used to control bead spacing, which changes how the charge limit is read."
       }
     }
   },
