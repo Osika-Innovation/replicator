@@ -1,6 +1,6 @@
 # Optics and optical metamaterials
 
-In the prototype, light has one job: it measures. A ring of small laser diodes looks across the chamber and reports where material is and what the sound field is doing, without cameras. In the long-term design, light also switches the acoustic elements, cures and heats material, and handles particles too small for sound. Nothing on this page has been built or measured.
+In the prototype, light has one job: it measures. A ring of small laser diodes looks across the chamber and reports where material is and what the sound field is doing, without cameras. In the long-term design, light also switches the acoustic elements, cures and heats material, and handles particles too small for sound.
 
 Optics shares one coordinate frame with [acoustics](acoustics.html) and [electromagnetic control](electromagnetics.html). The machine as a whole is described in [Desktop Replicator](desktop-replicator.html).
 

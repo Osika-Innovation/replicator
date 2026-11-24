@@ -1,6 +1,6 @@
 # Compute, sensing and control
 
-<div class="lead">This chapter covers the electronics and control loop of the Desktop Replicator: boards, clock, drive stage, 1-bit receive converters, laser readout, bus and compute card. It also defines the file formats and the software interface that every machine, real or emulated, must honour. Nothing described here has been built or measured.</div>
+<div class="lead">This chapter covers the electronics and control loop of the Desktop Replicator: boards, clock, drive stage, 1-bit receive converters, laser readout, bus and compute card. It also defines the file formats and the software interface that every machine, real or emulated, must honour.</div>
 
 <div class="diagram">
 <svg viewBox="0 0 880 540" role="group" aria-labelledby="cc-title cc-desc" xmlns="http://www.w3.org/2000/svg">
@@ -82,7 +82,15 @@ The control system turns a target into twelve timed drive signals, and turns the
 
 Everything above the boards speaks one narrow interface, so real hardware and the emulator are interchangeable.
 
-**Chord, `.pattern` and `.fcode`.** A chord is one set of complex drive values: an amplitude and a phase for each source at each tone. A `.pattern` file stores an object or field shape as one or more chords, each marked as measured or inferred; it says what to make, not when. A `.fcode` file is what a machine plays: a time-ordered list of frames, each with one chord, a duration, a verb and the channels to record. The compiler turns a `.pattern` into `.fcode` for a particular machine and refuses an inferred chord unless it has been explicitly promoted. On the wire, `.fcode` is a compact binary stream with 16-bit drive values (tagged `FCD1`).
+**Holographic equation, chord and `.fcode`.** Three things are kept apart.
+
+- A **holographic equation** is the stored description of an object. It is a `.holo` file (format `holo-eq/0.2`) and it does not depend on any one machine. It says what to make.
+- A **chord** is one set of complex drive values: an amplitude and a phase for each source at each tone. A chord belongs to one chamber in one state. It is computed when needed and is not the record.
+- A **`.fcode`** file is what a machine plays: a time-ordered list of frames, each with one chord, a duration, a verb and the channels to record. On the wire it is a compact binary stream with 16-bit drive values (tagged `FCD1`).
+
+The compiler turns a holographic equation into `.fcode` for a particular machine through that machine's calibration. Every stored item states whether it was measured or inferred, and the compiler refuses an inferred one unless it has been explicitly promoted.
+
+An earlier format, `.pattern`, stored the chords themselves. It is superseded as the store, because chords do not survive a change of chamber, as described [below](#holographic-equations). The simulation workbench still reads and writes `.pattern` files, and the chord memory still operates on them.
 
 **Verbs.** Each frame carries one of three verbs.
 
@@ -105,7 +113,43 @@ listen(gates, steps)   -> records the port response to a low-level probe
 
 The body-response file (`body-response/0.1`) holds one machine's transfer from drive voltage to plate motion at each tone. Planning code states the field it wants, and the compiler maps that through the file for the machine in front of it. The current presets are `desktop-200mm` and the small `boro12`.
 
-**Shapes stored independently of the chamber (Simulated).** A drive pattern saved as raw signals belongs to one chamber. In simulation it stops working when the plate is slightly different, when the cylinder changes size or when sources are added. A second format, `holo-eq/0.2`, therefore stores the goal itself together with a compact description of how the object scatters sound, in terms that do not depend on the chamber. Each machine compiles that through its own calibration. In simulation the result matches a direct solve within 1 % on chambers with 12 and with 36 sources, where matching the raw field loses 50 to 1,000 times the lift. A follow-on version, `holo-eq/0.3-mm`, splits each stored response into a material part and a shape part, which makes the file several hundred times smaller. The controller can take a new goal as a short stream of corrections, about 1.5 kB for a small job, without extra memory. Raw per-chamber patterns remain as a cache.
+### Holographic equations
+
+**Why chords cannot be the record (Simulated).** A set of drive values tuned for one chamber writes a shape well on that chamber and fails on the next. In a pre-registered simulation, drives optimised per shape on the nominal plate scored 0.60 to 1.00 overlap with their targets; replayed on plates that differ by half a percent in thickness they fell to chance. The same happens when the cylinder changes size, when sources are added, or when the air warms by a couple of kelvin. A stored chord describes a chamber, not an object.
+
+**What the file holds.** A holographic equation describes the object about its own centre, in two parts.
+
+- *The write form* is the sound field the object needs around it, expressed as a short list of spherical waves at each tone, in one or more steps called strokes. At the default detail this is 49 numbers per tone.
+- *The read form* is how the object scatters sound: a compact table that turns any incoming wave into the outgoing one. It is what the machine compares an echo against to check the object, and what removal starts from.
+
+Because both parts are written in spherical waves about the object, turning or moving the object is an exact calculation and needs no new optimisation (Derived).
+
+**How a machine uses it.** Each chamber measures its own response during calibration: what one volt on each source produces at the object's position. The three verbs then run through that measurement.
+
+| Verb | What the machine does with the equation |
+|---|---|
+| ADD | Compiles the goal through its calibration into drive values, within the voltage it has |
+| LISTEN | Predicts the echo the object should return and compares it with the measured one |
+| REMOVE | Uses the measured echo to compute the drive that the object absorbs best |
+
+**Carry the goal, not the field (Simulated).** There are two ways to compile ADD. Reproducing the stored field as closely as the sources allow works on every chamber tried but wastes the supply: it lifts 50 to 1,000 times less than the chamber's own best. Carrying the goal, meaning the sites to hold and the clearance around them, and letting each chamber choose its own field matches a direct solve within 1 % on chambers with 12 and with 36 sources. The format therefore stores the goal.
+
+**What the experiments support so far (Simulated, pre-registered, 22 November 2026).**
+
+- A rule re-derived from each chamber's calibration beats a stored chord on plates it was not tuned for: mean overlap 0.32 against 0.04.
+- Thirty further iterations on the chamber's own calibration bring that to 86 % of a full per-chamber optimisation, above chance on all 65 plate and shape pairs tested.
+- The equation is not yet short. No compact list of modes reached 95 % of the fully optimised result, and a route that derives the drive from listening alone failed.
+- Thin objects need care. Writing them one site at a time with strong suppression of neighbouring traps puts the traps in the right place, at the cost of lift: on twelve sources three of six test objects fell below their own weight.
+
+These scores use a simplified measure of where the pressure nodes fall, on a 7 × 7 × 7 grid. They are not a simulation of material being held.
+
+**Limits that are physics (Derived).** At the default detail the write form describes the field only within about 2 mm of the object's centre at the top tone; larger objects need more terms or several centres. A chamber with twelve sources can realise only twelve independent fields per tone, so compilation reports how much of the equation it could not meet. A scan can recover only the part of the read form that the sources can see.
+
+**Several materials.** A follow-on version, `holo-eq/0.3-mm`, stores a list of materials and where each sits, and rebuilds the scattering table from a material model when needed. For an eleven-material test object the file is about 1.7 kB, several hundred times smaller than storing the table for every probe band.
+
+**To the controller.** The controller does not receive the file. It receives a short packet (`HLEQ`), about 1.5 kB for a six-stroke job, that sets the goal for the on-board pattern network without using extra memory.
+
+**In code.** The simulation workbench and the twin both read and write the format. An earlier export with the same `.holo` name (`holo-field/0.1`) stored raw per-chamber signals and is superseded.
 
 **Calibration uses a symmetry of still air (Derived).** In still air the response from source A to source B equals the response from B to A. Calibration can therefore measure 78 pairs of the twelve sources where it would otherwise measure 144, and it recovers each channel's send and receive gains as a by-product. Any departure from the symmetry during a build is a sign that the air is moving or the machine has drifted, and serves as an alarm.
 

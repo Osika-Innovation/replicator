@@ -3,7 +3,7 @@
   "title": "Etherworks Replicator Handbook",
   "site_url": "https://osika-innovation.github.io/replicator/",
   "repository": "https://github.com/Osika-Innovation/replicator",
-  "updated": "2026-11-22",
+  "updated": "2026-11-24",
   "documents": [
     {
       "id": "home",
@@ -77,22 +77,55 @@
       "group": "Start",
       "status": "Current guide",
       "owner": "Systems / documentation",
-      "summary": "The machine being designed first: one open chamber, two undrilled glass wafers, self-sensing piezo sources and a ring of self-mixing lasers. Nothing is built yet.",
+      "summary": "The machine being designed first: one chamber closed by a glass cylinder, two undrilled glass wafers, self-sensing piezo sources and a ring of self-mixing lasers. Each figure is labelled as a design decision, a calculation or a simulation result.",
       "topics": [
         "prototype",
         "desktop replicator",
         "hardware",
         "CAD"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-24",
       "review_scope": "Active prototype design, quoted from the shared engineering constants",
       "related": [
         "status",
         "architecture",
+        "subsystems",
         "acoustics",
         "compute-control",
         "insights",
         "glossary"
+      ]
+    },
+    {
+      "id": "evidence",
+      "title": "Proven in the lab",
+      "source": "docs/content/evidence.md",
+      "url": "guides/evidence.html",
+      "type": "guide",
+      "group": "Start",
+      "status": "Current guide",
+      "owner": "Systems / research",
+      "summary": "Cornerstone Replicator physics organized by peer-reviewed third-party laboratory experiments (acoustic holography, CPA, optical field imaging, physical wave computing, crystal memory, tweezer arrays, cold welding).",
+      "topics": [
+        "evidence",
+        "publications",
+        "laboratory demonstrations",
+        "investors",
+        "DOIs",
+        "cornerstones"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Published third-party experimental basis mapped to Desktop prototype and long-term horizon rungs",
+      "related": [
+        "start",
+        "status",
+        "research",
+        "desktop-replicator",
+        "architecture",
+        "acoustics",
+        "optics",
+        "cadence-memory",
+        "matter-loop"
       ]
     },
     {
@@ -156,18 +189,23 @@
       "group": "Systems",
       "status": "Current guide",
       "owner": "Architecture",
-      "summary": "Coordinated fields, two-carrier wavelength/momentum physics, volume crossings, and Ultimate vs. Prototype comparison.",
+      "summary": "The whole machine in one clickable block diagram: the two-zone cylindrical stack, four flows with their budgets, and the prototype, trade space and final machine side by side with the gate for each swap.",
       "topics": [
         "block diagram",
-        "modules",
-        "two carriers",
-        "ultimate vs prototype",
-        "3+3"
+        "subsystems",
+        "two-zone stack",
+        "flows and budgets",
+        "prototype vs final",
+        "trade space",
+        "two carriers"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Coordinated-field architecture, two-carrier physics, and Ultimate vs. Prototype subsystem table",
+      "reviewed": "2026-11-24",
+      "review_scope": "Master subsystem block diagram, flow budgets, three-column comparison matrix and interface summary; two-carrier physics retained",
       "related": [
         "start",
+        "subsystems",
+        "desktop-replicator",
+        "ultimate-replicator",
         "agents",
         "physics",
         "acoustics",
@@ -177,7 +215,51 @@
         "cadence-memory",
         "digital-twin",
         "manufacturing",
-        "matter-loop"
+        "matter-loop",
+        "evidence"
+      ]
+    },
+    {
+      "id": "subsystems",
+      "title": "Subsystems and interfaces",
+      "source": "docs/content/subsystems.md",
+      "url": "guides/subsystems.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Architecture",
+      "summary": "One datasheet per subsystem, the interface control matrix with every wire, file and mechanical contract, and the log of deleted parts and retired baselines.",
+      "topics": [
+        "subsystems",
+        "interface control",
+        "ICD",
+        "N2 matrix",
+        "HLEQ",
+        "LMQ8",
+        "body-response",
+        "holo-eq",
+        "LightRead",
+        "deleted parts",
+        "retired baselines"
+      ],
+      "reviewed": "2026-11-24",
+      "review_scope": "Subsystem datasheets, interface control matrix and deleted-parts log for the Desktop Replicator, quoted from the shared engineering constants",
+      "related": [
+        "architecture",
+        "desktop-replicator",
+        "ultimate-replicator",
+        "acoustics",
+        "optics",
+        "electromagnetics",
+        "compute-control",
+        "cadence-memory",
+        "matter-loop",
+        "manufacturing",
+        "digital-twin",
+        "evidence",
+        "insights",
+        "upgrades",
+        "status"
       ]
     },
     {
@@ -1104,6 +1186,33 @@
         "architecture",
         "research",
         "status"
+      ]
+    },
+    {
+      "id": "ultimate-replicator",
+      "title": "The long-term machine",
+      "source": "docs/content/ultimate-replicator.md",
+      "url": "guides/ultimate-replicator.html",
+      "type": "guide",
+      "group": "Systems",
+      "status": "Current guide",
+      "owner": "Architecture",
+      "summary": "The release-hold-write materialisation chamber: the physical floors (energy, information, time), the open questions with decisive tests, and the bridge from the Desktop Replicator.",
+      "topics": [
+        "materialisation chamber",
+        "bounds model",
+        "release hold write",
+        "doors",
+        "loop energy"
+      ],
+      "reviewed": "2026-11-22",
+      "review_scope": "Long-term machine bounds, doors and bridge; Derived floors from the programme bounds model",
+      "related": [
+        "architecture",
+        "matter-loop",
+        "upgrades",
+        "status",
+        "desktop-replicator"
       ]
     }
   ]

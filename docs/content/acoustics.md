@@ -1,6 +1,6 @@
 # Acoustics
 
-The acoustic subsystem makes the force that holds and moves material. Two facing plates radiate ultrasound into the chamber, the sound forms a standing pattern, and small objects settle into its quiet pockets. The same sources also listen, so the subsystem senses what it is holding. Everything here is design, derivation or simulation. Nothing has been built or measured.
+The acoustic subsystem makes the force that holds and moves material. Two facing plates radiate ultrasound into the chamber, the sound forms a standing pattern, and small objects settle into its quiet pockets. The same sources also listen, so the subsystem senses what it is holding. Everything here is design, derivation or simulation.
 
 ## The physics that matters
 

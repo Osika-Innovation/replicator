@@ -1,14 +1,14 @@
 # The engineering twin
 
-The digital twin is the software model of the machine. It holds the parametric CAD, the field solvers and the same machine interface that real hardware will use, so a job that runs on the emulated machine is meant to run unchanged on a built one. Because no hardware exists, the twin is currently the only place where the [Desktop Replicator](desktop-replicator.html) can be exercised. Every result it produces is Derived or Simulated; none is Measured.
+The digital twin is the software model of the machine. It holds the parametric CAD, the field solvers and the same machine interface that real hardware will use, so a job that runs on the emulated machine is meant to run unchanged on a built one. Every result the twin produces is Derived or Simulated.
 
 ## Two code bases
 
 **`twin/` is the machine in software.** It is a single Swift and Metal package with no third-party dependencies. It contains three things: the parametric solid model of the Desktop Replicator, the solvers that compute the sound field and the force on a particle, and the machine interface (`MachineBackend`) through which every program talks to either the emulator or a controller. Its command-line tool is `fieldc`.
 
-**`holo/` is the simulation and training workbench.** It is Python on Apple's MLX array library. It trains the pattern network (Cadence), simulates the two sensing paths (the piezo receive path and the laser ring), runs automated design searches over plate layouts, and encodes the job and pattern files. Its checks run with `python3 -m holo.verify`.
+**`holo/` is the simulation and training workbench.** It is Python on Apple's MLX array library. It trains the pattern network (Cadence), simulates the two sensing paths (the piezo receive path and the laser ring), runs automated design searches over plate layouts, and encodes the job files and holographic equations. Its checks run with `python3 -m holo.verify`.
 
-The two share file formats: `.fcode` for a job, `.pattern` for a sparse drive pattern, and the plate-response file described below.
+The two share file formats: `.fcode` for a job, `.holo` for a holographic equation (the stored description of an object), and the plate-response file described below.
 
 ## The physics the solver rests on
 
@@ -55,7 +55,7 @@ The checks confirm that the solid model is geometrically self-consistent:
 
 The current model passes these checks. The power and thermal figures are Derived from assumed datasheet values.
 
-**The checks say nothing about whether the machine works.** They do not show that the plates produce a usable field, that a particle is held, that the sensing paths have enough signal, or that the parts can be bought and assembled. No hardware exists to test any of that.
+**The checks say nothing about whether the machine works.** They do not show that the plates produce a usable field, that a particle is held, that the sensing paths have enough signal, or that the parts can be bought and assembled. Those are questions for the bench.
 
 ## The plate-response file
 
@@ -101,7 +101,7 @@ The twin models the quantities the real machine will be able to observe, and no 
 
 - the electrical state of each piezo disc while it drives, using the standard equivalent circuit of a piezo resonator (Butterworth–Van Dyke), including the drift of its capacitance with temperature;
 - along each of the {{c:mosquito_smi.total_ommatidia}} laser sightlines, the shadow cast by an object and the ripple that sound imposes on the beam;
-- sparse drive patterns in the `.pattern` format.
+- holographic equations in the `.holo` format, and chords in the earlier `.pattern` format.
 
 The pattern network is compared with the direct physics solver under four levels of hardware realism: ideal floating point; the prototype microcontroller with 8-bit weights, its 1-bit converter at {{c:haptic_pzt.sigma_delta_fs_hz|mhz}} million samples per second, capacitance drift and laser noise; a sparse 8-bit programmable-logic card; and an analogue optical phase-change medium. The network must fit in under {{c:cadence_brain.cadence_sparse_max_kb}} kB and settle in {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms on the microcontroller. These comparisons are Simulated, and the simulation checks that must pass before any board is made are still Open; the [insight register](insights.html) tracks them. Details are in [Cadence, memory and wave compute](cadence-memory.html) and [Compute, sensing and control](compute-control.html).
 
@@ -115,7 +115,7 @@ Every view and exported report keeps three layers apart:
 2. **Simulated prediction.** Pressure, force, flow and temperature from a model, with the model's assumptions stated.
 3. **Measured and inferred.** Raw observations at the boundary, kept distinct from any interior reconstruction computed from them.
 
-A passing simulation check never stands in for a measurement. Until hardware exists the third layer is empty.
+A passing simulation check never stands in for a measurement.
 
 ## Rules for the twin's own size
 

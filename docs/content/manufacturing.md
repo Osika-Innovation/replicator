@@ -2,7 +2,7 @@
 
 <div class="lead">A part is made in five steps that share one work volume: feed, trap, move, consolidate and check. Trapping and moving a single small bead are supported by simulation on earlier apertures. Joining material, and placing one bead beside another, are not yet shown for the first machine.</div>
 
-Nothing on this page has been built or measured. The first machine is described in [Desktop Replicator](desktop-replicator.html). Scanning, removal of material and the stores are in [Scan, recover and matter stores](matter-loop.html).
+This page describes the process as designed and simulated. The first machine is described in [Desktop Replicator](desktop-replicator.html). Scanning, removal of material and the stores are in [Scan, recover and matter stores](matter-loop.html).
 
 ## The loop: feed, trap, move, consolidate, check
 
@@ -91,7 +91,7 @@ The long-term design replaces twelve wired sources with a surface of roughly 100
 
 - **Fine placement by light.** Sound brings a piece to within reach, then holographic optical tweezers (Documented: Ashkin; Grier) align it to nanometre tolerances. Below a few tens of nanometres thermal motion beats a plain optical trap, and near-field traps are needed. The hand-off from sound to light is Open.
 - **Other ways to levitate.** Molten metals can be held and heated by induction, and charged droplets electrostatically under fast active control. Large coils acting across the whole chamber were studied and produce negligible force, so induction is a long-term, close-range option.
-- **Automatic feed.** Feedstock would rise from a storage chamber below the build chamber, sorted and inspected on the way. See [the stores](matter-loop.html#the-stores-pattern-library-vs-matter-pantry).
+- **Automatic feed.** Feedstock would rise from a storage chamber below the build chamber, sorted and inspected on the way. See [the stores](matter-loop.html#the-stores-equation-library-vs-matter-pantry).
 
 ## Open questions
 

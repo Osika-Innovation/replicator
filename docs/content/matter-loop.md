@@ -2,7 +2,7 @@
 
 <div class="lead">A machine that improves itself has to do three things with matter: see what is in the chamber, take material away as well as add it, and keep its feedstock in a safe form. This chapter covers scanning, removal and the stores. Adding material is covered in <a href="manufacturing.html">Manufacturing</a>.</div>
 
-Nothing here has been built or measured. Scanning rests on standard scattering physics and simulation. Removal is a derived plan that the code does not yet implement. The first machine is the [Desktop Replicator](desktop-replicator.html).
+Scanning rests on standard scattering physics and simulation. Removal is a derived plan that the code does not yet implement. The first machine is the [Desktop Replicator](desktop-replicator.html).
 
 ## Scan: non-moving 3D tomography and scattering
 
@@ -48,7 +48,7 @@ The relation has a hard limit in air. A solid has an acoustic impedance of 10 to
 
 Three rules keep reconstruction honest. The first two are software checks run on simulated data. They are model checks, not bench results.
 
-- **Measured or inferred, always stated.** Every stored pattern must say whether it was measured or inferred, with no default, and an inferred pattern must name the model that produced it. The file reader rejects a pattern that omits this (the provenance check, G17). No bench data exists yet, so nothing is tagged measured from hardware.
+- **Measured or inferred, always stated.** Every stored pattern must say whether it was measured or inferred, with no default, and an inferred pattern must name the model that produced it. The file reader rejects a pattern that omits this (the provenance check, G17).
 - **Held-out prediction.** The chamber model must predict a quarter of the source and receiver pairs that were withheld from it (the held-out check, G18). A wrong model cannot predict data it never saw. The check passes on simulated data.
 - **A known reference object.** Absolute dimensional error is to be checked against a precisely made reference object in the chamber (G19). This needs hardware and has not been run.
 
@@ -117,16 +117,16 @@ Wave energy cannot un-react a cured polymer, reverse metal diffusion or sort a m
 
 Every recovery run is meant to update a ledger of mass in, stock recovered, losses and energy spent. The loop counts as closed when a second inspected part has been built from recovered material.
 
-## The Stores: pattern library vs. matter pantry
+## The Stores: equation library vs. matter pantry
 
-The pattern store holds information. The matter stores hold atoms. Keeping them separate avoids design errors.
+The equation store holds information. The matter stores hold atoms. Keeping them separate avoids design errors.
 
 | Store | Holds | Constraint | In the Desktop Replicator |
 |---|---|---|---|
-| Pattern store | Shapes, the calibrated chamber response, the trained pattern network, build recipes | Storage capacity; every item tagged measured or inferred | Workstation disk, plus under {{c:cadence_brain.cadence_sparse_max_kb}} kB on the compute card |
+| Equation store | Holographic equations of objects, the calibrated chamber response, the trained pattern network, build recipes | Storage capacity; every item tagged measured or inferred | Workstation disk, plus under {{c:cadence_brain.cadence_sparse_max_kb}} kB on the compute card |
 | Matter stores | Feed materials | Conservation of mass, chemical stability, safety | Three open crucibles in the chamber: {{c:desktop_geometry.in_chamber_crucibles}} |
 
-The prototype's crucibles are loaded by hand with material whose origin is recorded. Nothing enters or leaves through pipes. The pattern store is described in [Cadence, memory and wave compute](cadence-memory.html).
+The prototype's crucibles are loaded by hand with material whose origin is recorded. Nothing enters or leaves through pipes. The holographic equation is described in [Compute, sensing and control](compute-control.html#holographic-equations), and the memory that recalls stored entries in [Cadence, memory and wave compute](cadence-memory.html).
 
 ### Store oxidised, never as reactive powder (Derived)
 

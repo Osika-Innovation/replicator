@@ -12,7 +12,7 @@ The paper library keeps the original standalone essays and dated design specific
 
 ## Papers and patents from outside the project
 
-The [public source catalog](../sources.json) contains selected primary papers and patents, their review depth, possible engineering use and next check. It is generated from an explicitly reviewed selection. A listed patent is a source of claims and mechanisms, not a demonstration or an adoption decision.
+For an investor- and architecture-oriented map of third-party experimental demonstrations by subsystem, start with [Proven in the lab](evidence.html). The [public source catalog](../sources.json) below is partitioned into three tiers—published laboratory experiments first, reference datasets and models second, and patents or exploratory claims last so non-experimental material never reads like a lab result.
 
 <!-- SOURCE_TABLE -->
 
