@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "synced_at": "2026-11-24",
+  "synced_at": "2026-11-25",
   "constants": {
     "architecture_status": {
       "active_prototype": "Desktop Replicator (Rev S)",
@@ -172,7 +172,7 @@
       "door_half_sweep_deg": 78.0,
       "door_opening_chord_mm": 204.2,
       "clear_view_deg": 211.0,
-      "nominal_mass_kg": 18.8,
+      "nominal_mass_kg": 17.2,
       "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Rev F2 (#37/#41, 2026-11-22) closes the chamber with a stock DURAN O250x5 borosilicate cylinder on the lifting head, placing the lateral glass boundary at r=120 mm (ID 240 mm, OD 250 mm, 5 mm wall).",
       "enclosure_minor_rev": 0,
       "chamber_glass": true,
@@ -185,7 +185,7 @@
       ],
       "chamber_wall": "glass cylinder on lifting head (Rev F, operator 2026-11-18); --no-lift = open front, --glass = rotating door",
       "lift_stroke_mm": 265.0,
-      "lift_moving_mass_kg": 7.22,
+      "lift_moving_mass_kg": 6.28,
       "envelope_open_height_mm": 909.0,
       "glass_cylinder_id_od_mm": [
         240.0,
@@ -234,7 +234,8 @@
       "laser_class": "Class 1 by construction: no lasers in the default build (SMI off since #108; --smi restores it with each emitter capped at 0.30 mW under the 0.39 mW visible Class 1 limit, IEC 60825-1:2014 as recalled, to verify). Cure light OPEN.",
       "lift_drive": "motorised (#110, inverted #113): fixed corner pieces on the base hold 2 x Ø12 lead-10 ball screws, the guide carriages and a brushless servo with power-off brake; belts in the base; the centre spine (112 mm body, 154 mm plates) rides with the head on rails, driven by nut arms at its foot; --sleeve-lift keeps the spring version",
       "lift_move_s": 2.5,
-      "smi_default": false
+      "smi_default": false,
+      "build_route": "no tooling: CNC aluminium skeleton + catalogue parts + white printed PA12 skins (#118); --metal-skins for aluminium"
     },
     "dissolve_and_toroidal": {
       "matter_state_fields": [
@@ -278,8 +279,8 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 173,
-    "total_surfaces": 173,
+    "implemented_surfaces": 175,
+    "total_surfaces": 175,
     "items": [
       {
         "id": "INS-01",
@@ -632,6 +633,14 @@
         "evidence": "DERIVED",
         "implemented": 3,
         "surfaces": 3
+      },
+      {
+        "id": "INS-45",
+        "summary": "A study of repeating patterns (crystals) for sound and light picked the few worth trying first and ruled out the rest.",
+        "effect": "The first test is a light pattern of small steel dots on the back of each glass plate, to be checked in simulation before anyone builds it. The same study found that the empty-chamber echo test also shows a leaking cassette, and that sound and light can share one crystal only in factory-made chips at gigahertz.",
+        "evidence": "DERIVED",
+        "implemented": 2,
+        "surfaces": 2
       }
     ],
     "notes": {
@@ -810,6 +819,10 @@
       "INS-44": {
         "summary": "The pattern-network software now runs on the laptop's graphics chip instead of one overheating processor core, and the small controller version is frozen.",
         "effect": "The large model reads the handbook text, a 3D shape grid and a fast physics stand-in, and every answer is checked by the exact physics before it counts. The same entry sets the limits for assembling in a liquid: a density match of roughly 100 to 130 kg/m³, and 12 to 42 sound ports."
+      },
+      "INS-45": {
+        "summary": "A study of repeating patterns (crystals) for sound and light picked the few worth trying first and ruled out the rest.",
+        "effect": "The first test is a light pattern of small steel dots on the back of each glass plate, to be checked in simulation before anyone builds it. The same study found that the empty-chamber echo test also shows a leaking cassette, and that sound and light can share one crystal only in factory-made chips at gigahertz."
       }
     }
   },

@@ -157,7 +157,7 @@ Three driven acoustic bodies (stacks) are built from one cartridge design: Stack
 **A printed surface against a driven one.** A printed surface delays the sound by a fixed amount at each point and shapes one chosen field ([Melde et al., 2016](https://doi.org/10.1038/nature19755), Documented). The wired sources can change at any moment, a print cannot. A printed phase lens on the chamber face is an [upgrade](upgrades.html) option (Open). Two rules for any printed or porous part:
 
 - **Holes must be much wider than the sticky layer of air.** Friction slows the air next to a wall over a layer about 12 µm thick at 32 kHz and 5 µm at 160 kHz (Derived). Channels only a few times wider turn sound into heat.
-- **A perfectly regular lattice is a filter.** Evenly repeated cells block whole bands of frequency (Documented for phononic crystals, source not yet registered).
+- **A perfectly regular lattice is a filter.** Evenly repeated cells block whole bands of frequency (Documented for phononic crystals: [Kushwaha et al. 1993](https://doi.org/10.1103/physrevlett.71.2022), `R160`; [Martínez-Sala et al. 1995](https://doi.org/10.1038/378241a0), `R161`). The [crystals guide](crystals.html) says which patterns the machine will try: small steel dots on the back of each plate to help it radiate (RG-1, a simulation first) and a quiet seat if the bench shows vibration crossing the frame (PX-1).
 
 ## Known limits
 

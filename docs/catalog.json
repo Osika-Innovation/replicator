@@ -3,7 +3,7 @@
   "title": "Etherworks Replicator Handbook",
   "site_url": "https://osika-innovation.github.io/replicator/",
   "repository": "https://github.com/Osika-Innovation/replicator",
-  "updated": "2026-11-24",
+  "updated": "2026-11-25",
   "documents": [
     {
       "id": "home",
@@ -155,7 +155,8 @@
         "acoustics",
         "optics",
         "cadence-memory",
-        "matter-loop"
+        "matter-loop",
+        "crystals"
       ]
     },
     {
@@ -291,7 +292,8 @@
         "insights",
         "upgrades",
         "status",
-        "cad-3d"
+        "cad-3d",
+        "crystals"
       ]
     },
     {
@@ -323,7 +325,8 @@
         "upgrades",
         "periodic-table",
         "materials",
-        "physics-to-hardware"
+        "physics-to-hardware",
+        "crystals"
       ]
     },
     {
@@ -356,7 +359,8 @@
         "materials",
         "digital-twin",
         "manufacturing",
-        "research"
+        "research",
+        "crystals"
       ]
     },
     {
@@ -831,7 +835,37 @@
         "acoustics",
         "upgrades",
         "physics-to-hardware",
-        "optics"
+        "optics",
+        "crystals"
+      ]
+    },
+    {
+      "id": "crystals",
+      "title": "Crystals",
+      "source": "docs/content/crystals.md",
+      "url": "guides/crystals.html",
+      "type": "guide",
+      "group": "Research framework",
+      "status": "Current guide",
+      "owner": "Materials and modes",
+      "summary": "Patterns that steer sound and light: which crystals the machine tries first, which it skips, and why.",
+      "topics": [
+        "phononic crystal",
+        "photonic crystal",
+        "phoxonic",
+        "band gap",
+        "hologram",
+        "opal"
+      ],
+      "reviewed": "2026-11-25",
+      "review_scope": "Current programme explanation",
+      "related": [
+        "materials",
+        "acoustics",
+        "optics",
+        "evidence",
+        "subsystems",
+        "status"
       ]
     },
     {

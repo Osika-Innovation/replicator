@@ -125,6 +125,8 @@ A printed surface can shape a wave with no electronics in each cell. Three ideas
 
 ### Fabricating the next optical module
 
+Crystals made of light patterns, such as an opal or a hologram stored in a lithium niobate crystal, are covered in [Crystals](crystals.html#rung-2-crystals-of-light).
+
 The first machine cannot make structures finer than a light wavelength. Optical modules therefore start as bought optics or outside-made masters. Copies can then be made by nanoimprint, which presses the pattern into a resin loaded with high-index nanoparticles ([published protocol](https://doi.org/10.1038/s41596-026-01407-0), Documented).
 
 The tolerance that matters is surface height. A height error δh on a clear element of index n gives a phase error δφ:
