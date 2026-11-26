@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "synced_at": "2026-11-25",
+  "synced_at": "2026-11-26",
   "constants": {
     "architecture_status": {
       "active_prototype": "Desktop Replicator (Rev S)",
@@ -31,6 +31,14 @@
       "coherent_comb_window_us": 62.5,
       "transmit_ring_us": 125.0,
       "capture_burst_us": 500.0,
+      "ring_lock_n_ref_ticks": 18750,
+      "ring_lock_slew_ticks_per_frame": 2,
+      "ring_lock_in_lock_ticks": 4,
+      "ring_lock_range_ticks": 136,
+      "ring_lock_drive_table_entries": 21,
+      "ring_lock_drive_table_step_ticks": 10,
+      "ring_lock_drive_refuse_ticks": 20,
+      "bench_gate0_flood_r_max": 0.5,
       "sync_skew_max_ns": 2.0,
       "spinal_bus_mbps_range": [
         50,
@@ -172,7 +180,7 @@
       "door_half_sweep_deg": 78.0,
       "door_opening_chord_mm": 204.2,
       "clear_view_deg": 211.0,
-      "nominal_mass_kg": 17.2,
+      "nominal_mass_kg": 17.08,
       "gap_note": "Raised from 120.0 to 180.0 mm (operator, 2026-11-17) and to 240.0 mm (operator, 2026-11-18), CAD Rev E2. Rev F2 (#37/#41, 2026-11-22) closes the chamber with a stock DURAN O250x5 borosilicate cylinder on the lifting head, placing the lateral glass boundary at r=120 mm (ID 240 mm, OD 250 mm, 5 mm wall).",
       "enclosure_minor_rev": 0,
       "chamber_glass": true,
@@ -232,10 +240,24 @@
         0.5
       ],
       "laser_class": "Class 1 by construction: no lasers in the default build (SMI off since #108; --smi restores it with each emitter capped at 0.30 mW under the 0.39 mW visible Class 1 limit, IEC 60825-1:2014 as recalled, to verify). Cure light OPEN.",
-      "lift_drive": "motorised (#110, inverted #113): fixed corner pieces on the base hold 2 x Ø12 lead-10 ball screws, the guide carriages and a brushless servo with power-off brake; belts in the base; the centre spine (112 mm body, 154 mm plates) rides with the head on rails, driven by nut arms at its foot; --sleeve-lift keeps the spring version",
+      "lift_drive": "motorised (#110, inverted #113, brake-free #128): fixed corner pieces on the base hold 2 x Ø12 lead-10 ball screws, the guide carriages and a brushless servo with NO brake; belts in the base; the centre spine (112 mm body, 154 mm plates) rides with the head on rails, driven by nut arms at its foot; during jobs the head rests on two hardened stops at the 240.00 mm gap, servo disabled; --sleeve-lift keeps the spring version",
       "lift_move_s": 2.5,
       "smi_default": false,
-      "build_route": "no tooling: CNC aluminium skeleton + catalogue parts + white printed PA12 skins (#118); --metal-skins for aluminium"
+      "build_route": "no tooling: CNC aluminium skeleton + catalogue parts + white printed PA12 skins (#118); --metal-skins for aluminium",
+      "lift_hold": {
+        "mode": "head rests on hard stops under its own weight during jobs; servo disabled; no brake (#128, from #119 WITH LIMITS)",
+        "seat_force_n": 61.6,
+        "seat_tolerance_mm": 0.5,
+        "seat_tolerance_k_air": 1.22,
+        "lock_ticks_needed_pm3k_plus_seat": 135,
+        "ring_range_ticks": 136,
+        "holding_heat_w_during_jobs": 0.0,
+        "holding_heat_saved_vs_current_hold_w": 4.3,
+        "brake_mass_saved_kg": 0.14,
+        "power_loss": "raised head sinks ~55 mm/s onto its stops; windings must be shorted on power loss (REQUIRED, check part)",
+        "liquid_seal": "extra-soft foam gasket ~41 N (10 kPa ASSUMED) leaves ~20 N on the stops (HDR133)",
+        "register": "DERIVED geometry, ASSUMED motor/foam constants, nothing measured"
+      }
     },
     "dissolve_and_toroidal": {
       "matter_state_fields": [
@@ -279,8 +301,8 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 175,
-    "total_surfaces": 175,
+    "implemented_surfaces": 177,
+    "total_surfaces": 177,
     "items": [
       {
         "id": "INS-01",
@@ -637,7 +659,15 @@
       {
         "id": "INS-45",
         "summary": "A study of repeating patterns (crystals) for sound and light picked the few worth trying first and ruled out the rest.",
-        "effect": "The first test is a light pattern of small steel dots on the back of each glass plate, to be checked in simulation before anyone builds it. The same study found that the empty-chamber echo test also shows a leaking cassette, and that sound and light can share one crystal only in factory-made chips at gigahertz.",
+        "effect": "The first test, a light pattern of small steel dots on the back of each glass plate, has since failed its simulation, and a thicker plate is the lead that replaces it. The same study found that the empty-chamber echo test also shows a leaking cassette, and that sound and light can share one crystal only in factory-made chips at gigahertz.",
+        "evidence": "DERIVED",
+        "implemented": 2,
+        "surfaces": 2
+      },
+      {
+        "id": "INS-46",
+        "summary": "The machine now follows temperature drift by changing the drive timing instead of moving the head, and the pattern network gets a plan to think silently first and use words second, as the human brain does.",
+        "effect": "The lift motor loses its brake and its heating, because the head rests on two hard stops during a job. A cassette-flood check is added to the first empty-chamber test. The brain study adds no hardware. It sets the order of work for the next pattern-network experiments.",
         "evidence": "DERIVED",
         "implemented": 2,
         "surfaces": 2
@@ -822,7 +852,11 @@
       },
       "INS-45": {
         "summary": "A study of repeating patterns (crystals) for sound and light picked the few worth trying first and ruled out the rest.",
-        "effect": "The first test is a light pattern of small steel dots on the back of each glass plate, to be checked in simulation before anyone builds it. The same study found that the empty-chamber echo test also shows a leaking cassette, and that sound and light can share one crystal only in factory-made chips at gigahertz."
+        "effect": "The first test, a light pattern of small steel dots on the back of each glass plate, has since failed its simulation, and a thicker plate is the lead that replaces it. The same study found that the empty-chamber echo test also shows a leaking cassette, and that sound and light can share one crystal only in factory-made chips at gigahertz."
+      },
+      "INS-46": {
+        "summary": "The machine now follows temperature drift by changing the drive timing instead of moving the head, and the pattern network gets a plan to think silently first and use words second, as the human brain does.",
+        "effect": "The lift motor loses its brake and its heating, because the head rests on two hard stops during a job. A cassette-flood check is added to the first empty-chamber test. The brain study adds no hardware. It sets the order of work for the next pattern-network experiments."
       }
     }
   },

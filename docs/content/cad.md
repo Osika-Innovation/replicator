@@ -22,14 +22,14 @@ One axis runs from the plinth at the bottom to the head at the top. The stack is
 | Storage bucket | A fixed glass tube, the same size as the build tube, for feedstock | [S02 Storage and release](subsystems.html#s02-storage-and-release-plinth) |
 | Mid-plane | The slot and the cassette: a flat wafer in a hard ring that reflects sound and lifts out by hand | [S03 Mid-plane interface](subsystems.html#s03-mid-plane-interface) |
 | Build cylinder | The lifting glass tube, the rear liner and the laser ring | [S01 Chamber and stack](subsystems.html#s01-chamber-and-stack-topology), [S06 Optical ring](subsystems.html#s06-optical-tomography) |
-| Head | The upper acoustic plate, driven up and down by the lift servo | [S05 Gap lock](subsystems.html#s05-gap-actuator-and-resonance-lock) |
+| Head | The upper acoustic plate, raised and lowered by the lift servo and resting on two stops during a job | [S05 Gap lock](subsystems.html#s05-gap-actuator-and-resonance-lock) |
 | Rear tower | The rails the head rides on, the cooling duct, the laser strips | [Desktop Replicator](desktop-replicator.html#the-enclosure) |
 
 ## How the model is made
 
 The twin generates the model from a parametric description, so a change to a number in the design redraws every part that depends on it. The same description writes an exact solid model (STEP files) and the mesh in this viewer. The geometry checks confirm that the solids close, that parts do not collide and that the mesh matches the exact solids. Those checks show the model is self-consistent. They do not show that the machine works ([Digital twin](digital-twin.html#what-each-kind-of-check-proves)).
 
-The viewer shows the current default build, called Rev S in the design files: 379 × 294 × 644 mm closed and about 19 kg (Derived from the model; the screen module's mass is assumed). It is the first model with the storage bucket and the mid-plane cassette directly under the build chamber, as the [architecture](architecture.html) describes. Part descriptions are written for this page. Sizes are the bounding box of each part in millimetres, read from the mesh.
+The viewer shows the current default build, called Rev S in the design files: 379 × 294 × 644 mm closed and about 17 kg (Derived from the model; the screen module's mass is assumed). It is the first model with the storage bucket and the mid-plane cassette directly under the build chamber, as the [architecture](architecture.html) describes. Part descriptions are written for this page. Sizes are the bounding box of each part in millimetres, read from the mesh.
 
 ## What the model does not settle
 

@@ -2,7 +2,7 @@
 
 <div class="lead">A crystal, in this handbook, is any pattern that repeats. A repeating pattern can block a wave, trap it or push it out. This page says which patterns the Replicator will try first, which it will not, and what has to be true before it tries the rest.</div>
 
-<div class="callout note"><strong>Status.</strong> Every number here comes from a calculation or from other groups' papers. Nothing on this page has been measured by this project, and no part has been bought. The first crystal to try (RG-1, below) still has to pass a simulation before anyone builds it (Open).</div>
+<div class="callout note"><strong>Status.</strong> Every number here comes from a calculation or from other groups' papers. Nothing on this page has been measured by this project, and no part has been bought. The first crystal to try (RG-1, below) has been simulated and failed its pre-registered test, so it is dropped as drawn (Simulated). A thicker plate is the lead that replaces it, and it is still Open.</div>
 
 ## What a crystal does to a wave
 
@@ -38,7 +38,7 @@ One pattern cannot block all five tones: the tones span a factor of five, and on
 
 The glass plate (a 1 mm wafer) sends sound into the water by bending. A bending wave in this plate travels slower than sound in water at all five tones. A wave that slow cannot send a sound wave straight into the water. Most of its energy stays in the plate. This is why driving the plate in water takes much more voltage than in air: unmatched water needs 49 to 61 V rms to hold a heavy particle, against an 18 V supply (Derived, from the S-VOL1 study).
 
-A crystal can help here, but only one kind: a pattern that scatters the slow bending waves into directions where they do radiate.
+A crystal can help here, but only one kind: a pattern that scatters the slow bending waves into directions where they do radiate. Rung 1 below tested that idea with steel dots, and it did not work. The same simulation found that the simple alternative does help at the low tones: a thicker plate.
 
 ## What we do not need a crystal for
 
@@ -46,8 +46,8 @@ Three ideas were checked against the numbers and dropped (all Derived):
 
 | Idea | Result |
 |---|---|
-| **A crystal rim reflector** around the plate edge | Not needed. A hard aluminium ring with air behind it already bounces back at least 99.7 % of the sound for the typical chamber mode. What limits the echo is the leaks and gaps (the 12 mm transfer port, slots, a soft bond), not the ring |
-| **A permeable crystal floor** that lets matter flow through the whole mid-plane | Fails. With water behind it, the echo drops badly for the sideways chamber modes (the weakest 5 % fall to 0.05 to 0.47). The sealed, air-backed cassette M1 stays |
+| **A crystal rim reflector** around the plate edge | Not needed. A hard aluminium ring with air behind it already bounces back at least 99.7 % of the sound for the typical chamber mode, and the #124 simulation reproduced that figure at all five tones (Simulated). What limits the echo is the leaks and gaps (the 12 mm transfer port, slots, a soft bond), not the ring |
+| **A permeable crystal floor** that lets matter flow through the whole mid-plane | Fails. With water behind it, the echo drops badly for the sideways chamber modes (the weakest 5 % fall to 0.05 to 0.47). A perforated steel version, simulated in #124, reflects only 0.48, 0.53 and 0.66 of the sound at 32, 64 and 96 kHz, below the 0.85 needed (Simulated). The sealed, air-backed cassette M1 stays |
 | **Safety opals** for laser filtering | Not safe by design. A grown opal has no rated blocking strength. Laser filters are bought as rated parts |
 
 Two more are parked, not killed. A graded-index plate that bends sound like a lens is too weak at 32 kHz (1.4 rad of phase). Soft-clamping the plate edge buys nothing, because the silicone ring already acts like a free edge in simulation (field correlation 0.9998, Simulated).
@@ -56,16 +56,16 @@ Two more are parked, not killed. A graded-index plate that bends sound like a le
 
 The sealed cassette has air behind the plate. The first test of the empty chamber ([Bench Gate 0](status.html)) compares the second echo to the first and needs a ratio showing a reflection of at least 0.85.
 
-The crystal study found a useful side effect. If water gets behind the plate, the reflection falls from about 0.9996 to between 0.11 and 0.43 (Derived). That is a huge change. So the same echo test is also a leak detector for the cassette, with no extra sensor. It should become a software interlock and a seal requirement in the CAD (Design decision; not yet built).
+The crystal study found a useful side effect. If water gets behind the plate, the reflection falls from about 0.9996 to between 0.11 and 0.43 (Derived). That is a huge change. So the same echo test is also a leak detector for the cassette, with no extra sensor. The #124 simulation confirmed it: the echo falls to 0.11 to 0.43, and the force that holds a particle falls to 0.11 to 0.35 of the sealed case (Simulated). Task #129 then wrote the interlock in firmware. If the reflection falls below 0.50, or no resonance can be found, the sweep reports a flood, switches off the drive, stops any running dose and refuses to start a matter drive or the pump until a later sweep passes. It passes 452 workstation checks (Simulated). It is not wired into the main program yet, no board has run it, and the 0.50 threshold rests on the simulation alone (Open).
 
-## Rung 1: the first crystal to try
+## Rung 1: the first crystal to try, and what the simulation said
 
-The plan climbs three rungs. Rung 1 uses what the machine already is.
+The plan climbs three rungs. Rung 1 uses what the machine already is. The first item on it, RG-1, has now been simulated and failed.
 
-### RG-1: little steel dots on the back of the glass
+### RG-1: little steel dots on the back of the glass (killed in simulation)
 
-**What.** A triangular pattern of small steel discs glued to the dry back face of each acoustic wafer, 37.4 mm apart (Derived).
-- About 18 dots, each 3 mm wide and 1 mm thick, 56 mg each. Together about 1 g, 1.4 % of the wafer's mass.
+**What.** A triangular pattern of small steel discs waxed to the dry back face of each acoustic wafer, 37.4 mm apart (Derived).
+- Drawn as about 18 dots, each 3 mm wide and 1 mm thick, 56 mg each. Together about 1 g, 1.4 % of the wafer's mass.
 - Only on the dry air side, at least 10 mm from every piezo disc, and inside the O-ring line.
 - Held by removable wax, so the test can be undone. The wet face stays flat, bare glass.
 
@@ -73,9 +73,17 @@ The plan climbs three rungs. Rung 1 uses what the machine already is.
 
 **Temperature.** The best pitch moves very little when the water warms. The calculated safety margin shifts by at most 0.0014 per kelvin, so it stays positive over a 10 K swing and RG-1 needs no speed-of-sound lock (Derived).
 
-**Status: Derived pattern, gain Open.** A simulation screen comes first (task #124). It compares four plates on the same drive: bare, with RG-1, the same weight at random places (to test whether the pattern matters), and a 2 mm plate (the simple alternative).
-- **Pass:** at least 1.3 times the sound pressure per volt at 32 to 96 kHz, no tone below 0.9 times, and glass stress still under 10 MPa.
-- **Kill:** it fails that, or the random dots do as well. Then the repeat does not matter and the idea goes.
+**Status: killed on its own pre-registered rule (Simulated; nothing measured).** Task #124 ran the screen before any dot was bought. It solved the lower wafer, six 16 mm piezo discs and the water-filled chamber, with the water treated as extra mass on the plate. It compared four plates on the same drive: bare, with RG-1, the same weight at random places (two random draws), and a 2 mm plate. The simulation was run by the simulation team, not by this handbook.
+- **Pass was** at least 1.3 times the sound pressure per volt at 32 to 96 kHz, no tone below 0.9 times, and glass stress under 10 MPa.
+- **Result.** RG-1 gave a median gain of **1.08**, against 1.3 needed, so it fails. The gain at 32, 64, 96, 128 and 160 kHz was 0.97, 1.08, 1.09, 0.95 and 1.60.
+- **Random dots did about the same.** Their median gain was 0.93 and 0.94, and at 160 kHz they did better than the pattern (1.9 against 1.6). So the repeat does not matter. What changes there is the plate's own resonances shifting under extra mass, not a grating.
+- **Why.** The pitch is right. The calculated safety margin was still positive for the loaded waves, by 0.28 to 0.52. But only 14 dots fit, not 18, because the six piezo discs sit on a spiral near the middle, not at the rim, and the keep-out zones remove four sites. Those 14 dots weigh 0.78 g on a 70 g wafer, which is too little to couple at 32 to 96 kHz.
+- **The stress test does not pick a winner.** At the voltage needed to hold a particle with unmatched glass in water, the bare wafer and RG-1 both fail the 10 MPa limit (42 and 36 MPa, at 160 and 134 V rms). That is a limit of the glass in water, not of the dots.
+- **Limits.** The plate model treats the water as added mass, which suits free bending waves better than the radiating part. The dots have no stiffness or glue layer, one mesh was used, and there were eight test points.
+
+### A thicker wafer is the lead that works at low tones
+
+The bare 2 mm wafer, the "simple alternative" in the screen, raised the pressure per volt by **3.6 to 3.8 times at 32 and 64 kHz** (Simulated). At 96 kHz it lost (0.55 times). Its numbers at 128 and 160 kHz (0.09 and 0.44 times) come from a rough radiation model of a plate that is faster than sound in water, and the simulation team warns they should not be trusted. A fluid-coupled solve could change them. The 2 mm wafer would need a different mass, a different gap allowance and a new check of the five-tone drive, so it is a lead for the design team to rule on, not a change to the design (Open).
 
 ### PX-1: a quiet seat
 
@@ -135,7 +143,7 @@ Until then, no phoxonic work touches the Desktop Replicator.
 
 | Question | How it will be answered |
 |---|---|
-| Does RG-1 raise the sound pressure per volt, and does the repeat beat random dots? | Simulation screen (#124), then the bench |
+| Does a 2 mm wafer keep its 3.6 to 3.8 times gain at 32 and 64 kHz in a fluid-coupled solve, and what does it do above 96 kHz? | Fluid-coupled simulation, then the bench |
 | Does structure-borne crosstalk exceed the PX-1 trigger? | Bench Gate 0 |
 | Is a flooded cassette really visible in the echo ratio? | Bench Gate 0, with a deliberate flood test on a spare cassette |
 | Can a recalled hologram page hold the same trap as the stored pattern? | K-1 round-trip test |

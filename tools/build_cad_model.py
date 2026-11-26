@@ -73,7 +73,7 @@ PART_RULES = [
     (r'lift-plug', 'S03', 'matter', 'A handle point for lifting the mid-plane cassette out by hand.'),
     (r'ball-screw|screw-(top|bottom)-bearing', 'S01', 'desktop', 'A ball screw (12 mm, 10 mm lead) standing in a fixed corner piece. Turning it drives the nut, the spine and the head up or down.'),
     (r'ball-nut|nut-arm', 'S01', 'desktop', 'The nut that rides on a ball screw, and the arm that joins it to the centre spine through a slot in the corner piece.'),
-    (r'brushless-servo|servo-', 'S05', 'acoustics', 'The lift servo, with a brake that holds the head if power is lost. It raises and lowers the head, and trims the gap by up to 1 mm to keep it tuned as the air warms.'),
+    (r'brushless-servo|servo-', 'S05', 'acoustics', 'The lift servo. It raises and lowers the head, then switches off while the head rests on its two stops. It has no brake, and its windings are shorted if power is lost so the head sinks slowly.'),
     (r'sync-belt|drive-belt|-pulley', 'S01', 'desktop', 'A belt or pulley in the base that links the servo to both ball screws so they turn together.'),
     (r'head-down-stop|home|limit-sensor', 'S05', 'desktop', 'A hard stop or a sensor that tells the controller where the head is: homed, at the top, or down.'),
     (r'corner-piece|centre-spine|slot-brush', 'S01', 'desktop', 'Part of the lift structure: the fixed corner pieces that hold the screws, the centre spine that rises with the head, or a brush that seals a slot.'),
