@@ -129,6 +129,25 @@ A holographic memory is judged by five measured things: light returned, errors, 
 - **Recall and capacity share one limit (Derived).** The more patterns are stored, the more alike the weak answers look, on the same η curve. The honest score is patterns that can still be told apart per cubic centimetre, not bytes.
 - **Recall is a hypothesis (Design decision).** The memory returns a ranked guess. Only a sensor can confirm it. Every stored entry states whether it was measured or inferred, and an inferred one names its model and inputs. Writing weights into a material makes them fast, not more true. The same rule governs scans ([what a scan may claim](matter-loop.html#what-a-scan-is-allowed-to-claim)).
 
+## How Prime borrows from the human brain: silent imagination first, words second
+
+Research task BRAIN-BIO-1 (#126) asked which ideas from the human brain are worth copying into Prime, and which are not. It added no hardware and ran no simulation. It is a reading of 32 sources (`R199`–`R230`) and a plan for the next experiments (Design decision; Open). The network it concerns is the research version of Prime, not the small controller card.
+
+The human brain does not think in English sentences. Brain scans and patient studies show that silent thinking happens in quiet spatial and problem-solving networks: picturing a shape, judging whether a glass plate will crack, or asking "what if I push here instead?". The language circuits act mostly as a translator that packs a finished thought into words ([Fedorenko et al., *Nature* 2024](https://doi.org/10.1038/s41586-024-07522-w), `R216`) † (Documented).
+
+The plan copies that split on purpose. The wave network settles the sound, light and shape fields silently, and only afterwards a small frozen language model turns its settled state into words.
+
+| Brain idea | What the lab work shows (Documented) | What the plan does with it (Derived or Open) |
+|---|---|---|
+| **Thinking in shape-waves** | Activity in the cortex follows the natural standing waves set by the folded shape of the cortex ([Pang et al., *Nature* 2023](https://doi.org/10.1038/s41586-023-06098-1), `R209`) †. Travelling waves sweep one way while a memory is stored and the other way while it is recalled ([Mohan et al., *Nat. Hum. Behav.* 2024](https://doi.org/10.1038/s41562-024-01838-3), `R214`) † | Prime already settles to rest on a symmetric wave grid (Derived). Sensor drive and goal drive are applied at the boundary, so the two directions are two kinds of input and the symmetric network, which keeps settling guaranteed, is not touched (Design decision; Open) |
+| **Maps shaped like a doughnut** | Navigation cells in the entorhinal cortex trace out a doughnut-shaped surface (a torus), also during sleep ([Gardner et al., *Nature* 2022](https://doi.org/10.1038/s41586-021-04268-7), `R210`) † | Prime's phases already wrap onto a bounded torus, so values cannot blow up in long runs (Derived). The fast and slow bands of the state may be split to match several map scales (Open) |
+| **Trying futures before acting** | Before a path is chosen, the hippocampus flicks about eight times a second between candidate futures ([Kay et al., *Cell* 2020](https://doi.org/10.1016/j.cell.2020.01.014), `R218`) † | Prime checks several "what if" drives against the exact wave physics before it commits, and keeps the existing rule that it learns only from real errors (Open) |
+| **Silent thought, then words** | Non-verbal thought reaches the language network only at the end, to be spoken or to be understood (`R216`) † | Prime thinks silently, then a frozen local language model reads its settled state through a simple geometric map, so its words stay tied to the physics (Open; task #127 is building the first test) |
+
+**What a first test would be.** The bridge is judged against three controls on the same questions: the language model alone, the language model with only the geometric map, and a random map. The map is adopted only if it beats all three (Open; not run). The ideas on the machine-learning side come from 2024–2026 preprints: models that learn in an internal space and are translated outward ([LLM-JEPA](https://arxiv.org/abs/2509.14252), `R223`; [LeJEPA](https://arxiv.org/abs/2511.08544), `R224`; [H-JEPA](https://arxiv.org/abs/2610.06805), `R227`; [Counterfactual world models](https://arxiv.org/abs/2611.24778), `R228`). Plato's Key (`R222`) is a lab blog post, not a peer-reviewed paper. All of these are Documented as reports and none has been reproduced here.
+
+**What is left out.** The plan assumes no quantum effects in the brain. A calculation of how fast delicate quantum states scramble in warm, wet tissue gives between 10⁻¹³ and 10⁻²⁰ seconds, far too short to drive thought ([Tegmark, *Phys. Rev. E* 2000](https://doi.org/10.1103/PhysRevE.61.4194), `R202`) † (Documented). The older "holonomic" brain idea, that memory is spread like a hologram, is kept only as a mathematical picture of overlapping phase patterns ([Plate, 1995](https://doi.org/10.1109/72.377968), `R203`; [Pribram and Carlton, 1986](https://doi.org/10.1016/0001-6918(86)90062-4), `R199`) †. Laser reference beams in the cortex and quantum claims about microtubules are not used.
+
 <a id="3d-form-drawing-curriculum-oph-quarantine-and-teacher-distillation"></a>
 
 ## Training and checks in simulation
@@ -228,4 +247,5 @@ None has been run (Open). Each step gives one number, and nothing after step 3 s
 | Can a real reciprocal medium supply feedback and local updates at useful precision, at an operating point that is sensitive and still shrinks noise? | Optical experiment; not scheduled |
 | Can thick, low-loss phase-change stacks be made? | Materials research |
 | Can the machine make its own memory material? Plastics and doped glass look possible; phase-change films of exact composition look hard | Materials research |
+| Does a frozen language model, reading Prime's settled state through a simple geometric map, beat the three controls above? | Task #127; not run |
 | Does the sound field in the chamber do any useful computing for free while it shapes material? | Not assigned. It must not be counted on in any budget ([reservoir question](biology.html#ideas-that-exist-only-on-paper)) |

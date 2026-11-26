@@ -3,7 +3,7 @@
   "title": "Etherworks Replicator Handbook",
   "site_url": "https://osika-innovation.github.io/replicator/",
   "repository": "https://github.com/Osika-Innovation/replicator",
-  "updated": "2026-11-25",
+  "updated": "2026-11-26",
   "documents": [
     {
       "id": "home",
@@ -84,7 +84,7 @@
         "hardware",
         "CAD"
       ],
-      "reviewed": "2026-11-24",
+      "reviewed": "2026-11-26",
       "review_scope": "Active prototype design, quoted from the shared engineering constants",
       "related": [
         "status",
@@ -144,7 +144,7 @@
         "DOIs",
         "cornerstones"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-26",
       "review_scope": "Published third-party experimental basis mapped to Desktop prototype and long-term horizon rungs",
       "related": [
         "start",
@@ -175,7 +175,7 @@
         "ultimate vs prototype",
         "prototype"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-26",
       "review_scope": "Ultimate vs. Prototype programme checkpoint",
       "related": [
         "glossary",
@@ -230,7 +230,7 @@
         "trade space",
         "two carriers"
       ],
-      "reviewed": "2026-11-24",
+      "reviewed": "2026-11-26",
       "review_scope": "Master subsystem block diagram, flow budgets, three-column comparison matrix and interface summary; two-carrier physics retained",
       "related": [
         "start",
@@ -274,7 +274,7 @@
         "deleted parts",
         "retired baselines"
       ],
-      "reviewed": "2026-11-24",
+      "reviewed": "2026-11-26",
       "review_scope": "Subsystem datasheets, interface control matrix and deleted-parts log for the Desktop Replicator, quoted from the shared engineering constants",
       "related": [
         "architecture",
@@ -314,7 +314,7 @@
         "hologram",
         "resonator"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-26",
       "review_scope": "Ultimate vs. Prototype apertures, 25 kHz harmonic comb closure, resolution ladder, and prototype 1-bit sigma-delta bridge",
       "related": [
         "architecture",
@@ -449,9 +449,11 @@
         "ThoracicMotorCompiler",
         "AssociativeChordBank",
         "TRELLIS",
-        "wave compute"
+        "wave compute",
+        "brain biomimicry",
+        "thought and language"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-26",
       "review_scope": "Synthesis of holographic_memory_and_compute_plan, holo/ EqProp architecture, and minimal-electricity Ultimate substrate ladder",
       "related": [
         "biology",
@@ -857,7 +859,7 @@
         "hologram",
         "opal"
       ],
-      "reviewed": "2026-11-25",
+      "reviewed": "2026-11-26",
       "review_scope": "Current programme explanation",
       "related": [
         "materials",

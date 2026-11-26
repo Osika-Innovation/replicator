@@ -118,7 +118,7 @@ def master():
                     'echo read on the drive wires by {{c:haptic_pzt.adc_fallback_mpn}}, 16 bit'], 'DESIGN · SIMULATED', ['act', 'sense', 'power']))
     p.append(block(467, 92, 318, 66, 'acoustics.html#known-limits', 'Gap actuator and resonance lock',
                    ['holds gap ÷ sound speed: 0.41 mm per kelvin, ± 0.07 mm',
-                    '± 1 mm trim by the lift servo (CAD) · lock host-tested'], 'SIMULATED NEED · NOT ON A BOARD', ['act', 'sense']))
+                    'drive-timing lock, gap fixed on stops · host-tested'], 'SIMULATED NEED · NOT ON A BOARD', ['act', 'sense']))
     p.append(block(135, 168, 650, 30, 'acoustics.html', 'Upper wafer',
                    ['undrilled Ø{{c:desktop_geometry.wafer_diameter_mm}} × {{c:desktop_geometry.wafer_thickness_mm}} mm borosilicate: source, reflector and microphone in one part'], 'DESIGN', ['act', 'sense'], bar=True))
     p.append(block(135, 208, 190, 198, 'optics.html', 'Optical ring (LightRead)',
