@@ -156,10 +156,21 @@ Supporting results for the [brain-inspired plan for Prime](cadence-memory.html#h
 | Many numbers can be bound into one pattern | **Plate, [*IEEE Trans. Neural Netw.* (1995)](https://doi.org/10.1109/72.377968)** (`R203`) †; **Kanerva, [*Cogn. Comput.* (2009)](https://doi.org/10.1007/s12559-009-9009-8)** (`R204`) † | Gave the mathematics of holographic and hyperdimensional representations. | The honest core of the "holographic brain" idea |
 | Learn in a hidden space, then translate | **Huang et al., [arXiv:2509.14252](https://arxiv.org/abs/2509.14252)** (`R223`); **Balestriero et al., [arXiv:2511.08544](https://arxiv.org/abs/2511.08544)** (`R224`) | Preprints on training a model to predict in a hidden space: LLM-JEPA applies it to language models, and LeJEPA gives a recipe without training tricks. | Preprints, not yet reproduced here. They guide the first test and do not prove it will work |
 
+## 11. Pieces for the module upgrade ladder
+
+Supporting results for the [upgrade map](upgrades.html). These are other groups' lab results, offered as evidence that a rung is possible, never as results of this machine.
+
+| Shown | By | What they did | Meaning and limits |
+|---|---|---|---|
+| One exposure can print a whole 3D part | **Lin et al., [*Sci. Adv.* (2026)](https://doi.org/10.1126/sciadv.aec3536)** (`R151`) | Used an inverse-designed phase mask to deliver the full 3D light dose in one step for millimetre parts. | Supports M05 Rung 2. One mask makes one shape, whereas the rotating-pattern method of `R083` changes shape in time |
+| Sound can carry matter along curved wall-less tubes | **Nikolaev et al., [*PNAS* (2026)](https://doi.org/10.1073/pnas.2614959123)** (`R156`) | Guided solids, liquids and aerosols along programmable 3D paths with 256 transducers at 40 kHz. | Supports M06 Rung 2. One 8 cm module in air; scaling and fitting into our chamber are open. A guide, not a trap |
+| A flat optical surface can make hundreds of thousands of traps | **Holman et al., [*Nature* (2026)](https://doi.org/10.1038/s41586-025-09961-5)** (`R141`) | Trapped single atoms in a metasurface-made array of about 360,000 optical traps. | Supports M05 Rung 3 as a Claim. Needs ultra-high vacuum and laser-cooled atoms, not loose feedstock |
+
 ## Where to go next
 
 - [Research library](research.html): every source by evidence strength. Patents and unverified leads (`P004`, `P020–P023`) are kept apart.
 - [Current state](status.html): what is simulated, failing or open.
 - [Crystals](crystals.html): which repeating patterns of sound and light the machine will try.
 - [Cadence, memory and wave compute](cadence-memory.html): the brain-inspired plan for Prime.
+- [Upgrade loop](upgrades.html): the eight modules and the three rungs of each.
 - [Desktop Replicator](desktop-replicator.html): the first machine.

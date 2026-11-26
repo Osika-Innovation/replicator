@@ -1,0 +1,357 @@
+{
+  "schema": "handbook-modules/1",
+  "note": "Handbook copy of the Rev S module map M01-M08 (INS-47, FOUNDER_INTENT.md). The viewer uses the engineering module_manifest.json (task #132) for part membership when it is present, and the rules below when it is not. No module has a Measured badge: nothing has been built.",
+  "badges": {
+    "derived": "Derived",
+    "simulated": "Simulated",
+    "documented": "Documented",
+    "decision": "Design decision",
+    "open": "Open",
+    "claim": "Claim"
+  },
+  "modules": [
+    {
+      "id": "M01",
+      "name": "Boundary stacks",
+      "kid": "The flat glass plates that make the sound. There are three: floor, middle and ceiling. Each is a cartridge you can lift out and swap.",
+      "fixed": "The Ø238 mm bore-plug cartridge with its rim pogo pins (Stack 1 floor, Stack 2 mid-plane cassette, Stack 3 ceiling)",
+      "links": [
+        [
+          "S04 Acoustic array",
+          "subsystems.html#s04-acoustic-array"
+        ],
+        [
+          "Crystals",
+          "crystals.html"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "derived",
+            "simulated"
+          ],
+          "title": "Today",
+          "short": "Undrilled Ø200 mm Borofloat wafer, six Ø16 mm PZT-8 discs, a haptic board, in a Ø238 mm cartridge.",
+          "text": "An undrilled Ø200 mm Borofloat wafer (1 mm thick, with 2 mm as the water option), six Ø16 mm PZT-8 discs and a haptic board, in a Ø238 mm cartridge with rim pogo pins. The sealed mid-plane cassette reaches 1.9 to 2.4 times a foam bead's weight in simulation. The steel-dot grating RG-1 was killed (1.08 times against 1.3 needed). A 2 mm wafer gives 3.6 to 3.8 times the pressure per volt in water at 32 and 64 kHz."
+        },
+        {
+          "badges": [
+            "decision"
+          ],
+          "title": "Next",
+          "short": "An 18-port lamina or an optically addressed transducer tile, in the same cartridge.",
+          "text": "An 18-port lamina, or an optically addressed transducer tile, in the same cartridge and the same seat."
+        },
+        {
+          "badges": [
+            "claim"
+          ],
+          "title": "Target",
+          "short": "A plate of about 100,000 optically gated pixels, or a sound-and-light (phoxonic) plate.",
+          "text": "An aperture plate of about 10⁵ optically gated pixels, or a phoxonic plate that steers sound and light together. Only factory-made chips at gigahertz do both today (X-1 in the crystals guide)."
+        }
+      ]
+    },
+    {
+      "id": "M02",
+      "name": "Interconnect and routing",
+      "kid": "How power, timing and messages travel up the machine. Today it is wires. Next it is light inside glass threads. At the end there are no wires at all.",
+      "fixed": "The service channel in the right corner piece and up the spine, and the rim contact positions on every cartridge",
+      "links": [
+        [
+          "Interconnect ladder",
+          "upgrades.html#the-zero-cables-ladder-m02"
+        ],
+        [
+          "Compute, sensing and control",
+          "compute-control.html"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "derived"
+          ],
+          "title": "Today (copper)",
+          "short": "A rolling copper service loop and spring pogo pins on the cartridge rims.",
+          "text": "A rolling flexible copper loop in the right corner piece carries power and signals to the moving head. Spring pogo pins on each cartridge rim carry the 18 V supply and the data bus, so no cable is plugged in when a cartridge is swapped (CAD; electrical figures are design values)."
+        },
+        {
+          "badges": [
+            "decision",
+            "open"
+          ],
+          "title": "Next (fibre bundles)",
+          "short": "Photonic-crystal or multi-core fibre bundles carry optical clock, hologram pages and sensing up the spine.",
+          "text": "Photonic-crystal or multi-core fibre bundles carry the optical clock, hologram pages and optical sensing from the plinth up the spine into the rear panels and the stacks. The link budget, the bend limits and the bundle keep-outs are being worked out in tasks #132 and #133. Nothing here is simulated yet."
+        },
+        {
+          "badges": [
+            "claim"
+          ],
+          "title": "Target (no cables)",
+          "short": "Integrated optical waveguides and free-space micro-optical relays. No electrical cables.",
+          "text": "Cable-free routing: integrated optical waveguides and free-space micro-optical relays between modules. No electrical cable in the final machine."
+        }
+      ]
+    },
+    {
+      "id": "M03",
+      "name": "Compute core",
+      "kid": "The small computer that works out what every sound plate should do.",
+      "fixed": "The plinth compute slot and the backplane connector",
+      "links": [
+        [
+          "Compute, sensing and control",
+          "compute-control.html"
+        ],
+        [
+          "Cadence, memory and wave compute",
+          "cadence-memory.html"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "simulated"
+          ],
+          "title": "Today",
+          "short": "RP2350B controller (59,548 of 60,000 bytes, 452 checks) plus a larger network, Prime-Core, on a plug-in card.",
+          "text": "An RP2350B controller running the small pattern network: 59,548 bytes of the 60,000-byte static memory on the Cortex-M33 build, with 452 workstation checks passing (#129). The larger Prime-Core network on a plug-in M.2 card scores J = 0.36318 on validation in simulation (#123). Nothing has run on a board."
+        },
+        {
+          "badges": [
+            "decision",
+            "documented"
+          ],
+          "title": "Next",
+          "short": "A phase-change (Sb₂S₃) photonic tensor co-processor feeding the fibre bundles.",
+          "text": "A hybrid photonic tensor co-processor built on antimony-sulphide phase-change material feeds the fibre bundles. The parts are reported by others (R129†, R134†). The way they connect to this machine is a design decision."
+        },
+        {
+          "badges": [
+            "claim"
+          ],
+          "title": "Target",
+          "short": "An all-optical toroidal wave computer, with the digital twin as its reference.",
+          "text": "An all-optical, toroidal wave-compute core, checked against the digital twin."
+        }
+      ]
+    },
+    {
+      "id": "M04",
+      "name": "Pattern and holographic memory",
+      "kid": "Where the shapes the machine knows how to make are kept.",
+      "fixed": "The plinth memory bay (its keep-out is being drawn in task #132)",
+      "links": [
+        [
+          "Cadence, memory and wave compute",
+          "cadence-memory.html"
+        ],
+        [
+          "Crystals (K-1)",
+          "crystals.html#rung-2-crystals-of-light"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "decision",
+            "simulated"
+          ],
+          "title": "Today",
+          "short": "Flash memory and host files in the HLEQ v1 holographic-equation format.",
+          "text": "Digital flash on the controller, and holographic-equation files (.holo, HLEQ v1) kept on the host."
+        },
+        {
+          "badges": [
+            "documented",
+            "open"
+          ],
+          "title": "Next",
+          "short": "K-1: an angle-multiplexed iron-doped lithium niobate crystal. Parts exist; the integration is open.",
+          "text": "K-1, an angle-multiplexed Fe:LiNbO₃ volume-grating crystal, about 100 kbit a page and 500 to 1,600 pages per cm³ (R100†, R195–R198†). Other groups have done the pieces. Putting them in this machine is open."
+        },
+        {
+          "badges": [
+            "claim"
+          ],
+          "title": "Target",
+          "short": "Petabit-class three-dimensional optical memory.",
+          "text": "Petabit-class 3D optical memory. R138† reports a nanoscale optical disk with that capacity. Our version is a claim."
+        }
+      ]
+    },
+    {
+      "id": "M05",
+      "name": "Six rear active panels",
+      "kid": "Six flat strips on the back wall inside the glass. Now they only reflect sound and read the temperature. Later they shine patterned light.",
+      "fixed": "Six 30° panel slots on the rear half-circle inside the glass, about 108.5 mm from the axis",
+      "links": [
+        [
+          "S06 Optical tomography",
+          "subsystems.html#s06-optical-tomography"
+        ],
+        [
+          "Optics",
+          "optics.html"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "derived"
+          ],
+          "title": "Today",
+          "short": "Passive aluminium baffles, temperature and humidity sensors and clear windows.",
+          "text": "Passive flat aluminium baffles (the \"pinna\"), temperature and humidity sensors and clear windows. They sit inside the glass, so the curved wall never bends the light (CAD; light transmission figure from the S-VOL1 study)."
+        },
+        {
+          "badges": [
+            "decision",
+            "documented"
+          ],
+          "title": "Next",
+          "short": "Fibre-fed projectors that lock a whole 3D shape in one exposure.",
+          "text": "Fibre-fed volumetric optical hologram projectors that lock a whole 3D shape in one exposure. Others have shown the effect in the lab (R083, R151). Our version is a design decision."
+        },
+        {
+          "badges": [
+            "claim"
+          ],
+          "title": "Target",
+          "short": "Active programmable metasurface panels.",
+          "text": "Active, programmable metasurface panels (R141 and R084 show the building blocks)."
+        }
+      ]
+    },
+    {
+      "id": "M06",
+      "name": "Lower bucket and feed",
+      "kid": "The glass tube below the build chamber. It holds the stuff the machine builds from, and takes leftovers back.",
+      "fixed": "The Ø250 × 5 mm DURAN glass tube and the Stack 1 bore",
+      "links": [
+        [
+          "S02 Storage and release",
+          "subsystems.html#s02-storage-and-release-plinth"
+        ],
+        [
+          "Scan, recover and matter stores",
+          "matter-loop.html"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "derived"
+          ],
+          "title": "Today",
+          "short": "A waterproof Stack 1 bore plug, a Ø6 mm fill-and-drain tube and a 12 mm rim port.",
+          "text": "A waterproof Stack 1 bore plug seals the glass tube. It has a Ø6 mm fill-and-drain tube. Matter goes up through the 12 mm rim port of the cassette (CAD)."
+        },
+        {
+          "badges": [
+            "decision"
+          ],
+          "title": "Next",
+          "short": "A six-sector feedstock carousel, a rim louver ring and sound-guided matter.",
+          "text": "A six-sector feedstock carousel, a louver ring at the rim and acoustic guidance of matter along curved paths with no walls (R156)."
+        },
+        {
+          "badges": [
+            "claim"
+          ],
+          "title": "Target",
+          "short": "Closed-loop release and a reclaim bin.",
+          "text": "Closed-loop release and a reclaim bin that takes back every gram."
+        }
+      ]
+    },
+    {
+      "id": "M07",
+      "name": "Chassis, lift and spine",
+      "kid": "The body, the motor that lifts the top, and two stops it rests on. It holds still without using power.",
+      "fixed": "The Rev S frame: two corner pieces, the centre spine and the two 240.00 mm hard stops",
+      "links": [
+        [
+          "Desktop Replicator",
+          "desktop-replicator.html#the-enclosure"
+        ],
+        [
+          "Subsystems S01",
+          "subsystems.html#s01-chamber-and-stack-topology"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "derived"
+          ],
+          "title": "Today",
+          "short": "17.08 kg, brake-free. Head rests on 240.00 mm stops at 0 W. Sinks at 55 mm/s if power fails.",
+          "text": "17.08 kg, no brake. During a job the head rests on two hard stops at 240.00 mm with the servo off, so holding costs 0 W (about 4.3 W saved against holding on current). The motor windings are shorted on power loss, so a raised head sinks at about 55 mm/s. 6.28 kg moves. CAD-derived; motor constants are assumed; nothing weighed."
+        },
+        {
+          "badges": [
+            "decision"
+          ],
+          "title": "Next",
+          "short": "A freestanding machine with the same bays, scaled by diameter and height.",
+          "text": "A freestanding machine with the same eight bays, scaled by diameter and height."
+        },
+        {
+          "badges": [
+            "derived",
+            "open"
+          ],
+          "title": "Target",
+          "short": "The Ultimate barrel, built on the same bay layout.",
+          "text": "The Ultimate barrel on the same bay layout. The scaling rule is derived. The machine is open."
+        }
+      ]
+    },
+    {
+      "id": "M08",
+      "name": "Metrology and interlocks",
+      "kid": "The listening, the temperature checks and the safety switches that tell the machine when something is wrong.",
+      "fixed": "The sensor ports, the head-down switch and the interlock chain",
+      "links": [
+        [
+          "S05 Resonance lock",
+          "subsystems.html#s05-gap-actuator-and-resonance-lock"
+        ],
+        [
+          "S11 Thermal and safety",
+          "subsystems.html#s11-thermal-and-safety"
+        ]
+      ],
+      "rungs": [
+        {
+          "badges": [
+            "simulated"
+          ],
+          "title": "Today",
+          "short": "16-bit receive path, a 150 MHz ring-length lock and the Bench Gate 0 flood interlock.",
+          "text": "A 16-bit AD7380 receive path on the piezo discs. A 150 MHz ring-length lock that follows temperature (±136 steps, 0.063 K per two steps). Bench Gate 0, whose echo test doubles as a cassette-flood interlock. An optional Class 1 laser reading. Host-tested only; the laser class is open."
+        },
+        {
+          "badges": [
+            "decision"
+          ],
+          "title": "Next",
+          "short": "Fibre-coupled interferometry and material identification with several carriers.",
+          "text": "Fibre-coupled interferometry, and material identification that uses sound and several colours of light together (INS-33)."
+        },
+        {
+          "badges": [
+            "open"
+          ],
+          "title": "Target",
+          "short": "Whole-machine optical metrology on the cable-free link. Not worked out.",
+          "text": "Optical metrology over the cable-free link. Not yet worked out."
+        }
+      ]
+    }
+  ]
+}

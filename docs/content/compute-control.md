@@ -175,6 +175,8 @@ The timing figures (Derived):
 - The board-to-board skew target is {{c:clock_and_bus.sync_skew_max_ns}} ns, which is 0.12° at 160 kHz.
 - No tone has a whole number of clock ticks per period: {{c:clock_and_bus.sys_clk_hz|mhz}} MHz divided by 32 kHz is 4687.5. Firmware needs fractional timing or must accept one tick of jitter.
 
+**Following temperature with the clock (Simulated).** Gap over sound speed sets the resonance, and the gap is now fixed on two stops. The drive therefore changes its timing ring instead: the ring is 18,750 steps of a {{c:clock_and_bus.sys_clk_hz|mhz}} MHz clock, two steps shift all five tones by 107 parts per million (0.063 K of air), and the ring can move ±136 steps. The firmware measures the sign of the temperature slope from two readings 0.3 K apart and freezes the ring, refusing to drive, if it would leave its range ([Gap lock](subsystems.html#s05-gap-actuator-and-resonance-lock)). It passes workstation tests only.
+
 How the multiplied clocks on different boards are brought into a known phase is Open.
 
 ### Drive stage
@@ -241,6 +243,8 @@ The backplane has one M.2 socket behind a side hatch. The card runs Prime, the p
 | 1 · RP2350B microcontroller | Default | Sparse 8-bit weights, under {{c:cadence_brain.cadence_sparse_max_kb}} kB of {{c:cadence_brain.rp2350_sram_total_kb}} kB memory. It fits, but accuracy at that size is disputed | Target {{c:cadence_brain.rp2350_settle_target_ms_range|range}} ms (Design target). Instruction counts give 4.4 to 6.1 ms (Derived) |
 | 2 · FPGA module | Optional | The same network in block memory | Microseconds as a design target; not modelled |
 | 3 · Optical core | Reserved | Analogue weights in an optical medium | Set by light travel time; long-term research |
+
+Card 1's firmware passes 452 workstation checks and uses 59.5 kB of the 60 kB static memory on the target chip. It also stops the drive if the empty-chamber echo shows a flooded cassette (Simulated). Card 3 is module M03's Rung 3; see the [upgrade map](upgrades.html#m03).
 
 Card 2 is justified only by a need for faster reflexes, wider converters or a large modulator interface. Tests of the sparse network for Card 1 are in the [Cadence guide](cadence-memory.html#in-the-desktop-replicator).
 

@@ -86,6 +86,10 @@ Each driven plate has its own stack of boards. A backplane in the plinth holds t
 
 All part numbers are candidates. Their electrical values are typical figures and must be re-read from current datasheets before the design is frozen. Stock and price have not been checked.
 
+## Eight swappable modules
+
+Rev S is built from eight modules that swap in place on the same frame: boundary stacks, interconnect, compute core, memory, six rear panels, lower bucket, chassis with lift, and metrology with interlocks. The head's brake-free lift (about 4.3 W of holding heat avoided) belongs to the chassis module. The [upgrade page](upgrades.html#the-rev-s-master-platform-pulled-apart) shows the machine pulled apart. It also gives each module's three upgrade steps, from today's design to a cable-free target. Each module can be isolated in the [3D model](cad-3d.html).
+
 ## Heat
 
 With three driven plates the machine gives off an estimated 23.8 W with the first compute card and 29.3 W with the second, every plate driven with its worst pattern (Derived).

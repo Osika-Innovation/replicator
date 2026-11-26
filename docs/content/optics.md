@@ -135,6 +135,10 @@ The tolerance that matters is surface height. A height error δh on a clear elem
 
 For λ = 650 nm, n = 1.5 and an allowed phase error of 0.1 rad, the height must be right to about 21 nm (Derived). Each optical upgrade records light lost in the part, height error and the share of parts without defects ([The upgrade loop](upgrades.html)).
 
+## Rear panels, by rung
+
+The six rear panels are the optical seat of the machine (module M05). Today they are passive aluminium baffles with temperature and humidity sensors and clear windows, inside the glass so the curved wall cannot bend the light (Derived). The next step is fibre-fed projectors that lock a whole shape in one exposure, a design decision that rests on lab results from others ([Wang et al. 2026](https://doi.org/10.1038/s41586-026-10114-5) (`R083`), [Lin et al. 2026](https://doi.org/10.1126/sciadv.aec3536) (`R151`)). The target is a programmable metasurface panel (Claim; [Holman et al. 2026](https://doi.org/10.1038/s41586-025-09961-5), `R141`). The fibre feed is a plan, with no link budget yet ([upgrade map](upgrades.html#m05)).
+
 ## Open questions
 
 | Question | Who answers it |

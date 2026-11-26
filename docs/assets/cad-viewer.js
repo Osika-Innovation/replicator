@@ -21,6 +21,37 @@ async function start(el) {
     fetch(base + '.bin').then((r) => r.arrayBuffer()),
   ]);
 
+  // Module map (M01-M08). modules.json is the handbook's text for each module; module_manifest.json is the
+  // engineering export (task #132). Either may be missing or slow: parts already carry a module tag baked in at
+  // build time, so the pills work offline and the manifest only refines them when it arrives and is readable.
+  const dir = base.slice(0, base.lastIndexOf('/') + 1);
+  const modsInfo = await fetch(el.dataset.modules || dir + 'modules.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const manifest = await Promise.race([
+    fetch(dir + 'module_manifest.json').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    new Promise((res) => setTimeout(() => res(null), 2500)),
+  ]);
+  const modById = Object.fromEntries(((modsInfo && modsInfo.modules) || []).map((m) => [m.id, m]));
+  const modOf = new Map();
+  let modSource = 'handbook rules';
+  for (const p of meta.parts) modOf.set(p.id, p.module || null);
+  if (manifest) {
+    // Accepts {modules:[{id, parts|objects|groups|members:[names or prefixes]}]}, {modules:{M01:[...]}}, or {M01:[...]}.
+    const raw = manifest.modules || manifest;
+    const list = Array.isArray(raw) ? raw.map((m) => [m.id || m.module, m.parts || m.objects || m.groups || m.members || m.prefixes || []])
+      : Object.entries(raw).filter(([k]) => /^M0[1-8]$/.test(k)).map(([k, v]) => [k, Array.isArray(v) ? v : (v.parts || v.objects || v.groups || v.members || [])]);
+    let hit = 0;
+    for (const [id, names] of list) {
+      if (!/^M0[1-8]$/.test(id || '')) continue;
+      for (const s of names) {
+        const key = String(s).toLowerCase();
+        for (const p of meta.parts) {
+          if (p.id.toLowerCase() === key || p.id.toLowerCase().startsWith(key) || p.name.toLowerCase() === key) { modOf.set(p.id, id); hit++; }
+        }
+      }
+    }
+    if (hit) modSource = 'engineering manifest';
+  }
+
   const stage = el.querySelector('.cad-stage');
   const tip = el.querySelector('.cad-tip');
   const panel = el.querySelector('.cad-panel');
@@ -103,7 +134,7 @@ async function start(el) {
   let dirty = true;
   let t = 0, tTarget = 0;
   let shift = 0;
-  let hover = null, selected = null, isolated = null;
+  let hover = null, selected = null, isolated = null, isoModule = null;
   const hidden = new Set();
 
   function layout() {
@@ -123,7 +154,7 @@ async function start(el) {
   function visibility() {
     for (const m of entries) {
       const a = m.userData.part.assembly;
-      const ghost = isolated && a !== isolated;
+      const ghost = (isolated && a !== isolated) || (isoModule && modOf.get(m.userData.part.id) !== isoModule);
       m.visible = !hidden.has(a) && !(m.userData.glass && !glassBox.checked);
       m.material.opacity = ghost ? 0.08 : (m.userData.glass ? meta.materials[m.userData.part.matKey].opacity : 1);
       m.material.transparent = ghost || m.userData.glass;
@@ -159,7 +190,8 @@ async function start(el) {
     if (!m) { tip.hidden = true; renderer.domElement.style.cursor = 'grab'; return; }
     const p = m.userData.part;
     tip.hidden = false;
-    tip.replaceChildren(el2('strong', p.name), el2('span', asmById[p.assembly].title), el2('small', `${p.material} · ${size(p)} mm`));
+    const mid = modOf.get(p.id);
+    tip.replaceChildren(el2('strong', p.name), el2('span', (mid ? mid + ' · ' : '') + asmById[p.assembly].title), el2('small', `${p.material} · ${size(p)} mm`));
     const r = stage.getBoundingClientRect();
     tip.style.left = Math.min(ev.clientX - r.left + 14, r.width - 230) + 'px';
     tip.style.top = Math.min(ev.clientY - r.top + 14, r.height - 80) + 'px';
@@ -191,7 +223,7 @@ async function start(el) {
     }
     const p = m.userData.part, a = asmById[p.assembly];
     panel.append(
-      el2('span', a.title, { class: 'eyebrow' }),
+      el2('span', (modOf.get(p.id) ? modOf.get(p.id) + ' · ' : '') + a.title, { class: 'eyebrow' }),
       el2('h3', p.name),
       el2('p', p.text || a.summary),
       el2('p', `${p.material} · ${size(p)} mm (bounding box, from the CAD model)`, { class: 'cad-meta' }),
@@ -226,12 +258,66 @@ async function start(el) {
     legend.append(li);
   }
 
+  // Module pills: All, M01-M08
+  const MOD_COLOR = { M01: '#186b60', M02: '#9a542e', M03: '#2f5aa0', M04: '#7a4f9a', M05: '#8f6d10', M06: '#3f7a28', M07: '#55616b', M08: '#a83f3f' };
+  const BADGE = { derived: ['Derived', 'bd-derived'], simulated: ['Simulated', 'bd-sim'], documented: ['Documented', 'bd-doc'],
+    decision: ['Design decision', 'bd-dec'], open: ['Open', 'bd-open'], claim: ['Claim', 'bd-claim'] };
+  const bar = el.querySelector('.cad-bar');
+  const modBar = el2('div', null, { class: 'cad-mods', role: 'group', 'aria-label': 'Isolate a module' });
+  modBar.append(el2('span', 'Module', { class: 'eyebrow' }));
+  const pills = [];
+  const counts = {};
+  for (const id of modOf.values()) counts[id] = (counts[id] || 0) + 1;
+  const mkPill = (id, label) => {
+    const b = el2('button', label, { type: 'button', class: 'cad-pill', 'data-mod': id, 'aria-pressed': String(id === 'all') });
+    const info = modById[id];
+    b.title = id === 'all' ? 'Show every module' : `${id} ${info ? info.name : ''} · ${counts[id] || 0} parts`;
+    if (id !== 'all') { b.style.setProperty('--mc', MOD_COLOR[id] || '#55616b'); if (!counts[id]) b.dataset.empty = 'true'; }
+    b.addEventListener('click', () => pickModule(id === 'all' ? null : (isoModule === id ? null : id)));
+    pills.push(b); modBar.append(b);
+  };
+  mkPill('all', 'All');
+  for (const id of ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08']) mkPill(id, id);
+  const exploreBtn = el2('button', 'Explode view', { type: 'button', class: 'cad-btn', 'aria-pressed': 'false' });
+  exploreBtn.addEventListener('click', () => {
+    const on = explode.value < 50;
+    explode.value = on ? 100 : 0; tTarget = on ? 1 : 0; exploreBtn.setAttribute('aria-pressed', String(on)); dirty = true;
+  });
+  modBar.append(exploreBtn, el2('span', `Grouped by: ${modSource}`, { class: 'cad-modsrc' }));
+  bar.after(modBar);
+
+  function pickModule(id) {
+    isoModule = id;
+    pills.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mod === (id || 'all'))));
+    visibility();
+    if (!id) { select(selected); return; }
+    const info = modById[id] || { name: id, kid: '', rungs: [], links: [] };
+    const n = counts[id] || 0;
+    panel.replaceChildren(el2('span', `${id} · module`, { class: 'eyebrow' }), el2('h3', info.name), el2('p', info.kid));
+    if (!n) panel.append(el2('p', 'No part of this module is drawn in the model yet. The bay is being added by the CAD lane (task #132).', { class: 'cad-hint' }));
+    else panel.append(el2('p', `${n} parts in the model. Everything else is faded.`, { class: 'cad-meta' }));
+    const wrap = el2('div', null, { class: 'cad-rungs' });
+    (info.rungs || []).forEach((r, i) => {
+      const box = el2('div', null, { class: `mod-rung r${i + 1}` });
+      box.append(el2('span', `Rung ${i + 1} · ${r.title}`, { class: 'mod-rn' }));
+      for (const k of r.badges) box.append(el2('span', BADGE[k][0], { class: 'bd ' + BADGE[k][1] }));
+      box.append(el2('p', r.short || r.text));
+      wrap.append(box);
+    });
+    panel.append(wrap);
+    const links = el2('div', null, { class: 'cad-links' });
+    links.append(link('upgrades.html#' + id.toLowerCase(), 'Swap card for ' + id));
+    for (const [label, href] of info.links || []) links.append(link(href, label));
+    panel.append(links);
+  }
+
   explode.addEventListener('input', () => { tTarget = explode.value / 100; dirty = true; });
   cut.addEventListener('input', () => { clip.constant = cut.value >= 100 ? 9999 : (cut.value / 100) * 300 - 150; dirty = true; });
   glassBox.addEventListener('change', visibility);
   el.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => go(b.dataset.view)));
   el.querySelector('#cad-reset').addEventListener('click', () => {
-    explode.value = 0; cut.value = 100; tTarget = 0; clip.constant = 9999; hidden.clear(); isolated = null;
+    explode.value = 0; cut.value = 100; tTarget = 0; clip.constant = 9999; hidden.clear(); isolated = null; isoModule = null;
+    pills.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mod === 'all'))); exploreBtn.setAttribute('aria-pressed', 'false');
     legend.querySelectorAll('input').forEach((i) => { i.checked = true; });
     legend.querySelectorAll('button[data-asm]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
     select(null); visibility(); go('iso');
