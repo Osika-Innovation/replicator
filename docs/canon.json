@@ -301,8 +301,8 @@
     }
   },
   "insights": {
-    "implemented_surfaces": 177,
-    "total_surfaces": 177,
+    "implemented_surfaces": 178,
+    "total_surfaces": 179,
     "items": [
       {
         "id": "INS-01",
@@ -517,7 +517,7 @@
         "summary": "Nothing is frozen, no acceptance procedure exists for this machine, the first self-made upgrade is unnamed, and several findings cite the wrong sources.",
         "effect": "Lists what must exist before hardware can be released.",
         "evidence": "DOCUMENTED",
-        "implemented": 5,
+        "implemented": 4,
         "surfaces": 5
       },
       {
@@ -668,6 +668,14 @@
         "id": "INS-46",
         "summary": "The machine now follows temperature drift by changing the drive timing instead of moving the head, and the pattern network gets a plan to think silently first and use words second, as the human brain does.",
         "effect": "The lift motor loses its brake and its heating, because the head rests on two hard stops during a job. A cassette-flood check is added to the first empty-chamber test. The brain study adds no hardware. It sets the order of work for the next pattern-network experiments.",
+        "evidence": "DERIVED",
+        "implemented": 2,
+        "surfaces": 2
+      },
+      {
+        "id": "INS-47",
+        "summary": "The Rev S machine is now the one master platform, made of eight swappable modules, and its wiring plan is copper first, then fibre bundles, then no cables at all.",
+        "effect": "Each module gets its own three-step upgrade path with an honest label for how real each step is. The 3D model can now show one module at a time. No new hardware is built by this ruling.",
         "evidence": "DERIVED",
         "implemented": 2,
         "surfaces": 2
@@ -857,6 +865,10 @@
       "INS-46": {
         "summary": "The machine now follows temperature drift by changing the drive timing instead of moving the head, and the pattern network gets a plan to think silently first and use words second, as the human brain does.",
         "effect": "The lift motor loses its brake and its heating, because the head rests on two hard stops during a job. A cassette-flood check is added to the first empty-chamber test. The brain study adds no hardware. It sets the order of work for the next pattern-network experiments."
+      },
+      "INS-47": {
+        "summary": "The Rev S machine is now the one master platform, made of eight swappable modules, and its wiring plan is copper first, then fibre bundles, then no cables at all.",
+        "effect": "Each module gets its own three-step upgrade path with an honest label for how real each step is. The 3D model can now show one module at a time. No new hardware is built by this ruling."
       }
     }
   },

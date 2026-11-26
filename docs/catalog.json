@@ -114,16 +114,17 @@
         "parts",
         "viewer"
       ],
-      "reviewed": "2026-11-24",
+      "reviewed": "2026-11-26",
       "review_scope": "Interactive view of the default CAD build (Rev S); part descriptions written for the handbook",
       "related": [
-        "desktop-replicator",
-        "architecture",
-        "subsystems",
-        "digital-twin",
         "acoustics",
+        "architecture",
+        "desktop-replicator",
+        "digital-twin",
+        "matter-loop",
         "optics",
-        "matter-loop"
+        "subsystems",
+        "upgrades"
       ]
     },
     {
@@ -349,7 +350,7 @@
         "SLM",
         "nanoimprint"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-26",
       "review_scope": "Ultimate vs. Prototype optical subsystem summary, toroidal pulse physics, and K-MOSQUITO-SMI gate",
       "related": [
         "architecture",
@@ -416,7 +417,7 @@
         "FPGA",
         "optical compute"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-26",
       "review_scope": "Invariant wire contract plus Ultimate continuous wave control vs. Prototype RP2350B/FPGA bootstrap classification",
       "related": [
         "architecture",
@@ -575,7 +576,7 @@
         "Cadence",
         "holo"
       ],
-      "reviewed": "2026-11-17",
+      "reviewed": "2026-11-26",
       "review_scope": "Consolidated CHARTER/ENGINE/CAD discipline, multi-island autoresearch, and 4 hardware-realism tiers",
       "related": [
         "architecture",
@@ -597,24 +598,32 @@
       "group": "Build and improve",
       "status": "Current guide",
       "owner": "Upgrade loop",
-      "summary": "Acyclic dependency graph joining Prototype seed coupons and FAB-01 to Ultimate wave apertures and self-improvement.",
+      "summary": "The Rev S modular master platform: eight swappable modules (M01 to M08), each with three upgrade rungs and a badge for how real each is, the zero-cables interconnect ladder, and the acyclic upgrade graph.",
       "topics": [
-        "self-replication",
-        "upgrade graph",
         "FAB-01",
         "META-01",
+        "Rev S",
+        "automation",
         "constructor",
-        "automation"
+        "fibre bundles",
+        "interconnect ladder",
+        "modules M01-M08",
+        "self-replication",
+        "upgrade graph"
       ],
-      "reviewed": "2026-11-17",
-      "review_scope": "Two-ended search joining P0/HA-0 seed coupons to META-01 and Ultimate physical convergence",
+      "reviewed": "2026-11-26",
+      "review_scope": "Rev S module map (INS-47), upgrade rungs and badges, upgrade graph",
       "related": [
-        "start",
+        "agents",
+        "architecture",
+        "cad-3d",
+        "cadence-memory",
+        "crystals",
+        "desktop-replicator",
         "manufacturing",
         "matter-loop",
-        "cadence-memory",
-        "agents",
-        "physics-to-hardware"
+        "physics-to-hardware",
+        "start"
       ]
     },
     {
@@ -1337,7 +1346,7 @@
         "doors",
         "loop energy"
       ],
-      "reviewed": "2026-11-22",
+      "reviewed": "2026-11-26",
       "review_scope": "Long-term machine bounds, doors and bridge; Derived floors from the programme bounds model",
       "related": [
         "architecture",

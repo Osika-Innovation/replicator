@@ -5430,6 +5430,84 @@
       "next_action": "Reference as verified upgrade path if edge/codec latency of Qwen3 later warrants T2H spiking conversion.",
       "engineering_task": "BRAIN-BIO-1",
       "decision": "documents Qwen3-4B T2H + DSSA + INT8-Spiking (64.31% sparsity) as future edge-codec pathway for Qwen3"
+    },
+    {
+      "id": "R141",
+      "title": "Trapping of single atoms in metasurface optical tweezer arrays",
+      "kind": "journal_article",
+      "canonical_url": "https://doi.org/10.1038/s41586-025-09961-5",
+      "identifier": "10.1038/s41586-025-09961-5",
+      "authors": [
+        "A. Holman",
+        "Y. Xu",
+        "X. Sun",
+        "J. Wu",
+        "M. Wang",
+        "Z. Zhu",
+        "B. Seo"
+      ],
+      "publication_date": "2026-01-01",
+      "checked_date": "2026-11-24",
+      "review_status": "primary_indexed_abstract",
+      "evidence_status": "published experimental report",
+      "possible_insight": "Nature demonstration of single-atom trapping in metasurface-generated tweezer arrays with ~360,000 optical traps; metasurface optics replaces bulk objectives for atom-array generation.",
+      "scope_limit": "Ultrahigh vacuum, laser-cooled atoms; not ambient feedstock handling.",
+      "fabrication_and_precision": "Nano-fabricated metasurface tweezer generator.",
+      "next_action": "Cite as the metasurface-tweezer convergence record (links section 5 metasurfaces to section 8 atom arrays).",
+      "engineering_task": "R4",
+      "decision": "candidate; major upgrade for tweezer-array row; public-catalog cross-refs: P017"
+    },
+    {
+      "id": "R151",
+      "title": "Single-exposure holographic 3D printing via inverse-designed phase masks",
+      "kind": "journal_article",
+      "canonical_url": "https://doi.org/10.1126/sciadv.aec3536",
+      "identifier": "10.1126/sciadv.aec3536",
+      "authors": [
+        "D. Lin",
+        "X. Chen",
+        "C. J. O'Dea",
+        "J. W. Kim",
+        "K. S. Mason"
+      ],
+      "publication_date": "2026-05-01",
+      "checked_date": "2026-11-24",
+      "review_status": "primary_indexed_abstract",
+      "evidence_status": "published experimental report",
+      "possible_insight": "Single-exposure holographic volumetric 3D printing: an inverse-designed phase mask delivers the entire 3D optical dose in one step, millimetre-scale parts (Science Advances 2026); complements DISH (R083) as a static-mask single-shot route.",
+      "scope_limit": "Static mask = one geometry per mask; DISH rotates views dynamically.",
+      "fabrication_and_precision": "Inverse-designed phase-mask fabrication.",
+      "next_action": "Cite beside R083 in the lock-with-light row.",
+      "engineering_task": "M-A2",
+      "decision": "candidate; single-shot optical volumetric printing"
+    },
+    {
+      "id": "R156",
+      "title": "Contactless continuous guidance of matter in its main states using curved elongated Bessel-like acoustic fields",
+      "kind": "journal_article",
+      "canonical_url": "https://doi.org/10.1073/pnas.2614959123",
+      "identifier": "10.1073/pnas.2614959123",
+      "authors": [
+        "Dmitrii Nikolaev",
+        "Denys Iablonskyi",
+        "Alexander Martinez-Marchese",
+        "Marika Sirkka",
+        "Mikel Aldea",
+        "Chinedum Okwudire",
+        "Edward Haeggstrom",
+        "Asier Marzo",
+        "Ari Salmi"
+      ],
+      "publication_date": "2026-10-23",
+      "checked_date": "2026-11-24",
+      "review_status": "primary_indexed_abstract",
+      "evidence_status": "published experimental report",
+      "possible_insight": "PNAS 2026: elongated Bessel-like acoustic fields (EBAFs) form reconfigurable mid-air conduits ('tubes without walls') that CONTINUOUSLY transport solids, liquids, aerosols, gases and even electrical discharge along programmable 3D trajectories (256 transducers, 40 kHz, ~50 W per 8 cm module). Co-authored by Marzo. Solves the bulk/streamed-matter transport limitation of particle-by-particle holograms.",
+      "scope_limit": "8 cm single module demonstrated; scaling, field uniformity and in-chamber integration open; transport guide rather than a trap.",
+      "fabrication_and_precision": "Cylindrical 256-element PAT ring modules, connectable in series.",
+      "next_action": "Cite as the feedstock-streaming cornerstone for the deck 'suspended/streamed matter' narrative and the chamber feed/reclaim path; evaluate EBAF modules for Desktop feedstock injection.",
+      "engineering_task": "SYS-01",
+      "decision": "candidate; new cornerstone-adjacent capability: continuous contactless matter transport"
     }
   ]
 }

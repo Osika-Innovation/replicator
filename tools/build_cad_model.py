@@ -15,6 +15,7 @@ z = 0, z up, front at +x. Every part is a named object, "assembly__part", which 
 what makes the exploded view and the hover labels possible.
 """
 import argparse
+import shutil
 import collections
 import json
 import os
@@ -101,6 +102,21 @@ PART_RULES = [
     (r'datum|vee-block', 'S01', 'desktop', 'Part of the seat that puts the head back in the same place after every lift.'),
 ]
 
+# Module map M01-M08 (INS-47). Part-name rules win over the assembly default. The engineering export
+# (task #132) will tag the OBJ groups and write module_manifest.json; until then this is the fallback,
+# and a tag such as M03__electronics__slug in an OBJ group name overrides it.
+MODULE_NAME_RULES = [
+    (r'sensor|interlock|plunger|camera|c0-reference', 'M08'),
+    (r'umbilical|spring-contact|pogo|bus-block', 'M02'),
+    (r'rear-panel|rear-pinna', 'M05'),
+    (r'stack-1-(dry-break|filldrain)|bucket', 'M06'),
+]
+MODULE_ASSEMBLY_DEFAULT = {
+    'head-lower': 'M01', 'cassette': 'M01', 'midplane': 'M01', 'head-upper': 'M01', 'electronics': 'M03', 'optics': 'M05',
+    'bucket': 'M06', 'base': 'M07', 'tower': 'M07', 'head': 'M07', 'lift': 'M07', 'console': 'M07', 'chamber': 'M07',
+}
+MODULE_TAG = re.compile(r'^(M0[1-8])__(.+)$')
+
 # Words that read badly when title-cased from a slug.
 RENAME = {'pzt': 'PZT', 'pcb': 'PCB', 'usb': 'USB', 'c': 'C', 'dc': 'DC', 'io': 'I/O', 'led': 'LED', 'ui': 'UI', 'smi': 'SMI',
           'mcu': 'MCU', 'ad7380': 'AD7380', 'rp2350b': 'RP2350B', 'xin': 'XIN', 'm1': 'M1', 'm2': 'M2', 'c0': 'C0',
@@ -168,6 +184,10 @@ def main():
     positions, indices, out_parts = [], [], []
     vbase = 0
     for key, p in parts.items():
+        tag = MODULE_TAG.match(key)
+        tagged = tag.group(1) if tag else None
+        if tag:
+            key = tag.group(2)
         asm, slug = key.split('__', 1)
         if asm not in ASSEMBLIES:
             raise SystemExit(f'unknown assembly {asm!r}: add it to ASSEMBLIES in {Path(__file__).name}')
@@ -184,8 +204,15 @@ def main():
             if re.search(pattern, slug):
                 ds, guide, text = d, g, t
                 break
+        module, msrc = tagged, 'obj-tag'
+        if not module:
+            module, msrc = MODULE_ASSEMBLY_DEFAULT[asm], 'handbook-rules'
+            for pattern, mid in MODULE_NAME_RULES:
+                if re.search(pattern, slug):
+                    module = mid
+                    break
         out_parts.append({
-            'id': key, 'assembly': asm, 'name': title(slug), 'material': MATERIAL_LABEL.get(p['material'], p['material']),
+            'id': key, 'assembly': asm, 'module': module, 'moduleSource': msrc, 'name': title(slug), 'material': MATERIAL_LABEL.get(p['material'], p['material']),
             'matKey': p['material'], 'bbox': [round(float(v), 1) for v in (*lo, *hi)],
             'vert': [vbase, len(used)], 'tri': [sum(len(i) for i in indices[:-1]), len(faces)],
             'subsystem': DS[ds][0], 'subsystemLabel': DS[ds][1], 'guide': GUIDE[guide][0], 'guideLabel': GUIDE[guide][1],
@@ -206,8 +233,14 @@ def main():
         'assemblies': [{'id': k, 'title': v[0], 'summary': v[1], 'subsystem': DS[v[2]][0], 'subsystemLabel': DS[v[2]][1],
                         'guide': GUIDE[v[3]][0], 'guideLabel': GUIDE[v[3]][1], 'explode': list(v[4])} for k, v in ASSEMBLIES.items()],
         'materials': mats,
+        'modules': [{'id': mid, 'parts': sum(1 for q in out_parts if q['module'] == mid),
+                     'source': sorted({q['moduleSource'] for q in out_parts if q['module'] == mid})} for mid in sorted(set(MODULE_ASSEMBLY_DEFAULT.values()) | {f'M0{i}' for i in range(1, 9)})],
         'parts': out_parts,
     }
+    manifest = cad / 'module_manifest.json'
+    if manifest.exists():  # written by the engineering CAD lane (task #132); the viewer prefers it
+        shutil.copyfile(manifest, OUT / 'module_manifest.json')
+        print('copied module_manifest.json')
     (OUT / 'desktop.json').write_text(json.dumps(model, separators=(',', ':'), ensure_ascii=False) + '\n')
     print(f"{len(out_parts)} parts, {len(pos)} vertices, {len(idx) // 3} triangles; "
           f"desktop.bin {(OUT / 'desktop.bin').stat().st_size // 1024} kB, desktop.json {(OUT / 'desktop.json').stat().st_size // 1024} kB")

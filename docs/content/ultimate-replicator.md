@@ -79,6 +79,8 @@ Each step is a smaller case of the same write operation.
 4. An atom-array chamber tests D2 and D3 at atomic scale.
 5. The materialisation chamber writes whole objects.
 
+The Desktop Replicator's eight modules (M01 to M08) are meant to carry up the ladder. The larger machines keep the same bay layout and scale it by diameter and height (a Derived rule; the machines themselves are Open). Their wiring ends at the cable-free target of M02 Rung 3, which is a Claim ([upgrade map](upgrades.html#the-rev-s-master-platform-pulled-apart)). Task #133 is checking this long-term design against the module map. Older entries that assumed a ±1 mm gap trim, three contrawound toroids or a 12 mm axial bore are being retired there. This page does not yet reflect that review.
+
 A step can be skipped once its test passes. A prototype part is replaced only when its measured test passes ([the swap rule](upgrades.html#the-swap-rule)).
 
 ## Safety by construction

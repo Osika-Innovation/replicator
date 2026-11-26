@@ -349,6 +349,8 @@ Two budgets shape the layout most.
 
 ## Long-term architecture and the Desktop Replicator
 
+The table below lists every part and its replacement. The [upgrade page](upgrades.html#the-rev-s-master-platform-pulled-apart) groups the same parts into eight modules (M01 to M08) on the Rev S frame. Its [zero-cables ladder](upgrades.html#the-zero-cables-ladder-m02) shows the wiring path from copper, to fibre bundles, to no cable (a design plan; the link budget is Open).
+
 This is the handbook's one comparison of the prototype, the options still being traded, and the final machine. The final machine is a research direction, Open throughout ([The long-term machine](ultimate-replicator.html)). The last column is the test that must pass on the machine before the prototype part is replaced.
 
 | Subsystem | Prototype 1 (Desktop, coaxial) | Engineering options and trade space | Final machine | Gate that triggers the swap |
