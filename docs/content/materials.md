@@ -2,7 +2,7 @@
 
 We design the Replicator's shape and its material structure together. The aim is more function in fewer parts: a body that guides vibration, a surface that shapes a field, a crystal that links electrical and mechanical motion, or an optical element that does one repeatable job on light. Every candidate earns its place by its response, manufacturing route and measured benefit (Design decision).
 
-This is the fabrication end of the [physics section](physics.html). [Periodic table and tones](periodic-table.html) maps material response. [Light, fields and matter](light-matter.html) gives the interpretation.
+This is the fabrication end of the [physics section](physics.html). For crystals that are repeating patterns in sound and light, see [Crystals](crystals.html). [Periodic table and tones](periodic-table.html) maps material response. [Light, fields and matter](light-matter.html) gives the interpretation.
 
 ## Spectra across scales
 

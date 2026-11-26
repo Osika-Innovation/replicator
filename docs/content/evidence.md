@@ -126,8 +126,24 @@ The long-term design needs these to go from ready-made 10 µm bricks to a steady
 | Gold wires weld at room temperature | **Lu, Huang, Lou et al., [*Nat. Nanotechnol.* 5, 218–224 (2010)](https://doi.org/10.1038/nnano.2010.4)** (`R103`) | Gently touched single-crystal gold nanowires fused with no melting. The crystal pattern ran almost unbroken across the join. | Supports ready-made bricks joined by cold-welded seams. Shown for gold nanowires only. |
 | Glass can cold-weld too | **Guo et al., *Matter* (2024)** (`R144`, [publisher page](https://www.cell.com/matter/fulltext/S2590-2385(24)00485-5), DOI not yet resolved); **Dong et al., *Mater. Today* (2024)** (`R143`, [publisher page](https://www.sciencedirect.com/science/article/pii/S1369702124002177), DOI not yet resolved) | Guo welded silica nanospheres at room temperature in seconds. Dong explains when such welds work. | Closer to the chamber glass than gold. Nanospheres only; seam strength is Open. |
 
+## 9. Crystals that steer sound and light
+
+Supporting results for the [crystals guide](crystals.html). These are not one of the eight tricks. They support the choice of which repeating patterns to try. † means only the title and catalogue record were checked.
+
+| Shown | By | What they did | Meaning and limits |
+|---|---|---|---|
+| A repeating pattern can block sound | **Martínez-Sala et al., [*Nature* 378, 241 (1995)](https://doi.org/10.1038/378241a0)** (`R161`) †; **Kushwaha et al., [*Phys. Rev. Lett.* 71, 2022 (1993)](https://doi.org/10.1103/physrevlett.71.2022)** (`R160`) † | A sculpture of rods blocked a band of sound; the band structure of a periodic elastic composite was calculated. | Origin of the band gap for sound. Our tones need rows of 4.6 to 23 mm in water (Derived) |
+| A repeating pattern can block light | **Yablonovitch, [*Phys. Rev. Lett.* 58, 2059 (1987)](https://doi.org/10.1103/physrevlett.58.2059)** (`R158`) †; **John, [*Phys. Rev. Lett.* 58, 2486 (1987)](https://doi.org/10.1103/physrevlett.58.2486)** (`R159`) † | Proposed forbidden bands for light in periodic dielectrics. | Theory. The same vocabulary of rows, contrast and gap is reused for sound |
+| Tiny resonators block sound far below its wavelength | **Liu et al., [*Science* 289, 1734 (2000)](https://doi.org/10.1126/science.289.5485.1734)** (`R162`) | Built a sonic material with gaps at wavelengths much longer than its cells. | Each gap is narrow, so one such part does not serve five tones |
+| Ribs on a panel let a slow bending wave radiate | **Maidanik, [*J. Acoust. Soc. Am.* (1962)](https://doi.org/10.1121/1.1918200)** (`R176`) | Showed how ribs raise the sound a panel radiates in a reverberant field. | The basis for RG-1. Our version, dots on a water-loaded glass wafer, is Derived and untested |
+| Sound can order small particles into crystals | **Owens et al., [(2016)](https://doi.org/10.1039/c5sm02348c)** (`R179`); **He et al., [(2024)](https://doi.org/10.1063/5.0185692)** (`R180`) | Used sound to assemble microparticles into well-ordered layers. | Supports P-1. Sound anneals the layer; it does not place single sub-micrometre balls |
+| A thick hologram is a crystal written by light | **Kogelnik, [*Bell Syst. Tech. J.* (1969)](https://doi.org/10.1002/j.1538-7305.1969.tb01198.x)** (`R197`) †; **Mok, [*Opt. Lett.* (1993)](https://doi.org/10.1364/OL.18.000915)** (`R195`) †; **Mok, Burr & Psaltis, [*Opt. Lett.* (1996)](https://doi.org/10.1364/OL.21.000896)** (`R196`) † | Gave the theory of thick gratings, stored 5,000 holograms in one lithium niobate crystal, and defined the memory metric. | Supports K-1. Drive-pattern storage as our store is Open |
+| Doping lets a hologram be read without erasing it | **Buse, Adibi & Psaltis, [*Nature* (1998)](https://doi.org/10.1038/31429)** (`R198`) † | Reported non-volatile storage in doubly doped lithium niobate. | Fixes read-erasure for K-1 |
+| Light and GHz sound in one chip pattern | **Eichenfield et al., [*Nature* (2009)](https://doi.org/10.1038/nature08524)** (`R188`) †; **Jiang et al., [*Optica* (2019)](https://doi.org/10.1364/optica.6.000845)** (`R192`) † | Silicon and lithium niobate optomechanical crystals. | Sound near 5 GHz with 1.5 µm light. Bought chips only; this is Rung 3 |
+
 ## Where to go next
 
 - [Research library](research.html): every source by evidence strength. Patents and unverified leads (`P004`, `P020–P023`) are kept apart.
 - [Current state](status.html): what is simulated, failing or open.
+- [Crystals](crystals.html): which repeating patterns of sound and light the machine will try.
 - [Desktop Replicator](desktop-replicator.html): the first machine.

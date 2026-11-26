@@ -67,7 +67,7 @@ Every datasheet has the same lines. Owner is the guide that holds the detail.
 | Prototype fits | The undrilled lower wafer, the flat ring round it, the liquid riser at the rim. *Design decision* |
 | In | Sound from above; liquid from below |
 | Out | Reflected sound; material onto the chamber floor |
-| Budgets | The lift needs an end reflection of at least 0.85. The ring covers 31 % of the end area and dominates it; bare glass reflects almost everything (*Simulated*) |
+| Budgets | The lift needs an end reflection of at least 0.85. The ring covers 31 % of the end area and dominates it; bare glass reflects almost everything (*Simulated*). Water behind the wafer would drop the reflection from about 0.9996 to 0.11 to 0.43, so the Bench Gate 0 echo ratio doubles as a flood detector for the cassette ([Crystals](crystals.html#bench-gate-0-can-tell-you-if-the-cassette-leaks), *Derived*) |
 | Open | Sealed wafer with feed ports in the ring, or a continuous tall cylinder with a separator. The liquid riser's effect on the sound field |
 | Owner | [Acoustic bodies](acoustics.html), [Scan, recover and matter stores](matter-loop.html) |
 
